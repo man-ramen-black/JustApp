@@ -31,7 +31,7 @@ class MainActivity : Activity() {
                         .map { dan -> "$num x $dan = ${num*dan}\n"}}
                     .scan{x, y -> x + y}
                     .subscribe{result -> simpleResult.text = result}
-            }
+            }//
         })
 
         /**
