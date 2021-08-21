@@ -1,61 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-    <EditText
-            android:id="@+id/simpleInput"
+    <ScrollView
+            android:id="@+id/scrollView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
-    />
-
-    <TextView
-            android:id="@+id/simpleResult"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/simpleInput"
-    />
-
-    <EditText
-            android:id="@+id/leftInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toLeftOf="@id/x"
-            app:layout_constraintTop_toBottomOf="@id/simpleResult"
-            app:layout_constraintHorizontal_chainStyle="packed"
-    />
-
-    <TextView
-            android:id="@+id/x"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="x"
-            app:layout_constraintLeft_toRightOf="@id/leftInput"
-            app:layout_constraintRight_toLeftOf="@id/rightInput"
-            app:layout_constraintTop_toBottomOf="@id/simpleResult"
-            app:layout_constraintBottom_toBottomOf="@id/leftInput"
-    />
-
-    <EditText
-            android:id="@+id/rightInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="@id/leftInput"
-            app:layout_constraintLeft_toRightOf="@id/x"
-            app:layout_constraintRight_toRightOf="parent"
-    />
-
-    <TextView
-            android:id="@+id/mergeResult"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/leftInput"
-            app:layout_constraintBottom_toBottomOf="parent"
-    />
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_height="match_parent"
+        />
+</LinearLayout>
