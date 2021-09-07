@@ -1,5 +1,6 @@
 package com.black.study.base
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,10 +9,24 @@ import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
+import com.black.study.util.Log
 
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     protected var binding: T? = null
     protected abstract val layoutResId : Int
+
+    @CallSuper
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
+        Log.d(javaClass.simpleName)
+    }
+
+    @CallSuper
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(javaClass.simpleName)
+    }
 
     /**
      * Fragment View Binding = https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
@@ -23,8 +38,33 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d(javaClass.simpleName)
         binding = DataBindingUtil.inflate(inflater, layoutResId, container, false)
         return binding!!.root
+    }
+
+    @CallSuper
+    override fun onStart() {
+        super.onStart()
+        Log.d(javaClass.simpleName)
+    }
+
+    @CallSuper
+    override fun onResume() {
+        super.onResume()
+        Log.d(javaClass.simpleName)
+    }
+
+    @CallSuper
+    override fun onPause() {
+        super.onPause()
+        Log.d(javaClass.simpleName)
+    }
+
+    @CallSuper
+    override fun onStop() {
+        super.onStop()
+        Log.d(javaClass.simpleName)
     }
 
     /**
@@ -35,6 +75,19 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     @CallSuper
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d(javaClass.simpleName)
         binding = null
+    }
+
+    @CallSuper
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(javaClass.simpleName)
+    }
+
+    @CallSuper
+    override fun onDetach() {
+        super.onDetach()
+        Log.d(javaClass.simpleName)
     }
 }
