@@ -6,14 +6,16 @@ import android.view.ViewGroup
 import android.widget.Button
 import com.black.study.R
 import com.black.study.base.BaseFragment
-import com.black.study.contents.contentsSample.ContentsSampleFragment
+//import com.black.study.contents.recyclerview.RecyclerViewFragment
+import com.black.study.contents.sample.SampleFragment
 import com.black.study.databinding.FragmentContentsListBinding
 import kotlinx.android.synthetic.main.fragment_contents_list.*
 
 class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
     override val layoutResId: Int = R.layout.fragment_contents_list
     private val contentsList : List<ContentsFragment<*>> = listOf(
-        ContentsSampleFragment()
+        SampleFragment()
+//        ,RecyclerViewFragment()
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

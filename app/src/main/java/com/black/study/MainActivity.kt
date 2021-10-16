@@ -1,10 +1,7 @@
 package com.black.study
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import androidx.databinding.DataBindingUtil
 import com.black.study.base.BaseActivity
-import com.black.study.base.ListFragment
 import com.black.study.contents.ContentsListFragment
 import com.black.study.databinding.ActivityMainBinding
 
