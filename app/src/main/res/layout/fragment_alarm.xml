@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="fragment"
+            type="com.black.study.contents.alarm.AlarmFragment"/>
+
+        <variable
+            name="nextAlarmText"
+            type="String" />
+
+        <variable
+            name="alarmDumpText"
+            type="String" />
+    </data>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            style="@style/RootLayout"
+            android:orientation="vertical"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/TextViewTitle"
+                android:text="Alarm"
+                />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="@{fragment::onClickGetNextAlarm}"
+                android:text="getNextAlarm"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{nextAlarmText}"
+                android:background="@drawable/background_border"
+                android:padding="10dp"
+                />
+
+            <View style="@style/divider"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="@{fragment::onClickGetAlarmDump}"
+                android:text="dumpsys alarm"
+                android:layout_margin="0dp"
+                />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{alarmDumpText}"
+                android:background="@drawable/background_border"
+                android:padding="10dp"
+                />
+        </LinearLayout>
+    </ScrollView>
+</layout>

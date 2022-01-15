@@ -2,6 +2,10 @@
           package="com.black.study">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <permission android:name="android.permission.DUMP"
+        android:protectionLevel="signature|privileged|development|appop" />
+    <permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        android:protectionLevel="signature|privileged|development|appop" />
 
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
     <application
