@@ -7,6 +7,7 @@ import android.widget.Button
 import com.black.study.R
 import com.black.study.base.BaseFragment
 import com.black.study.contents.alarm.AlarmFragment
+import com.black.study.contents.launcher.LauncherFragment
 import com.black.study.contents.recyclerview.RecyclerViewFragment
 import com.black.study.contents.sample.SampleFragment
 import com.black.study.databinding.FragmentContentsListBinding
@@ -17,7 +18,8 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
     private val contentsList : List<ContentsFragment<*>> = listOf(
         SampleFragment(),
         RecyclerViewFragment(),
-        AlarmFragment()
+        AlarmFragment(),
+        LauncherFragment()
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

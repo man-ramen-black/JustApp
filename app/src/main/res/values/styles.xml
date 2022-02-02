@@ -13,6 +13,12 @@
         <item name="android:paddingBottom">10dp</item>
     </style>
 
+    <!--런처에서 배경화면 노출을 위해 아래와 같이 스타일을 설정-->
+    <style name="Launcher" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
     <style name="TextViewTitle" parent="TextAppearance.AppCompat.Large">
         <item name="android:layout_width">match_parent</item>
     </style>
