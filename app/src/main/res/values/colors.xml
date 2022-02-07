@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorAccent">#FFFFFF</color>
+    <color name="colorPrimary">#222222</color>
+    <color name="windowBackground">#333333</color>
 
-    <color name="text">#FFFFFF</color>
+    <color name="textColor">@color/colorAccent</color>
+    <color name="textColorHint">#888888</color>
+    <color name="colorControlNormal">#888888</color>
+    <color name="editTextUnderLine">#FFFFFF</color>
+
     <color name="border">#777777</color>
     <color name="divider">#999999</color>
     <color name="background">#111111</color>
