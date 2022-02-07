@@ -9,7 +9,7 @@ android {
     compileSdkVersion 30
     buildToolsVersion "29.0.2"
     defaultConfig {
-        applicationId "com.black.study"
+        applicationId "com.black.code"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1

@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.black.study">
+          package="com.black.code">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <permission android:name="android.permission.DUMP"
@@ -27,7 +27,7 @@
         https://medium.com/@WeAreMobile1st/how-to-develop-android-apps-for-foldable-devices-950a3b26327f
         -->
         <activity
-                android:name=".MainActivity"
+                android:name="com.black.code.MainActivity"
                 android:configChanges="orientation|screenSize|keyboardHidden|keyboard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".contents.launcher.internal.LauncherActivity"
+        <activity android:name="com.black.code.contents.launcher.internal.LauncherActivity"
             android:theme="@style/Launcher"
             android:exported="false">
             <intent-filter>

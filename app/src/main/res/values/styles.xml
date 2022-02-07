@@ -3,6 +3,10 @@
         <item name="textAllCaps">false</item>
         <item name="android:textAllCaps">false</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textViewStyle">@style/TextDefault</item>
+    </style>
+
+    <style name="TextDefault" parent="TextAppearance.AppCompat">
         <item name="android:textIsSelectable">true</item>
     </style>
 
