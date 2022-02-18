@@ -1,15 +1,44 @@
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="android:colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/windowBackground</item>
 
         <item name="textAllCaps">false</item>
         <item name="android:textAllCaps">false</item>
+        <item name="editTextColor">@color/textColor</item>
+        <item name="android:editTextColor">@color/textColor</item>
+        <item name="android:textColorHint">@color/textColorHint</item>
 
         <item name="android:textViewStyle">@style/TextViewDefault</item>
         <item name="android:editTextStyle">@style/EditTextDefault</item>
         <item name="editTextStyle">@style/EditTextDefault</item>
+        <item name="textInputStyle">@style/textInputLayoutDefault</item>
+    </style>
+
+    <!--
+    https://medium.com/omisoft/textinputlayout-styling-8b36a5e0d73c
+    TextInputLayout Style 정리
+    -->
+    <style name="textInputLayoutDefault" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="android:textColorHint">@color/textColorHint</item>
+        <item name="hintTextColor">@color/textColorHint</item>
+        <item name="boxStrokeColor">@color/border</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+
+        <!-- 내부 EditText Style -->
+        <item name="materialThemeOverlay">@style/textInputEditTextDefault</item>
+    </style>
+
+    <style name="textInputEditTextDefault" parent="@style/ThemeOverlay.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textColor">@color/textColor</item>
+
+        <!-- 커서 색상 -->
+        <item name="android:colorPrimary">@color/textColor</item>
+        <item name="colorPrimary">@color/textColor</item>
     </style>
 
     <style name="TextViewDefault" parent="TextAppearance.AppCompat">
@@ -20,9 +49,6 @@
     <!-- https://pluu.github.io/blog/android/2016/10/31/editText-color/ -->
     <style name="EditTextDefault" parent="Widget.AppCompat.EditText">
         <item name="android:textColor">@color/textColor</item>
-        <item name="editTextColor">@color/textColor</item>
-        <item name="android:editTextColor">@color/textColor</item>
-        <item name="android:textColorHint">@color/textColorHint</item>
         <!-- API 21 이하 EditText 포커스 없을 때 하단 라인색 -->
         <item name="android:colorControlNormal">@color/colorControlNormal</item>
         <item name="colorControlNormal">@color/colorControlNormal</item>
@@ -47,6 +73,7 @@
     <style name="TextViewTitle" parent="TextAppearance.AppCompat.Large">
         <item name="android:textColor">@color/textColor</item>
         <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_marginBottom">10dp</item>
     </style>
 
     <style name="divider">
