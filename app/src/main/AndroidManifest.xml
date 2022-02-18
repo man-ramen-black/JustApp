@@ -2,6 +2,8 @@
           package="com.black.code">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--dumpysys alarm 쉘커맨드 동작용-->
     <permission android:name="android.permission.DUMP"
         android:protectionLevel="signature|privileged|development|appop" />
     <permission android:name="android.permission.PACKAGE_USAGE_STATS"
@@ -28,7 +30,8 @@
         -->
         <activity
                 android:name="com.black.code.MainActivity"
-                android:configChanges="orientation|screenSize|keyboardHidden|keyboard">
+                android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
+                android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.intent.action.VIEW"/>
@@ -38,7 +41,7 @@
 
         <activity android:name="com.black.code.contents.launcher.internal.LauncherActivity"
             android:theme="@style/Launcher"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <!-- 런처용 카테고리 -->
                 <category android:name="android.intent.category.HOME"/>
