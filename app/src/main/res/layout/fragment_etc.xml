@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DataBinding의 기본 : <layout>으로 감싸야 Binding 클래스가 생성됩니다. -->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+       <variable
+           name="fragment"
+           type="com.black.code.contents.sample.ETCFragment" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        style="@style/RootLayout"
+        android:orientation="vertical"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/TextViewTitle"
+            android:text="@{fragment.title}"
+            />
+
+        <com.black.code.view.CustomViewSample
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:text="Custom View Sample"/>
+
+    </LinearLayout>
+
+</layout>

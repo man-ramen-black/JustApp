@@ -4,22 +4,25 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.appcompat.view.ContextThemeWrapper
 import com.black.code.R
 import com.black.code.base.BaseFragment
 import com.black.code.contents.alarm.AlarmFragment
 import com.black.code.contents.launcher.LauncherFragment
+import com.black.code.contents.notification.NotificationFragment
 import com.black.code.contents.recyclerview.RecyclerViewFragment
-import com.black.code.contents.sample.SampleFragment
+import com.black.code.contents.sample.ETCFragment
 import com.black.code.databinding.FragmentContentsListBinding
 import kotlinx.android.synthetic.main.fragment_contents_list.*
 
 class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
     override val layoutResId: Int = R.layout.fragment_contents_list
     private val contentsList : List<ContentsFragment<*>> = listOf(
-        SampleFragment(),
         RecyclerViewFragment(),
         AlarmFragment(),
-        LauncherFragment()
+        LauncherFragment(),
+        NotificationFragment(),
+        ETCFragment()
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,7 +32,7 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
 
     private fun addContentsFragment() {
         for (contentsFragment in contentsList) {
-            val button = Button(context)
+            val button = Button(ContextThemeWrapper(context, R.style.AppTheme))
                 .apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                     text = contentsFragment.title
