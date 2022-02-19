@@ -11,6 +11,7 @@
         <item name="editTextColor">@color/textColor</item>
         <item name="android:editTextColor">@color/textColor</item>
         <item name="android:textColorHint">@color/textColorHint</item>
+        <item name="android:textSize">15dp</item>
 
         <item name="android:textViewStyle">@style/TextViewDefault</item>
         <item name="android:editTextStyle">@style/EditTextDefault</item>
@@ -41,9 +42,8 @@
         <item name="colorPrimary">@color/textColor</item>
     </style>
 
-    <style name="TextViewDefault" parent="TextAppearance.AppCompat">
+    <style name="TextViewDefault" parent="Widget.MaterialComponents.TextView">
         <item name="android:textColor">@color/textColor</item>
-        <item name="android:textIsSelectable">true</item>
     </style>
 
     <!-- https://pluu.github.io/blog/android/2016/10/31/editText-color/ -->
@@ -70,10 +70,14 @@
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <style name="TextViewTitle" parent="TextAppearance.AppCompat.Large">
-        <item name="android:textColor">@color/textColor</item>
-        <item name="android:layout_width">match_parent</item>
+    <style name="TextViewTitle" parent="TextViewDefault">
+        <item name="android:textSize">18dp</item>
         <item name="android:layout_marginBottom">10dp</item>
+    </style>
+
+    <style name="TextViewSub" parent="TextViewDefault">
+        <item name="android:textSize">13dp</item>
+        <item name="android:textColor">@color/textColorSub</item>
     </style>
 
     <style name="divider">
@@ -82,5 +86,20 @@
         <item name="android:background">@color/divider</item>
         <item name="android:layout_marginTop">20dp</item>
         <item name="android:layout_marginBottom">20dp</item>
+    </style>
+
+    <style name="clickableLayout">
+        <item name="android:background">@drawable/background_ripple</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="theme">@style/clickableLayoutChild</item>
+    </style>
+
+    <style name="clickableLayoutChild" parent="TextViewDefault">
+        <item name="android:clickable">false</item>
     </style>
 </resources>

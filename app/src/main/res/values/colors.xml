@@ -5,6 +5,7 @@
     <color name="windowBackground">#222222</color>
 
     <color name="textColor">@color/colorAccent</color>
+    <color name="textColorSub">#BBBBBB</color>
     <color name="textColorHint">#888888</color>
     <color name="colorControlNormal">#888888</color>
     <color name="editTextUnderLine">#DDDDDD</color>
