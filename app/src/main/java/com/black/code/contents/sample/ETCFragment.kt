@@ -1,5 +1,6 @@
 package com.black.code.contents.sample
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import com.black.code.R
@@ -13,5 +14,9 @@ class ETCFragment : ContentsFragment<FragmentEtcBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.fragment = this
+    }
+
+    fun onClickShowEtcActivity(view: View?) {
+        launchActivity(Intent(requireActivity(), ETCActivity::class.java))
     }
 }

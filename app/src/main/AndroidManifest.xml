@@ -19,18 +19,25 @@
             android:usesCleartextTraffic="true"
             android:theme="@style/AppTheme">
         <!--
+        [configChanges]
         https://developer.android.com/guide/topics/manifest/activity-element?hl=ko#config
-        configChanges
         orientation|screenSize : 화면 회전
         keyboardHidden : 키보드 노출/숨김
         keyboard : 외부 키보드 연결
-        screenLayout|smallestScreenSize : 폴더블 접음/펼침 (with resizeableActivity = true)
+
+        [configChanges : Foldable]
         https://developer.samsung.com/sdp/blog/en-us/2019/01/31/how-to-update-your-apps-for-foldable-displays
         https://medium.com/@WeAreMobile1st/how-to-develop-android-apps-for-foldable-devices-950a3b26327f
+        screenLayout|smallestScreenSize : 폴더블 접음/펼침 (with resizeableActivity = true)
+
+        [LaunchMode]
+        https://developer.android.com/guide/components/activities/tasks-and-back-stack?hl=ko
+        https://aroundck.tistory.com/63
         -->
         <activity
                 android:name="com.black.code.MainActivity"
                 android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
+                android:launchMode="singleTask"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -47,5 +54,9 @@
                 <category android:name="android.intent.category.HOME"/>
             </intent-filter>
         </activity>
+
+        <activity android:name=".contents.sample.ETCActivity"
+            android:parentActivityName=".MainActivity"
+            android:exported="false"/>
     </application>
 </manifest>

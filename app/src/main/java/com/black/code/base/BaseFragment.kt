@@ -1,10 +1,13 @@
 package com.black.code.base
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
@@ -14,6 +17,7 @@ import com.black.code.util.Log
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     protected var binding: T? = null
     protected abstract val layoutResId : Int
+    private lateinit var activityLauncher : ActivityResultLauncher<Intent>
 
     @CallSuper
     override fun onAttach(context: Context) {
@@ -40,7 +44,19 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     ): View? {
         Log.d(javaClass.simpleName)
         binding = DataBindingUtil.inflate(inflater, layoutResId, container, false)
+
+        activityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            Log.d("onActivityResult : resultCode : ${it.resultCode}, data : ${it.data}")
+            onActivityResult(it.resultCode, it.data)
+        }
         return binding!!.root
+    }
+
+    open fun onActivityResult(resultCode: Int, data: Intent?) {
+    }
+
+    protected fun launchActivity(intent: Intent) {
+        activityLauncher.launch(intent)
     }
 
     @CallSuper
