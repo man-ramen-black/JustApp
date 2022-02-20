@@ -9,6 +9,12 @@
     <permission android:name="android.permission.PACKAGE_USAGE_STATS"
         android:protectionLevel="signature|privileged|development|appop" />
 
+    <!--
+    https://developer.android.com/guide/components/foreground-services#request-foreground-service-permissions
+    Android 9(API 레벨 28) 이상에서 ForegroundService를 사용하기 위한 퍼미션 (퍼미션 허용은 따로 하지 않아도됨)
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
     <application
             android:allowBackup="true"
@@ -58,5 +64,13 @@
         <activity android:name=".contents.sample.ETCActivity"
             android:parentActivityName=".MainActivity"
             android:exported="false"/>
+
+        <service android:name=".contents.service.ForegroundService"/>
+
+        <receiver android:name=".broadcast.BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

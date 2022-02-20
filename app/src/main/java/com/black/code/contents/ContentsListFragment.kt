@@ -12,6 +12,7 @@ import com.black.code.contents.launcher.LauncherFragment
 import com.black.code.contents.notification.NotificationFragment
 import com.black.code.contents.recyclerview.RecyclerViewFragment
 import com.black.code.contents.sample.ETCFragment
+import com.black.code.contents.service.ServiceFragment
 import com.black.code.databinding.FragmentContentsListBinding
 import kotlinx.android.synthetic.main.fragment_contents_list.*
 
@@ -22,6 +23,7 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
         AlarmFragment(),
         LauncherFragment(),
         NotificationFragment(),
+        ServiceFragment(),
         ETCFragment()
     )
 
