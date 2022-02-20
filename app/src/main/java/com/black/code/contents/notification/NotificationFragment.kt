@@ -1,27 +1,23 @@
 package com.black.code.contents.notification
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.viewModels
 import com.black.code.MainActivity
 import com.black.code.R
 import com.black.code.contents.ContentsFragment
 import com.black.code.databinding.FragmentNotificationBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.black.code.util.DialogUtil
 
 class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATION = 920725
+        private const val NOTIFICATION_CHANNEL_ID = "Default"
     }
 
     override val layoutResId: Int = R.layout.fragment_notification
@@ -32,27 +28,7 @@ class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
         super.onViewCreated(view, savedInstanceState)
         binding?.fragment = this
         binding?.viewModel = viewModel
-        createNotificationChannel()
-    }
-
-    /**
-     * https://developer.android.com/training/notify-user/build-notification?hl=ko#Priority
-     * 알림 채널이 만들어진 상태라면 아무 작업도 실행되지 않으므로 이 코드를 반복적으로 호출하는 것이 안전합니다.
-     */
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Default"
-            val descriptionText = "Default Channel"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-
-            val channel = NotificationChannel("Default", name, importance)
-                .apply {
-                    description = descriptionText
-                }
-
-            val notificationManager: NotificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
+        NotificationUtil.createNotificationChannel(requireContext(), NOTIFICATION_CHANNEL_ID, "Default", NotificationManagerCompat.IMPORTANCE_MAX)
     }
 
     private fun createContentIntent() : PendingIntent{
@@ -78,17 +54,17 @@ class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
     }
 
     fun onClickShowNotification(view: View?) {
-        val notification = NotificationCompat.Builder(requireContext(), "Default")
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(viewModel.title.value?:"")
-            .setContentText(viewModel.message.value?:"")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(createContentIntent())
-            .setAutoCancel(true) // 터치 시 알림 제거
-            .build()
-
-        NotificationManagerCompat.from(requireContext())
-            .notify(viewModel.notificationId.value?:1, notification)
+        NotificationUtil.showNotification(
+            requireContext(),
+            NOTIFICATION_CHANNEL_ID,
+            viewModel.title.value?:"",
+            viewModel.message.value?:"",
+            viewModel.notificationId.value?:1,
+            null,
+        ) {
+            it.setAutoCancel(true) // 터치 시 알림 제거
+                .setContentIntent(createContentIntent())
+        }
     }
 
     fun onClickContentIntentFlag(view: View?) {
@@ -97,18 +73,9 @@ class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
             .map { it.toString() }
             .toTypedArray()
 
-        showSimpleDialog(requireContext(), "ContentIntentFlag", items) { dialog, which, item ->
+        DialogUtil.showSimpleDialog(requireContext(), "ContentIntentFlag", items) { dialog, which, item ->
             viewModel.contentIntentFlag.value = NotificationViewModel.PendingIntentFlag.valueOf(item)
             binding?.invalidateAll()
         }
-    }
-
-    fun showSimpleDialog(context: Context, title: String, items: Array<String>, onItemClick: (dialog: DialogInterface, which: Int, item: String) -> Unit) {
-        MaterialAlertDialogBuilder(context)
-            .setTitle(title)
-            .setItems(items) { dialog, which ->
-                onItemClick(dialog, which, items[which])
-            }
-            .show()
     }
 }

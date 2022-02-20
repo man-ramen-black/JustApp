@@ -14,7 +14,7 @@ import com.black.code.util.Log
 abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
     protected lateinit var binding: T
     protected abstract val layoutResId : Int
-    private lateinit var activityLauncher : ActivityResultLauncher<Intent>
+    protected lateinit var activityLauncher : ActivityResultLauncher<Intent>
 
     /**
      * Activity View Binding : https://developer.android.com/topic/libraries/view-binding?hl=ko#activities

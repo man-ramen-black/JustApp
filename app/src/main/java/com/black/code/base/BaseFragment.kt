@@ -17,7 +17,7 @@ import com.black.code.util.Log
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     protected var binding: T? = null
     protected abstract val layoutResId : Int
-    private lateinit var activityLauncher : ActivityResultLauncher<Intent>
+    protected lateinit var activityLauncher : ActivityResultLauncher<Intent>
 
     @CallSuper
     override fun onAttach(context: Context) {
