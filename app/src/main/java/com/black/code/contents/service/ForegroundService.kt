@@ -2,10 +2,9 @@ package com.black.code.contents.service
 
 import android.app.Service
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.black.code.broadcast.UnlockReceiver
 import com.black.code.contents.notification.NotificationUtil
 import com.black.code.util.Log
 
@@ -15,6 +14,8 @@ class ForegroundService : Service() {
         private const val NOTIFICATION_CHANNEL_ID = "ForegroundService"
         private const val NOTIFICATION_CHANNEL_NAME = "Foreground Service"
     }
+
+    private var unlockReceiver : UnlockReceiver? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
@@ -40,10 +41,12 @@ class ForegroundService : Service() {
     override fun onCreate() {
         Log.d()
         super.onCreate()
+        unlockReceiver = UnlockReceiver.register(applicationContext)
     }
 
     override fun onDestroy() {
         Log.d()
+        UnlockReceiver.unregister(applicationContext, unlockReceiver)
         super.onDestroy()
     }
 }

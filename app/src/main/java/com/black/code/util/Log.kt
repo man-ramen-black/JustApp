@@ -33,19 +33,30 @@ object Log {
         val methodInfo = getMethodInfo()
         val logMessage = "${methodInfo.methodName}: $message [${methodInfo.simpleName}.${methodInfo.methodName}() : ${methodInfo.lineNumber}]"
         when (level) {
-            'v' -> Log.v(methodInfo.className, logMessage)
-            'i' -> Log.i(methodInfo.className, logMessage)
-            'd' -> Log.d(methodInfo.className, logMessage)
-            'w' -> Log.w(methodInfo.className, logMessage)
-            'e' -> Log.e(methodInfo.className, logMessage)
+            'v' -> Log.v(methodInfo.simpleName, logMessage)
+            'i' -> Log.i(methodInfo.simpleName, logMessage)
+            'd' -> Log.d(methodInfo.simpleName, logMessage)
+            'w' -> Log.w(methodInfo.simpleName, logMessage)
+            'e' -> Log.e(methodInfo.simpleName, logMessage)
         }
     }
 
     private data class MethodInfo(val className: String, val packageName: String, val simpleName: String, val methodName: String, val lineNumber: Int)
 
     private fun getMethodInfo() : MethodInfo {
-        val stackTrace = Thread.currentThread().stackTrace.getOrNull(5)
+        val stackTraceArr = Thread.currentThread().stackTrace
+        val stackTraceIndex = 5
+        val stackTrace = stackTraceArr.getOrNull(stackTraceIndex)
+            ?.let {
+                // 획득한 StackTrace 클래스명이 Log일 경우 다음 StackTrace 사용
+                if (it.className == this@Log::class.java.name) {
+                    stackTraceArr.getOrNull(stackTraceIndex + 1)
+                } else {
+                    it
+                }
+            }
             ?: return MethodInfo("Unknown", "Unknown", "Unknown", "Unknown", 0)
+
 
 //        for (index in Thread.currentThread().stackTrace.indices) {
 //            Log.d("getMethodInfo", "[$index] ${Thread.currentThread().stackTrace[index].className}")

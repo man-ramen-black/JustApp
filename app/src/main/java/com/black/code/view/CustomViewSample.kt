@@ -7,10 +7,14 @@ import android.widget.LinearLayout
 import com.black.code.R
 import com.black.code.databinding.ViewSampleBinding
 
-// https://gun0912.tistory.com/38
 // CustomView 가이드
-// https://0391kjy.tistory.com/28
+// https://gun0912.tistory.com/38
 // CustomView ViewBinding
+// https://0391kjy.tistory.com/28
+// CustomView ViewModel
+// https://medium.com/@nicholas.rose/level-up-your-custom-views-d0c6f69fd1ec
+// findViewTreeViewModelStoreOwner
+// https://pluu.github.io/blog/android/2020/12/21/viewtreelifecycle/
 class CustomViewSample : LinearLayout {
 
     private val binding = ViewSampleBinding.inflate(LayoutInflater.from(context), this, true)
