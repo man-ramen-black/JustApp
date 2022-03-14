@@ -17,6 +17,13 @@
         <item name="android:editTextStyle">@style/EditTextDefault</item>
         <item name="editTextStyle">@style/EditTextDefault</item>
         <item name="textInputStyle">@style/textInputLayoutDefault</item>
+        <item name="buttonStyle">@style/buttonDefault</item>
+        <item name="android:buttonStyle">@style/buttonDefault</item>
+        <item name="materialButtonStyle">@style/buttonDefault</item>
+    </style>
+
+    <style name="buttonDefault" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/textColor</item>
     </style>
 
     <!--

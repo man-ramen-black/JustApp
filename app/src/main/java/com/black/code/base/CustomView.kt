@@ -12,7 +12,7 @@ import androidx.databinding.ViewDataBinding
 // CustomView 가이드
 // https://0391kjy.tistory.com/28
 // CustomView ViewBinding
-abstract class BaseCustomView<T : ViewDataBinding> : FrameLayout {
+abstract class CustomView<T : ViewDataBinding> : FrameLayout {
 
     protected lateinit var binding : T
 
