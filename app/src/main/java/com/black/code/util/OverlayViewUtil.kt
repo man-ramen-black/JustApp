@@ -2,15 +2,18 @@ package com.black.code.util
 
 import android.content.Context
 import android.graphics.PixelFormat
+import android.graphics.Point
 import android.os.Build
+import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 
 object OverlayViewUtil {
-    fun attachView(context: Context, view: View) {
+    fun attachView(view: View, onSetWindowParams: ((windowParams: WindowManager.LayoutParams) -> Unit)? = null) {
         Log.d()
 
+        val context = view.context
         if (!PermissionUtil.canDrawOverlays(context)) {
             Toast.makeText(context, "다른 앱 위에 그리기 권한 허용이 필요합니다.", Toast.LENGTH_SHORT)
                 .show()
@@ -42,6 +45,7 @@ object OverlayViewUtil {
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
+        onSetWindowParams?.invoke(layoutParams)
         windowManager.addView(view, layoutParams)
     }
 
@@ -57,7 +61,7 @@ object OverlayViewUtil {
         windowManager.updateViewLayout(view, windowParams)
     }
 
-    fun detachView(context: Context, view: View) {
+    fun detachView(view: View) {
         Log.d()
 
         if (view.parent == null) {
@@ -65,7 +69,49 @@ object OverlayViewUtil {
             return
         }
 
+        val context = view.context
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         windowManager.removeView(view)
     }
+
+    /**
+     * 화면의 x, y 좌표로 뷰를 이동
+     */
+    fun moveView(view: View, x: Float, y: Float) {
+        updateView(view) {
+            it.gravity = Gravity.TOP or Gravity.LEFT
+            it.x = x.toInt()
+            it.y = y.toInt()
+        }
+    }
+
+    /**
+     * Gravity가 right인 경우 x값은 오른쪽에서부터의 x이고, bottom도 아래부터의 y이기 때문에,
+     * 화면 사이즈, view size를 계산하여 Top, Left 기준의 x, y 위치를 반환
+     */
+    fun getAbsoluteWindowPosition(view: View) : Point {
+        val context = view.context
+        val screenSize = Util.getScreenSize(context)
+
+        val windowParams = view.layoutParams as? WindowManager.LayoutParams
+            ?: throw ClassCastException("LayoutParams is not WindowManager.LayoutParams")
+
+        val x = if (windowParams.gravity and Gravity.RIGHT == Gravity.RIGHT) {
+            Log.d("gravity is right")
+            screenSize.x - view.width - windowParams.x
+        } else {
+            Log.d("gravity is left")
+            windowParams.x
+        }
+
+        val y = if (windowParams.gravity and Gravity.BOTTOM == Gravity.BOTTOM) {
+            Log.d("gravity is bottom")
+            screenSize.y - view.height - windowParams.y
+        } else {
+            Log.d("gravity is top")
+            windowParams.y
+        }
+        return Point(x, y)
+    }
+
 }

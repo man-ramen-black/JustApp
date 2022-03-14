@@ -12,7 +12,7 @@ class ServiceViewModel : ViewModel() {
                 Log.e("context is null")
                 return
             }
-        appContext.startService(Intent(appContext, ForegroundService::class.java))
+        ForegroundService.start(appContext)
     }
 
     fun onClickStopForegroundService(view: View?) {
@@ -21,6 +21,6 @@ class ServiceViewModel : ViewModel() {
                 Log.e("context is null")
                 return
             }
-        appContext.stopService(Intent(appContext, ForegroundService::class.java))
+        ForegroundService.stop(appContext)
     }
 }

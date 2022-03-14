@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import com.black.code.contents.notification.NotificationUtil
+import com.black.code.contents.service.ForegroundService
 import com.black.code.util.Log
 
 class BootReceiver : BroadcastReceiver() {
@@ -26,5 +27,7 @@ class BootReceiver : BroadcastReceiver() {
             "Boot completed",
             NOTIFICATION_ID
         )
+
+        ForegroundService.start(context)
     }
 }

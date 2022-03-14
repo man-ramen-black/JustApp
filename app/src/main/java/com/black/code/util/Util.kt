@@ -1,14 +1,20 @@
 package com.black.code.util
 
 import android.content.Context
+import android.graphics.Point
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.TypedValue
 
 object Util {
     fun pxToDp(context: Context, px: Int) : Float {
         return px.toFloat() / context.resources.displayMetrics.density
+    }
+
+    fun dpToPx(context: Context, dp: Float) : Int {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.resources.displayMetrics).toInt()
     }
 
     fun vibrateOneShot(context: Context, milliseconds: Long) {
@@ -24,5 +30,13 @@ object Util {
         } else {
             vibrator.vibrate(milliseconds)
         }
+    }
+
+    /**
+     * https://myksb1223.github.io/develop_diary/2019/03/28/Screen-size-in-Android.html
+     */
+    fun getScreenSize(context: Context) : Point {
+        val metrics = context.resources.displayMetrics
+        return Point(metrics.widthPixels, metrics.heightPixels)
     }
 }

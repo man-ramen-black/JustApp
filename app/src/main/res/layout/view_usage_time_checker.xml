@@ -12,10 +12,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/background_round"
-        android:padding="10dp"
+        android:paddingLeft="12dp"
+        android:paddingRight="10dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         >
 
-        <Chronometer
+        <com.black.code.view.BKChronometer
             android:id="@+id/timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -35,6 +38,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toRightOf="@id/timer"
+            app:layout_constraintRight_toRightOf="parent"
 
             android:background="@drawable/button_round"
             android:src="@drawable/close"
@@ -42,30 +46,5 @@
             android:onClick="@{() -> viewModel.detachView()}"
             />
 
-<!--        app:layout_constraintRight_toRightOf="parent"-->
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/close"
-            >
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="start"
-                android:onClick="@{() -> viewModel.start()}"
-                />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="stop"
-                android:onClick="@{() -> viewModel.stop()}"
-                />
-
-        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

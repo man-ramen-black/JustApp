@@ -15,6 +15,7 @@ import com.black.code.contents.sample.ETCFragment
 import com.black.code.contents.service.ServiceFragment
 import com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment
 import com.black.code.databinding.FragmentContentsListBinding
+import com.google.android.material.button.MaterialButton
 import kotlinx.android.synthetic.main.fragment_contents_list.*
 
 class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
@@ -36,7 +37,12 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
 
     private fun addContentsFragment() {
         for (contentsFragment in contentsList) {
-            val button = Button(ContextThemeWrapper(context, R.style.AppTheme))
+            /*
+            Theme, Style 적용하여 뷰 생성
+            val button = Button(ContextThemeWrapper(context, R.style.AppTheme), null, R.style.AppTheme)
+             */
+             // AppTheme이 Material 라이브러리 테마인 경우 Material View를 생성해주면 앱 테마에 맞는 뷰가 생성됨
+            val button = MaterialButton(requireContext())
                 .apply {
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                     text = contentsFragment.title
