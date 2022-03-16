@@ -41,7 +41,7 @@
             app:layout_constraintRight_toRightOf="parent"
 
             android:background="@drawable/button_round"
-            android:src="@drawable/close"
+            android:src="@drawable/ic_close"
             android:scaleType="fitCenter"
             android:onClick="@{() -> viewModel.detachView()}"
             />

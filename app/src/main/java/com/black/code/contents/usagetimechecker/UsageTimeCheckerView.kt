@@ -3,8 +3,9 @@ package com.black.code.contents.usagetimechecker
 import android.content.Context
 import android.content.res.TypedArray
 import android.view.Gravity
+import android.view.WindowManager
 import com.black.code.R
-import com.black.code.base.DraggableView
+import com.black.code.base.MovableOverlayView
 import com.black.code.databinding.ViewUsageTimeCheckerBinding
 import com.black.code.util.OverlayViewUtil
 import com.black.code.util.Util
@@ -20,7 +21,7 @@ import com.black.code.util.Util
  * BindingMethods
  * https://developer.android.com/topic/libraries/data-binding/binding-adapters?hl=ko#specify-method
  */
-class UsageTimeCheckerView(context: Context) : DraggableView<ViewUsageTimeCheckerBinding>(context) {
+class UsageTimeCheckerView(context: Context) : MovableOverlayView<ViewUsageTimeCheckerBinding>(context) {
     override val layoutId: Int
         get() = R.layout.view_usage_time_checker
 
@@ -28,7 +29,15 @@ class UsageTimeCheckerView(context: Context) : DraggableView<ViewUsageTimeChecke
         get() = null
 
     override fun initialize(binding: ViewUsageTimeCheckerBinding, typedArray: TypedArray?) {
-        isDraggable = true
+        isMovable = true
+    }
+
+    override fun onSetLayoutParams(windowParams: WindowManager.LayoutParams) {
+        windowParams.apply {
+            gravity = Gravity.TOP or Gravity.RIGHT
+            x = Util.dpToPx(context, 20f)
+            y = Util.dpToPx(context, 20f)
+        }
     }
 
     fun start() {
@@ -43,17 +52,9 @@ class UsageTimeCheckerView(context: Context) : DraggableView<ViewUsageTimeChecke
         binding.timer.stop()
     }
 
-    fun attachView() {
+    override fun attachView() {
         binding.viewModel = this
         start()
-        OverlayViewUtil.attachView(this) {
-            it.gravity = Gravity.TOP or Gravity.RIGHT
-            it.x = Util.dpToPx(context, 20f)
-            it.y = Util.dpToPx(context, 20f)
-        }
-    }
-
-    fun detachView() {
-        OverlayViewUtil.detachView(this)
+        super.attachView()
     }
 }

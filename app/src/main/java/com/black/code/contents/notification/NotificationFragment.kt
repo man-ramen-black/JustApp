@@ -73,7 +73,7 @@ class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
             .map { it.toString() }
             .toTypedArray()
 
-        DialogUtil.showSimpleDialog(requireContext(), "ContentIntentFlag", items) { dialog, which, item ->
+        DialogUtil.showListDialog(requireContext(), "ContentIntentFlag", items) { dialog, which, item ->
             viewModel.contentIntentFlag.value = NotificationViewModel.PendingIntentFlag.valueOf(item)
             binding?.invalidateAll()
         }
