@@ -4,11 +4,14 @@ import android.content.Context
 import android.content.res.TypedArray
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.databinding.Observable
+import androidx.databinding.ObservableField
 import com.black.code.R
-import com.black.code.base.MovableOverlayView
+import com.black.code.base.view.MovableOverlayView
+import com.black.code.base.viewmodel.LiveEvent
 import com.black.code.databinding.ViewUsageTimeCheckerBinding
-import com.black.code.util.OverlayViewUtil
 import com.black.code.util.Util
+import java.util.*
 
 /**
  * CustomView 가이드
@@ -27,6 +30,8 @@ class UsageTimeCheckerView(context: Context) : MovableOverlayView<ViewUsageTimeC
 
     override val styleableId: IntArray?
         get() = null
+
+    private val viewModel by lazy { ViewModel() }
 
     override fun initialize(binding: ViewUsageTimeCheckerBinding, typedArray: TypedArray?) {
         isMovable = true
@@ -52,9 +57,27 @@ class UsageTimeCheckerView(context: Context) : MovableOverlayView<ViewUsageTimeC
         binding.timer.stop()
     }
 
-    override fun attachView() {
-        binding.viewModel = this
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        binding.viewModel = viewModel
+        viewModel.event.observeForever(this::onReceivedEvent)
         start()
-        super.attachView()
+    }
+
+    override fun onDetachedFromWindow() {
+        viewModel.event.removeObserver()
+        super.onDetachedFromWindow()
+    }
+
+    private fun onReceivedEvent(action: String, data: Any?) {
+        detachView()
+    }
+
+    class ViewModel {
+        val event by lazy { LiveEvent() }
+
+        fun onClickClose() {
+            event.send()
+        }
     }
 }

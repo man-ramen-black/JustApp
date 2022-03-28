@@ -55,6 +55,8 @@ class ForegroundService : Service() {
             }
         }
 
+        // onStartCommand default return : START_STICKY
+        // https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)
         return super.onStartCommand(intent, flags, startId)
     }
 

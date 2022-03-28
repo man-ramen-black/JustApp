@@ -26,9 +26,12 @@ class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding?.fragment = this
-        binding?.viewModel = viewModel
         NotificationUtil.createNotificationChannel(requireContext(), NOTIFICATION_CHANNEL_ID, "Default", NotificationManagerCompat.IMPORTANCE_MAX)
+    }
+
+    override fun bindVariable(binding: FragmentNotificationBinding) {
+        binding.fragment = this
+        binding.viewModel = viewModel
     }
 
     private fun createContentIntent() : PendingIntent{

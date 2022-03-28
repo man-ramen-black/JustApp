@@ -3,11 +3,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!--dumpysys alarm 쉘커맨드 동작용-->
+    <!-- dumpysys alarm 쉘커맨드 동작용 -->
     <permission android:name="android.permission.DUMP"
         android:protectionLevel="signature|privileged|development|appop" />
     <permission android:name="android.permission.PACKAGE_USAGE_STATS"
         android:protectionLevel="signature|privileged|development|appop" />
+
+    <!-- BOOT_COMPLETED Broadcast를 받기 위한 권한 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <!--
     https://developer.android.com/guide/components/foreground-services#request-foreground-service-permissions

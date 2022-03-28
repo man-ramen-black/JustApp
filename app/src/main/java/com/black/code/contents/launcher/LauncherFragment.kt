@@ -13,9 +13,8 @@ class LauncherFragment : ContentsFragment<FragmentLauncherBinding>() {
     override val title: String = "Launcher"
     override val layoutResId: Int = R.layout.fragment_launcher
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding?.fragment = this
+    override fun bindVariable(binding: FragmentLauncherBinding) {
+        binding.fragment = this
     }
 
     fun onClickShowLauncher(view: View?) {

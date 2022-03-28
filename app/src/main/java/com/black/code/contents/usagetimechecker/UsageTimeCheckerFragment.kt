@@ -1,23 +1,26 @@
 package com.black.code.contents.usagetimechecker
 
-import android.os.Bundle
-import android.view.View
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import com.black.code.R
-import com.black.code.base.MovableOverlayView
+import com.black.code.base.view.MovableOverlayView
+import com.black.code.base.viewmodel.EventObserver
+import com.black.code.base.viewmodel.EventViewModel
 import com.black.code.contents.ContentsFragment
 import com.black.code.databinding.FragmentUsageTimeCheckerBinding
 
-class UsageTimeCheckerFragment : ContentsFragment<FragmentUsageTimeCheckerBinding>() {
+class UsageTimeCheckerFragment : ContentsFragment<FragmentUsageTimeCheckerBinding>(), EventObserver {
     override val layoutResId: Int = R.layout.fragment_usage_time_checker
     override val title: String = "UsageTimeChecker"
+    private val viewModel : ViewModel by viewModels()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding?.fragment = this
+    override fun bindVariable(binding: FragmentUsageTimeCheckerBinding) {
+        binding.fragment = this
+        binding.viewModel = viewModel
+        viewModel.event.observe(this, this)
     }
 
-    fun onClickShow() {
+    override fun onReceivedEvent(action: String, data: Any?) {
         val view = UsageTimeCheckerView(requireContext())
             .apply {
                 setOnMoveListener { view, action, x, y ->
@@ -33,4 +36,11 @@ class UsageTimeCheckerFragment : ContentsFragment<FragmentUsageTimeCheckerBindin
             }
         view.attachView()
     }
+
+    class ViewModel : EventViewModel() {
+        fun onClickShow() {
+            event.send()
+        }
+    }
 }
+

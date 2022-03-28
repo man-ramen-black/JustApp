@@ -1,7 +1,7 @@
 package com.black.code
 
 import android.os.Bundle
-import com.black.code.base.BaseActivity
+import com.black.code.base.component.BaseActivity
 import com.black.code.contents.ContentsListFragment
 import com.black.code.databinding.ActivityMainBinding
 
@@ -13,5 +13,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         supportFragmentManager.beginTransaction()
             .replace(binding.fragmentContainer.id, ContentsListFragment())
             .commit()
+    }
+
+    override fun bindVariable(binding: ActivityMainBinding) {
+
     }
 }

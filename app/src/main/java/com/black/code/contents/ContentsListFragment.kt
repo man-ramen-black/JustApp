@@ -3,10 +3,8 @@ package com.black.code.contents
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import androidx.appcompat.view.ContextThemeWrapper
 import com.black.code.R
-import com.black.code.base.BaseFragment
+import com.black.code.base.component.BaseFragment
 import com.black.code.contents.alarm.AlarmFragment
 import com.black.code.contents.launcher.LauncherFragment
 import com.black.code.contents.notification.NotificationFragment
@@ -60,5 +58,8 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
                 }
             contentsContainer.addView(button)
         }
+    }
+
+    override fun bindVariable(binding: FragmentContentsListBinding) {
     }
 }

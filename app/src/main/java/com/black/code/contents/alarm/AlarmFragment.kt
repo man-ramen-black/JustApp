@@ -18,9 +18,8 @@ class AlarmFragment : ContentsFragment<FragmentAlarmBinding>() {
     override val title: String = "Alarm"
     override val layoutResId: Int = R.layout.fragment_alarm
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding?.fragment = this
+    override fun bindVariable(binding: FragmentAlarmBinding) {
+        binding.fragment = this
     }
 
     fun onClickGetNextAlarm(view: View?) {

@@ -1,10 +1,8 @@
-package com.black.code.base
+package com.black.code.base.component
 
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.CallSuper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -14,7 +12,8 @@ import com.black.code.util.Log
 abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
     protected lateinit var binding: T
     protected abstract val layoutResId : Int
-    protected lateinit var activityLauncher : ActivityResultLauncher<Intent>
+
+    abstract fun bindVariable(binding: T)
 
     /**
      * Activity View Binding : https://developer.android.com/topic/libraries/view-binding?hl=ko#activities
@@ -25,17 +24,7 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
         Log.d(javaClass.simpleName)
         binding = DataBindingUtil.setContentView(this, layoutResId)
-        activityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            Log.d("onActivityResult : resultCode : ${it.resultCode}, data : ${it.data}")
-            onActivityResult(it.resultCode, it.data)
-        }
-    }
-
-    open fun onActivityResult(resultCode: Int, data: Intent?) {
-    }
-
-    protected fun launchActivity(intent : Intent) {
-        activityLauncher.launch(intent)
+        bindVariable(binding)
     }
 
     @CallSuper

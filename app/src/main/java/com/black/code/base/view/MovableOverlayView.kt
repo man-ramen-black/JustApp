@@ -1,4 +1,4 @@
-package com.black.code.base
+package com.black.code.base.view
 
 import android.content.Context
 import android.util.AttributeSet

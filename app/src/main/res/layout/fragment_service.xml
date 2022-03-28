@@ -6,9 +6,6 @@
             name="fragment"
             type="com.black.code.contents.service.ServiceFragment" />
 
-        <variable
-            name="viewModel"
-            type="com.black.code.contents.service.ServiceViewModel" />
     </data>
 
     <ScrollView
@@ -32,14 +29,14 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{viewModel::onClickStartForegroundService}"
+                android:onClick="@{() -> fragment.onClickStartForegroundService()}"
                 android:text="startForegroundService"
                 />
 
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{viewModel::onClickStopForegroundService}"
+                android:onClick="@{() -> fragment.onClickStopForegroundService()}"
                 android:text="stopForegroundService"
                 />
 

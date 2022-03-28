@@ -3,7 +3,7 @@ package com.black.code.contents.launcher.internal
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import com.black.code.R
-import com.black.code.base.BaseActivity
+import com.black.code.base.component.BaseActivity
 import com.black.code.databinding.ActivityLauncherBinding
 
 /**
@@ -24,5 +24,8 @@ class LauncherActivity : BaseActivity<ActivityLauncherBinding>() {
             .commit()
 
         val widgetManager = AppWidgetManager.getInstance(this)
+    }
+
+    override fun bindVariable(binding: ActivityLauncherBinding) {
     }
 }

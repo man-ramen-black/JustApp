@@ -5,6 +5,9 @@
         <variable
             name="fragment"
             type="com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment" />
+        <variable
+            name="viewModel"
+            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment.ViewModel" />
     </data>
 
     <ScrollView
@@ -29,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="show"
-                android:onClick="@{() -> fragment.onClickShow()}"
+                android:onClick="@{() -> viewModel.onClickShow()}"
                 />
 
         </LinearLayout>

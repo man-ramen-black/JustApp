@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerView" />
+            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerView.ViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -40,10 +40,10 @@
             app:layout_constraintLeft_toRightOf="@id/timer"
             app:layout_constraintRight_toRightOf="parent"
 
-            android:background="@drawable/button_round"
+            android:background="@drawable/button_light_round"
             android:src="@drawable/ic_close"
             android:scaleType="fitCenter"
-            android:onClick="@{() -> viewModel.detachView()}"
+            android:onClick="@{() -> viewModel.onClickClose()}"
             />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

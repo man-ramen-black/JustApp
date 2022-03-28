@@ -31,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="startETCActivity"
-            android:onClick="@{fragment::onClickShowEtcActivity}"
+            android:onClick="@{() -> fragment.onClickShowEtcActivity()}"
             />
     </LinearLayout>
 

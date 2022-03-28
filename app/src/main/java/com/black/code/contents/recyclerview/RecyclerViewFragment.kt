@@ -12,6 +12,7 @@ class RecyclerViewFragment : ContentsFragment<FragmentRecyclerviewBinding>() {
     override val title: String = "RecyclerView"
     override val layoutResId: Int = R.layout.fragment_recyclerview
     private val adapter = RecyclerViewAdapter()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.recyclerView?.let {
@@ -24,5 +25,8 @@ class RecyclerViewFragment : ContentsFragment<FragmentRecyclerviewBinding>() {
         }
         adapter.submitList(listOf("yoyo", "yapyap", "asdfasdf", "ehdgoanfrhk"))
 
+    }
+
+    override fun bindVariable(binding: FragmentRecyclerviewBinding) {
     }
 }
