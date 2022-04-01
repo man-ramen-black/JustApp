@@ -23,7 +23,9 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
         Log.d(javaClass.simpleName)
-        binding = DataBindingUtil.setContentView(this, layoutResId)
+        binding = DataBindingUtil.setContentView<T>(this, layoutResId).apply {
+            lifecycleOwner = this@BaseActivity
+        }
         bindVariable(binding)
     }
 

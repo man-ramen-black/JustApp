@@ -70,8 +70,13 @@
         </activity>
 
         <activity android:name=".contents.sample.ETCActivity"
-            android:parentActivityName=".MainActivity"
-            android:exported="false"/>
+            android:parentActivityName=".MainActivity"/>
+
+        <activity android:name=".contents.architecture.mvc.MVCActivity"
+            android:parentActivityName=".MainActivity"/>
+
+        <activity android:name=".contents.architecture.mvvm.MVVMActivity"
+            android:parentActivityName=".MainActivity"/>
 
         <service android:name=".contents.service.ForegroundService"/>
 

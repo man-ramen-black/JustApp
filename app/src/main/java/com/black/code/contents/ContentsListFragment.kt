@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import com.black.code.R
 import com.black.code.base.component.BaseFragment
 import com.black.code.contents.alarm.AlarmFragment
+import com.black.code.contents.architecture.ArchitectureFragment
 import com.black.code.contents.launcher.LauncherFragment
 import com.black.code.contents.notification.NotificationFragment
 import com.black.code.contents.recyclerview.RecyclerViewFragment
@@ -25,6 +26,7 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
         NotificationFragment(),
         ServiceFragment(),
         UsageTimeCheckerFragment(),
+        ArchitectureFragment(),
         ETCFragment()
     )
 

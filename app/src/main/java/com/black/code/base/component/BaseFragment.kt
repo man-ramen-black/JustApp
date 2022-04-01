@@ -41,10 +41,11 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        binding = DataBindingUtil.inflate(inflater, layoutResId, container, false)
-        // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
-        // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
-        binding!!.lifecycleOwner = this
+        binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+            // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
+            // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
+            lifecycleOwner = this@BaseFragment
+        }
         bindVariable(binding!!)
         return binding!!.root
     }
