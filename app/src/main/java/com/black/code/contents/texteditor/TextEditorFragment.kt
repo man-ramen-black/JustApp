@@ -10,6 +10,7 @@ import com.black.code.R
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.contents.ContentsFragment
 import com.black.code.databinding.FragmentTextEditorBinding
+import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import com.black.code.util.PermissionHelper
 import com.black.code.util.Util
@@ -70,7 +71,7 @@ class TextEditorFragment : ContentsFragment<FragmentTextEditorBinding>(), EventO
         }
 
         val inputStream = requireActivity().contentResolver.openInputStream(uri)
-        val path = Util.getPath(requireContext(), uri)
+        val path = FileUtil.getPath(requireContext(), uri)
         viewModel.onLoadedFile(uri, path, inputStream)
     }
 
@@ -82,7 +83,7 @@ class TextEditorFragment : ContentsFragment<FragmentTextEditorBinding>(), EventO
 
         // wt : 스트림을 열면서 해당 파일 내용을 지움
         val outputStream = requireActivity().contentResolver.openOutputStream(uri, "wt")
-        val path = Util.getPath(requireContext(), uri)
+        val path = FileUtil.getPath(requireContext(), uri)
         viewModel.onCreatedFile(uri, path, outputStream)
     }
 

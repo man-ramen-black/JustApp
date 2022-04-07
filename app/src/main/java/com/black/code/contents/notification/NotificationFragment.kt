@@ -12,6 +12,7 @@ import com.black.code.R
 import com.black.code.contents.ContentsFragment
 import com.black.code.databinding.FragmentNotificationBinding
 import com.black.code.util.DialogUtil
+import com.black.code.util.NotificationUtil
 
 class NotificationFragment : ContentsFragment<FragmentNotificationBinding>() {
 

@@ -1,4 +1,4 @@
-package com.black.code.contents.notification
+package com.black.code.util
 
 import android.app.Notification
 import android.content.Context

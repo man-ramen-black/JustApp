@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/rippleEffect">
+    <item
+        android:id="@android:id/mask"
+        android:gravity="center">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/rippleEffect" />
+            <corners android:radius="999dp"/>
+        </shape>
+    </item>
+    <item
+        android:id="@android:id/background"
+        android:gravity="center">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorPrimary" />
+            <corners android:radius="999dp"/>
+        </shape>
+    </item>
+</ripple>

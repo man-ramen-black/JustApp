@@ -4,6 +4,7 @@ import android.net.Uri
 import android.view.View
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.util.FileUtil
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -52,7 +53,7 @@ class TextEditorViewModel : EventViewModel() {
             return
         }
 
-        TextFileManager.read(stream) {
+        FileUtil.read(stream) {
             text.value = it
         }
         event.send(EVENT_TOAST, "Loaded")
@@ -73,7 +74,7 @@ class TextEditorViewModel : EventViewModel() {
             return
         }
 
-        TextFileManager.write(stream) {
+        FileUtil.write(stream) {
             it.write(text.value)
         }
         openedFileUri = uri

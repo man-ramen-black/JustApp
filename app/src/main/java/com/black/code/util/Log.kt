@@ -4,6 +4,9 @@ import android.util.Log
 import com.black.code.BuildConfig
 
 object Log {
+
+    private data class MethodInfo(val className: String, val packageName: String, val simpleName: String, val methodName: String, val lineNumber: Int)
+
     fun v(message: String = "") {
         printLog(message, 'v')
     }
@@ -40,8 +43,6 @@ object Log {
             'e' -> Log.e(methodInfo.simpleName, logMessage)
         }
     }
-
-    private data class MethodInfo(val className: String, val packageName: String, val simpleName: String, val methodName: String, val lineNumber: Int)
 
     private fun getMethodInfo() : MethodInfo {
         val stackTraceArr = Thread.currentThread().stackTrace

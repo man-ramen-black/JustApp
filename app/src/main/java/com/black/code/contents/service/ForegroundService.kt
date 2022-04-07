@@ -4,11 +4,13 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.black.code.broadcast.UsageTimeCheckerReceiver
-import com.black.code.contents.notification.NotificationUtil
+import com.black.code.util.NotificationUtil
 import com.black.code.contents.usagetimechecker.UsageTimeCheckerView
 import com.black.code.util.Log
+import com.black.code.util.PermissionHelper
 
 class ForegroundService : Service() {
     companion object {
@@ -21,6 +23,13 @@ class ForegroundService : Service() {
         const val ACTION_STOP = "STOP"
 
         fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) {
+            if (!PermissionHelper.isIgnoringBatteryOptimizations(context)) {
+                Toast.makeText(context, "배터리 최적화를 해제해주세요.", Toast.LENGTH_LONG)
+                    .show()
+                PermissionHelper.showIgnoreBatteryOptimizationSettings(context)
+                return
+            }
+
             val appContext = context.applicationContext
             val intent = Intent(appContext, ForegroundService::class.java)
             onSetIntent?.invoke(intent)

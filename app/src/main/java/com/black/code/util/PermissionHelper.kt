@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
@@ -59,12 +60,26 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         // https://blog.kmshack.kr/ignore_battery_optimizations/
         // ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS를 사용하면
         // dialog에서 바로 배터리 최적화 해제가 가능하지만, 구글 스토어에서 반려
-        fun ignoreBatteryOptimization() {
+        fun showIgnoreBatteryOptimizationSettings(context: Context) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                Log.i("API Level < 23")
+                return
+            }
 
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            if (context !is Activity) {
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
         }
 
-        fun isIgnoredBatteryOptimization() : Boolean {
-            return true
+        fun isIgnoringBatteryOptimizations(context: Context) : Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                return true
+            }
+
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            return powerManager.isIgnoringBatteryOptimizations(context.packageName)
         }
     }
 
