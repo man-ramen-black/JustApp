@@ -3,6 +3,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <!-- dumpysys alarm 쉘커맨드 동작용 -->
     <permission android:name="android.permission.DUMP"
         android:protectionLevel="signature|privileged|development|appop" />

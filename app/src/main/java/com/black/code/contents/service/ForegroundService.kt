@@ -18,6 +18,7 @@ class ForegroundService : Service() {
 
         const val ACTION_ATTACH_USAGE_TIME_CHECKER = "ATTACH_USAGE_TIME_CHECKER"
         const val ACTION_DETACH_USAGE_TIME_CHECKER = "DETACH_USAGE_TIME_CHECKER"
+        const val ACTION_STOP = "STOP"
 
         fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) {
             val appContext = context.applicationContext
@@ -28,13 +29,16 @@ class ForegroundService : Service() {
 
         fun stop(context: Context) {
             val appContext = context.applicationContext
-            val intent = Intent(appContext, ForegroundService::class.java)
-            appContext.stopService(intent)
+            val intent = Intent(appContext, ForegroundService::class.java).apply {
+                action = ACTION_STOP
+            }
+            appContext.startService(intent)
         }
     }
 
     private var usageTimeCheckerReceiver : UsageTimeCheckerReceiver? = null
     private var usageTimeCheckerView : UsageTimeCheckerView? = null
+    private var isStopEnabled = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
@@ -52,6 +56,11 @@ class ForegroundService : Service() {
                     return super.onStartCommand(intent, flags, startId)
                 }
                 usageTimeCheckerView?.detachView()
+            }
+
+            ACTION_STOP -> {
+                isStopEnabled = true
+                stopSelf()
             }
         }
 
@@ -87,5 +96,13 @@ class ForegroundService : Service() {
         Log.d()
         UsageTimeCheckerReceiver.unregister(applicationContext, usageTimeCheckerReceiver)
         super.onDestroy()
+
+        // android 12 포그라운드 서비스 예외사항 : 배터리 최적화 예외 시 포그라운드 서비스 내에서 재시작 가능
+        // https://developer.android.com/about/versions/12/foreground-services?hl=ko#cases-fgs-background-starts-allowed
+        // 무한 재실행
+        // https://medium.com/@Lakshya_Punhani/background-services-running-forever-in-android-part-2-6e3a667d36fd
+        if (!isStopEnabled) {
+            start(this)
+        }
     }
 }

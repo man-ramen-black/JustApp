@@ -12,6 +12,7 @@ import com.black.code.contents.notification.NotificationFragment
 import com.black.code.contents.recyclerview.RecyclerViewFragment
 import com.black.code.contents.sample.ETCFragment
 import com.black.code.contents.service.ServiceFragment
+import com.black.code.contents.texteditor.TextEditorFragment
 import com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment
 import com.black.code.databinding.FragmentContentsListBinding
 import com.google.android.material.button.MaterialButton
@@ -27,6 +28,7 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
         ServiceFragment(),
         UsageTimeCheckerFragment(),
         ArchitectureFragment(),
+        TextEditorFragment(),
         ETCFragment()
     )
 
@@ -64,4 +66,5 @@ class ContentsListFragment : BaseFragment<FragmentContentsListBinding>() {
 
     override fun bindVariable(binding: FragmentContentsListBinding) {
     }
+
 }
