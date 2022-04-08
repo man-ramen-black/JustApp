@@ -8,7 +8,7 @@ import com.black.code.contents.architecture.CounterModel
 import com.black.code.databinding.ActivityMvvmBinding
 
 /**
- * MVVM은 Layout xml, Activity가 View 역할을 담당
+ * MVVM은 Activity가 View 역할을 담당
  * View는 ViewModel만을 참조함
  * https://velog.io/@its-mingyu/%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4MVC-MVP-MVVM
  */
@@ -23,7 +23,7 @@ class MVVMActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Binding 생성
+        // Binding 객체 생성
         binding = ActivityMvvmBinding.inflate(LayoutInflater.from(this)).apply {
             // Lifecycle 동기화를 위해 LifecycleOwner 적용
             lifecycleOwner = this@MVVMActivity
@@ -36,8 +36,5 @@ class MVVMActivity : AppCompatActivity() {
 
         // Activity에 레이아웃 적용
         setContentView(binding!!.root)
-
-        // 초기화
-        viewModel.init()
     }
 }

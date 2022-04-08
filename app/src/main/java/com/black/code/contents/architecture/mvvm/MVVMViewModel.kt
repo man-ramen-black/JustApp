@@ -10,6 +10,8 @@ import com.black.code.contents.architecture.CounterModel
  * View, Context에 대해 참조하지 않도록 구현 필요
  */
 class MVVMViewModel : ViewModel() {
+
+    // 캡슐화를 위해 MutableLiveData, LiveData를 함께 정의
     private val _count by lazy { MutableLiveData(0) }
     val count : LiveData<Int>
         get() = _count
@@ -17,27 +19,17 @@ class MVVMViewModel : ViewModel() {
     private var model : CounterModel? = null
 
     /**
+     * 버튼 터치 시 동작
+     */
+    fun onClickAddCount() {
+        val model = model ?: return
+        _count.value = model.addCount()
+    }
+
+    /**
      * Model을 설정
      */
     fun setModel(counterModel: CounterModel) {
         this.model = counterModel
-    }
-
-    /**
-     * Model을 통해서 초기 상태(count = 0) 적용
-     */
-    fun init() {
-        model?.let {
-            _count.value = it.count
-        }
-    }
-
-    /**
-     * 버튼 터치 시 동작
-     */
-    fun onClickAddCount() {
-        model?.let {
-            _count.value = it.addCount()
-        }
     }
 }

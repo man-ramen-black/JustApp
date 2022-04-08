@@ -4,6 +4,7 @@ package com.black.code.contents.architecture
  * Model은 데이터, 상태, 비즈니스 로직을 관리
  */
 class CounterModel {
+    // Count 데이터
     var count = 0
         private set
 

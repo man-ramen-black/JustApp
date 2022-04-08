@@ -5,30 +5,23 @@
             name="viewModel"
             type="com.black.code.contents.architecture.mvvm.MVVMViewModel" />
     </data>
-    
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        >
-
+        android:gravity="center">
         <TextView
             android:id="@+id/countTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18dp"
-            android:text="@{viewModel.count.toString()}"
-            />
-
+            android:textSize="50dp"
+            android:text="@{viewModel.count.toString()}"/>
         <Button
             android:id="@+id/countButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18dp"
+            android:textSize="50dp"
             android:text="+"
-            android:onClick="@{() -> viewModel.onClickAddCount()}"
-            />
-
+            android:onClick="@{() -> viewModel.onClickAddCount()}"/>
     </LinearLayout>
 </layout>
