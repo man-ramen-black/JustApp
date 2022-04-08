@@ -6,11 +6,11 @@
     <data>
        <variable
            name="fragment"
-           type="com.black.code.contents.architecture.ArchitectureFragment" />
+           type="com.black.code.ui.example.architecture.ArchitectureFragment" />
 
         <variable
             name="viewModel"
-            type="com.black.code.contents.architecture.ArchitectureFragment.ViewModel" />
+            type="com.black.code.ui.example.architecture.ArchitectureFragment.ViewModel" />
     </data>
 
     <LinearLayout

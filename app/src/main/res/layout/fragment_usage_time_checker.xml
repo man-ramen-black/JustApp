@@ -4,10 +4,10 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment" />
+            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerFragment.ViewModel" />
+            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment.ViewModel" />
     </data>
 
     <ScrollView

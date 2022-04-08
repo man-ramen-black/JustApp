@@ -4,13 +4,13 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.code.contents.notification.NotificationFragment"/>
+            type="com.black.code.ui.example.notification.NotificationFragment"/>
 
         <variable
             name="viewModel"
-            type="com.black.code.contents.notification.NotificationViewModel" />
+            type="com.black.code.ui.example.notification.NotificationViewModel" />
 
-        <import type="com.black.code.util.BindingConverter"/>
+        <import type="com.black.code.ui.example.notification.NotificationViewModel" />
     </data>
 
     <ScrollView
@@ -87,7 +87,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     style="@style/TextViewSub"
-                    android:text='@={BindingConverter.pendingIntentFlagToString(viewModel.contentIntentFlag)}'
+                    android:text='@={NotificationViewModel.pendingIntentFlagToString(viewModel.contentIntentFlag)}'
                     />
             </LinearLayout>
 

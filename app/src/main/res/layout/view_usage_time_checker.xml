@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.contents.usagetimechecker.UsageTimeCheckerView.ViewModel" />
+            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerView.ViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

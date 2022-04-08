@@ -4,7 +4,7 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.code.contents.service.ServiceFragment" />
+            type="com.black.code.ui.example.service.ServiceFragment" />
 
     </data>
 

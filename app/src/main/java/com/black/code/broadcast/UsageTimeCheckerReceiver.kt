@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import com.black.code.contents.service.ForegroundService
+import com.black.code.service.ForegroundService
 import com.black.code.util.Log
 
 class UsageTimeCheckerReceiver : BroadcastReceiver() {
