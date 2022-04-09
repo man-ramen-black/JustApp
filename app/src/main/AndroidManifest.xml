@@ -35,6 +35,18 @@
             android:supportsRtl="true"
             android:usesCleartextTraffic="true"
             android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".ui.SplashActivity"
+            android:theme="@style/splashTheme"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <!--
         [configChanges]
         https://developer.android.com/guide/topics/manifest/activity-element?hl=ko#config
@@ -55,15 +67,9 @@
                 android:name="com.black.code.ui.MainActivity"
                 android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
                 android:launchMode="singleTask"
-                android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+                />
 
-        <activity android:name="com.black.code.contents.launcher.internal.LauncherActivity"
+        <activity android:name=".ui.example.launcher.internal.LauncherActivity"
             android:theme="@style/Launcher"
             android:exported="true">
             <intent-filter>
@@ -72,16 +78,16 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".contents.sample.ETCActivity"
+        <activity android:name=".ui.example.sample.ETCActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".contents.architecture.mvc.MVCActivity"
+        <activity android:name=".ui.example.architecture.mvc.MVCActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".contents.architecture.mvvm.MVVMActivity"
+        <activity android:name=".ui.example.architecture.mvvm.MVVMActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <service android:name=".contents.service.ForegroundService"/>
+        <service android:name=".service.ForegroundService"/>
 
         <receiver android:name=".broadcast.BootReceiver" android:exported="true">
             <intent-filter>

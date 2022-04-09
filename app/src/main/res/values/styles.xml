@@ -22,6 +22,10 @@
         <item name="materialButtonStyle">@style/buttonDefault</item>
     </style>
 
+    <style name="splashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+    </style>
+
     <style name="buttonDefault" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@color/textColor</item>
     </style>
