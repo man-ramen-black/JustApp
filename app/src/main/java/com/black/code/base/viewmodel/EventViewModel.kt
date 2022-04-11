@@ -5,6 +5,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 
 open class EventViewModel : ViewModel() {
+    @Deprecated("Use method")
     val event by lazy { LiveEvent() }
 
     fun sendEvent(action: String = "", data: Any? = null) {

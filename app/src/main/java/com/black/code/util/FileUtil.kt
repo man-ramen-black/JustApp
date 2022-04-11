@@ -8,21 +8,24 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import java.io.*
+import kotlin.jvm.Throws
 
 object FileUtil {
+    @Throws(IOException::class)
     fun read(inputStream: InputStream, onRead: (text: String) -> Unit) {
         val builder = StringBuilder()
         inputStream.use { stream ->
             InputStreamReader(stream).use { reader ->
                 reader.readLines()
                     .forEach() {
-                        builder.append(it)
+                        builder.append(it + "\n")
                     }
                 onRead(builder.toString())
             }
         }
     }
 
+    @Throws(IOException::class)
     fun write(outputStream: OutputStream, onWrite: (writer: BufferedWriter) -> Unit) {
         outputStream.use { stream ->
             OutputStreamWriter(stream).use { writer ->

@@ -44,7 +44,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
-            lifecycleOwner = this@BaseFragment
+            lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
         bindVariable(binding!!)
         return binding!!.root
