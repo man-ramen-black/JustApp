@@ -1,0 +1,31 @@
+package com.black.code.ui.example.texteditor
+
+import android.content.Context
+import android.net.Uri
+import com.black.code.base.model.BasePreferences
+
+/**
+ * Created by jinhyuk.lee on 2022/04/11
+ **/
+class TextEditorPreferences(context: Context) : BasePreferences(context, "TextEditor") {
+    companion object {
+        private const val KEY_LATEST_URI = "LatestUri"
+    }
+
+    fun saveLatestUri(uri: Uri) {
+        put(KEY_LATEST_URI, uri.toString())
+    }
+
+    fun loadLatestUri() : Uri? {
+        val uriString = get(KEY_LATEST_URI, "")
+        return if (uriString.isEmpty()) {
+            null
+        } else {
+            Uri.parse(uriString)
+        }
+    }
+
+    fun removeLatestUri() {
+        remove(KEY_LATEST_URI)
+    }
+}

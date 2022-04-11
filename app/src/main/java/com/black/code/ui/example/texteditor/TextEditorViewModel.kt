@@ -5,6 +5,8 @@ import android.view.View
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
 import com.black.code.util.FileUtil
+import com.black.code.util.Log
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -15,6 +17,7 @@ import java.io.OutputStream
 class TextEditorViewModel : EventViewModel() {
     companion object {
         const val EVENT_LOAD = "Load"
+        const val EVENT_LOAD_LATEST = "LoadLatest"
         const val EVENT_SAVE_NEW_DOCUMENT = "SaveNewDocument"
         const val EVENT_SAVE_OVERWRITE = "SaveOverwrite"
         const val EVENT_CLEAR = "Clear"
@@ -24,6 +27,25 @@ class TextEditorViewModel : EventViewModel() {
     val text = MutableLiveData("")
     val path = MutableLiveData("")
     var openedFileUri : Uri? = null
+    private var preferences : TextEditorPreferences? = null
+
+    fun loadLatestFile() {
+        if (!path.value.isNullOrEmpty()) {
+            Log.i("File already loaded")
+            return
+        }
+
+        val uri = preferences?.loadLatestUri() ?: run {
+            Log.w("LatestFile is null")
+            return
+        }
+
+        sendEvent(EVENT_LOAD_LATEST, uri)
+    }
+
+    fun setModel(preferences: TextEditorPreferences) {
+        this.preferences = preferences
+    }
 
     fun onClickNewFile() {
         if (path.value.isNullOrEmpty()) {
@@ -46,17 +68,22 @@ class TextEditorViewModel : EventViewModel() {
 
     fun loadFile(uri: Uri, path: String?, stream: InputStream?) {
         this.path.value = path ?: ""
-        openedFileUri = uri
 
         if (path == null || stream == null) {
-            event.send(EVENT_TOAST, "onLoadedFile : path == $path, stream == $stream")
+            sendEvent(EVENT_TOAST, "onLoadedFile : path == $path, stream == $stream")
             return
         }
 
-        FileUtil.read(stream) {
-            text.value = it
+        try {
+            FileUtil.read(stream) {
+                text.value = it
+            }
+            openedFileUri = uri
+            preferences?.saveLatestUri(uri)
+            sendEvent(EVENT_TOAST, "Loaded")
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        event.send(EVENT_TOAST, "Loaded")
     }
 
     fun saveNewFile(uri: Uri, path: String?, stream: OutputStream?) {
@@ -74,15 +101,21 @@ class TextEditorViewModel : EventViewModel() {
             return
         }
 
-        FileUtil.write(stream) {
-            it.write(text.value)
+        try {
+            FileUtil.write(stream) {
+                it.write(text.value)
+            }
+            openedFileUri = uri
+            preferences?.saveLatestUri(uri)
+            sendEvent(EVENT_TOAST, "Saved")
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        openedFileUri = uri
-        event.send(EVENT_TOAST, "Saved")
     }
 
     fun clear() {
         openedFileUri = null
+        preferences?.removeLatestUri()
         path.value = ""
         text.value = ""
     }

@@ -1,5 +1,6 @@
 package com.black.code.ui.example.texteditor
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -38,19 +39,24 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
         permissionHelper.init()
 
         // registerForActivityResult는 onAttach 또는 onCreate에서 호출되어야 함
-        openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument(), this::onOpenDocument)
-        createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(), this::onCreateDocument)
+        openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument(), this::openDocument)
+        createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(), this::saveDocument)
     }
 
     override fun bindVariable(binding: FragmentTextEditorBinding) {
         binding.fragment = this
-        binding.viewModel = viewModel
-        viewModel.event.observe(this, this)
+        binding.viewModel = viewModel.apply {
+            setModel(TextEditorPreferences(requireContext()))
+        }
+        viewModel.observeEvent(this, this)
+        viewModel.loadLatestFile()
     }
 
     override fun onReceivedEvent(action: String, data: Any?) {
         when (action) {
             TextEditorViewModel.EVENT_LOAD -> load()
+
+            TextEditorViewModel.EVENT_LOAD_LATEST -> openDocument(data as? Uri)
 
             TextEditorViewModel.EVENT_SAVE_NEW_DOCUMENT -> saveNewFile()
 
@@ -62,18 +68,23 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
         }
     }
 
-    private fun onOpenDocument(uri: Uri?) {
+    private fun openDocument(uri: Uri?) {
         uri ?: run {
             Log.w("uri is null")
             return
         }
 
-        val inputStream = requireActivity().contentResolver.openInputStream(uri)
+        val inputStream = requireActivity().contentResolver.apply {
+                // 재부팅 시에도 해당 URI의 권한이 유지되도록 설정
+                takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+            .openInputStream(uri)
+
         val path = FileUtil.getPath(requireContext(), uri)
         viewModel.loadFile(uri, path, inputStream)
     }
 
-    private fun onCreateDocument(uri: Uri?) {
+    private fun saveDocument(uri: Uri?) {
         uri ?: run {
             Log.w("uri is null")
             return
