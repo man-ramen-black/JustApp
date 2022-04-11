@@ -44,7 +44,7 @@ class TextEditorViewModel : EventViewModel() {
         }
     }
 
-    fun onLoadedFile(uri: Uri, path: String?, stream: InputStream?) {
+    fun loadFile(uri: Uri, path: String?, stream: InputStream?) {
         this.path.value = path ?: ""
         openedFileUri = uri
 
@@ -59,16 +59,16 @@ class TextEditorViewModel : EventViewModel() {
         event.send(EVENT_TOAST, "Loaded")
     }
 
-    fun onCreatedFile(uri: Uri, path: String?, stream: OutputStream?) {
+    fun saveNewFile(uri: Uri, path: String?, stream: OutputStream?) {
         this.path.value = path ?: ""
         if (path == null) {
-            event.send(EVENT_TOAST, "onCreatedFile : path == null")
+            event.send(EVENT_TOAST, "saveNewFile : path == null")
             return
         }
-        save(uri, stream)
+        saveOverwrite(uri, stream)
     }
 
-    fun save(uri: Uri, stream: OutputStream?) {
+    fun saveOverwrite(uri: Uri, stream: OutputStream?) {
         if (stream == null) {
             event.send(EVENT_TOAST, "save : stream == null")
             return

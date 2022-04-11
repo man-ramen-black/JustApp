@@ -11,10 +11,7 @@ import com.black.code.ui.example.architecture.CounterModel
  */
 class MVVMViewModel : ViewModel() {
 
-    // 캡슐화를 위해 MutableLiveData, LiveData를 함께 정의
-    private val _count by lazy { MutableLiveData(0) }
-    val count : LiveData<Int>
-        get() = _count
+    val count by lazy { MutableLiveData(0) }
 
     private var model : CounterModel? = null
 
@@ -23,7 +20,7 @@ class MVVMViewModel : ViewModel() {
      */
     fun onClickAddCount() {
         val model = model ?: return
-        _count.value = model.addCount()
+        count.value = model.addCount()
     }
 
     /**

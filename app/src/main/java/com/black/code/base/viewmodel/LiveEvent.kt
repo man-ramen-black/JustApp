@@ -11,7 +11,7 @@ import androidx.lifecycle.Observer
  * onClick 등의 이벤트 처리를 위해 observe하는 경우 Activity가 inactive -> active 되는 경우 등에 마지막 값을 다시 전달하게되므로,
  * 한 번 set한 값이 observe 시 한 번만 전달되도록 하는 LiveData Wrapper
  */
-class LiveEvent {
+open class LiveEvent {
     private val liveData = MutableLiveData<Event>()
     private var foreverObserver : Observer<in Event>? = null
 

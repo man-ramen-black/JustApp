@@ -56,7 +56,7 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
 
             TextEditorViewModel.EVENT_SAVE_OVERWRITE -> saveOverwrite()
 
-            TextEditorViewModel.EVENT_CLEAR -> clearForNewFile()
+            TextEditorViewModel.EVENT_CLEAR -> confirmNewFile()
 
             TextEditorViewModel.EVENT_TOAST -> Toast.makeText(requireContext(), data?.toString() ?: "", Toast.LENGTH_SHORT).show()
         }
@@ -70,7 +70,7 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
 
         val inputStream = requireActivity().contentResolver.openInputStream(uri)
         val path = FileUtil.getPath(requireContext(), uri)
-        viewModel.onLoadedFile(uri, path, inputStream)
+        viewModel.loadFile(uri, path, inputStream)
     }
 
     private fun onCreateDocument(uri: Uri?) {
@@ -82,13 +82,11 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
         // wt : 스트림을 열면서 해당 파일 내용을 지움
         val outputStream = requireActivity().contentResolver.openOutputStream(uri, "wt")
         val path = FileUtil.getPath(requireContext(), uri)
-        viewModel.onCreatedFile(uri, path, outputStream)
+        viewModel.saveNewFile(uri, path, outputStream)
     }
 
     private fun requestPermission(onPermissionGranted : () -> Unit) {
-        val result = permissionHelper.checkPermissions(PERMISSIONS)
-        val requestPermissions = result.deniedPermissions + result.retryPermissions
-        permissionHelper.requestPermissions(requestPermissions.toTypedArray()) {
+        permissionHelper.requestPermissions(PERMISSIONS) {
             if (it.deniedPermissions.isEmpty() && it.retryPermissions.isEmpty()) {
                 onPermissionGranted()
             } else {
@@ -117,10 +115,10 @@ class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTex
             return
         }
         val stream = requireActivity().contentResolver.openOutputStream(openedFileUri, "wt")
-        viewModel.save(openedFileUri, stream)
+        viewModel.saveOverwrite(openedFileUri, stream)
     }
 
-    private fun clearForNewFile() {
+    private fun confirmNewFile() {
         MaterialAlertDialogBuilder(requireActivity())
             .setTitle("새 문서")
             .setMessage("새 문서 작성을 위해 초기화합니다.")
