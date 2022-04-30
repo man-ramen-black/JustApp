@@ -13,14 +13,9 @@ import kotlin.jvm.Throws
 object FileUtil {
     @Throws(IOException::class)
     fun read(inputStream: InputStream, onRead: (text: String) -> Unit) {
-        val builder = StringBuilder()
         inputStream.use { stream ->
             InputStreamReader(stream).use { reader ->
-                reader.readLines()
-                    .forEach() {
-                        builder.append(it + "\n")
-                    }
-                onRead(builder.toString())
+                onRead(reader.readLines().joinToString("\n"))
             }
         }
     }

@@ -6,10 +6,10 @@ import android.content.Intent
 import android.os.IBinder
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
-import com.black.code.broadcast.UsageTimeCheckerReceiver
-import com.black.code.util.NotificationUtil
-import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerView
+import com.black.code.broadcast.ScreenReceiver
+import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerManager
 import com.black.code.util.Log
+import com.black.code.util.NotificationUtil
 import com.black.code.util.PermissionHelper
 
 class ForegroundService : Service() {
@@ -18,8 +18,6 @@ class ForegroundService : Service() {
         private const val NOTIFICATION_CHANNEL_ID = "ForegroundService"
         private const val NOTIFICATION_CHANNEL_NAME = "Foreground Service"
 
-        const val ACTION_ATTACH_USAGE_TIME_CHECKER = "ATTACH_USAGE_TIME_CHECKER"
-        const val ACTION_DETACH_USAGE_TIME_CHECKER = "DETACH_USAGE_TIME_CHECKER"
         const val ACTION_STOP = "STOP"
 
         fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) {
@@ -45,32 +43,23 @@ class ForegroundService : Service() {
         }
     }
 
-    private var usageTimeCheckerReceiver : UsageTimeCheckerReceiver? = null
-    private var usageTimeCheckerView : UsageTimeCheckerView? = null
-    private var isStopEnabled = false
+    private val interfaces = listOf(
+        UsageTimeCheckerManager,
+        ScreenReceiver.ServiceInterface
+    )
+
+    private var isStopped = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
+        isStopped = false
+        interfaces.forEach {
+            it.onStartCommand(this, intent ?: return@forEach, flags, startId)
+        }
 
-        when(intent?.action) {
-            ACTION_ATTACH_USAGE_TIME_CHECKER -> {
-                usageTimeCheckerView = UsageTimeCheckerView(this).also {
-                    it.attachView()
-                }
-            }
-
-            ACTION_DETACH_USAGE_TIME_CHECKER -> {
-                usageTimeCheckerView ?: run {
-                    Log.w("usageTimeCheckerView not attached")
-                    return super.onStartCommand(intent, flags, startId)
-                }
-                usageTimeCheckerView?.detachView()
-            }
-
-            ACTION_STOP -> {
-                isStopEnabled = true
-                stopSelf()
-            }
+        if (intent?.action == ACTION_STOP) {
+            isStopped = true
+            stopSelf()
         }
 
         // onStartCommand default return : START_STICKY
@@ -98,20 +87,27 @@ class ForegroundService : Service() {
         }
         startForeground(NOTIFICATION_ID, notification)
 
-        usageTimeCheckerReceiver = UsageTimeCheckerReceiver.register(applicationContext)
+        interfaces.forEach { it.onCreate(this) }
     }
 
     override fun onDestroy() {
         Log.d()
-        UsageTimeCheckerReceiver.unregister(applicationContext, usageTimeCheckerReceiver)
+        interfaces.forEach { it.onDestroy(this) }
+
         super.onDestroy()
 
         // android 12 포그라운드 서비스 예외사항 : 배터리 최적화 예외 시 포그라운드 서비스 내에서 재시작 가능
         // https://developer.android.com/about/versions/12/foreground-services?hl=ko#cases-fgs-background-starts-allowed
         // 무한 재실행
         // https://medium.com/@Lakshya_Punhani/background-services-running-forever-in-android-part-2-6e3a667d36fd
-        if (!isStopEnabled) {
+        if (!isStopped) {
             start(this)
         }
+    }
+
+    interface Interface {
+        fun onStartCommand(context: Context, intent: Intent, flags: Int, startId: Int)
+        fun onCreate(context: Context)
+        fun onDestroy(context: Context)
     }
 }

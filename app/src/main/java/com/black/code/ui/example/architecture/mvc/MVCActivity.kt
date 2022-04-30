@@ -18,8 +18,7 @@ class MVCActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // Layout xml 적용
         setContentView(R.layout.activity_mvc)
-        // 텍스트뷰에 초기 카운트(0)을 설정
-        countTextView.text = model.count.toString()
+
         // 버튼을 터치했을 때 동작 설정
         countButton.setOnClickListener {
             // Model을 통해 값을 증가시키고, 증가시킨 값을 텍스트뷰에 설정
