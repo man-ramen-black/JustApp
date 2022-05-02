@@ -8,6 +8,8 @@ import com.black.code.util.NotificationUtil
 import com.black.code.service.ForegroundService
 import com.black.code.util.Log
 
+// 앱 업데이트 시 Service 자동 시작하려면 ACTION_MY_PACKAGE_REPLACED
+// https://developer.android.com/reference/android/content/Intent#ACTION_MY_PACKAGE_REPLACED
 class BootReceiver : BroadcastReceiver() {
     companion object {
         private const val NOTIFICATION_ID = 6

@@ -7,11 +7,11 @@ import com.black.code.base.component.BaseActivity
 import com.black.code.databinding.ActivityMainBinding
 import com.black.code.util.Log
 
-/**
- * Android package structure, 패키지 구조, 프로젝트 구조
- * https://vagabond95.me/posts/android-pakage-structure/
- * https://infinum.com/handbook/android/project-structure/package-structure
- */
+// SplashActivity 가이드
+// https://lanace.github.io/articles/right-way-on-splash/
+// 패키지 구조 (feature -> ui)
+// https://vagabond95.me/posts/android-pakage-structure/
+// https://infinum.com/handbook/android/project-structure/package-structure
 class MainActivity : BaseActivity<ActivityMainBinding>() {
     override val layoutResId: Int = R.layout.activity_main
 
