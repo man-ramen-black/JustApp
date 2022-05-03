@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import com.black.code.util.Log
 
 /**
  * https://lanace.github.io/articles/right-way-on-splash/
@@ -15,6 +16,7 @@ class SplashActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onResume() {
+        Log.d()
         isCanceled = false
         doSomething {
             startMainActivity()
@@ -23,7 +25,8 @@ class SplashActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        cancelMainActivity()
+        Log.d()
+        isCanceled = false
         cancelDoSomething()
         super.onPause()
     }
@@ -49,9 +52,5 @@ class SplashActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
         overridePendingTransition(0, android.R.anim.fade_out);
-    }
-
-    private fun cancelMainActivity() {
-        isCanceled = true
     }
 }

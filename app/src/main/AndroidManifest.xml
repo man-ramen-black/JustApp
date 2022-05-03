@@ -78,7 +78,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.example.sample.ETCActivity"
+        <activity android:name=".ui.example.etc.ETCActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
         <activity android:name=".ui.example.architecture.mvc.MVCActivity"

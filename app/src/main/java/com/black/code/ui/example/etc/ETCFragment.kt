@@ -1,4 +1,4 @@
-package com.black.code.ui.example.sample
+package com.black.code.ui.example.etc
 
 import android.content.Intent
 import com.black.code.R

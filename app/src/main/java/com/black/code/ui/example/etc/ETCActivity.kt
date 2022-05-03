@@ -1,4 +1,4 @@
-package com.black.code.ui.example.sample
+package com.black.code.ui.example.etc
 
 import com.black.code.R
 import com.black.code.base.component.BaseActivity

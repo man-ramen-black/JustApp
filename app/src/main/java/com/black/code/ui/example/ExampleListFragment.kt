@@ -11,7 +11,8 @@ import com.black.code.ui.example.architecture.ArchitectureFragment
 import com.black.code.ui.example.launcher.LauncherFragment
 import com.black.code.ui.example.notification.NotificationFragment
 import com.black.code.ui.example.recyclerview.RecyclerViewFragment
-import com.black.code.ui.example.sample.ETCFragment
+import com.black.code.ui.example.etc.ETCFragment
+import com.black.code.ui.example.retrofit.RetrofitFragment
 import com.black.code.ui.example.service.ServiceFragment
 import com.black.code.ui.example.texteditor.TextEditorFragment
 import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment
@@ -20,7 +21,7 @@ import kotlinx.android.synthetic.main.fragment_contents_list.*
 
 class ExampleListFragment : BaseFragment<FragmentContentsListBinding>() {
     override val layoutResId: Int = R.layout.fragment_contents_list
-    private val exampleList : List<com.black.code.ui.example.ExampleFragment<*>> = listOf(
+    private val exampleList : List<ExampleFragment<*>> = listOf(
         RecyclerViewFragment(),
         AlarmFragment(),
         LauncherFragment(),
@@ -29,6 +30,7 @@ class ExampleListFragment : BaseFragment<FragmentContentsListBinding>() {
         UsageTimeCheckerFragment(),
         ArchitectureFragment(),
         TextEditorFragment(),
+        RetrofitFragment(),
         ETCFragment()
     )
 
