@@ -6,6 +6,9 @@
             name="fragment"
             type="com.black.code.ui.example.service.ServiceFragment" />
 
+        <variable
+            name="viewModel"
+            type="com.black.code.ui.example.service.ServiceViewModel" />
     </data>
 
     <ScrollView
@@ -26,20 +29,13 @@
                 android:text="@{fragment.title}"
                 />
 
-            <Button
+            <com.google.android.material.switchmaterial.SwitchMaterial
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{() -> fragment.onClickStartForegroundService()}"
-                android:text="startForegroundService"
+                android:text="ForegroundService"
+                android:checked="@={viewModel.foregroundServiceChecked}"
+                android:onCheckedChanged="@{(view, checked) -> viewModel.onCheckedChangedForegroundService(checked)}"
                 />
-
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="@{() -> fragment.onClickStopForegroundService()}"
-                android:text="stopForegroundService"
-                />
-
         </LinearLayout>
     </ScrollView>
 </layout>

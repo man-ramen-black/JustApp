@@ -1,26 +1,25 @@
 package com.black.code.ui.example.service
 
+import androidx.fragment.app.viewModels
 import com.black.code.R
 import com.black.code.databinding.FragmentServiceBinding
-import com.black.code.service.ForegroundService
+import com.black.code.ui.example.ExampleFragment
 
 /**
  * ForegroundService
  * https://developer.android.com/guide/components/foreground-services
  */
-class ServiceFragment : com.black.code.ui.example.ExampleFragment<FragmentServiceBinding>() {
+class ServiceFragment : ExampleFragment<FragmentServiceBinding>() {
     override val layoutResId: Int = R.layout.fragment_service
     override val title: String = "Service"
 
+    private val viewModel : ServiceViewModel by viewModels()
+
     override fun bindVariable(binding: FragmentServiceBinding) {
         binding.fragment = this
-    }
-
-    fun onClickStartForegroundService() {
-        ForegroundService.start(requireContext().applicationContext)
-    }
-
-    fun onClickStopForegroundService() {
-        ForegroundService.stop(requireContext().applicationContext)
+        binding.viewModel = viewModel.apply {
+            setModel(ServiceModel(requireContext()))
+        }
+        viewModel.init()
     }
 }

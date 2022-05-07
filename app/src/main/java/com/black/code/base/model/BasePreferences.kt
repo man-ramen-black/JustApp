@@ -2,6 +2,7 @@ package com.black.code.base.model
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import java.lang.NumberFormatException
 
 /**
  * Created by jinhyuk.lee on 2022/04/11
@@ -25,6 +26,42 @@ open class BasePreferences(private val context: Context, private val name: Strin
 
     fun get(key: String, def: String) : String {
         return preferences.all.getOrDefault(key, def).toString()
+    }
+
+    fun put(key: String, value: Boolean) {
+        preferences.edit()
+            .putBoolean(key, value)
+            .apply()
+    }
+
+    fun get(key: String, def: Boolean) : Boolean {
+        val value = preferences.all[key]
+        return when {
+            value?.toString().equals("true", true) -> {
+                true
+            }
+            value?.toString().equals("false", true) -> {
+                false
+            }
+            else -> {
+                def
+            }
+        }
+    }
+
+    fun putLong(key: String, value: Long) {
+        preferences.edit()
+            .putLong(key, value)
+            .apply()
+    }
+
+    fun getLong(key: String, def: Long) : Long {
+        return try {
+            preferences.all.getOrDefault(key, def).toString().toLong()
+        } catch (e: NumberFormatException) {
+            e.printStackTrace()
+            def
+        }
     }
 
     fun remove(key: String) {

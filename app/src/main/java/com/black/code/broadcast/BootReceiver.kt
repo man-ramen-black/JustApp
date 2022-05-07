@@ -4,9 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
-import com.black.code.util.NotificationUtil
+import com.black.code.model.preferences.ForegroundServicePreference
 import com.black.code.service.ForegroundService
 import com.black.code.util.Log
+import com.black.code.util.NotificationUtil
 
 // 앱 업데이트 시 Service 자동 시작하려면 ACTION_MY_PACKAGE_REPLACED
 // https://developer.android.com/reference/android/content/Intent#ACTION_MY_PACKAGE_REPLACED
@@ -30,6 +31,8 @@ class BootReceiver : BroadcastReceiver() {
             NOTIFICATION_ID
         )
 
-        ForegroundService.start(context)
+        if (ForegroundServicePreference(context).getForegroundServiceActivated()) {
+            ForegroundService.start(context)
+        }
     }
 }

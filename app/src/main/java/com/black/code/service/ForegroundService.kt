@@ -20,18 +20,23 @@ class ForegroundService : Service() {
 
         const val ACTION_STOP = "STOP"
 
-        fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) {
+        fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) : Boolean {
+            return start(context, true, onSetIntent)
+        }
+
+        fun start(context: Context, requestPermission: Boolean, onSetIntent: ((intent: Intent) -> Unit)? = null) : Boolean {
             if (!PermissionHelper.isIgnoringBatteryOptimizations(context)) {
-                Toast.makeText(context, "배터리 최적화를 해제해주세요.", Toast.LENGTH_LONG)
-                    .show()
-                PermissionHelper.showIgnoreBatteryOptimizationSettings(context)
-                return
+                if (requestPermission) {
+                    PermissionHelper.showIgnoreBatteryOptimizationSettings(context)
+                }
+                return false
             }
 
             val appContext = context.applicationContext
             val intent = Intent(appContext, ForegroundService::class.java)
             onSetIntent?.invoke(intent)
             appContext.startService(intent)
+            return true
         }
 
         fun stop(context: Context) {

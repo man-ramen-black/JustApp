@@ -1,12 +1,14 @@
 package com.black.code.util
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
@@ -60,17 +62,31 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         // https://blog.kmshack.kr/ignore_battery_optimizations/
         // ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS를 사용하면
         // dialog에서 바로 배터리 최적화 해제가 가능하지만, 구글 스토어에서 반려
-        fun showIgnoreBatteryOptimizationSettings(context: Context) {
+        fun showIgnoreBatteryOptimizationSettings(context: Context, withToast: Boolean = false) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 Log.i("API Level < 23")
                 return
             }
 
-            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-            if (context !is Activity) {
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            if (withToast) {
+                Toast.makeText(context, "배터리 최적화를 해제해주세요.", Toast.LENGTH_LONG)
+                    .show()
             }
-            context.startActivity(intent)
+
+            val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                .apply {
+                    if (context !is Activity) {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    // 동작하지 않음
+                    // data = Uri.parse("package:" + context.packageName)
+                }
+
+            try {
+                context.startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+            }
         }
 
         fun isIgnoringBatteryOptimizations(context: Context) : Boolean {
