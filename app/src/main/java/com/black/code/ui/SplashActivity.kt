@@ -1,34 +1,24 @@
 package com.black.code.ui
 
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
-import androidx.appcompat.app.AppCompatActivity
-import com.black.code.util.Log
+import com.black.code.base.component.BaseSplashActivity
 
 /**
  * https://lanace.github.io/articles/right-way-on-splash/
  * https://velog.io/@pish11010/Android-Splash-Screen-%EA%B5%AC%ED%98%84
  **/
-class SplashActivity : AppCompatActivity() {
-    @Volatile private var isCanceled = false
-
+class SplashActivity : BaseSplashActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun onResume() {
-        Log.d()
-        isCanceled = false
+    override fun onSplashStart(splash: Splash) {
         doSomething {
-            startMainActivity()
+            splash.complete()
         }
-        super.onResume()
     }
 
-    override fun onPause() {
-        Log.d()
-        isCanceled = false
+    override fun onSplashCanceled() {
         cancelDoSomething()
-        super.onPause()
     }
 
     private fun doSomething(callback: () -> Unit) {
@@ -39,18 +29,5 @@ class SplashActivity : AppCompatActivity() {
 
     private fun cancelDoSomething() {
         handler.removeCallbacksAndMessages(null)
-    }
-
-    private fun startMainActivity() {
-        if (isCanceled) {
-            return
-        }
-        val intent = Intent(this, MainActivity::class.java).apply {
-            data = intent.data
-            putExtras(intent)
-        }
-        startActivity(intent)
-        finish()
-        overridePendingTransition(0, android.R.anim.fade_out);
     }
 }
