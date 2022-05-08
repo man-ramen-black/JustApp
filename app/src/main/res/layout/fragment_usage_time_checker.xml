@@ -2,12 +2,15 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
+        <import type="android.text.TextUtils"/>
+        <import type="android.view.View"/>
+
         <variable
             name="fragment"
             type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment.ViewModel" />
+            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerViewModel" />
     </data>
 
     <ScrollView
@@ -35,6 +38,64 @@
                 android:onClick="@{() -> viewModel.onClickShow()}"
                 />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    >
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text='@={viewModel.pauseDurationMin + ""}'
+                        android:hint="Pause duration(min)"
+                        />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="save"
+                    android:layout_marginLeft="5dp"
+                    android:onClick="@{() -> viewModel.onClickSave()}"
+                    />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text='@{viewModel.pauseRemainText}'
+                android:visibility="@{TextUtils.isEmpty(viewModel.pauseRemainText) ? View.GONE : View.VISIBLE}"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Pause"
+                    android:onClick="@{() -> viewModel.onClickPause()}"
+                    />
+
+                <View
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content"/>
+
+                <Button
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Cancel"
+                    android:onClick="@{() -> viewModel.onClickCancelPause()}"
+                    />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </layout>

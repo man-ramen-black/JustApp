@@ -3,8 +3,10 @@ package com.black.code.ui.example.usagetimechecker
 import android.content.Context
 import android.content.Intent
 import com.black.code.broadcast.ScreenReceiver
+import com.black.code.model.preferences.ForegroundServicePreference
 import com.black.code.service.ForegroundService
 import com.black.code.util.Log
+import java.lang.ref.WeakReference
 
 /**
  * ForegroundService, ScreenReceiver에서 UsageTimeChecker 동작 구현
@@ -15,6 +17,7 @@ object UsageTimeCheckerManager : ForegroundService.Interface, ScreenReceiver.Int
     private const val ACTION_DETACH = "UsageTimeChecker.DETACH"
 
     private var usageTimeCheckerView : UsageTimeCheckerView? = null
+    private var preference :  WeakReference<ForegroundServicePreference>? = null
 
     override fun onStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
         when(intent.action) {
@@ -41,7 +44,25 @@ object UsageTimeCheckerManager : ForegroundService.Interface, ScreenReceiver.Int
 
     }
 
+    private fun isUsageTimerPaused(context: Context) : Boolean {
+        if (preference?.get() == null) {
+            preference = WeakReference(ForegroundServicePreference(context))
+        }
+
+        val endTime = preference!!.get()!!.getUsageTimerPauseEndTime()
+        if (endTime == 0L) {
+            return false
+        }
+
+        return System.currentTimeMillis() < endTime
+    }
+
     override fun onScreenOn(context: Context, intent: Intent) {
+        if (isUsageTimerPaused(context)) {
+            Log.d("UsageTimer paused")
+            return
+        }
+
         ForegroundService.start(context) {
             it.action = ACTION_ATTACH
         }

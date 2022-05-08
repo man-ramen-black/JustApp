@@ -49,6 +49,21 @@ open class BasePreferences(private val context: Context, private val name: Strin
         }
     }
 
+    fun put(key: String, value: Int) {
+        preferences.edit()
+            .putInt(key, value)
+            .apply()
+    }
+
+    fun get(key: String, def: Int) : Int {
+        return try {
+            preferences.all.getOrDefault(key, def).toString().toInt()
+        } catch (e: NumberFormatException) {
+            e.printStackTrace()
+            def
+        }
+    }
+
     fun putLong(key: String, value: Long) {
         preferences.edit()
             .putLong(key, value)

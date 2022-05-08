@@ -10,6 +10,8 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.TypedValue
 import android.view.WindowManager
+import java.text.SimpleDateFormat
+import java.util.*
 
 object Util {
     fun pxToDp(context: Context, px: Int) : Float {
@@ -56,6 +58,62 @@ object Util {
                             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
             }
+        }
+    }
+
+    fun milliSecondsToTimeString(pattern: String, milliSeconds: Long) : String {
+        var remainPattern = pattern
+        var remainTime = milliSeconds
+        if (remainPattern.contains("H")) {
+            val hours = remainTime / 1000 / 60 / 60
+            remainTime %= (1000 * 60 * 60)
+            remainPattern = if (remainPattern.contains("HH")) {
+                val hoursText = if (hours < 10) {
+                    "0$hours"
+                } else {
+                    hours.toString()
+                }
+                remainPattern.replace("HH", hoursText)
+            } else {
+                remainPattern.replace("H", hours.toString())
+            }
+        }
+
+        if (remainPattern.contains("m")) {
+            val minutes = remainTime / 1000 / 60
+            remainTime %= (1000 * 60)
+            remainPattern = if (remainPattern.contains("mm")) {
+                val minutesText = if (minutes < 10) {
+                    "0$minutes"
+                } else {
+                    minutes.toString()
+                }
+                remainPattern.replace("mm", minutesText)
+            } else {
+                remainPattern.replace("m", minutes.toString())
+            }
+        }
+
+        if (remainPattern.contains("s")) {
+            val seconds = remainTime / 1000
+            remainTime %= 1000
+            remainPattern = if (remainPattern.contains("ss")) {
+                val secondsText = if (seconds < 10) {
+                    "0$seconds"
+                } else {
+                    seconds.toString()
+                }
+                remainPattern.replace("ss", secondsText)
+            } else {
+                remainPattern.replace("s", seconds.toString())
+            }
+        }
+
+        return try {
+            SimpleDateFormat(remainPattern, Locale.US).format(Date(milliSeconds))
+        } catch(e: IllegalArgumentException) {
+            e.printStackTrace()
+            ""
         }
     }
 }

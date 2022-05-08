@@ -11,16 +11,31 @@ import com.black.code.databinding.FragmentUsageTimeCheckerBinding
 class UsageTimeCheckerFragment : com.black.code.ui.example.ExampleFragment<FragmentUsageTimeCheckerBinding>(), EventObserver {
     override val layoutResId: Int = R.layout.fragment_usage_time_checker
     override val title: String = "UsageTimeChecker"
-    private val viewModel : ViewModel by viewModels()
+    private val viewModel : UsageTimeCheckerViewModel by viewModels()
 
     override fun bindVariable(binding: FragmentUsageTimeCheckerBinding) {
         binding.fragment = this
-        binding.viewModel = viewModel
-        viewModel.event.observe(this, this)
+        binding.viewModel = viewModel.apply {
+            setModel(UsageTimerModel(requireContext()))
+            observeEvent(viewLifecycleOwner, this@UsageTimeCheckerFragment)
+        }
+        viewModel.init()
     }
 
     override fun onReceivedEvent(action: String, data: Any?) {
-        val view = UsageTimeCheckerView(requireContext())
+        when (action) {
+            UsageTimeCheckerViewModel.EVENT_SHOW -> {
+                showUsageTimeCheckerView()
+            }
+            UsageTimeCheckerViewModel.EVENT_TOAST -> {
+                Toast.makeText(requireContext(), data?.toString() ?: return, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    private fun showUsageTimeCheckerView() {
+        UsageTimeCheckerView(requireContext())
             .apply {
                 setOnMoveListener { view, action, x, y ->
                     when(action) {
@@ -33,13 +48,7 @@ class UsageTimeCheckerFragment : com.black.code.ui.example.ExampleFragment<Fragm
                     }
                 }
             }
-        view.attachView()
-    }
-
-    class ViewModel : EventViewModel() {
-        fun onClickShow() {
-            event.send()
-        }
+            .attachView()
     }
 }
 
