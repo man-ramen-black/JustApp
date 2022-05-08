@@ -1,5 +1,7 @@
 package com.black.code.util
 
+import android.app.Activity
+import android.app.KeyguardManager
 import android.content.Context
 import android.graphics.Point
 import android.os.Build
@@ -7,6 +9,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.TypedValue
+import android.view.WindowManager
 
 object Util {
     fun pxToDp(context: Context, px: Int) : Float {
@@ -38,5 +41,21 @@ object Util {
     fun getScreenSize(context: Context) : Point {
         val metrics = context.resources.displayMetrics
         return Point(metrics.widthPixels, metrics.heightPixels)
+    }
+
+    fun turnScreenOn(activity: Activity) {
+        with(activity) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                setShowWhenLocked(true)
+                setTurnScreenOn(true)
+                val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+                keyguardManager.requestDismissKeyguard(this, null)
+            } else {
+                window.addFlags(
+                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+            }
+        }
     }
 }

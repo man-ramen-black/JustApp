@@ -1,8 +1,10 @@
 package com.black.code.ui
 
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import com.black.code.base.component.BaseSplashActivity
+import com.black.code.util.Util
 
 /**
  * https://lanace.github.io/articles/right-way-on-splash/
@@ -10,6 +12,13 @@ import com.black.code.base.component.BaseSplashActivity
  **/
 class SplashActivity : BaseSplashActivity() {
     private val handler = Handler(Looper.getMainLooper())
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // 앱 설치 시 화면을 켬
+        Util.turnScreenOn(this)
+    }
 
     override fun onSplashStart(splash: Splash) {
         doSomething {

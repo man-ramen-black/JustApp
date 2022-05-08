@@ -11,11 +11,8 @@ class ServiceModel(private val context: Context) {
     private val preference = ForegroundServicePreference(context)
 
     fun startForegroundService() : Boolean {
-        return ForegroundService.start(context).also {
-            if (it) {
-                preference.putForegroundServiceActivated(true)
-            }
-        }
+        preference.putForegroundServiceActivated(true)
+        return ForegroundService.start(context)
     }
 
     fun stopForegroundService() {

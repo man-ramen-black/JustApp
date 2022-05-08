@@ -96,5 +96,13 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
+
+        <!-- 동작하지 않음 -->
+        <!-- 스토어를 통해서 업데이트하면 동작하지 않을까 추측 -->
+        <receiver android:name=".broadcast.AppUpdateReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -4,9 +4,9 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.black.code.broadcast.ScreenReceiver
+import com.black.code.model.preferences.ForegroundServicePreference
 import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerManager
 import com.black.code.util.Log
 import com.black.code.util.NotificationUtil
@@ -25,14 +25,22 @@ class ForegroundService : Service() {
         }
 
         fun start(context: Context, requestPermission: Boolean, onSetIntent: ((intent: Intent) -> Unit)? = null) : Boolean {
-            if (!PermissionHelper.isIgnoringBatteryOptimizations(context)) {
+            val appContext = context.applicationContext
+
+            if (!ForegroundServicePreference(appContext).getForegroundServiceActivated()) {
+                Log.d("ForegroundService not activated")
+                return false
+            }
+
+            val isIgnored = PermissionHelper.isIgnoringBatteryOptimizations(appContext)
+            if (!isIgnored) {
+                Log.d("BatteryOptimizations not ignored")
                 if (requestPermission) {
-                    PermissionHelper.showIgnoreBatteryOptimizationSettings(context)
+                    PermissionHelper.showIgnoreBatteryOptimizationSettings(appContext, true)
                 }
                 return false
             }
 
-            val appContext = context.applicationContext
             val intent = Intent(appContext, ForegroundService::class.java)
             onSetIntent?.invoke(intent)
             appContext.startService(intent)

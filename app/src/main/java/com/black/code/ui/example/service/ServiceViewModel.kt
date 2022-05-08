@@ -2,6 +2,7 @@ package com.black.code.ui.example.service
 
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.util.Log
 
 /**
  * Created by jinhyuk.lee on 2022/05/07
@@ -19,6 +20,7 @@ class ServiceViewModel : EventViewModel() {
     }
 
     fun onCheckedChangedForegroundService(checked: Boolean) {
+        Log.d("checked : $checked")
         if (checked) {
             val result = model?.startForegroundService()
             foregroundServiceChecked.postValue(result)

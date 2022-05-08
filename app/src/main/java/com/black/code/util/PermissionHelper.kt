@@ -39,11 +39,17 @@ class PermissionHelper(private val activity: Activity, private val activityResul
 
         fun showDrawOverlaysSetting(context: Context) {
             val intent = getDrawOverlaysSettingIntent(context)
-                ?.apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
                 ?: return
-            context.startActivity(intent)
+
+            if (context !is Activity) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            try {
+                context.startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+            }
         }
 
         fun requestDrawOverlaysPermission(activity: ComponentActivity, onResult: (Boolean) -> Unit) {

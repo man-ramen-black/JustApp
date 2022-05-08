@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat
 import com.black.code.R
 import com.black.code.databinding.FragmentEtcBinding
 import com.black.code.ui.SplashActivity
+import com.black.code.util.PermissionHelper
 
 class ETCFragment : com.black.code.ui.example.ExampleFragment<FragmentEtcBinding>() {
     override val title: String = "ETC"
@@ -31,5 +32,9 @@ class ETCFragment : com.black.code.ui.example.ExampleFragment<FragmentEtcBinding
         Handler(Looper.getMainLooper()).postDelayed({
             activity.startActivity(Intent(activity, SplashActivity::class.java))
         }, 50)
+    }
+
+    fun onClickBatteryOptimizationsSetting() {
+        PermissionHelper.showIgnoreBatteryOptimizationSettings(requireContext())
     }
 }

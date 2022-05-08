@@ -61,10 +61,10 @@ class ScreenReceiver : BroadcastReceiver() {
         intent ?: return
 
         when (intent.action) {
-            Intent.ACTION_SCREEN_ON -> ForegroundService.start(context) {
+            Intent.ACTION_SCREEN_ON -> {
                 interfaces.forEach { it.onScreenOn(context, intent) }
             }
-            Intent.ACTION_SCREEN_OFF -> ForegroundService.start(context) {
+            Intent.ACTION_SCREEN_OFF -> {
                 interfaces.forEach { it.onScreenOff(context, intent) }
             }
         }

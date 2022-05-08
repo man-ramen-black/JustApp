@@ -5,6 +5,7 @@ import android.view.MenuItem
 import com.black.code.R
 import com.black.code.base.component.BaseActivity
 import com.black.code.databinding.ActivityMainBinding
+import com.black.code.service.ForegroundService
 import com.black.code.util.Log
 
 // SplashActivity 가이드
@@ -30,6 +31,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             val actionBarBackButtonEnable = supportFragmentManager.backStackEntryCount != 0
             supportActionBar?.setDisplayHomeAsUpEnabled(actionBarBackButtonEnable)
         }
+
+        // 앱 디버깅 시에 서비스가 실행되도록 설정
+        ForegroundService.start(this, false)
     }
 
     override fun bindVariable(binding: ActivityMainBinding) {

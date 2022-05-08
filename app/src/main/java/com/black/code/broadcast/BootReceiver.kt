@@ -31,8 +31,6 @@ class BootReceiver : BroadcastReceiver() {
             NOTIFICATION_ID
         )
 
-        if (ForegroundServicePreference(context).getForegroundServiceActivated()) {
-            ForegroundService.start(context)
-        }
+        ForegroundService.start(context)
     }
 }
