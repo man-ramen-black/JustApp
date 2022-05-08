@@ -15,7 +15,7 @@ import com.black.code.ui.example.etc.ETCFragment
 import com.black.code.ui.example.retrofit.RetrofitFragment
 import com.black.code.ui.example.service.ServiceFragment
 import com.black.code.ui.example.texteditor.TextEditorFragment
-import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment
+import com.black.code.ui.example.usagetimer.UsageTimerFragment
 import com.google.android.material.button.MaterialButton
 import kotlinx.android.synthetic.main.fragment_contents_list.*
 
@@ -27,7 +27,7 @@ class ExampleListFragment : BaseFragment<FragmentContentsListBinding>() {
         LauncherFragment(),
         NotificationFragment(),
         ServiceFragment(),
-        UsageTimeCheckerFragment(),
+        UsageTimerFragment(),
         ArchitectureFragment(),
         TextEditorFragment(),
         RetrofitFragment(),

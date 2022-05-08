@@ -1,4 +1,4 @@
-package com.black.code.ui.example.usagetimechecker
+package com.black.code.ui.example.usagetimer
 
 import android.content.Context
 import android.content.Intent
@@ -9,29 +9,29 @@ import com.black.code.util.Log
 import java.lang.ref.WeakReference
 
 /**
- * ForegroundService, ScreenReceiver에서 UsageTimeChecker 동작 구현
+ * ForegroundService, ScreenReceiver에서 UsageTimer 동작 구현
  * Created by jinhyuk.lee on 2022/04/29
  **/
-object UsageTimeCheckerManager : ForegroundService.Interface, ScreenReceiver.Interface {
-    private const val ACTION_ATTACH = "UsageTimeChecker.ATTACH"
-    private const val ACTION_DETACH = "UsageTimeChecker.DETACH"
+object UsageTimerManager : ForegroundService.Interface, ScreenReceiver.Interface {
+    private const val ACTION_ATTACH = "UsageTimer.ATTACH"
+    private const val ACTION_DETACH = "UsageTimer.DETACH"
 
-    private var usageTimeCheckerView : UsageTimeCheckerView? = null
+    private var usageTimerView : UsageTimerView? = null
     private var preference :  WeakReference<ForegroundServicePreference>? = null
 
     override fun onStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
         when(intent.action) {
             ACTION_ATTACH -> {
-                usageTimeCheckerView = UsageTimeCheckerView(context).also {
+                usageTimerView = UsageTimerView(context).also {
                     it.attachView()
                 }
             }
 
             ACTION_DETACH -> {
-                usageTimeCheckerView ?: run {
-                    Log.w("usageTimeCheckerView not attached")
+                usageTimerView ?: run {
+                    Log.w("usageTimerView not attached")
                 }
-                usageTimeCheckerView?.detachView()
+                usageTimerView?.detachView()
             }
         }
     }

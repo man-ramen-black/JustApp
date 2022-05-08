@@ -7,10 +7,10 @@
 
         <variable
             name="fragment"
-            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerFragment" />
+            type="com.black.code.ui.example.usagetimer.UsageTimerFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimechecker.UsageTimeCheckerViewModel" />
+            type="com.black.code.ui.example.usagetimer.UsageTimerViewModel" />
     </data>
 
     <ScrollView

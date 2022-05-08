@@ -1,4 +1,4 @@
-package com.black.code.ui.example.usagetimechecker
+package com.black.code.ui.example.usagetimer
 
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
@@ -7,7 +7,7 @@ import com.black.code.util.Util
 /**
  * Created by jinhyuk.lee on 2022/05/08
  **/
-class UsageTimeCheckerViewModel : EventViewModel() {
+class UsageTimerViewModel : EventViewModel() {
     companion object {
         const val EVENT_SHOW = "Show"
         const val EVENT_TOAST = "Toast"

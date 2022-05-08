@@ -7,7 +7,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.preferences.ForegroundServicePreference
-import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerManager
+import com.black.code.ui.example.usagetimer.UsageTimerManager
 import com.black.code.util.Log
 import com.black.code.util.NotificationUtil
 import com.black.code.util.PermissionHelper
@@ -57,7 +57,7 @@ class ForegroundService : Service() {
     }
 
     private val interfaces = listOf(
-        UsageTimeCheckerManager,
+        UsageTimerManager,
         ScreenReceiver.ServiceInterface
     )
 

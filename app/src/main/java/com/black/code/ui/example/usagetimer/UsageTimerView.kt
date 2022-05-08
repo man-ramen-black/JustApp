@@ -1,4 +1,4 @@
-package com.black.code.ui.example.usagetimechecker
+package com.black.code.ui.example.usagetimer
 
 import android.content.Context
 import android.content.res.TypedArray
@@ -7,7 +7,7 @@ import android.view.WindowManager
 import com.black.code.R
 import com.black.code.base.view.MovableOverlayView
 import com.black.code.base.viewmodel.LiveEvent
-import com.black.code.databinding.ViewUsageTimeCheckerBinding
+import com.black.code.databinding.ViewUsageTimerBinding
 import com.black.code.util.Util
 
 /**
@@ -21,16 +21,16 @@ import com.black.code.util.Util
  * BindingMethods
  * https://developer.android.com/topic/libraries/data-binding/binding-adapters?hl=ko#specify-method
  */
-class UsageTimeCheckerView(context: Context) : MovableOverlayView<ViewUsageTimeCheckerBinding>(context) {
+class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBinding>(context) {
     override val layoutId: Int
-        get() = R.layout.view_usage_time_checker
+        get() = R.layout.view_usage_timer
 
     override val styleableId: IntArray?
         get() = null
 
     private val viewModel by lazy { ViewModel() }
 
-    override fun initialize(binding: ViewUsageTimeCheckerBinding, typedArray: TypedArray?) {
+    override fun initialize(binding: ViewUsageTimerBinding, typedArray: TypedArray?) {
         isMovable = true
     }
 

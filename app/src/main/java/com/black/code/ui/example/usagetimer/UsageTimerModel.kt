@@ -1,4 +1,4 @@
-package com.black.code.ui.example.usagetimechecker
+package com.black.code.ui.example.usagetimer
 
 import android.content.Context
 import com.black.code.model.preferences.ForegroundServicePreference

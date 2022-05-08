@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.black.code.service.ForegroundService
-import com.black.code.ui.example.usagetimechecker.UsageTimeCheckerManager
+import com.black.code.ui.example.usagetimer.UsageTimerManager
 import com.black.code.util.Log
 
 class ScreenReceiver : BroadcastReceiver() {
@@ -52,7 +52,7 @@ class ScreenReceiver : BroadcastReceiver() {
     }
 
     private val interfaces = listOf<Interface>(
-        UsageTimeCheckerManager
+        UsageTimerManager
     )
 
     override fun onReceive(context: Context?, intent: Intent?) {
