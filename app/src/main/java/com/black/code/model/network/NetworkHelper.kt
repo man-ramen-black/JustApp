@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by jinhyuk.lee on 2022/04/12
  **/
-object RetrofitHelper {
+object NetworkHelper {
     fun <T> create(baseUrl: String, service: Class<T>) : T {
         val client = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -36,7 +36,7 @@ object RetrofitHelper {
     /**
      *  Json String을 JSONArray로 반환
      */
-    fun Call<ResponseBody>.callJSONArray(callback: (result: HttpResult<JSONArray>) -> Unit) : Call<ResponseBody> {
+    fun Call<ResponseBody>.callJSONArray(callback: (result: NetworkResult<JSONArray>) -> Unit) : Call<ResponseBody> {
         return callString({
             try {
                 JSONArray(it)
@@ -50,7 +50,7 @@ object RetrofitHelper {
     /**
      *  Json String을 JSONObject로 반환
      */
-    fun Call<ResponseBody>.callJSONObject(callback: (result: HttpResult<JSONObject>) -> Unit) : Call<ResponseBody> {
+    fun Call<ResponseBody>.callJSONObject(callback: (result: NetworkResult<JSONObject>) -> Unit) : Call<ResponseBody> {
         return callString({
             try {
                 JSONObject(it)
@@ -64,7 +64,7 @@ object RetrofitHelper {
     /**
      *  Json String List<resultCls>로 역직렬화하여 반환
      */
-    fun <T> Call<ResponseBody>.callList(resultCls: Class<T>, callback: (result: HttpResult<List<T?>>) -> Unit) : Call<ResponseBody> {
+    fun <T> Call<ResponseBody>.callList(resultCls: Class<T>, callback: (result: NetworkResult<List<T?>>) -> Unit) : Call<ResponseBody> {
         return callString({
             val jsonArr = try {
                 JSONArray(it)
@@ -89,7 +89,7 @@ object RetrofitHelper {
     /**
      *  Json String을 resultCls로 역직렬화하여 반환
      */
-    fun <T> Call<ResponseBody>.call(resultCls: Class<T>, callback: (result: HttpResult<T>) -> Unit) : Call<ResponseBody> {
+    fun <T> Call<ResponseBody>.call(resultCls: Class<T>, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
         return callString({
             try {
                 Gson().fromJson(it, resultCls)
@@ -103,14 +103,14 @@ object RetrofitHelper {
     /**
      * Response String 반환
      */
-    fun Call<ResponseBody>.call(callback: (result: HttpResult<String>) -> Unit) : Call<ResponseBody> {
+    fun Call<ResponseBody>.call(callback: (result: NetworkResult<String>) -> Unit) : Call<ResponseBody> {
         return callString({ it }, callback)
     }
 
     /**
      * Response String을 T로 변환하여 반환
      */
-    private fun <T> Call<ResponseBody>.callString(parse: (String) -> T?, callback: (result: HttpResult<T>) -> Unit) : Call<ResponseBody> {
+    private fun <T> Call<ResponseBody>.callString(parse: (String) -> T?, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
         return callInternal({ responseBody ->
             responseBody?.string()
                 ?.let { it to parse(it) }
@@ -122,7 +122,7 @@ object RetrofitHelper {
      * call 공통 로직
      * @param getRawAndData ResponseBody를 raw String과 data로 변환하여 반환
      */
-    private fun <T> Call<ResponseBody>.callInternal(getRawAndData: (ResponseBody?) -> Pair<String, T?>, callback: (result: HttpResult<T>) -> Unit) : Call<ResponseBody> {
+    private fun <T> Call<ResponseBody>.callInternal(getRawAndData: (ResponseBody?) -> Pair<String, T?>, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
         Log.i("HTTP Start : [${request().method()}] ${request().url()}")
         enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -141,7 +141,7 @@ object RetrofitHelper {
 
                 if (call.isCanceled) {
                     Log.w("HTTP Canceled : [${request().method()}] ${request().url()}\n[${response.code()}]")
-                    callback(HttpResult(null, response.code(), "Canceled", true))
+                    callback(NetworkResult(null, response.code(), "Canceled", true))
                     return
                 }
 
@@ -154,16 +154,16 @@ object RetrofitHelper {
                 } else {
                     Log.i("HTTP Success : [${request().method()}] ${request().url()}\n[${response.code()}]\n$raw")
                 }
-                callback(HttpResult(data, response.code()))
+                callback(NetworkResult(data, response.code()))
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 t.printStackTrace()
 
                 val errorMessage = t.message ?: "Unknown network error"
-                Log.w("HTTP Failure : [${request().method()}] ${request().url()}\n[${HttpResult.STATUS_NETWORK_ERROR}]\n$errorMessage")
+                Log.w("HTTP Failure : [${request().method()}] ${request().url()}\n[${NetworkResult.STATUS_NETWORK_ERROR}]\n$errorMessage")
 
-                callback(HttpResult(null, HttpResult.STATUS_NETWORK_ERROR, errorMessage, call.isCanceled))
+                callback(NetworkResult(null, NetworkResult.STATUS_NETWORK_ERROR, errorMessage, call.isCanceled))
             }
         })
         return this

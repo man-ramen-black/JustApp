@@ -1,5 +1,6 @@
 package com.black.code.base.component
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -16,7 +17,7 @@ abstract class BaseSplashActivity : AppCompatActivity() {
     // 캡슐화?를 위해 인터페이스로 정의
     interface Splash {
         fun complete()
-        fun cancel()
+        fun isCanceled() : Boolean
     }
 
     // 익명 인터페이스 구현
@@ -28,15 +29,16 @@ abstract class BaseSplashActivity : AppCompatActivity() {
                     return
                 }
                 isCompleted = true
-                startMainActivity()
+                startNextActivity()
             }
 
-            override fun cancel() {
-                isCanceled = true
+            override fun isCanceled() : Boolean {
+                return isCanceled
             }
         }
     }
 
+    abstract val nextActivityClass : Class<out Activity>
     abstract fun onSplashStart(splash: Splash)
     abstract fun onSplashCanceled()
 
@@ -56,7 +58,7 @@ abstract class BaseSplashActivity : AppCompatActivity() {
         Log.d(this::class.java.simpleName)
         if (!isCompleted) {
             Log.d("Splash cancel")
-            splash.cancel()
+            splash.isCanceled()
             onSplashCanceled()
         }
         super.onPause()
@@ -75,8 +77,8 @@ abstract class BaseSplashActivity : AppCompatActivity() {
         setIntent(intent)
     }
 
-    private fun startMainActivity() {
-        val intent = Intent(this, MainActivity::class.java).apply {
+    private fun startNextActivity() {
+        val intent = Intent(this, nextActivityClass).apply {
             data = intent.data
             putExtras(intent)
         }

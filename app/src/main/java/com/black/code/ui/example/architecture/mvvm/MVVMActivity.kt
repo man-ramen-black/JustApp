@@ -10,7 +10,10 @@ import com.black.code.databinding.ActivityMvvmBinding
 /**
  * MVVM은 Activity가 View 역할을 담당
  * View는 ViewModel만을 참조함
- * https://velog.io/@its-mingyu/%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4MVC-MVP-MVVM
+ */
+/*
+#MVC #MVP #MVVM 정의, 개념
+https://velog.io/@its-mingyu/%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4MVC-MVP-MVVM
  */
 class MVVMActivity : AppCompatActivity() {
     private var binding : ActivityMvvmBinding? = null

@@ -1,6 +1,5 @@
 package com.black.code.ui.example.architecture.mvvm
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.black.code.ui.example.architecture.CounterModel

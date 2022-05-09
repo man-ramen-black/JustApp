@@ -1,5 +1,6 @@
 package com.black.code.ui
 
+import android.app.Activity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,12 +14,8 @@ import com.black.code.util.Util
 class SplashActivity : BaseSplashActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // 앱 설치 시 화면을 켬
-        Util.turnScreenOn(this)
-    }
+    override val nextActivityClass: Class<out Activity>
+        get() = MainActivity::class.java
 
     override fun onSplashStart(splash: Splash) {
         doSomething {
@@ -28,6 +25,13 @@ class SplashActivity : BaseSplashActivity() {
 
     override fun onSplashCanceled() {
         cancelDoSomething()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // 앱 설치 시 화면을 켬
+        Util.turnScreenOn(this)
     }
 
     private fun doSomething(callback: () -> Unit) {

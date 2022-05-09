@@ -8,19 +8,19 @@ import android.content.Context
 class NetworkSampleModel(private val context: Context) {
     fun loadAlbums(callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSampleAlbum?>?) -> Unit) {
         NetworkSampleApi.getAlbums {
-            callback(it.statusCode, it.errorMessage, it.data)
+            callback(it.statusCode, it.message, it.data)
         }
     }
 
     fun loadAlbumsWrongResponse(callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSampleAlbum?>?) -> Unit) {
         NetworkSampleApi.getAlbumsWrongResponse {
-            callback(it.statusCode, it.errorMessage, it.data)
+            callback(it.statusCode, it.message, it.data)
         }
     }
 
     fun loadPhotos(albumId: Int, callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSamplePhoto?>?) -> Unit) {
         NetworkSampleApi.getPhotos(albumId) {
-            callback(it.statusCode, it.errorMessage, it.data)
+            callback(it.statusCode, it.message, it.data)
         }
     }
 }

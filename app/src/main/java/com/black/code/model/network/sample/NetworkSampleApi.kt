@@ -1,8 +1,8 @@
 package com.black.code.model.network.sample
 
-import com.black.code.model.network.HttpResult
-import com.black.code.model.network.RetrofitHelper
-import com.black.code.model.network.RetrofitHelper.callList
+import com.black.code.model.network.NetworkResult
+import com.black.code.model.network.NetworkHelper
+import com.black.code.model.network.NetworkHelper.callList
 import okhttp3.ResponseBody
 import retrofit2.Call
 
@@ -12,20 +12,20 @@ import retrofit2.Call
 object NetworkSampleApi {
     private const val HOST = "https://jsonplaceholder.typicode.com/"
 
-    fun getAlbums(callback: (HttpResult<List<NetworkSampleAlbum?>>) -> Unit) : Call<ResponseBody> {
-        return RetrofitHelper.create(HOST, NetworkSampleService::class.java)
+    fun getAlbums(callback: (NetworkResult<List<NetworkSampleAlbum?>>) -> Unit) : Call<ResponseBody> {
+        return NetworkHelper.create(HOST, NetworkSampleService::class.java)
             .getAlbums()
             .callList(NetworkSampleAlbum::class.java, callback)
     }
 
-    fun getAlbumsWrongResponse(callback: (HttpResult<List<NetworkSampleAlbum?>>) -> Unit) : Call<ResponseBody> {
-        return RetrofitHelper.create("https://www.netmarble.net/", NetworkSampleService::class.java)
+    fun getAlbumsWrongResponse(callback: (NetworkResult<List<NetworkSampleAlbum?>>) -> Unit) : Call<ResponseBody> {
+        return NetworkHelper.create("https://www.netmarble.net/", NetworkSampleService::class.java)
             .getAlbums()
             .callList(NetworkSampleAlbum::class.java, callback)
     }
 
-    fun getPhotos(albumId: Int, callback: (HttpResult<List<NetworkSamplePhoto?>>) -> Unit) : Call<ResponseBody> {
-        return RetrofitHelper.create(HOST, NetworkSampleService::class.java)
+    fun getPhotos(albumId: Int, callback: (NetworkResult<List<NetworkSamplePhoto?>>) -> Unit) : Call<ResponseBody> {
+        return NetworkHelper.create(HOST, NetworkSampleService::class.java)
             .getPhotos(albumId)
             .callList(NetworkSamplePhoto::class.java, callback)
     }

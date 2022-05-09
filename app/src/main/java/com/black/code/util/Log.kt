@@ -82,8 +82,14 @@ object Log {
             return MethodInfo("Unknown", "Unknown", "Unknown", "Unknown", 0)
         }
 
+        val classSplit = calledMethod.className.split("$")
+
         // ex. com.netmarble.proto.util.Log
-        val className = calledMethod.className.split("$")[0]
+        val className = classSplit[0]
+
+        // ex. NetworkHelper.callInternal or callInternal
+        val methodName = classSplit.getOrNull(1)?.plus("$" + calledMethod.methodName)
+            ?: calledMethod.methodName
 
         // ex.com.netmarble.proto
         val packageName = className.split(".").subList(0, 3).joinToString(".")
@@ -91,7 +97,7 @@ object Log {
         // ex.Log
         val simpleName = className.substringAfterLast(".")
 
-        return MethodInfo(className, packageName, simpleName, calledMethod.methodName, calledMethod.lineNumber)
+        return MethodInfo(className, packageName, simpleName, methodName, calledMethod.lineNumber)
     }
 
     /**
