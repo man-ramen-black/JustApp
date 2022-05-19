@@ -10,10 +10,13 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.TypedValue
 import android.view.WindowManager
+import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.*
 
 object Util {
+    private val RANDOM_CHAR_LIST : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+
     fun pxToDp(context: Context, px: Int) : Float {
         return px.toFloat() / context.resources.displayMetrics.density
     }
@@ -115,5 +118,15 @@ object Util {
             e.printStackTrace()
             ""
         }
+    }
+
+    fun generateRandomString(length: Int): String {
+        val random = SecureRandom()
+        val bytes = ByteArray(length)
+        random.nextBytes(bytes)
+
+        return bytes.indices
+            .map { RANDOM_CHAR_LIST[random.nextInt(RANDOM_CHAR_LIST.size)] }
+            .joinToString("")
     }
 }

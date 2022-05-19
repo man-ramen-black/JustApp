@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="data"
+            type="com.black.code.ui.example.recyclerview.RecyclerViewData.Dialog"/>
+
+        <variable
+            name="viewHolder"
+            type="androidx.recyclerview.widget.RecyclerView.ViewHolder" />
+
+        <variable
+            name="viewModel"
+            type="com.black.code.ui.example.recyclerview.RecyclerViewViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="10dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="10dp"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dialog"
+            android:layout_marginBottom="5dp"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{data.message}"
+            android:onClick="@{() -> viewModel.onItemClickDialog(data)}"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change"
+            android:onClick="@{() -> viewModel.onItemClickChange(viewHolder.absoluteAdapterPosition)}"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:onClick="@{() -> viewModel.onItemClickDelete(viewHolder.absoluteAdapterPosition)}"
+            />
+
+    </LinearLayout>
+</layout>

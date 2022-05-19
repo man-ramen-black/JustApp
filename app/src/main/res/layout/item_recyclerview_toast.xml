@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="data"
+            type="com.black.code.ui.example.recyclerview.RecyclerViewData.Toast" />
+
+        <variable
+            name="viewHolder"
+            type="androidx.recyclerview.widget.RecyclerView.ViewHolder" />
+
+        <variable
+            name="viewModel"
+            type="com.black.code.ui.example.recyclerview.RecyclerViewViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingLeft="20dp"
+        android:paddingTop="10dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="10dp"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toast"
+            android:layout_marginRight="10dp"
+            />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@{data.toast}"
+            android:onClick="@{() -> viewModel.onItemClickToast(data)}"
+            />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Change"
+            android:onClick="@{() -> viewModel.onItemClickChange(viewHolder.absoluteAdapterPosition)}"
+            />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete"
+            android:onClick="@{() -> viewModel.onItemClickDelete(viewHolder.absoluteAdapterPosition)}"
+            />
+    </LinearLayout>
+</layout>

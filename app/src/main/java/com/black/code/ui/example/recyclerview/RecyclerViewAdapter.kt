@@ -1,74 +1,77 @@
 package com.black.code.ui.example.recyclerview
 
-import android.annotation.SuppressLint
-import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.databinding.DataBindingUtil
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
-import androidx.viewbinding.ViewBinding
+import androidx.databinding.ViewDataBinding
 import com.black.code.R
-import com.black.code.databinding.ItemRecyclerviewBinding
+import com.black.code.base.view.BaseListAdapter
+import com.black.code.databinding.ItemRecyclerviewDialogBinding
+import com.black.code.databinding.ItemRecyclerviewToastBinding
 
-// https://www.charlezz.com/?p=1363
-class BaseItemCallback : DiffUtil.ItemCallback<Any>() {
-    override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean {
-        // 이전 객체와 새로운 객체가 같은 객체인지 비교하기 위해 고유 식별자를 비교
-        return oldItem === newItem
+/*
+android #recyclerview multiple data type
+https://class-programming.tistory.com/139
+
+#Viewmodels for #RecyclerView #items
+https://stackoverflow.com/questions/61364874/view-models-for-recyclerview-items
+ */
+class RecyclerViewAdapter(private val viewModel: RecyclerViewViewModel) : BaseListAdapter<RecyclerViewData>() {
+    companion object {
+        private const val VIEW_TYPE_TOAST = 1
+        private const val VIEW_TYPE_DIALOG = 2
     }
 
-    @SuppressLint("DiffUtilEquals")
-    override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean {
-        if (oldItem::class != newItem::class) {
-            return false
+    class ToastViewHolder(binding: ItemRecyclerviewToastBinding, private val viewModel: RecyclerViewViewModel)
+        : BaseViewHolder<ItemRecyclerviewToastBinding, RecyclerViewData>(binding) {
+
+        override fun bind(item : RecyclerViewData) {
+            binding.viewHolder = this
+            binding.data = item as RecyclerViewData.Toast
+            binding.viewModel = viewModel
         }
-
-        // 두 객체가 같은 데이터인지를 비교
-        return oldItem == newItem
-    }
-}
-
-// https://youngest-programming.tistory.com/474
-class RecyclerViewAdapter(itemCallback: DiffUtil.ItemCallback<Any> = BaseItemCallback())
-    : ListAdapter<Any, RecyclerViewAdapter.BaseViewHolder>(itemCallback) {
-
-    abstract class BaseViewHolder(binding: ViewBinding) : RecyclerView.ViewHolder(binding.root) {
-        abstract fun bind(item : Any)
     }
 
-    class ViewHolder(private val binding: ItemRecyclerviewBinding) : BaseViewHolder(binding) {
-        override fun bind(item : Any) {
-            if (item !is String) {
-                return
-            }
-            binding.data = item
+    class DialogViewHolder(binding: ItemRecyclerviewDialogBinding, private val viewModel: RecyclerViewViewModel)
+        : BaseViewHolder<ItemRecyclerviewDialogBinding, RecyclerViewData>(binding) {
 
-            // 동일 바인더에서의 포지션
-            // https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.ViewHolder#getBindingAdapterPosition()
-            bindingAdapterPosition
-
-            // 전체 항목에서의 포지션
-            // https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.ViewHolder#getAbsoluteAdapterPosition()
-            absoluteAdapterPosition
+        override fun bind(item : RecyclerViewData) {
+            binding.viewHolder = this
+            binding.data = item as RecyclerViewData.Dialog
+            binding.viewModel = viewModel
         }
     }
 
     override fun getItemViewType(position: Int): Int {
-        return super.getItemViewType(position)
+        return when (getItem(position)) {
+            is RecyclerViewData.Toast -> VIEW_TYPE_TOAST
+            is RecyclerViewData.Dialog -> VIEW_TYPE_DIALOG
+        }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
-        val binding : ItemRecyclerviewBinding = DataBindingUtil.inflate(
-            LayoutInflater.from(parent.context),
-            R.layout.item_recyclerview,
-            parent,
-            false
-        )
-        return ViewHolder(binding)
-    }
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): BaseViewHolder<ViewDataBinding, RecyclerViewData> {
+        return when(viewType) {
+            VIEW_TYPE_TOAST -> {
+                ToastViewHolder(inflateForViewHolder(parent, R.layout.item_recyclerview_toast), viewModel)
+            }
 
-    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        holder.bind(getItem(position))
+            VIEW_TYPE_DIALOG -> {
+                DialogViewHolder(inflateForViewHolder(parent, R.layout.item_recyclerview_dialog), viewModel)
+            }
+
+            else -> {
+                throw IllegalArgumentException("Invalid viewType")
+            }
+        }
     }
 }
+/*
+View마다 ViewModel은 1개이다
+RecyclerView 안의 아이템은 하나의 View이니까 ViewModel을 따로 가져가는게 맞지 않을까?
+
+=> https://stackoverflow.com/questions/61364874/view-models-for-recyclerview-items
+AAC ViewModel은 activity, fragment 별로 ViewModel을 재활용하기 때문에,
+각 item 마다 ViewModel을 만들어주더라도 결국 activity 내에 있기 때문에 각자 만들어지지 않고 재활용되고,
+결과적으로 비정상적으로 동작하게됨
+ */
