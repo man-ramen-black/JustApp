@@ -1,26 +1,21 @@
 package com.black.code.model.network.sample
 
 import android.content.Context
+import com.black.code.model.network.NetworkResult
 
 /**
  * Created by jinhyuk.lee on 2022/04/14
  **/
 class NetworkSampleModel(private val context: Context) {
-    fun loadAlbums(callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSampleAlbum?>?) -> Unit) {
-        NetworkSampleApi.getAlbums {
-            callback(it.statusCode, it.message, it.data)
-        }
+    fun loadAlbums(callback: (result: NetworkResult<List<NetworkSampleAlbum?>>) -> Unit) {
+        NetworkSampleApi.getAlbums(callback)
     }
 
-    fun loadAlbumsWrongResponse(callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSampleAlbum?>?) -> Unit) {
-        NetworkSampleApi.getAlbumsWrongResponse {
-            callback(it.statusCode, it.message, it.data)
-        }
+    fun loadAlbumsWrongResponse(callback: (result: NetworkResult<List<NetworkSampleAlbum?>>) -> Unit) {
+        NetworkSampleApi.getAlbumsWrongResponse(callback)
     }
 
-    fun loadPhotos(albumId: Int, callback: (statusCode: Int, errorMessage: String, albums: List<NetworkSamplePhoto?>?) -> Unit) {
-        NetworkSampleApi.getPhotos(albumId) {
-            callback(it.statusCode, it.message, it.data)
-        }
+    fun loadPhotos(albumId: Int, callback: (result: NetworkResult<List<NetworkSamplePhoto?>>) -> Unit) {
+        NetworkSampleApi.getPhotos(albumId, callback)
     }
 }

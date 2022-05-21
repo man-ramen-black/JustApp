@@ -12,6 +12,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -37,7 +38,7 @@ object NetworkHelper {
      *  Json String을 JSONArray로 반환
      */
     fun Call<ResponseBody>.callJSONArray(callback: (result: NetworkResult<JSONArray>) -> Unit) : Call<ResponseBody> {
-        return callString({
+        return callInternalString({
             try {
                 JSONArray(it)
             } catch (e: JSONException) {
@@ -51,7 +52,7 @@ object NetworkHelper {
      *  Json String을 JSONObject로 반환
      */
     fun Call<ResponseBody>.callJSONObject(callback: (result: NetworkResult<JSONObject>) -> Unit) : Call<ResponseBody> {
-        return callString({
+        return callInternalString({
             try {
                 JSONObject(it)
             } catch (e: JSONException) {
@@ -65,19 +66,19 @@ object NetworkHelper {
      *  Json String List<resultCls>로 역직렬화하여 반환
      */
     fun <T> Call<ResponseBody>.callList(resultCls: Class<T>, callback: (result: NetworkResult<List<T?>>) -> Unit) : Call<ResponseBody> {
-        return callString({
+        return callInternalString({
             val jsonArr = try {
                 JSONArray(it)
             } catch (e: JSONException) {
                 e.printStackTrace()
-                return@callString null
+                return@callInternalString null
             }
 
             val gson = Gson()
             val list = ArrayList<T?>()
-            for (i in 0 until (jsonArr?.length() ?: 0)) {
+            for (i in 0 until jsonArr.length()) {
                 try {
-                    list.add(gson.fromJson(jsonArr?.optString(i) ?: "", resultCls))
+                    list.add(gson.fromJson(jsonArr.optString(i) ?: "", resultCls))
                 } catch (e: JsonParseException) {
                     e.printStackTrace()
                 }
@@ -90,9 +91,11 @@ object NetworkHelper {
      *  Json String을 resultCls로 역직렬화하여 반환
      */
     fun <T> Call<ResponseBody>.call(resultCls: Class<T>, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
-        return callString({
+        return callInternalString({
             try {
-                Gson().fromJson(it, resultCls)
+                Gson().fromJson(it, resultCls).also { data ->
+                    Log.d("Response parsed : \n$data")
+                }
             } catch (e: JsonParseException) {
                 e.printStackTrace()
                 null
@@ -104,13 +107,13 @@ object NetworkHelper {
      * Response String 반환
      */
     fun Call<ResponseBody>.call(callback: (result: NetworkResult<String>) -> Unit) : Call<ResponseBody> {
-        return callString({ it }, callback)
+        return callInternalString({ it }, callback)
     }
 
     /**
      * Response String을 T로 변환하여 반환
      */
-    private fun <T> Call<ResponseBody>.callString(parse: (String) -> T?, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
+    private fun <T> Call<ResponseBody>.callInternalString(parse: (String) -> T?, callback: (result: NetworkResult<T>) -> Unit) : Call<ResponseBody> {
         return callInternal({ responseBody ->
             responseBody?.string()
                 ?.let { it to parse(it) }
@@ -141,7 +144,7 @@ object NetworkHelper {
 
                 if (call.isCanceled) {
                     Log.w("HTTP Canceled : [${request().method()}] ${request().url()}\n[${response.code()}]")
-                    callback(NetworkResult(null, response.code(), "Canceled", true))
+                    callback(NetworkResult(NetworkResult.CODE_CANCELED, NetworkResult.MESSAGE_CANCELED, null, response.code()))
                     return
                 }
 
@@ -151,19 +154,30 @@ object NetworkHelper {
 
                 if (data == null) {
                     Log.w("HTTP Failure : [${request().method()}] ${request().url()}\n[${response.code()}\n$raw]")
+                    callback(NetworkResult(NetworkResult.CODE_INVALID_RESPONSE, "Response is null", data, response.code()))
                 } else {
                     Log.i("HTTP Success : [${request().method()}] ${request().url()}\n[${response.code()}]\n$raw")
+                    callback(NetworkResult(NetworkResult.CODE_SUCCESS, NetworkResult.MESSAGE_SUCCESS, data, response.code()))
                 }
-                callback(NetworkResult(data, response.code()))
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 t.printStackTrace()
 
-                val errorMessage = t.message ?: "Unknown network error"
-                Log.w("HTTP Failure : [${request().method()}] ${request().url()}\n[${NetworkResult.STATUS_NETWORK_ERROR}]\n$errorMessage")
+                if (call.isCanceled) {
+                    Log.w("HTTP Canceled : [${request().method()}] ${request().url()}]")
+                    callback(NetworkResult(NetworkResult.CODE_CANCELED, NetworkResult.MESSAGE_CANCELED, null))
+                    return
+                }
 
-                callback(NetworkResult(null, NetworkResult.STATUS_NETWORK_ERROR, errorMessage, call.isCanceled))
+                val errorMessage = t.message ?: "Unknown network error"
+                Log.w("HTTP Network error : [${request().method()}] ${request().url()}\n$errorMessage")
+
+                if (t is SocketTimeoutException) {
+                    callback(NetworkResult(NetworkResult.CODE_TIMEOUT, errorMessage, null))
+                } else {
+                    callback(NetworkResult(NetworkResult.CODE_NETWORK_ERROR, errorMessage, null))
+                }
             }
         })
         return this

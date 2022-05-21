@@ -10,6 +10,7 @@ import retrofit2.Call
  * Created by jinhyuk.lee on 2022/04/12
  **/
 object NetworkSampleApi {
+    const val CODE_EMPTY_LIST = -10
     private const val HOST = "https://jsonplaceholder.typicode.com/"
 
     fun getAlbums(callback: (NetworkResult<List<NetworkSampleAlbum?>>) -> Unit) : Call<ResponseBody> {
@@ -27,6 +28,14 @@ object NetworkSampleApi {
     fun getPhotos(albumId: Int, callback: (NetworkResult<List<NetworkSamplePhoto?>>) -> Unit) : Call<ResponseBody> {
         return NetworkHelper.create(HOST, NetworkSampleService::class.java)
             .getPhotos(albumId)
-            .callList(NetworkSamplePhoto::class.java, callback)
+            .callList(NetworkSamplePhoto::class.java) {
+                it.data?.let { data ->
+                    if (it.isSuccess && data.isEmpty()) {
+                        callback(NetworkResult(it, CODE_EMPTY_LIST, "List is empty"))
+                        return@callList
+                    }
+                }
+                callback(it)
+            }
     }
 }

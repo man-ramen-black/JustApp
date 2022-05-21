@@ -39,6 +39,8 @@
                 android:onClick="@{() -> viewModel.onClickGetAlbumsWrongResponse()}"
                 />
 
+            <View style="@style/divider"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -56,6 +58,19 @@
                 android:text="getPhoto"
                 android:onClick="@{() -> viewModel.onClickGetPhoto()}"
                 />
+
+            <View style="@style/divider"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text='@={viewModel.errorCode + ""}'
+                    android:hint="ErrorCode"
+                    />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"

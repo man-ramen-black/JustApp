@@ -30,9 +30,9 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         Log.d(javaClass.simpleName)
     }
 
-    /**
-     * Fragment View Binding = https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
-     * View 셋팅은 onViewCreated에서 하도록 권장
+    /*
+    #Fragment #DataBinding
+    https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
      */
     @CallSuper
     override fun onCreateView(
@@ -48,6 +48,15 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         }
         bindVariable(binding!!)
         return binding!!.root
+    }
+
+    /**
+     * View 셋팅은 onViewCreated에서 하는 것을 권장
+     */
+    @CallSuper
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.d(javaClass.simpleName)
     }
 
     @CallSuper
@@ -74,10 +83,11 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         Log.d(javaClass.simpleName)
     }
 
-    /**
-     * 참고: 프래그먼트는 뷰보다 오래 지속됩니다.
-     * 프래그먼트의 onDestroyView() 메서드에서 결합 클래스 인스턴스 참조를 정리해야 합니다.
-     * https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
+    /*
+    참고: 프래그먼트는 뷰보다 오래 지속됩니다.
+    프래그먼트의 onDestroyView() 메서드에서 결합 클래스 인스턴스 참조를 정리해야 합니다.
+    #fragment #onDestroyView #destroy
+    https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
      */
     @CallSuper
     override fun onDestroyView() {

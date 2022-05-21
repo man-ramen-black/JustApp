@@ -2,12 +2,15 @@ package com.black.code.ui.example.retrofit
 
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.model.network.NetworkResult
 import com.black.code.model.network.sample.NetworkSampleModel
 
 /**
+ * [RetrofitFragment]
  * Created by jinhyuk.lee on 2022/05/02
  **/
 class RetrofitViewModel : EventViewModel() {
+    val errorCode = MutableLiveData(0)
     val statusCode = MutableLiveData(0)
     val errorMessage = MutableLiveData("")
     val data = MutableLiveData("")
@@ -19,10 +22,11 @@ class RetrofitViewModel : EventViewModel() {
         this.model = model
     }
 
-    private fun <T : List<*>> setResponse(statusCode: Int, errorMessage: String, data: T?) {
-        this@RetrofitViewModel.statusCode.value = statusCode
-        this@RetrofitViewModel.errorMessage.value = errorMessage
-        this@RetrofitViewModel.data.value = data?.joinToString(",\n") ?: "null"
+    private fun <T> setResponse(result: NetworkResult<List<T>>) {
+        errorCode.value = result.code
+        statusCode.value = result.statusCode
+        errorMessage.value = result.message
+        data.value = result.data?.joinToString(",\n") ?: "null"
     }
 
     fun onClickGetAlbums() {
