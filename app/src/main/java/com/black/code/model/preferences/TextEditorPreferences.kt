@@ -1,4 +1,4 @@
-package com.black.code.ui.example.texteditor
+package com.black.code.model.preferences
 
 import android.content.Context
 import android.net.Uri

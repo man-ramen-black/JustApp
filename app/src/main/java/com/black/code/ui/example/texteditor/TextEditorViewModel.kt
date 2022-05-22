@@ -4,6 +4,7 @@ import android.net.Uri
 import android.view.View
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.model.preferences.TextEditorPreferences
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import java.io.IOException
