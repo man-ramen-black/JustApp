@@ -65,12 +65,29 @@
 
             </LinearLayout>
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text='@{viewModel.pauseRemainText}'
-                android:visibility="@{TextUtils.isEmpty(viewModel.pauseRemainText) ? View.GONE : View.VISIBLE}"
-                />
+                android:orientation="horizontal"
+                android:visibility="@{viewModel.pauseRemainTime == 0L ? View.GONE : View.VISIBLE}"
+                >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text='Pause remain : '
+                    />
+
+                <com.black.code.view.BKCountDownTimer
+                    android:id="@+id/timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:millisInFuture="@{viewModel.pauseRemainTime}"
+                    app:onFinish="@{() -> viewModel.onFinishTimer()}"
+                    />
+
+            </LinearLayout>
+
 
             <LinearLayout
                 android:layout_width="match_parent"

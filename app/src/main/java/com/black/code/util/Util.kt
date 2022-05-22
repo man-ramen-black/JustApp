@@ -64,12 +64,20 @@ object Util {
         }
     }
 
+    private const val SEC_IN_MS = 1000
+    private const val MIN_IN_MS = SEC_IN_MS * 60
+    private const val HOUR_IN_MS = MIN_IN_MS * 60
+
+    /**
+     * ms를 시간 텍스트로 노출
+     * 패턴이 HH:mm:ss이고 3일인 경우 72:00:00 반환
+     */
     fun milliSecondsToTimeString(pattern: String, milliSeconds: Long) : String {
         var remainPattern = pattern
         var remainTime = milliSeconds
         if (remainPattern.contains("H")) {
-            val hours = remainTime / 1000 / 60 / 60
-            remainTime %= (1000 * 60 * 60)
+            val hours = remainTime / HOUR_IN_MS
+            remainTime %= HOUR_IN_MS
             remainPattern = if (remainPattern.contains("HH")) {
                 val hoursText = if (hours < 10) {
                     "0$hours"
@@ -83,8 +91,8 @@ object Util {
         }
 
         if (remainPattern.contains("m")) {
-            val minutes = remainTime / 1000 / 60
-            remainTime %= (1000 * 60)
+            val minutes = remainTime / MIN_IN_MS
+            remainTime %= MIN_IN_MS
             remainPattern = if (remainPattern.contains("mm")) {
                 val minutesText = if (minutes < 10) {
                     "0$minutes"
@@ -98,8 +106,8 @@ object Util {
         }
 
         if (remainPattern.contains("s")) {
-            val seconds = remainTime / 1000
-            remainTime %= 1000
+            val seconds = remainTime / SEC_IN_MS
+            remainTime %= SEC_IN_MS
             remainPattern = if (remainPattern.contains("ss")) {
                 val secondsText = if (seconds < 10) {
                     "0$seconds"

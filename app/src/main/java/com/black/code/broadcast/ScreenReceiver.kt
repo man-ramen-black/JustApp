@@ -15,14 +15,14 @@ class ScreenReceiver : BroadcastReceiver() {
     object ServiceInterface : ForegroundService.Interface {
         private var receiver : ScreenReceiver? = null
 
-        override fun onStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
+        override fun onForegroundServiceStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
         }
 
-        override fun onCreate(context: Context) {
+        override fun onForegroundServiceCreate(context: Context) {
             receiver = register(context.applicationContext)
         }
 
-        override fun onDestroy(context: Context) {
+        override fun onForegroundServiceDestroy(context: Context) {
             unregister(context.applicationContext, receiver)
         }
 

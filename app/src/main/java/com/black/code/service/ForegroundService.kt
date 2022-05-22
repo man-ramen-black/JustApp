@@ -1,16 +1,22 @@
 package com.black.code.service
 
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.black.code.broadcast.NotificationActionReceiver
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.preferences.ForegroundServicePreference
+import com.black.code.ui.SplashActivity
 import com.black.code.ui.example.usagetimer.UsageTimerManager
 import com.black.code.util.Log
 import com.black.code.util.NotificationUtil
 import com.black.code.util.PermissionHelper
+import kotlin.random.Random
 
 class ForegroundService : Service() {
     companion object {
@@ -58,7 +64,8 @@ class ForegroundService : Service() {
 
     private val interfaces = listOf(
         UsageTimerManager,
-        ScreenReceiver.ServiceInterface
+        ScreenReceiver.ServiceInterface,
+        NotificationActionReceiver.ForegroundServiceInterface
     )
 
     private var isStopped = false
@@ -67,7 +74,7 @@ class ForegroundService : Service() {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
         isStopped = false
         interfaces.forEach {
-            it.onStartCommand(this, intent ?: return@forEach, flags, startId)
+            it.onForegroundServiceStartCommand(this, intent ?: return@forEach, flags, startId)
         }
 
         if (intent?.action == ACTION_STOP) {
@@ -97,15 +104,22 @@ class ForegroundService : Service() {
             null
         ) {
             it.setOngoing(true)
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_CANCEL_CURRENT
+            }
+            it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, SplashActivity::class.java), flags))
+            it.addAction(NotificationCompat.Action(0, "PauseTimer", NotificationActionReceiver.getNotificationActionPendingIntent(this, NotificationActionReceiver.ACTION_PAUSE_USAGE_TIMER)))
         }
         startForeground(NOTIFICATION_ID, notification)
 
-        interfaces.forEach { it.onCreate(this) }
+        interfaces.forEach { it.onForegroundServiceCreate(this) }
     }
 
     override fun onDestroy() {
         Log.d()
-        interfaces.forEach { it.onDestroy(this) }
+        interfaces.forEach { it.onForegroundServiceDestroy(this) }
 
         super.onDestroy()
 
@@ -119,8 +133,8 @@ class ForegroundService : Service() {
     }
 
     interface Interface {
-        fun onStartCommand(context: Context, intent: Intent, flags: Int, startId: Int)
-        fun onCreate(context: Context)
-        fun onDestroy(context: Context)
+        fun onForegroundServiceStartCommand(context: Context, intent: Intent, flags: Int, startId: Int)
+        fun onForegroundServiceCreate(context: Context)
+        fun onForegroundServiceDestroy(context: Context)
     }
 }

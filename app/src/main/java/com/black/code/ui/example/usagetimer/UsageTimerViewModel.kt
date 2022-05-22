@@ -2,18 +2,21 @@ package com.black.code.ui.example.usagetimer
 
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.util.Log
 import com.black.code.util.Util
 
 /**
+ * [UsageTimerFragment]
  * Created by jinhyuk.lee on 2022/05/08
  **/
 class UsageTimerViewModel : EventViewModel() {
     companion object {
         const val EVENT_SHOW = "Show"
         const val EVENT_TOAST = "Toast"
+        const val EVENT_DETACH_VIEW_IN_SERVICE = "DetachViewInService"
     }
 
-    val pauseRemainText = MutableLiveData("")
+    val pauseRemainTime = MutableLiveData(0L)
     val pauseDurationMin = MutableLiveData(0)
     private var model : UsageTimerModel? = null
 
@@ -22,7 +25,7 @@ class UsageTimerViewModel : EventViewModel() {
     }
 
     fun init() {
-        updatePauseRemainText()
+        updatePauseRemainTime()
         pauseDurationMin.value = model?.getPauseDuration()
     }
 
@@ -39,24 +42,26 @@ class UsageTimerViewModel : EventViewModel() {
         val pauseDuration = pauseDurationMin.value ?: 0
         model?.savePauseDuration(pauseDuration)
         model?.pause(pauseDuration)
-        updatePauseRemainText()
-        sendEvent(EVENT_TOAST, "Pause complete")
+        updatePauseRemainTime()
+        sendEvent(EVENT_DETACH_VIEW_IN_SERVICE)
+        sendEvent(EVENT_TOAST, "Pause : ${pauseDuration}m")
     }
 
     fun onClickCancelPause() {
         model?.cancelPause()
-        updatePauseRemainText()
-        sendEvent(EVENT_TOAST, "Pause cancel")
+        updatePauseRemainTime()
+        sendEvent(EVENT_TOAST, "Pause canceled")
     }
 
-    private fun updatePauseRemainText() {
+    fun onFinishTimer() {
+        Log.d("onFinishTimer")
+        pauseRemainTime.value = 0
+    }
+
+    private fun updatePauseRemainTime() {
         val pauseEndTime = model?.getPauseEndTime()?.takeIf { System.currentTimeMillis() < it }
-            ?: 0L
-        pauseRemainText.value = pauseEndTime.takeIf { it != 0L }
-            ?.let {
-                val remainTime = it - System.currentTimeMillis()
-                "Pause remain : ${Util.milliSecondsToTimeString("mm:ss", remainTime)}"
-            }
-            ?: ""
+        val pauseRemainTime = pauseEndTime?.let { it - System.currentTimeMillis() }
+        Log.d("pauseEndTime : $pauseEndTime, pauseRemainTime : $pauseRemainTime")
+        this.pauseRemainTime.value = pauseRemainTime
     }
 }

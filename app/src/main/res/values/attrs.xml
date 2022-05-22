@@ -3,4 +3,7 @@
     <declare-styleable name="CustomViewSample">
         <attr name="text" format="reference|string" />
     </declare-styleable>
+
+    <declare-styleable name="BKCountDownTimer">
+    </declare-styleable>
 </resources>
