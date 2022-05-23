@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.text.Html"/>
+        <import type="android.text.TextUtils"/>
+
+        <variable
+            name="data"
+            type="com.black.code.ui.example.studypopup.StudyPopupData.Contents" />
+
+        <variable
+            name="viewHolder"
+            type="androidx.recyclerview.widget.RecyclerView.ViewHolder" />
+
+        <variable
+            name="viewModel"
+            type="com.black.code.ui.example.studypopup.StudyPopupViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="50dp"
+            android:layout_weight="1"
+            android:background="@drawable/background_ripple_round"
+            android:paddingLeft="10dp"
+            android:paddingTop="5dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="5dp"
+            android:gravity="center_vertical"
+            android:onClick="@{() -> viewModel.onItemClickContents(viewHolder.absoluteAdapterPosition)}"
+            android:text='@{TextUtils.isEmpty(data.text) ? @string/study_popup_empty_contents : Html.fromHtml(("" + data.text).replace("\n", "&lt;br/&gt;"))}'
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_delete"
+            android:background="@drawable/button_dark"
+            android:padding="10dp"
+            android:layout_marginLeft="5dp"
+            android:onClick="@{() -> viewModel.onItemClickDelete(viewHolder.absoluteAdapterPosition)}"
+            />
+    </LinearLayout>
+</layout>

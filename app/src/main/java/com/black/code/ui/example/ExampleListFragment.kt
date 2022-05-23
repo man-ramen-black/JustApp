@@ -14,6 +14,7 @@ import com.black.code.ui.example.recyclerview.RecyclerViewFragment
 import com.black.code.ui.example.etc.ETCFragment
 import com.black.code.ui.example.retrofit.RetrofitFragment
 import com.black.code.ui.example.service.ServiceFragment
+import com.black.code.ui.example.studypopup.StudyPopupFragment
 import com.black.code.ui.example.texteditor.TextEditorFragment
 import com.black.code.ui.example.usagetimer.UsageTimerFragment
 import com.google.android.material.button.MaterialButton
@@ -31,6 +32,7 @@ class ExampleListFragment : BaseFragment<FragmentContentsListBinding>() {
         ArchitectureFragment(),
         TextEditorFragment(),
         RetrofitFragment(),
+        StudyPopupFragment(),
         ETCFragment()
     )
 
