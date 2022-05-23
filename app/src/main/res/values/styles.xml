@@ -20,6 +20,8 @@
         <item name="buttonStyle">@style/buttonDefault</item>
         <item name="android:buttonStyle">@style/buttonDefault</item>
         <item name="materialButtonStyle">@style/buttonDefault</item>
+        <item name="materialAlertDialogTheme">@style/DialogStyle</item>
+        <item name="actionBarStyle">@style/ActionbarStyle</item>
     </style>
 
     <style name="splashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -67,6 +69,22 @@
         <item name="android:tint">@color/editTextUnderLine</item>
         <item name="backgroundTint">@color/editTextUnderLine</item>
     </style>
+
+    <style name="DialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="buttonBarNegativeButtonStyle">@style/DialogButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/DialogButtonStyle</item>
+        <item name="buttonBarNeutralButtonStyle">@style/DialogButtonStyle</item>
+        <item name="buttonBarButtonStyle">@style/DialogButtonStyle</item>
+    </style>
+
+    <style name="DialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/textColor</item>
+    </style>
+
+    <style name="ActionbarStyle" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <item name="background">@color/windowBackground</item>
+    </style>
+
 
     <style name="RootLayout">
         <item name="android:paddingLeft">20dp</item>

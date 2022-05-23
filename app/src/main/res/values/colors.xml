@@ -3,8 +3,8 @@
     <color name="ic_launcher_background">#000000</color>
 
     <color name="colorAccent">#DDDDDD</color>
-    <color name="colorPrimary">#111111</color>
-    <color name="windowBackground">#222222</color>
+    <color name="colorPrimary">#151515</color>
+    <color name="windowBackground">#000000</color>
     <color name="rippleEffect">#7F7F7F</color>
 
     <color name="textColor">@color/colorAccent</color>
