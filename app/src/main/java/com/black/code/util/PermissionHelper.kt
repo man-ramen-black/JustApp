@@ -121,7 +121,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                     deniedPermissions.add(permission)
                 }
             }
-            onRequestPermissionResult?.invoke(PermissionResult(grantedPermissions, deniedPermissions))
+            onRequestPermissionResult?.invoke(PermissionResult(deniedPermissions.isEmpty(), grantedPermissions, deniedPermissions))
             onRequestPermissionResult = null
         }
     }
@@ -150,7 +150,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                 }
             }
         }
-        return PermissionResult(grantedPermissions, deniedPermissions, retryPermissions)
+        return PermissionResult(permissions.size == grantedPermissions.size, grantedPermissions, deniedPermissions, retryPermissions)
     }
 
     fun requestPermissions(permissions: Array<String>, onRequestPermissionResult: ((PermissionResult) -> Unit)?) {
@@ -163,5 +163,5 @@ class PermissionHelper(private val activity: Activity, private val activityResul
      * @param deniedPermissions 권한을 아직 허용하지 않았거나, 다시 묻지 않음을 체크하지 않고 거부한 권한 리스트
      * @param retryPermissions 사용자가 거부한 권한 리스트 (재허용 가능)
      */
-    data class PermissionResult(val grantedPermissions: List<String>, val deniedPermissions: List<String>, val retryPermissions: List<String> = emptyList())
+    data class PermissionResult(val isGranted: Boolean, val grantedPermissions: List<String>, val deniedPermissions: List<String>, val retryPermissions: List<String> = emptyList())
 }
