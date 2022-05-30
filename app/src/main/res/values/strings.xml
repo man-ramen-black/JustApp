@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Code Collection</string>
 
-    <string name="study_popup_empty_contents">[터치하여 내용 입력]</string>
+    <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>
 </resources>

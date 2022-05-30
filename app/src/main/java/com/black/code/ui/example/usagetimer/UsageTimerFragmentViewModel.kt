@@ -2,14 +2,14 @@ package com.black.code.ui.example.usagetimer
 
 import androidx.lifecycle.MutableLiveData
 import com.black.code.base.viewmodel.EventViewModel
+import com.black.code.model.UsageTimerModel
 import com.black.code.util.Log
-import com.black.code.util.Util
 
 /**
  * [UsageTimerFragment]
  * Created by jinhyuk.lee on 2022/05/08
  **/
-class UsageTimerViewModel : EventViewModel() {
+class UsageTimerFragmentViewModel : EventViewModel() {
     companion object {
         const val EVENT_SHOW = "Show"
         const val EVENT_TOAST = "Toast"

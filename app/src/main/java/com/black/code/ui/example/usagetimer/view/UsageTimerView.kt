@@ -1,4 +1,4 @@
-package com.black.code.ui.example.usagetimer
+package com.black.code.ui.example.usagetimer.view
 
 import android.content.Context
 import android.content.res.TypedArray
@@ -54,10 +54,14 @@ class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBindin
         binding.timer.stop()
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
+    override fun bindVariable(binding: ViewUsageTimerBinding) {
+        super.bindVariable(binding)
         binding.viewModel = viewModel
         viewModel.event.observeForever(this::onReceivedEvent)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         start()
     }
 

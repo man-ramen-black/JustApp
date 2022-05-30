@@ -14,7 +14,7 @@
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.studypopup.StudyPopupViewModel" />
+            type="com.black.code.ui.example.studypopup.StudyPopupFragmentViewModel" />
     </data>
 
     <LinearLayout
@@ -37,7 +37,7 @@
             android:paddingBottom="5dp"
             android:gravity="center_vertical"
             android:onClick="@{() -> viewModel.onItemClickContents(viewHolder.absoluteAdapterPosition)}"
-            android:text='@{TextUtils.isEmpty(data.text) ? @string/study_popup_empty_contents : Html.fromHtml(("" + data.text).replace("\n", "&lt;br/&gt;"))}'
+            android:text='@{TextUtils.isEmpty(data.text) ? @string/study_popup_list_contents_empty : Html.fromHtml(("" + data.text).replace("\n", "&lt;br/&gt;"))}'
             />
 
         <ImageButton

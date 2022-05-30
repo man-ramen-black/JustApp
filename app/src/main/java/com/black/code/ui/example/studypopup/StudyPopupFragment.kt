@@ -15,6 +15,7 @@ import com.black.code.databinding.FragmentStudyPopupBinding
 import com.black.code.dialog.EditTextDialogBuilder
 import com.black.code.model.preferences.StudyPopupPreferences
 import com.black.code.ui.example.ExampleFragment
+import com.black.code.ui.example.studypopup.popup.StudyPopupView
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import com.black.code.util.PermissionHelper
@@ -34,14 +35,14 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
     override val title: String
         get() = "StudyPopup"
 
-    private val viewModel : StudyPopupViewModel by viewModels()
+    private val viewModel : StudyPopupFragmentViewModel by viewModels()
 
     private lateinit var openDocumentLauncher : ActivityResultLauncher<Array<String>>
     private lateinit var createDocumentLauncher : ActivityResultLauncher<String>
 
     private val permissionHelper by lazy { PermissionHelper(requireActivity(), this) }
 
-    private val adapter by lazy { StudyPopupAdapter(viewModel) }
+    private val adapter by lazy { StudyPopupListAdapter(viewModel) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,31 +70,32 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
     @Suppress("UNCHECKED_CAST")
     override fun onReceivedEvent(action: String, data: Any?) {
         when (action) {
-            StudyPopupViewModel.EVENT_LOAD -> {
+            StudyPopupFragmentViewModel.EVENT_LOAD -> {
                 load()
             }
 
-            StudyPopupViewModel.EVENT_LOAD_LATEST -> {
+            StudyPopupFragmentViewModel.EVENT_LOAD_LATEST -> {
                 onOpenedDocument(data as Uri)
             }
 
-            StudyPopupViewModel.EVENT_SAVE_NEW_DOCUMENT -> {
+            StudyPopupFragmentViewModel.EVENT_SAVE_NEW_DOCUMENT -> {
                 saveNewFile()
             }
 
-            StudyPopupViewModel.EVENT_SAVE_OVERWRITE -> {
+            StudyPopupFragmentViewModel.EVENT_SAVE_OVERWRITE -> {
                 saveOverwrite()
             }
 
-            StudyPopupViewModel.EVENT_UPDATE_RECYCLER_VIEW -> {
+            StudyPopupFragmentViewModel.EVENT_UPDATE_RECYCLER_VIEW -> {
                 adapter.submitList(data as List<StudyPopupData>)
             }
 
-            StudyPopupViewModel.EVENT_EDIT_CONTENTS -> {
-                showEditDialog(data as StudyPopupViewModel.ContentsItem)
+            StudyPopupFragmentViewModel.EVENT_EDIT_CONTENTS -> {
+                showEditDialog(data as StudyPopupFragmentViewModel.ContentsItem)
             }
 
-            StudyPopupViewModel.EVENT_TOAST -> {
+
+            StudyPopupFragmentViewModel.EVENT_TOAST -> {
                 Toast.makeText(requireContext(), data?.toString() ?: "", Toast.LENGTH_SHORT).show()
             }
         }
@@ -154,7 +156,7 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
         viewModel.saveOverwrite(openedFileUri, stream)
     }
 
-    private fun showEditDialog(data: StudyPopupViewModel.ContentsItem) {
+    private fun showEditDialog(data: StudyPopupFragmentViewModel.ContentsItem) {
         EditTextDialogBuilder(requireActivity())
             .setPositiveButton("확인") { dialog, _, text ->
                 viewModel.updateItem(data.position, StudyPopupData.Contents(text))

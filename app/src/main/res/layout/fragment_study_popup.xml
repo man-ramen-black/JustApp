@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.studypopup.StudyPopupViewModel" />
+            type="com.black.code.ui.example.studypopup.StudyPopupFragmentViewModel" />
     </data>
 
     <LinearLayout

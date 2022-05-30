@@ -10,7 +10,7 @@
             type="com.black.code.ui.example.usagetimer.UsageTimerFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimer.UsageTimerViewModel" />
+            type="com.black.code.ui.example.usagetimer.UsageTimerFragmentViewModel" />
     </data>
 
     <ScrollView

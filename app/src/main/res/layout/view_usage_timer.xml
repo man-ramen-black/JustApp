@@ -5,13 +5,13 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimer.UsageTimerView.ViewModel" />
+            type="com.black.code.ui.example.usagetimer.view.UsageTimerView.ViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/background_round"
+        android:background="@drawable/background_circle"
         android:paddingLeft="12dp"
         android:paddingRight="10dp"
         android:paddingTop="8dp"
@@ -40,7 +40,7 @@
             app:layout_constraintLeft_toRightOf="@id/timer"
             app:layout_constraintRight_toRightOf="parent"
 
-            android:background="@drawable/button_dark_round"
+            android:background="@drawable/button_dark_circle"
             android:src="@drawable/ic_close"
             android:scaleType="fitCenter"
             android:onClick="@{() -> viewModel.onClickClose()}"

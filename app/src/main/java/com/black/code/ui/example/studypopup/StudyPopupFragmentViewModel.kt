@@ -18,7 +18,7 @@ import java.io.*
  * https://blog.gangnamunni.com/post/mvvm_anti_pattern/
  * [StudyPopupFragment]
  */
-open class StudyPopupViewModel : EventViewModel() {
+open class StudyPopupFragmentViewModel : EventViewModel() {
     companion object {
         const val EVENT_LOAD = "Load"
         const val EVENT_LOAD_LATEST = "LoadLatest"
