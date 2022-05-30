@@ -5,6 +5,7 @@ import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 
@@ -62,5 +63,15 @@ abstract class CustomView<T : ViewDataBinding> : FrameLayout {
 
         initialize(binding, typedArray)
         typedArray?.recycle()
+    }
+
+    @CallSuper
+    override fun onAttachedToWindow() {
+        bindVariable(binding)
+        super.onAttachedToWindow()
+    }
+
+    protected open fun bindVariable(binding: T) {
+
     }
 }

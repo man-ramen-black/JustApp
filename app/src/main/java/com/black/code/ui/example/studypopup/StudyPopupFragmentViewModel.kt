@@ -20,6 +20,7 @@ import java.io.*
  */
 open class StudyPopupFragmentViewModel : EventViewModel() {
     companion object {
+        const val EVENT_ATTACH_VIEW = "AttachView"
         const val EVENT_LOAD = "Load"
         const val EVENT_LOAD_LATEST = "LoadLatest"
         const val EVENT_SAVE_NEW_DOCUMENT = "SaveNewDocument"
@@ -61,6 +62,10 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
         }
 
         sendEvent(EVENT_LOAD_LATEST, uri)
+    }
+
+    fun onClickAttachView() {
+        sendEvent(EVENT_ATTACH_VIEW)
     }
 
     fun onClickAdd() {

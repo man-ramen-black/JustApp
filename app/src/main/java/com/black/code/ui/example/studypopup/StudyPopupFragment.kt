@@ -98,6 +98,11 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
             StudyPopupFragmentViewModel.EVENT_TOAST -> {
                 Toast.makeText(requireContext(), data?.toString() ?: "", Toast.LENGTH_SHORT).show()
             }
+
+
+            StudyPopupFragmentViewModel.EVENT_ATTACH_VIEW -> {
+                StudyPopupView(requireContext()).attachView()
+            }
         }
     }
 

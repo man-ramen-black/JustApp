@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.text.Html"/>
+        <import type="android.text.TextUtils"/>
+
+        <variable
+            name="data"
+            type="com.black.code.ui.example.studypopup.StudyPopupData.Contents" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text='@{TextUtils.isEmpty(data.text) ? @string/study_popup_pager_contents_empty : Html.fromHtml(("" + data.text).replace("\n", "&lt;br/&gt;"))}'
+            />
+    </LinearLayout>
+</layout>
