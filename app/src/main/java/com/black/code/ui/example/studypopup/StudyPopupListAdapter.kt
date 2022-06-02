@@ -6,6 +6,7 @@ import com.black.code.R
 import com.black.code.base.view.BaseListAdapter
 import com.black.code.databinding.ItemStudyPopupListContentsBinding
 import com.black.code.databinding.ItemStudyPopupListFileManagerBinding
+import com.black.code.model.database.studypopup.StudyPopupData
 
 /**
  * Created by jinhyuk.lee on 2022/05/23

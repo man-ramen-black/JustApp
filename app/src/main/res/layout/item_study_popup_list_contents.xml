@@ -6,7 +6,7 @@
 
         <variable
             name="data"
-            type="com.black.code.ui.example.studypopup.StudyPopupData.Contents" />
+            type="com.black.code.model.database.studypopup.StudyPopupData.Contents" />
 
         <variable
             name="viewHolder"
@@ -37,7 +37,7 @@
             android:paddingBottom="5dp"
             android:gravity="center_vertical"
             android:onClick="@{() -> viewModel.onItemClickContents(viewHolder.absoluteAdapterPosition)}"
-            android:text='@{TextUtils.isEmpty(data.text) ? @string/study_popup_list_contents_empty : Html.fromHtml(("" + data.text).replace("\n", "&lt;br/&gt;"))}'
+            android:text='@{TextUtils.isEmpty(data.contents) ? @string/study_popup_list_contents_empty : Html.fromHtml(("" + data.contents).replace("\n", "&lt;br/&gt;"))}'
             />
 
         <ImageButton

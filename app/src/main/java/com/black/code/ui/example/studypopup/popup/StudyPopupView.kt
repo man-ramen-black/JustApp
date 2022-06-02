@@ -9,7 +9,8 @@ import com.black.code.base.view.OverlayView
 import com.black.code.base.view.setLoopingAdapter
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.ViewStudyPopupBinding
-import com.black.code.ui.example.studypopup.StudyPopupData
+import com.black.code.model.StudyPopupModel
+import com.black.code.model.database.studypopup.StudyPopupData
 import com.black.code.util.Log
 
 /**
@@ -41,7 +42,9 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
 
     override fun bindVariable(binding: ViewStudyPopupBinding) {
         super.bindVariable(binding)
+        Log.d()
         binding.viewModel = viewModel.apply {
+            setModel(StudyPopupModel(context))
             observeEventForever(this@StudyPopupView::onReceivedEvent)
         }
         viewModel.initList()
@@ -50,7 +53,6 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         binding.pager.setLoopingAdapter(adapter)
-        Log.d("currentItem : ${binding.pager.currentItem}")
     }
 
     override fun onSetLayoutParams(windowParams: WindowManager.LayoutParams) {
@@ -63,7 +65,12 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
                 detachView()
             }
             StudyPopupViewModel.EVENT_SUBMIT_LIST -> {
+                Log.d("EVENT_SUBMIT_LIST")
                 adapter.submitList(data as List<StudyPopupData.Contents>)
+            }
+            StudyPopupViewModel.EVENT_SET_CURRENT_ITEM -> {
+                Log.d("EVENT_SET_CURRENT_ITEM : $data, size : ${adapter.itemCount}")
+                viewModel.currentItem.set(data as Int)
             }
         }
     }

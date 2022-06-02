@@ -13,6 +13,8 @@ import com.black.code.R
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentStudyPopupBinding
 import com.black.code.dialog.EditTextDialogBuilder
+import com.black.code.model.StudyPopupModel
+import com.black.code.model.database.studypopup.StudyPopupData
 import com.black.code.model.preferences.StudyPopupPreferences
 import com.black.code.ui.example.ExampleFragment
 import com.black.code.ui.example.studypopup.popup.StudyPopupView
@@ -55,7 +57,7 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
 
     override fun bindVariable(binding: FragmentStudyPopupBinding) {
         binding.viewModel = viewModel.apply {
-            setPreferences(StudyPopupPreferences(requireContext()))
+            setModel(StudyPopupModel(requireContext()))
         }
         viewModel.observeEvent(this, this)
     }
@@ -91,7 +93,7 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
             }
 
             StudyPopupFragmentViewModel.EVENT_EDIT_CONTENTS -> {
-                showEditDialog(data as StudyPopupFragmentViewModel.ContentsItem)
+                showEditDialog(data as StudyPopupFragmentViewModel.IndexedContents)
             }
 
 
@@ -161,16 +163,16 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
         viewModel.saveOverwrite(openedFileUri, stream)
     }
 
-    private fun showEditDialog(data: StudyPopupFragmentViewModel.ContentsItem) {
+    private fun showEditDialog(data: StudyPopupFragmentViewModel.IndexedContents) {
         EditTextDialogBuilder(requireActivity())
             .setPositiveButton("확인") { dialog, _, text ->
-                viewModel.updateItem(data.position, StudyPopupData.Contents(text))
+                viewModel.updateItem(data.index, StudyPopupData.Contents(text))
                 dialog.dismiss()
             }
             .setNegativeButton("취소") { dialog, _, _ ->
                 dialog.dismiss()
             }
-            .setEditText(data.data.text)
+            .setEditText(data.data.contents)
             .setTitle("내용 입력")
             .show()
     }

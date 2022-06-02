@@ -13,7 +13,7 @@ https://developer.android.com/topic/libraries/data-binding/two-way
 object ViewPagerBindingAdapter {
     @BindingAdapter("currentItemSmooth")
     @JvmStatic fun setCurrentItemSmooth(view: ViewPager2, newValue: Int) {
-        Log.d("${view.currentItem} : $newValue")
+        Log.d("${view.currentItem} : $newValue, size : ${view.adapter?.itemCount}")
         // Important to break potential infinite loops.
         if (view.currentItem != newValue) {
             view.setCurrentItem(newValue, true)

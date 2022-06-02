@@ -137,7 +137,7 @@ object Log {
     private fun splitLog(log: String): List<String> {
         val list = ArrayList<String>()
         if (log.isEmpty()) {
-            return list
+            return listOf("")
         }
 
         for (i in 0 .. log.length / LOG_SPLIT_LENGTH) {

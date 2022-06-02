@@ -5,7 +5,7 @@ import androidx.databinding.ViewDataBinding
 import com.black.code.R
 import com.black.code.base.view.LoopingPagerAdapter
 import com.black.code.databinding.ItemStudyPopupPagerContentsBinding
-import com.black.code.ui.example.studypopup.StudyPopupData
+import com.black.code.model.database.studypopup.StudyPopupData
 
 /**
  * Created by jinhyuk.lee on 2022/05/24

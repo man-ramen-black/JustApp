@@ -1,14 +1,15 @@
 package com.black.code.ui.example.studypopup
 
 import android.net.Uri
-import android.text.Html
 import android.util.Xml
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.black.code.base.viewmodel.EventViewModel
-import com.black.code.model.preferences.StudyPopupPreferences
-import com.black.code.ui.example.recyclerview.RecyclerViewData
+import com.black.code.model.StudyPopupModel
+import com.black.code.model.database.studypopup.StudyPopupData
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
+import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.io.*
@@ -34,20 +35,21 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
     val path = MutableLiveData("")
     var openedFileUri : Uri? = null
     private val list = ArrayList<StudyPopupData>()
-    private var preferences : StudyPopupPreferences? = null
+    private var model: StudyPopupModel? = null
 
     init {
         initList()
         updateRecyclerView()
     }
 
-    fun setPreferences(preferences: StudyPopupPreferences) {
-        this.preferences = preferences
+    fun setModel(model: StudyPopupModel) {
+        this.model = model
     }
+
 
     private fun initList() {
         list.clear()
-        list.add(StudyPopupData.FileManager())
+        list.add(StudyPopupData.FileManager)
     }
 
     fun loadLatestFile() {
@@ -56,7 +58,7 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
             return
         }
 
-        val uri = preferences?.loadLatestUri() ?: run {
+        val uri = model?.loadLatestUri() ?: run {
             Log.w("LatestFile is null")
             return
         }
@@ -98,7 +100,7 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
                 }
 
                 startTag("", "contents")
-                text(element.text)
+                text(element.contents)
                 endTag("", "contents")
             }
             endDocument()
@@ -135,7 +137,7 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
             }
 
             openedFileUri = uri
-            preferences?.saveLatestUri(uri)
+            model?.saveLatestUri(uri)
             sendEvent(EVENT_TOAST, "Loaded")
         } catch (e: XmlPullParserException) {
             e.printStackTrace()
@@ -161,20 +163,23 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
             return
         }
 
-        try {
-            FileUtil.write(stream) {
-                it.write(text.value)
+        viewModelScope.launch {
+            try {
+                FileUtil.write(stream) {
+                    it.write(text.value)
+                }
+                openedFileUri = uri
+                model?.saveLatestUri(uri)
+                model?.save(getContentsList())
+                sendEvent(EVENT_TOAST, "Saved")
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-            openedFileUri = uri
-            preferences?.saveLatestUri(uri)
-            sendEvent(EVENT_TOAST, "Saved")
-        } catch (e: IOException) {
-            e.printStackTrace()
         }
     }
 
     fun onItemClickContents(position: Int) {
-        sendEvent(EVENT_EDIT_CONTENTS, ContentsItem(position, list[position] as StudyPopupData.Contents))
+        sendEvent(EVENT_EDIT_CONTENTS, IndexedContents(position, list[position] as StudyPopupData.Contents))
     }
 
     fun onItemClickDelete(position: Int) {
@@ -191,5 +196,15 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
         sendEvent(EVENT_UPDATE_RECYCLER_VIEW, list)
     }
 
-    data class ContentsItem(val position: Int, val data: StudyPopupData.Contents)
+    private fun getContentsList() : List<StudyPopupData.Contents> {
+        val contentsList = ArrayList<StudyPopupData.Contents>()
+        list.forEach {
+            if (it is StudyPopupData.Contents) {
+                contentsList.add(it)
+            }
+        }
+        return contentsList
+    }
+
+    data class IndexedContents(val index: Int, val data: StudyPopupData.Contents)
 }

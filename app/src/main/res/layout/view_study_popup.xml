@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
+        <import type="android.view.View"/>
         <variable
             name="viewModel"
             type="com.black.code.ui.example.studypopup.popup.StudyPopupViewModel" />
@@ -33,7 +34,22 @@
             app:layout_constraintLeft_toLeftOf="@id/background"
             app:layout_constraintBottom_toTopOf="@id/prev"
             app:layout_constraintRight_toRightOf="@id/background"
-            currentItemSmooth="@={viewModel.currentItem}"
+            currentItem="@={viewModel.currentItem}"
+            currentItemSmooth="@={viewModel.currentItemSmooth}"
+            android:visibility="@{viewModel.isProgress ? View.INVISIBLE : View.VISIBLE}"
+            />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/pager"
+            app:layout_constraintLeft_toLeftOf="@id/pager"
+            app:layout_constraintBottom_toBottomOf="@id/pager"
+            app:layout_constraintRight_toRightOf="@id/pager"
+            app:showAnimationBehavior="inward"
+            app:hideAnimationBehavior="inward"
+            android:indeterminate="true"
+            android:visibility="@{viewModel.isProgress ? View.VISIBLE : View.GONE}"
             />
 
         <ImageButton

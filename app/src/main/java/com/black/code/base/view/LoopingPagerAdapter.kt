@@ -55,8 +55,6 @@ fun <DATA> ViewPager2.setLoopingAdapter(adapter: LoopingPagerAdapter<DATA>) {
             }
         }
     })
-    Log.d("Adjust initial position, itemCount : ${adapter.itemCount}")
-    this.setCurrentItem(LoopingPagerAdapter.INITIAL_POSITION, false)
 }
 
 fun ViewPager2.setCurrentItemReal(item: Int, smoothScroll: Boolean) {
