@@ -7,7 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import com.black.code.service.ForegroundService
-import com.black.code.ui.example.usagetimer.UsageTimerManager
+import com.black.code.ui.example.usagetimer.UsageTimerGlobal
 import com.black.code.util.Log
 
 class NotificationActionReceiver : BroadcastReceiver() {
@@ -25,7 +25,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     private val interfaces = listOf<Interface>(
-        UsageTimerManager
+        UsageTimerGlobal
     )
 
     override fun onReceive(context: Context?, intent: Intent?) {

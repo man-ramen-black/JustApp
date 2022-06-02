@@ -2,7 +2,9 @@ package com.black.code.ui.example.usagetimer
 
 import android.content.Context
 import android.content.Intent
+import android.view.ContextThemeWrapper
 import android.widget.Toast
+import com.black.code.R
 import com.black.code.broadcast.NotificationActionReceiver
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.UsageTimerModel
@@ -16,43 +18,15 @@ import java.lang.ref.WeakReference
  * ForegroundService, ScreenReceiver에서 UsageTimer 동작 구현
  * Created by jinhyuk.lee on 2022/04/29
  **/
-object UsageTimerManager : ForegroundService.Interface, ScreenReceiver.Interface, NotificationActionReceiver.Interface {
-    private const val ACTION_ATTACH = "UsageTimer.ATTACH"
-    private const val ACTION_DETACH = "UsageTimer.DETACH"
-
+object UsageTimerGlobal : ScreenReceiver.Interface, NotificationActionReceiver.Interface {
     private var usageTimerView : UsageTimerView? = null
     private var preference :  WeakReference<ForegroundServicePreference>? = null
     private var model :  WeakReference<UsageTimerModel>? = null
 
-    fun detachViewInService(context: Context) {
-        ForegroundService.start(context) {
-            it.action = ACTION_DETACH
+    fun detachView() {
+        usageTimerView ?: run {
+            Log.w("usageTimerView not attached")
         }
-    }
-
-    override fun onForegroundServiceStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
-        when(intent.action) {
-            ACTION_ATTACH -> {
-                usageTimerView = UsageTimerView(context).also {
-                    it.attachView()
-                }
-            }
-
-            ACTION_DETACH -> {
-                usageTimerView ?: run {
-                    Log.w("usageTimerView not attached")
-                }
-                usageTimerView?.detachView()
-                usageTimerView = null
-            }
-        }
-    }
-
-    override fun onForegroundServiceCreate(context: Context) {
-
-    }
-
-    override fun onForegroundServiceDestroy(context: Context) {
         usageTimerView?.detachView()
         usageTimerView = null
     }
@@ -76,13 +50,13 @@ object UsageTimerManager : ForegroundService.Interface, ScreenReceiver.Interface
             return
         }
 
-        ForegroundService.start(context) {
-            it.action = ACTION_ATTACH
+        usageTimerView = UsageTimerView(ContextThemeWrapper(context, R.style.AppTheme)).also {
+            it.attachView()
         }
     }
 
     override fun onScreenOff(context: Context, intent: Intent) {
-        detachViewInService(context)
+        detachView()
     }
 
     override fun onNotificationAction(context: Context, intent: Intent): Boolean {
@@ -94,14 +68,11 @@ object UsageTimerManager : ForegroundService.Interface, ScreenReceiver.Interface
     }
 
     private fun pauseUsageTimerInNotificationAction(context: Context) {
-        val model = this.model?.get() ?: WeakReference(UsageTimerModel(context)).let {
-            model = it
-            it.get()!!
-        }
+        val model = model?.get() ?: WeakReference(UsageTimerModel(context)).also { model = it }.get()!!
 
         val pauseDuration = model.getPauseDuration()
         model.pause(pauseDuration)
-        detachViewInService(context)
+        detachView()
 
         Toast.makeText(context, "UsageTimer paused", Toast.LENGTH_SHORT)
             .show()

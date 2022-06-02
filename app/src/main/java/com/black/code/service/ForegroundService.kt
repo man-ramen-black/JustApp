@@ -12,11 +12,9 @@ import com.black.code.broadcast.NotificationActionReceiver
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.preferences.ForegroundServicePreference
 import com.black.code.ui.SplashActivity
-import com.black.code.ui.example.usagetimer.UsageTimerManager
 import com.black.code.util.Log
 import com.black.code.util.NotificationUtil
 import com.black.code.util.PermissionHelper
-import kotlin.random.Random
 
 class ForegroundService : Service() {
     companion object {
@@ -62,8 +60,7 @@ class ForegroundService : Service() {
         }
     }
 
-    private val interfaces = listOf(
-        UsageTimerManager,
+    private val interfaces : List<Interface> = listOf(
         ScreenReceiver.ServiceInterface,
         NotificationActionReceiver.ForegroundServiceInterface
     )

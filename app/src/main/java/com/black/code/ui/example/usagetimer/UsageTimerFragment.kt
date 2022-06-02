@@ -34,7 +34,7 @@ class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(), EventOb
                     .show()
             }
             UsageTimerFragmentViewModel.EVENT_DETACH_VIEW_IN_SERVICE -> {
-                UsageTimerManager.detachViewInService(requireContext())
+                UsageTimerGlobal.detachView()
             }
         }
     }

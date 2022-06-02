@@ -9,6 +9,7 @@ import com.black.code.model.StudyPopupModel
 import com.black.code.model.database.studypopup.StudyPopupData
 import com.black.code.util.Log
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * [StudyPopupView]
@@ -20,6 +21,7 @@ class StudyPopupViewModel : EventViewModel() {
         const val EVENT_CLOSE = "Close"
         const val EVENT_SUBMIT_LIST = "SubmitList"
         const val EVENT_SET_CURRENT_ITEM = "SetCurrentItem"
+        const val EVENT_TOAST = "Toast"
     }
 
     val isProgress = ObservableField(true)
@@ -38,7 +40,7 @@ class StudyPopupViewModel : EventViewModel() {
             isProgress.set(true)
 
             val contentList = model?.load() ?: return@launch
-            list.addAll(contentList)
+            list.addAll(contentList.shuffled(Random(System.currentTimeMillis())))
             isProgress.set(false)
             submitList()
             // submitList 시점과 맞추기 위해 sendEvent로 currentItem 설정
@@ -60,6 +62,10 @@ class StudyPopupViewModel : EventViewModel() {
         Log.d("${currentItemSmooth.get()}")
         val value = currentItemSmooth.get() ?: return
         currentItemSmooth.set(value + 1)
+    }
+
+    fun onClickOutside() {
+        onClickClose()
     }
 
     private fun submitList() {

@@ -12,6 +12,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:onClick="@{() -> viewModel.onClickOutside()}"
         >
 
         <View
@@ -39,15 +40,13 @@
             android:visibility="@{viewModel.isProgress ? View.INVISIBLE : View.VISIBLE}"
             />
 
-        <com.google.android.material.progressindicator.CircularProgressIndicator
+        <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintTop_toTopOf="@id/pager"
             app:layout_constraintLeft_toLeftOf="@id/pager"
             app:layout_constraintBottom_toBottomOf="@id/pager"
             app:layout_constraintRight_toRightOf="@id/pager"
-            app:showAnimationBehavior="inward"
-            app:hideAnimationBehavior="inward"
             android:indeterminate="true"
             android:visibility="@{viewModel.isProgress ? View.VISIBLE : View.GONE}"
             />

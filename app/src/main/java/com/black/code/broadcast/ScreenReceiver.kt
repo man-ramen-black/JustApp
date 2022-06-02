@@ -5,7 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.black.code.service.ForegroundService
-import com.black.code.ui.example.usagetimer.UsageTimerManager
+import com.black.code.ui.example.studypopup.StudyPopupGlobal
+import com.black.code.ui.example.usagetimer.UsageTimerGlobal
 import com.black.code.util.Log
 
 class ScreenReceiver : BroadcastReceiver() {
@@ -51,8 +52,9 @@ class ScreenReceiver : BroadcastReceiver() {
         }
     }
 
-    private val interfaces = listOf<Interface>(
-        UsageTimerManager
+    private val interfaces : List<Interface> = listOf(
+        UsageTimerGlobal,
+        StudyPopupGlobal
     )
 
     override fun onReceive(context: Context?, intent: Intent?) {

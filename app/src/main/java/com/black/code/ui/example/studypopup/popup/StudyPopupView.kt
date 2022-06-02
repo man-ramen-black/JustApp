@@ -3,7 +3,9 @@ package com.black.code.ui.example.studypopup.popup
 import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
+import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.Toast
 import com.black.code.R
 import com.black.code.base.view.OverlayView
 import com.black.code.base.view.setLoopingAdapter
@@ -55,7 +57,9 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
         binding.pager.setLoopingAdapter(adapter)
     }
 
-    override fun onSetLayoutParams(windowParams: WindowManager.LayoutParams) {
+    override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+        windowParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+        windowParams.height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -71,6 +75,9 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
             StudyPopupViewModel.EVENT_SET_CURRENT_ITEM -> {
                 Log.d("EVENT_SET_CURRENT_ITEM : $data, size : ${adapter.itemCount}")
                 viewModel.currentItem.set(data as Int)
+            }
+            StudyPopupViewModel.EVENT_TOAST -> {
+                Toast.makeText(context, data as String, Toast.LENGTH_SHORT).show()
             }
         }
     }

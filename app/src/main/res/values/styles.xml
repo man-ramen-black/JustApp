@@ -36,6 +36,7 @@
         <item name="materialAlertDialogTheme">@style/DialogStyle</item>
         <item name="actionBarStyle">@style/ActionbarStyle</item>
         <item name="circularProgressIndicatorStyle">@style/Widget.App.CircularProgressIndicator</item>
+        <item name="progressBarStyle">@style/Widget.App.ProgressBar</item>
     </style>
 
     <style name="splashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -144,6 +145,10 @@
 
     <style name="clickableLayoutChild" parent="TextViewDefault">
         <item name="android:clickable">false</item>
+    </style>
+
+    <style name="Widget.App.ProgressBar" parent="Widget.AppCompat.ProgressBar">
+        <item name="colorPrimary">@color/colorAccent</item>
     </style>
 
     <style name="Widget.App.CircularProgressIndicator" parent="Widget.MaterialComponents.CircularProgressIndicator">
