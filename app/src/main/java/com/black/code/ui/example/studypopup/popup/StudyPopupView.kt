@@ -1,5 +1,6 @@
 package com.black.code.ui.example.studypopup.popup
 
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
@@ -58,8 +59,11 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
     }
 
     override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
-        windowParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-        windowParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+        windowParams.apply {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+            windowAnimations = android.R.style.Animation_Dialog
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
