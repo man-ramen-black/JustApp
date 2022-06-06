@@ -20,7 +20,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintBottom_toTopOf="@id/add"
-            app:layout_constraintRight_toLeftOf="@id/load"
+            app:layout_constraintRight_toLeftOf="@id/sync"
             app:layout_constraintHorizontal_chainStyle="spread"
             >
             <!-- SingleLine : inputType = "text" -->
@@ -36,17 +36,30 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <ImageButton
-            android:id="@+id/load"
+            android:id="@+id/sync"
             android:layout_width="@dimen/image_button_size"
             android:layout_height="@dimen/image_button_size"
-            android:src="@drawable/ic_load"
-            android:onClick="@{() -> viewModel.onClickLoad()}"
+            android:src="@drawable/ic_sync"
+            android:onClick="@{() -> viewModel.onClickSync()}"
             android:layout_marginLeft="5dp"
             app:layout_constraintLeft_toRightOf="@id/path"
             app:layout_constraintTop_toTopOf="@id/save"
-            app:layout_constraintRight_toLeftOf="@id/save"
+            app:layout_constraintRight_toLeftOf="@id/load"
             app:layout_constraintBottom_toBottomOf="@id/save"
             />
+
+        <ImageButton
+            android:id="@+id/load"
+            android:layout_width="@dimen/image_button_size"
+            android:layout_height="@dimen/image_button_size"
+            android:layout_marginLeft="5dp"
+            android:onClick="@{() -> viewModel.onClickLoad()}"
+            android:src="@drawable/ic_load"
+            app:layout_constraintBottom_toBottomOf="@id/save"
+            app:layout_constraintLeft_toRightOf="@id/sync"
+            app:layout_constraintRight_toLeftOf="@id/save"
+            app:layout_constraintTop_toTopOf="@id/save"
+            app:layout_constraintVertical_bias="1.0" />
 
         <ImageButton
             android:id="@+id/save"

@@ -20,6 +20,7 @@ import com.black.code.ui.example.studypopup.popup.StudyPopupView
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import com.black.code.util.PermissionHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
  * Created by jinhyuk.lee on 2022/05/22
@@ -95,14 +96,17 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
                 showEditDialog(data as StudyPopupFragmentViewModel.IndexedContents)
             }
 
-
             StudyPopupFragmentViewModel.EVENT_TOAST -> {
                 Toast.makeText(requireContext(), data?.toString() ?: "", Toast.LENGTH_SHORT).show()
             }
 
-
             StudyPopupFragmentViewModel.EVENT_ATTACH_VIEW -> {
                 StudyPopupView(requireContext()).attachView()
+            }
+
+            StudyPopupFragmentViewModel.EVENT_CONFIRM_DELETE -> {
+                android.R.drawable.ic_btn_speak_now
+                confirmDelete(data as Int)
             }
         }
     }
@@ -185,5 +189,18 @@ class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventOb
                     .show()
             }
         }
+    }
+
+    private fun confirmDelete(position: Int) {
+        MaterialAlertDialogBuilder(requireActivity())
+            .setMessage("삭제하시겠습니까?")
+            .setPositiveButton("확인") { dialog, _ ->
+                viewModel.deleteItem(position)
+                dialog.dismiss()
+            }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }

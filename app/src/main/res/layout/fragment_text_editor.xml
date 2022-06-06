@@ -71,7 +71,6 @@
             android:id="@+id/saveButton"
             android:layout_width="@dimen/image_button_size"
             android:layout_height="@dimen/image_button_size"
-            android:background="@drawable/bt_dark"
             android:onClick="@{() -> viewModel.onClickSave()}"
             android:src="@drawable/ic_save"
             app:layout_constraintBottom_toBottomOf="@id/newButton"

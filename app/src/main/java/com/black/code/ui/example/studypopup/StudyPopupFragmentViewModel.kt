@@ -29,6 +29,7 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
         const val EVENT_TOAST = "Toast"
         const val EVENT_EDIT_CONTENTS = "EditContents"
         const val EVENT_UPDATE_RECYCLER_VIEW = "UpdateRecyclerView"
+        const val EVENT_CONFIRM_DELETE = "ConfirmDelete"
     }
 
     val text = MutableLiveData("")
@@ -53,11 +54,6 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
     }
 
     fun loadLatestFile() {
-        if (!path.value.isNullOrEmpty()) {
-            Log.i("File already loaded")
-            return
-        }
-
         val uri = model?.loadLatestUri() ?: run {
             Log.w("LatestFile is null")
             return
@@ -74,6 +70,10 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
         list.add(StudyPopupData.Contents(""))
         updateRecyclerView()
         onItemClickContents(list.size - 1)
+    }
+
+    fun onClickSync() {
+        loadLatestFile()
     }
 
     fun onClickLoad() {
@@ -183,6 +183,10 @@ open class StudyPopupFragmentViewModel : EventViewModel() {
     }
 
     fun onItemClickDelete(position: Int) {
+        sendEvent(EVENT_CONFIRM_DELETE, position)
+    }
+
+    fun deleteItem(position: Int) {
         list.removeAt(position)
         updateRecyclerView()
     }
