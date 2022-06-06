@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.View
 import com.black.code.R
 import com.black.code.databinding.FragmentAlarmBinding
+import com.black.code.ui.example.ExampleFragment
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -12,7 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class AlarmFragment : com.black.code.ui.example.ExampleFragment<FragmentAlarmBinding>() {
+class AlarmFragment : ExampleFragment<FragmentAlarmBinding>() {
     override val title: String = "Alarm"
     override val layoutResId: Int = R.layout.fragment_alarm
 

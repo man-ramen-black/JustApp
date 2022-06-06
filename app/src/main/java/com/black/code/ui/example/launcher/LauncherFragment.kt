@@ -5,9 +5,10 @@ import android.view.View
 import com.black.code.R
 import com.black.code.ui.example.launcher.internal.LauncherActivity
 import com.black.code.databinding.FragmentLauncherBinding
+import com.black.code.ui.example.ExampleFragment
 
 
-class LauncherFragment : com.black.code.ui.example.ExampleFragment<FragmentLauncherBinding>() {
+class LauncherFragment : ExampleFragment<FragmentLauncherBinding>() {
     override val title: String = "Launcher"
     override val layoutResId: Int = R.layout.fragment_launcher
 

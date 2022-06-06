@@ -11,12 +11,13 @@ import com.black.code.R
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentTextEditorBinding
 import com.black.code.model.preferences.TextEditorPreferences
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import com.black.code.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-class TextEditorFragment : com.black.code.ui.example.ExampleFragment<FragmentTextEditorBinding>(), EventObserver {
+class TextEditorFragment : ExampleFragment<FragmentTextEditorBinding>(), EventObserver {
 
     companion object {
         private val PERMISSIONS = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)

@@ -2,6 +2,9 @@ package com.black.code.ui
 
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.navigation.findNavController
+import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.setupActionBarWithNavController
 import com.black.code.R
 import com.black.code.base.component.BaseActivity
 import com.black.code.databinding.ActivityMainBinding
@@ -22,21 +25,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        supportFragmentManager.beginTransaction()
-            .replace(binding.fragmentContainer.id,
-                com.black.code.ui.example.ExampleListFragment()
-            )
-            .commit()
-
-        // 프래그먼트 이동 시 액션바 백버튼 활성화
-        supportFragmentManager.addOnBackStackChangedListener {
-            Log.d("backStackEntry : ${supportFragmentManager.backStackEntryCount}")
-            val actionBarBackButtonEnable = supportFragmentManager.backStackEntryCount != 0
-            supportActionBar?.setDisplayHomeAsUpEnabled(actionBarBackButtonEnable)
-        }
-
         // 앱 디버깅 시에 서비스가 실행되도록 설정
         ForegroundService.start(this, false)
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        /*
+        https://issuetracker.google.com/issues/142847973
+        onCreate 시점에는 Fragment가 아직 생성되지 않았기 때문에 findNavController가 null로 반환됨
+        onPostCreate에서 findNavController 호출하여 ActionBar 셋팅
+         */
+        setupActionBarWithNavController(findNavController(R.id.nav_host))
     }
 
     override fun bindVariable(binding: ActivityMainBinding) {

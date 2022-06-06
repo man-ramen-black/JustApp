@@ -7,9 +7,10 @@ import androidx.core.app.ActivityCompat
 import com.black.code.R
 import com.black.code.databinding.FragmentEtcBinding
 import com.black.code.ui.SplashActivity
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.util.PermissionHelper
 
-class ETCFragment : com.black.code.ui.example.ExampleFragment<FragmentEtcBinding>() {
+class ETCFragment : ExampleFragment<FragmentEtcBinding>() {
     override val title: String = "ETC"
     override val layoutResId: Int = R.layout.fragment_etc
 

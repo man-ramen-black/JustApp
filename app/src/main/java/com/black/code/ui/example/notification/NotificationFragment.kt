@@ -10,10 +10,11 @@ import androidx.fragment.app.viewModels
 import com.black.code.ui.MainActivity
 import com.black.code.R
 import com.black.code.databinding.FragmentNotificationBinding
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.util.DialogUtil
 import com.black.code.util.NotificationUtil
 
-class NotificationFragment : com.black.code.ui.example.ExampleFragment<FragmentNotificationBinding>() {
+class NotificationFragment : ExampleFragment<FragmentNotificationBinding>() {
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATION = 920725
