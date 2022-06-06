@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@{nextAlarmText}"
-                android:background="@drawable/background_border"
+                android:background="@drawable/bg_border"
                 android:padding="10dp"
                 />
 
@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@{alarmDumpText}"
-                android:background="@drawable/background_border"
+                android:background="@drawable/bg_border"
                 android:padding="10dp"
                 />
         </LinearLayout>

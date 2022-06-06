@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <!--
+    #Ripple
+    @android:id/mask를 적용하면 Shape이 실제로 노출되지 않고 Ripple만 적용된다.
+    -->
+    <item
+        android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <!-- 아래 색상은 실제로 노출되지 않고, 색상을 적용하지 않으면 Ripple이 적용되지 않음 -->
+            <solid android:color="@android:color/white"/>
+        </shape>
+    </item>
+</ripple>
