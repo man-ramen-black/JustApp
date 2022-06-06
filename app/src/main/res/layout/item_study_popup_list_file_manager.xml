@@ -44,11 +44,10 @@
             android:padding="10dp"
             android:onClick="@{() -> viewModel.onClickLoad()}"
             android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
             app:layout_constraintLeft_toRightOf="@id/path"
-            app:layout_constraintTop_toTopOf="@id/path"
+            app:layout_constraintTop_toTopOf="@id/save"
             app:layout_constraintRight_toLeftOf="@id/save"
-            app:layout_constraintBottom_toBottomOf="@id/path"
+            app:layout_constraintBottom_toBottomOf="@id/save"
             />
 
         <ImageButton
@@ -60,7 +59,7 @@
             android:padding="10dp"
             android:onClick="@{() -> viewModel.onClickSave()}"
             android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="4dp"
             app:layout_constraintLeft_toRightOf="@id/load"
             app:layout_constraintTop_toTopOf="@id/path"
             app:layout_constraintRight_toRightOf="parent"

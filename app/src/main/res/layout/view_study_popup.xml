@@ -91,8 +91,8 @@
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:padding="5dp"
-            android:layout_marginLeft="-15dp"
-            android:layout_marginBottom="-15dp"
+            android:layout_marginLeft="-17dp"
+            android:layout_marginBottom="-17dp"
             app:layout_constraintBottom_toTopOf="@id/background"
             app:layout_constraintLeft_toRightOf="@id/background"
 

@@ -14,78 +14,86 @@
         <import type="com.black.code.util.BindingConverter"/>
     </data>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/linearLayout"
         style="@style/RootLayout"
-        android:orientation="vertical"
-        >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="@style/TextViewTitle"
-            android:text="@{fragment.title}"
-            />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            >
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1">
-                <!-- SingleLine : inputType = "text" -->
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text='@={viewModel.path}'
-                    android:hint="Path"
-                    android:focusableInTouchMode="false"
-                    android:cursorVisible="false"
-                    android:inputType="text"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_add"
-                android:background="@drawable/bt_dark"
-                android:padding="10dp"
-                android:onClick="@{() -> viewModel.onClickNewFile()}"
-                android:layout_marginLeft="5dp"
-                />
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_load"
-                android:background="@drawable/bt_dark"
-                android:padding="10dp"
-                android:onClick="@{viewModel::onClickLoad}"
-                android:layout_marginLeft="5dp"
-                />
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_save"
-                android:background="@drawable/bt_dark"
-                android:padding="10dp"
-                android:onClick="@{() -> viewModel.onClickSave()}"
-                android:layout_marginLeft="5dp"
-                />
-        </LinearLayout>
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <EditText
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/editText"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:gravity="top"
             android:text="@={viewModel.text}"
-            />
-    </LinearLayout>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/path" />
+
+        <ImageButton
+            android:id="@+id/newButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:background="@drawable/bt_dark"
+            android:baselineAlignBottom="true"
+            android:onClick="@{() -> viewModel.onClickNewFile()}"
+            android:layout_marginTop="4dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_add"
+            app:layout_constraintBottom_toTopOf="@+id/editText"
+            app:layout_constraintEnd_toStartOf="@id/loadButton"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@id/path"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/loadButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="4dp"
+            android:background="@drawable/bt_dark"
+            android:onClick="@{viewModel::onClickLoad}"
+            android:padding="10dp"
+            android:src="@drawable/ic_load"
+            app:layout_constraintBottom_toBottomOf="@+id/newButton"
+            app:layout_constraintEnd_toStartOf="@id/saveButton"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@id/newButton"
+            app:layout_constraintTop_toTopOf="@+id/newButton" />
+
+        <ImageButton
+            android:id="@+id/saveButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bt_dark"
+            android:onClick="@{() -> viewModel.onClickSave()}"
+            android:padding="10dp"
+            android:src="@drawable/ic_save"
+            app:layout_constraintBottom_toBottomOf="@id/newButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/loadButton"
+            app:layout_constraintTop_toTopOf="@id/newButton" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/path"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            app:layout_constraintEnd_toStartOf="@id/newButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+            <!-- SingleLine : inputType = "text" -->
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusableInTouchMode="false"
+                android:hint="Path"
+                android:inputType="text"
+                android:text='@={viewModel.path}' />
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
