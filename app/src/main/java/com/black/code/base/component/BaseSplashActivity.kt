@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.black.code.ui.MainActivity
 import com.black.code.util.Log
 
@@ -44,6 +45,9 @@ abstract class BaseSplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(this::class.java.simpleName)
+        installSplashScreen().apply {
+            setKeepOnScreenCondition { true }
+        }
         super.onCreate(savedInstanceState)
     }
 

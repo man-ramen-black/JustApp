@@ -38,7 +38,7 @@
 
         <activity
             android:name=".ui.SplashActivity"
-            android:theme="@style/splashTheme"
+            android:theme="@style/Theme.App.Starting"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleTop"
             android:exported="true">
