@@ -26,15 +26,18 @@
         <item name="android:textColorHint">@color/textColorHint</item>
         <item name="android:textSize">15dp</item>
 
+        <item name="colorSecondary">#FF0000</item>
+
         <item name="android:textViewStyle">@style/TextViewDefault</item>
         <item name="android:editTextStyle">@style/EditTextDefault</item>
         <item name="editTextStyle">@style/EditTextDefault</item>
         <item name="textInputStyle">@style/textInputLayoutDefault</item>
-        <item name="buttonStyle">@style/buttonDefault</item>
-        <item name="android:buttonStyle">@style/buttonDefault</item>
-        <item name="materialButtonStyle">@style/buttonDefault</item>
+        <item name="buttonStyle">@style/Widget.App.Button</item>
+        <item name="android:buttonStyle">@style/Widget.App.Button</item>
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+        <item name="imageButtonStyle">@style/Widget.App.Button</item>
         <item name="materialAlertDialogTheme">@style/DialogStyle</item>
-        <item name="actionBarStyle">@style/ActionbarStyle</item>
+        <item name="actionBarStyle">@style/Widget.App.ActionBar</item>
         <item name="circularProgressIndicatorStyle">@style/Widget.App.CircularProgressIndicator</item>
         <item name="progressBarStyle">@style/Widget.App.ProgressBar</item>
     </style>
@@ -45,8 +48,14 @@
         <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 
-    <style name="buttonDefault" parent="Widget.MaterialComponents.Button">
+    <style name="Widget.App.Button" parent="Widget.AppCompat.Button">
         <item name="android:textColor">@color/textColor</item>
+        <item name="backgroundTint">@color/colorPrimary</item>
+        <item name="android:minHeight">50dp</item>
+    </style>
+
+    <style name="Widget.App.ImageButton" parent="Widget.App.Button">
+        <item name="android:padding">8dp</item>
     </style>
 
     <!--
@@ -98,10 +107,9 @@
         <item name="android:textColor">@color/textColor</item>
     </style>
 
-    <style name="ActionbarStyle" parent="Widget.MaterialComponents.ActionBar.Solid">
-        <item name="background">@color/windowBackground</item>
+    <style name="Widget.App.ActionBar" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <item name="background">@color/colorPrimary</item>
     </style>
-
 
     <style name="RootLayout">
         <item name="android:paddingLeft">20dp</item>
@@ -167,9 +175,9 @@
     Material Theme이 적용된 상태에서는 버튼의 Background를 변경할 수 없다.
     아래와 같이 style을 정의하고 AppCompat.Button에 적용 필요
     -->
-    <style name="Theme.App.Button.Borderless.White" parent="Widget.AppCompat.Button.Borderless">
+    <style name="Theme.App.Button.Borderless.White" parent="Widget.AppCompat.Button">
         <item name="android:textColor">@android:color/black</item>
-        <item name="android:background">@drawable/bt_white_square</item>
         <item name="backgroundTint">@android:color/white</item>
+        <item name="android:background">@drawable/bt_white_square</item>
     </style>
 </resources>

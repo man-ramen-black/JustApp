@@ -19,21 +19,15 @@
         style="@style/RootLayout"
         android:orientation="vertical"
         >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            style="@style/TextViewTitle"
-            android:text="@{fragment.title}"
-            />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="MVC"
             android:onClick='@{() -> viewModel.onClick("MVCActivity")}'
             />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="MVVM"
