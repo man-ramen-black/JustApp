@@ -4,7 +4,7 @@ import androidx.fragment.app.viewModels
 import com.black.code.R
 import com.black.code.databinding.FragmentRetrofitBinding
 import com.black.code.model.network.sample.NetworkSampleModel
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 
 /**
  * Created by jinhyuk.lee on 2022/05/02

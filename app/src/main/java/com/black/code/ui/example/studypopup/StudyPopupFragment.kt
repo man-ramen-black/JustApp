@@ -15,7 +15,7 @@ import com.black.code.databinding.FragmentStudyPopupBinding
 import com.black.code.dialog.EditTextDialogBuilder
 import com.black.code.model.StudyPopupModel
 import com.black.code.model.database.studypopup.StudyPopupData
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 import com.black.code.ui.example.studypopup.popup.StudyPopupView
 import com.black.code.util.FileUtil
 import com.black.code.util.Log

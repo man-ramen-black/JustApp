@@ -3,7 +3,7 @@ package com.black.code.ui.example.service
 import androidx.fragment.app.viewModels
 import com.black.code.R
 import com.black.code.databinding.FragmentServiceBinding
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 
 /**
  * ForegroundService

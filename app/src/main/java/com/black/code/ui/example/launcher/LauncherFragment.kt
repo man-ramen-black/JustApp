@@ -5,7 +5,7 @@ import android.view.View
 import com.black.code.R
 import com.black.code.ui.example.launcher.internal.LauncherActivity
 import com.black.code.databinding.FragmentLauncherBinding
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 
 
 class LauncherFragment : ExampleFragment<FragmentLauncherBinding>() {

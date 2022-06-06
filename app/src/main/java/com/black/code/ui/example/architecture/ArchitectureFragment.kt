@@ -8,7 +8,7 @@ import com.black.code.base.viewmodel.EventViewModel
 import com.black.code.ui.example.architecture.mvc.MVCActivity
 import com.black.code.ui.example.architecture.mvvm.MVVMActivity
 import com.black.code.databinding.FragmentArchitectureBinding
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 
 class ArchitectureFragment : ExampleFragment<FragmentArchitectureBinding>(), EventObserver {
     override val layoutResId: Int

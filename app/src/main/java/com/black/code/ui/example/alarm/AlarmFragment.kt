@@ -5,7 +5,7 @@ import android.content.Context
 import android.view.View
 import com.black.code.R
 import com.black.code.databinding.FragmentAlarmBinding
-import com.black.code.ui.example.ExampleFragment
+import com.black.code.base.component.ExampleFragment
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
