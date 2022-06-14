@@ -36,8 +36,7 @@ class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBindin
 
     override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
         windowParams.apply {
-            gravity = Gravity.TOP or Gravity.RIGHT
-            x = Util.dpToPx(context, 20f)
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
             y = Util.dpToPx(context, 20f)
             windowAnimations = android.R.style.Animation_Toast
         }

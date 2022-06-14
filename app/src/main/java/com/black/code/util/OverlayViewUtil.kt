@@ -48,6 +48,10 @@ object OverlayViewUtil {
             PixelFormat.TRANSLUCENT
         )
         onSetWindowParams?.invoke(layoutParams)
+        layoutParams.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+
+        Log.d("isCenter : ${layoutParams.gravity and Gravity.CENTER == Gravity.CENTER}")
+
         windowManager.addView(view, layoutParams)
     }
 
@@ -100,20 +104,44 @@ object OverlayViewUtil {
         val windowParams = view.layoutParams as? WindowManager.LayoutParams
             ?: throw ClassCastException("LayoutParams is not WindowManager.LayoutParams")
 
-        val x = if (windowParams.gravity and Gravity.RIGHT == Gravity.RIGHT) {
-            Log.d("gravity is right")
-            screenSize.x - view.width - windowParams.x
-        } else {
-            Log.d("gravity is left")
-            windowParams.x
+        val gravity = windowParams.gravity
+
+        val x = when {
+            gravity and Gravity.LEFT == Gravity.LEFT -> {
+                Log.d("gravity is left")
+                windowParams.x
+            }
+            gravity and Gravity.RIGHT == Gravity.RIGHT -> {
+                Log.d("gravity is right")
+                screenSize.x - view.width - windowParams.x
+            }
+            gravity and Gravity.CENTER_HORIZONTAL == Gravity.CENTER_HORIZONTAL -> {
+                Log.d("gravity is center horizontal")
+                screenSize.x / 2 - view.width / 2 + windowParams.x
+            }
+            else -> {
+                Log.d("gravity is unknown")
+                windowParams.x
+            }
         }
 
-        val y = if (windowParams.gravity and Gravity.BOTTOM == Gravity.BOTTOM) {
-            Log.d("gravity is bottom")
-            screenSize.y - view.height - windowParams.y
-        } else {
-            Log.d("gravity is top")
-            windowParams.y
+        val y = when {
+            gravity and Gravity.TOP == Gravity.TOP -> {
+                Log.d("gravity is top")
+                windowParams.y
+            }
+            gravity and Gravity.BOTTOM == Gravity.BOTTOM -> {
+                Log.d("gravity is bottom")
+                screenSize.y - view.height - windowParams.y
+            }
+            gravity and Gravity.CENTER_VERTICAL == Gravity.CENTER_VERTICAL -> {
+                Log.d("gravity is center vertical")
+                screenSize.y / 2 - view.height / 2 + windowParams.y
+            }
+            else -> {
+                Log.d("gravity is unknown")
+                windowParams.y
+            }
         }
         return Point(x, y)
     }
