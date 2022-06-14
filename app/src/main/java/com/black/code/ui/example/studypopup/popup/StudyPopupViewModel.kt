@@ -38,11 +38,13 @@ class StudyPopupViewModel : EventViewModel() {
         Log.d()
         viewModelScope.launch {
             isProgress.set(true)
-
-            val contentList = model?.load() ?: return@launch
+            val contentList = model?.load() ?: run {
+                Log.w("model is null")
+                return@launch
+            }
             list.addAll(contentList.shuffled(Random(System.currentTimeMillis())))
             isProgress.set(false)
-            submitList()
+            sendEvent(EVENT_SUBMIT_LIST, list)
             // submitList 시점과 맞추기 위해 sendEvent로 currentItem 설정
             sendEvent(EVENT_SET_CURRENT_ITEM, LoopingPagerAdapter.INITIAL_POSITION)
         }
@@ -66,9 +68,5 @@ class StudyPopupViewModel : EventViewModel() {
 
     fun onClickOutside() {
         onClickClose()
-    }
-
-    private fun submitList() {
-        sendEvent(EVENT_SUBMIT_LIST, list)
     }
 }

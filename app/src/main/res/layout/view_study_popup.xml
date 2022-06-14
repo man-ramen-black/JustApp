@@ -7,6 +7,9 @@
         <variable
             name="viewModel"
             type="com.black.code.ui.example.studypopup.popup.StudyPopupViewModel" />
+        <variable
+            name="adapter"
+            type="com.black.code.ui.example.studypopup.popup.StudyPopupPagerAdapter" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -35,6 +38,7 @@
             app:layout_constraintLeft_toLeftOf="@id/background"
             app:layout_constraintBottom_toTopOf="@id/prev"
             app:layout_constraintRight_toRightOf="@id/background"
+            adapter="@{adapter}"
             currentItem="@={viewModel.currentItem}"
             currentItemSmooth="@={viewModel.currentItemSmooth}"
             android:visibility="@{viewModel.isProgress ? View.INVISIBLE : View.VISIBLE}"

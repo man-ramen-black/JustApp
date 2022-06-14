@@ -1,6 +1,5 @@
 package com.black.code.ui.example.studypopup.popup
 
-import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.res.TypedArray
 import android.util.AttributeSet
@@ -9,7 +8,6 @@ import android.view.WindowManager
 import android.widget.Toast
 import com.black.code.R
 import com.black.code.base.view.OverlayView
-import com.black.code.base.view.setLoopingAdapter
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.ViewStudyPopupBinding
 import com.black.code.model.StudyPopupModel
@@ -50,12 +48,8 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
             setModel(StudyPopupModel(context))
             observeEventForever(this@StudyPopupView::onReceivedEvent)
         }
+        binding.adapter = adapter
         viewModel.initList()
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        binding.pager.setLoopingAdapter(adapter)
     }
 
     override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
