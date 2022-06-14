@@ -1,6 +1,5 @@
 package com.black.code.ui
 
-import android.app.Activity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -14,12 +13,9 @@ import com.black.code.util.Util
 class SplashActivity : BaseSplashActivity() {
     private val handler = Handler(Looper.getMainLooper())
 
-    override val nextActivityClass: Class<out Activity>
-        get() = MainActivity::class.java
-
     override fun onSplashStart(splash: Splash) {
         doSomething {
-            splash.complete()
+            splash.complete(MainActivity::class.java)
         }
     }
 

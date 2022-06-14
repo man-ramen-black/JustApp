@@ -7,44 +7,44 @@ object Log {
 
     private const val LOG_SPLIT_LENGTH = 3000
 
-    fun v(message: String = "") {
-        printLog(message, 'v')
+    fun v(obj: Any? = "") {
+        printLog("$obj", 'v')
     }
 
-    fun v(tag: String, message: String = "") {
-        printLog(message, 'v', tag)
+    fun v(tag: String, obj: Any?) {
+        printLog("$obj", 'v', tag)
     }
 
-    fun i(message: String = "") {
-        printLog(message, 'i')
+    fun i(obj: Any? = "") {
+        printLog("$obj", 'i')
     }
 
-    fun i(tag: String, message: String = "") {
-        printLog(message, 'w', tag)
+    fun i(tag: String, obj: Any?) {
+        printLog("$obj", 'i', tag)
     }
 
-    fun d(message: String = "") {
-        printLog(message, 'd')
+    fun d(obj: Any? = "") {
+        printLog("$obj", 'd')
     }
 
-    fun d(tag: String, message: String = "") {
-        printLog(message, 'w', tag)
+    fun d(tag: String, obj: Any?) {
+        printLog("$obj", 'd', tag)
     }
 
-    fun w(message: String = "") {
-        printLog(message, 'w')
+    fun w(obj: Any? = "") {
+        printLog("$obj", 'w')
     }
 
-    fun w(tag: String, message: String = "") {
-        printLog(message, 'w', tag)
+    fun w(tag: String, obj: Any?) {
+        printLog("$obj", 'w', tag)
     }
 
-    fun e(message: String = "") {
-        printLog(message, 'e')
+    fun e(obj: Any? = "") {
+        printLog("$obj", 'e')
     }
 
-    fun e(tag: String, message: String = "") {
-        printLog(message, 'e', tag)
+    fun e(tag: String, obj: Any?) {
+        printLog("$obj", 'e', tag)
     }
 
     private fun printLog(message: String, level: Char, tag: String? = null) {

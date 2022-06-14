@@ -10,8 +10,8 @@ import retrofit2.http.Path
  **/
 interface NetworkSampleService {
     @GET("albums")
-    fun getAlbums() : Call<ResponseBody>
+    fun getAlbums() : Call<List<NetworkSampleAlbum?>?>
 
     @GET("albums/{albumId}/photos")
-    fun getPhotos(@Path("albumId") albumId: Int) : Call<ResponseBody>
+    fun getPhotos(@Path("albumId") albumId: Int) : Call<List<NetworkSamplePhoto?>?>
 }

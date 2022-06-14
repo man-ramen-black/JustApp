@@ -1,6 +1,8 @@
 package com.black.code.base.component
 
+import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,14 +17,32 @@ import com.black.code.util.Log
 /**
  * Created by jinhyuk.lee on 2022/05/20
  **/
-abstract class BaseDialogFragment<T : ViewDataBinding>() : DialogFragment() {
+abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
     private var _binding: T? = null
     // onCreateView ~ onDestroyView까지 유효
     protected val binding get() = _binding!!
 
+    private var onDismissListener: ((DialogInterface) -> Unit)? = null
+
     protected abstract val layoutResId : Int
 
     abstract fun onBindVariable(binding: T)
+
+    open fun show(manager: FragmentManager) {
+        this.show(manager, javaClass.simpleName)
+    }
+
+    open fun setOnDismissListener(onDismiss: (DialogInterface) -> Unit) {
+        onDismissListener = onDismiss
+    }
+
+    protected open fun onBackPressed() {
+        cancel()
+    }
+
+    protected fun cancel() {
+        dialog?.cancel()
+    }
 
     @CallSuper
     override fun onAttach(context: Context) {
@@ -35,6 +55,15 @@ abstract class BaseDialogFragment<T : ViewDataBinding>() : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(javaClass.simpleName)
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        super.onCreateDialog(savedInstanceState)
+        return object: Dialog(requireActivity(), theme) {
+            override fun onBackPressed() {
+                this@BaseDialogFragment.onBackPressed()
+            }
+        }
     }
 
     /**
@@ -113,7 +142,9 @@ abstract class BaseDialogFragment<T : ViewDataBinding>() : DialogFragment() {
         Log.d(javaClass.simpleName)
     }
 
-    fun show(manager: FragmentManager) {
-        this.show(manager, javaClass.simpleName)
+    @CallSuper
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        onDismissListener?.invoke(dialog)
     }
 }
