@@ -6,8 +6,8 @@ import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.black.code.R
 import com.black.code.databinding.FragmentEtcBinding
-import com.black.code.ui.SplashActivity
 import com.black.code.base.component.ExampleFragment
+import com.black.code.ui.MainActivity
 import com.black.code.util.PermissionHelper
 
 class ETCFragment : ExampleFragment<FragmentEtcBinding>() {
@@ -29,9 +29,9 @@ class ETCFragment : ExampleFragment<FragmentEtcBinding>() {
         ActivityCompat.finishAffinity(requireActivity())
 
         val activity = requireActivity()
-        activity.startActivity(Intent(activity, SplashActivity::class.java))
+        activity.startActivity(Intent(activity, MainActivity::class.java))
         Handler(Looper.getMainLooper()).postDelayed({
-            activity.startActivity(Intent(activity, SplashActivity::class.java))
+            activity.startActivity(Intent(activity, MainActivity::class.java))
         }, 50)
     }
 

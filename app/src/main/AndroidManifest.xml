@@ -36,19 +36,6 @@
             android:usesCleartextTraffic="true"
             android:theme="@style/AppTheme">
 
-        <activity
-            android:name=".ui.SplashActivity"
-            android:theme="@style/Theme.App.Starting"
-            android:configChanges="orientation|screenSize"
-            android:launchMode="singleTop"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
         <!--
         [configChanges]
         https://developer.android.com/guide/topics/manifest/activity-element?hl=ko#config
@@ -66,10 +53,17 @@
         https://aroundck.tistory.com/63
         -->
         <activity
-                android:name="com.black.code.ui.MainActivity"
-                android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
-                android:launchMode="singleTask"
-                />
+            android:name="com.black.code.ui.MainActivity"
+            android:theme="@style/Theme.App.Starting"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
+            android:launchMode="singleTop"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
         <activity android:name=".ui.example.launcher.internal.LauncherActivity"
             android:theme="@style/Launcher"
@@ -104,5 +98,20 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
             </intent-filter>
         </receiver>
+
+        <!--*********************************************-->
+        <!-- Shortcut -->
+        <!--*********************************************-->
+        <activity android:name=".shortcut.MemoShortcutActivity"
+            android:label="@string/shortcut_memo_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <!--*********************************************-->
+        <!-- Shortcut -->
+        <!--*********************************************-->
     </application>
 </manifest>

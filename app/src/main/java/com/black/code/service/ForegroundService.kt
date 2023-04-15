@@ -11,7 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.black.code.broadcast.NotificationActionReceiver
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.preferences.ForegroundServicePreference
-import com.black.code.ui.SplashActivity
+import com.black.code.ui.MainActivity
 import com.black.code.util.Log
 import com.black.code.util.NotificationUtil
 import com.black.code.util.PermissionHelper
@@ -106,7 +106,7 @@ class ForegroundService : Service() {
             } else {
                 PendingIntent.FLAG_CANCEL_CURRENT
             }
-            it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, SplashActivity::class.java), flags))
+            it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
             it.addAction(NotificationCompat.Action(0, "PauseTimer", NotificationActionReceiver.getNotificationActionPendingIntent(this, NotificationActionReceiver.ACTION_PAUSE_USAGE_TIMER)))
         }
         startForeground(NOTIFICATION_ID, notification)

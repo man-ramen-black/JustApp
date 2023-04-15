@@ -27,6 +27,12 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
             lifecycleOwner = this@BaseActivity
         }
         bindVariable(binding)
+        onNewIntent(intent)
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        Log.d(javaClass.simpleName)
     }
 
     @CallSuper
