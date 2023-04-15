@@ -7,15 +7,22 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.black.code"
         minSdk 21
-        targetSdk 30
+        targetSdk 33
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        /*
+        #buildConfigField #AndroidManifest #Manifest
+        https://developer.android.com/studio/build/gradle-tips?hl=ko#share-custom-fields-and-resource-values-with-your-app-code
+        https://stackoverflow.com/questions/28954071/how-can-i-access-a-buildconfig-value-in-my-androidmanifest-xml-file
+         */
+        buildConfigField "long", "SAMPLE_APP_ID", "1234"
     }
 
     buildTypes {
