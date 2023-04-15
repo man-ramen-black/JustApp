@@ -47,7 +47,8 @@ class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
                 navController?.run {
                     for (node in graph.nodes.valueIterator()) {
                         Log.d("label : ${node.label}")
-                        if (node.label?.contentEquals(path, true) == true) {
+                        if (currentDestination?.id != node.id && // 이동하려는 화면이 이미 노출 중인지 체크
+                            node.label?.contentEquals(path, true) == true) {
                             Log.d("navigate!")
                             navigate(node.id)
                             break

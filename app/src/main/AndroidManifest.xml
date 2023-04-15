@@ -58,10 +58,18 @@
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
             android:launchMode="singleTop"
             android:exported="true">
+            <!-- #Android13에서는 #IntentFilter가 정확히 매칭되야지만 #startActivity가 동작-->
+            <!-- https://codechacha.com/ko/android-13-intent-matching/ -->
+            <!-- 앱 실행 -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-                <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- 바로가기 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <data android:scheme="black"/>
             </intent-filter>
         </activity>
 
