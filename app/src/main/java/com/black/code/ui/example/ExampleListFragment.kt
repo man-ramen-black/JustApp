@@ -1,7 +1,6 @@
 package com.black.code.ui.example
 
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavDestination
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.code.R
@@ -15,20 +14,6 @@ class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObs
     private val adapter by lazy { ExampleListAdapter(viewModel) }
     private val navController by lazy { findNavController() }
 
-    private val exampleFragmentIdList : List<Int> = listOf(
-        R.id.serviceFragment,
-        R.id.studyPopupFragment,
-        R.id.textEditorFragment,
-        R.id.usageTimerFragment,
-        R.id.notificationFragment,
-        R.id.recyclerViewFragment,
-        R.id.retrofitFragment,
-        R.id.alarmFragment,
-        R.id.architectureFragment,
-        R.id.launcherFragment,
-        R.id.etcFragment,
-    )
-
     override val layoutResId: Int = R.layout.fragment_example_list
 
     override fun bindVariable(binding: FragmentExampleListBinding) {
@@ -39,27 +24,23 @@ class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObs
             adapter = this@ExampleListFragment.adapter
             addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
         }
-        viewModel.initList(toDestinationList(exampleFragmentIdList))
+        viewModel.initList()
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun onReceivedEvent(action: String, data: Any?) {
         when (action) {
             ExampleViewModel.EVENT_SUBMIT_LIST -> {
-                adapter.submitList(data as List<NavDestination>)
+                adapter.submitList(data as List<ExampleListAdapter.Item>)
             }
             ExampleViewModel.EVENT_NAVIGATE_FRAGMENT -> {
-                navigate(data as NavDestination)
+                navigate(data as Int)
             }
         }
     }
 
-    private fun navigate(destination: NavDestination) {
-        navController.navigate(destination.id)
-    }
-
-    private fun toDestinationList(destinationIdList: List<Int>) : List<NavDestination> {
-        return destinationIdList.mapNotNull { navController.findDestination(it) }
+    private fun navigate(destinationId: Int) {
+        navController.navigate(destinationId)
     }
 
 //    private fun initExampleList() {

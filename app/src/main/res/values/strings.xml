@@ -6,4 +6,16 @@
 
     <string name="shortcut_memo_id">shortcut_memo</string>
     <string name="shortcut_memo_label">메모</string>
+
+    <string name="fragment_name_service">Service</string>
+    <string name="fragment_name_study_popup">StudyPopup</string>
+    <string name="fragment_name_text_editor">TextEditor</string>
+    <string name="fragment_name_usage_timer">UsageTimer</string>
+    <string name="fragment_name_notification">Notification</string>
+    <string name="fragment_name_recycler_view">RecyclerView</string>
+    <string name="fragment_name_retrofit">Retrofit</string>
+    <string name="fragment_name_alarm">Alarm</string>
+    <string name="fragment_name_architecture">Architecture</string>
+    <string name="fragment_name_launcher">Launcher</string>
+    <string name="fragment_name_etc">ETC</string>
 </resources>

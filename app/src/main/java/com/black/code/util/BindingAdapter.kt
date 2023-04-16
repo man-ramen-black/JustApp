@@ -3,6 +3,7 @@ package com.black.code.util
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -164,5 +165,19 @@ object EditTextBindingAdapter {
     @JvmStatic
     fun setErrorResId(view: EditText, @StringRes errorResId: Int?) {
         view.error = errorResId?.takeIf { it != 0 }?.let { view.context.getString(it) }
+    }
+}
+
+/**
+ * TextView
+ */
+object TextViewBindingAdapter {
+    @BindingAdapter("textRes")
+    @JvmStatic
+    fun setTextRes(view: TextView, @StringRes stringResId: Int) {
+        if (stringResId == 0) {
+            return
+        }
+        view.setText(stringResId)
     }
 }
