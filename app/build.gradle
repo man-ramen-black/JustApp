@@ -1,7 +1,6 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    id "kotlin-android-extensions"
     id "kotlin-kapt"
     id "project-report" // 터미널에 ./gradlew app:htmlDependencyReport 입력 시 디펜던시 리포트 확인 가능 (...classpath 폴더 확인)
 }
@@ -32,8 +31,12 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     // 데이터 바인딩 활성화
@@ -44,10 +47,10 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.2' // AppCompatActivity, LiveData, ViewModel
-    implementation "androidx.activity:activity-ktx:1.4.0" // Activity by viewModels 지원
-    implementation "androidx.fragment:fragment-ktx:1.4.1" // Fragment에서 by viewModels 지원
+    implementation "androidx.activity:activity-ktx:1.7.2" // Activity by viewModels 지원
+    implementation "androidx.fragment:fragment-ktx:1.6.0" // Fragment에서 by viewModels 지원
 
-    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
