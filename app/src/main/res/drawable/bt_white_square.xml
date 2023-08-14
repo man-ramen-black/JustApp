@@ -2,7 +2,7 @@
 
 <!-- 이펙트 색상이 흰색인 경우 보이지 않으므로 별도 색상(rippleEffect) 적용 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="@color/rippleEffect">
+    android:color="@color/ripple_effect">
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@android:color/white"/>

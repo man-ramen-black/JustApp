@@ -21,8 +21,8 @@ class MVCActivity : AppCompatActivity() {
         setContentView(R.layout.activity_mvc)
 
         // 버튼을 터치했을 때 동작 설정
-        val countTextView = findViewById<TextView>(R.id.countTextView)
-        val countButton = findViewById<Button>(R.id.countButton)
+        val countTextView = findViewById<TextView>(R.id.count_text_view)
+        val countButton = findViewById<Button>(R.id.count_button)
         countButton.setOnClickListener {
             // Model을 통해 값을 증가시키고, 증가시킨 값을 텍스트뷰에 설정
             countTextView.text = model.addCount().toString()

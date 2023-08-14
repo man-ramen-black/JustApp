@@ -27,7 +27,7 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/close"
             android:layout_marginRight="7dp"
-            android:textColor="@color/textColor"
+            android:textColor="@color/text_color"
             />
 
         <ImageButton

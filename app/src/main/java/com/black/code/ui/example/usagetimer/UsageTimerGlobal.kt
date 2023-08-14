@@ -9,7 +9,6 @@ import com.black.code.broadcast.NotificationActionReceiver
 import com.black.code.broadcast.ScreenReceiver
 import com.black.code.model.UsageTimerModel
 import com.black.code.model.preferences.ForegroundServicePreference
-import com.black.code.service.ForegroundService
 import com.black.code.ui.example.usagetimer.view.UsageTimerView
 import com.black.code.util.Log
 import java.lang.ref.WeakReference
@@ -50,7 +49,7 @@ object UsageTimerGlobal : ScreenReceiver.Interface, NotificationActionReceiver.I
             return
         }
 
-        usageTimerView = UsageTimerView(ContextThemeWrapper(context, R.style.AppTheme)).also {
+        usageTimerView = UsageTimerView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
             it.attachView()
         }
     }

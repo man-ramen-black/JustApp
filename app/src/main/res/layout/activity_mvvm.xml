@@ -11,13 +11,13 @@
         android:orientation="vertical"
         android:gravity="center">
         <TextView
-            android:id="@+id/countTextView"
+            android:id="@+id/count_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="50dp"
             android:text="@{viewModel.count.toString()}"/>
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/countButton"
+            android:id="@+id/count_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="50dp"

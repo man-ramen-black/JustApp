@@ -2,16 +2,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">#000000</color>
 
-    <color name="colorAccent">#DDDDDD</color>
-    <color name="colorPrimary">#121212</color>
-    <color name="windowBackground">#000000</color>
-    <color name="rippleEffect">#7F7F7F</color>
+    <color name="color_accent">#DDDDDD</color>
+    <color name="color_primary">#121212</color>
+    <color name="window_background">#000000</color>
+    <color name="ripple_effect">#7F7F7F</color>
 
-    <color name="textColor">@color/colorAccent</color>
-    <color name="textColorSub">#BBBBBB</color>
-    <color name="textColorHint">#888888</color>
-    <color name="colorControlNormal">#888888</color>
-    <color name="editTextUnderLine">#DDDDDD</color>
+    <color name="text_color">@color/color_accent</color>
+    <color name="text_color_sub">#BBBBBB</color>
+    <color name="text_color_hint">#888888</color>
+    <color name="color_control_normal">#888888</color>
+    <color name="edit_text_under_line">#DDDDDD</color>
 
     <color name="border">#777777</color>
     <color name="divider">#999999</color>

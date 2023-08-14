@@ -11,7 +11,7 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
     private var studyPopupView : StudyPopupView? = null
 
     override fun onScreenOn(context: Context, intent: Intent) {
-        studyPopupView = StudyPopupView(ContextThemeWrapper(context, R.style.AppTheme)).also {
+        studyPopupView = StudyPopupView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
             it.attachView()
         }
     }
