@@ -15,6 +15,7 @@ import com.black.code.base.component.BaseActivity
 import com.black.code.base.component.BaseSplashActivity
 import com.black.code.databinding.ActivityMainBinding
 import com.black.code.service.ForegroundService
+import com.black.code.ui.example.ExampleListAdapter
 import com.black.code.util.Log
 import java.util.*
 
@@ -27,6 +28,7 @@ https://vagabond95.me/posts/android-pakage-structure/
 https://infinum.com/handbook/android/project-structure/package-structure
  */
 class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
+
     private var navController : NavController? = null
     private val handler = Handler(Looper.getMainLooper())
     private val navControllerQueue = LinkedList<Runnable>()

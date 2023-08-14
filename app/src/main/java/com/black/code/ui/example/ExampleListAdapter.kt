@@ -6,13 +6,14 @@ import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import androidx.databinding.ViewDataBinding
 import androidx.navigation.NavDestination
+import androidx.navigation.NavDirections
 import androidx.navigation.findNavController
 import com.black.code.R
 import com.black.code.base.view.BaseListAdapter
 import com.black.code.databinding.ItemExampleBinding
 
 class ExampleListAdapter(private val viewModel: ExampleViewModel) : BaseListAdapter<ExampleListAdapter.Item>() {
-    data class Item(@StringRes val nameResId: Int, @IdRes val fragmentId: Int, @DrawableRes val iconResId: Int)
+    data class Item(@StringRes val nameResId: Int, @DrawableRes val iconResId: Int, val navDirection: NavDirections)
 
     class ViewHolder(binding: ItemExampleBinding, private val viewModel: ExampleViewModel) : BaseViewHolder<ItemExampleBinding, Item>(binding) {
         override fun bind(item: Item) {

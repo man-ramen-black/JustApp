@@ -11,37 +11,37 @@
         android:name="com.black.code.ui.example.ExampleListFragment"
         android:label="CodeCollection" >
         <action
-            android:id="@+id/action_exampleListFragment_to_retrofitFragment"
+            android:id="@+id/action_retrofit"
             app:destination="@id/retrofit_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_usageTimerFragment"
+            android:id="@+id/action_usage_timer"
             app:destination="@id/usage_timer_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_serviceFragment"
+            android:id="@+id/action_service"
             app:destination="@id/service_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_launcherFragment"
+            android:id="@+id/action_launcher"
             app:destination="@id/launcher_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_notificationFragment"
+            android:id="@+id/action_notification"
             app:destination="@id/notification_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_architectureFragment"
+            android:id="@+id/action_architecture"
             app:destination="@id/architecture_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_textEditorFragment"
+            android:id="@+id/action_text_editor"
             app:destination="@id/text_editor_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_studyPopupFragment"
+            android:id="@+id/action_study_popup"
             app:destination="@id/study_popup_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_recyclerViewFragment"
+            android:id="@+id/action_recycler_view"
             app:destination="@id/recycler_view_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_alarmFragment"
+            android:id="@+id/action_alarm"
             app:destination="@id/alarm_fragment" />
         <action
-            android:id="@+id/action_exampleListFragment_to_etcFragment"
+            android:id="@+id/action_etc"
             app:destination="@id/etc_fragment" />
     </fragment>
 

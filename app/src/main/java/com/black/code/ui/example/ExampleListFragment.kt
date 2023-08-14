@@ -1,6 +1,7 @@
 package com.black.code.ui.example
 
 import androidx.fragment.app.viewModels
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.code.R
@@ -9,6 +10,21 @@ import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentExampleListBinding
 
 class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObserver {
+
+    // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리
+    private val itemList = listOf(
+        ExampleListAdapter.Item(R.string.fragment_name_text_editor, R.drawable.ic_editor, ExampleListFragmentDirections.actionTextEditor()),
+        ExampleListAdapter.Item(R.string.fragment_name_service, R.drawable.ic_android, ExampleListFragmentDirections.actionService()),
+        ExampleListAdapter.Item(R.string.fragment_name_study_popup, R.drawable.ic_quiz, ExampleListFragmentDirections.actionStudyPopup()),
+        ExampleListAdapter.Item(R.string.fragment_name_usage_timer, R.drawable.ic_timer, ExampleListFragmentDirections.actionUsageTimer()),
+        ExampleListAdapter.Item(R.string.fragment_name_notification, R.drawable.ic_notification, ExampleListFragmentDirections.actionNotification()),
+        ExampleListAdapter.Item(R.string.fragment_name_recycler_view, R.drawable.ic_list, ExampleListFragmentDirections.actionRecyclerView()),
+        ExampleListAdapter.Item(R.string.fragment_name_retrofit, R.drawable.ic_http, ExampleListFragmentDirections.actionRetrofit()),
+        ExampleListAdapter.Item(R.string.fragment_name_alarm, R.drawable.ic_alarm, ExampleListFragmentDirections.actionAlarm()),
+        ExampleListAdapter.Item(R.string.fragment_name_architecture, R.drawable.ic_architecture, ExampleListFragmentDirections.actionArchitecture()),
+        ExampleListAdapter.Item(R.string.fragment_name_launcher, R.drawable.ic_home, ExampleListFragmentDirections.actionLauncher()),
+        ExampleListAdapter.Item(R.string.fragment_name_etc, R.drawable.ic_etc, ExampleListFragmentDirections.actionEtc())
+    )
 
     private val viewModel : ExampleViewModel by viewModels()
     private val adapter by lazy { ExampleListAdapter(viewModel) }
@@ -24,52 +40,14 @@ class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObs
             adapter = this@ExampleListFragment.adapter
             addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
         }
-        viewModel.initList()
+        adapter.submitList(itemList)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun onReceivedEvent(action: String, data: Any?) {
         when (action) {
-            ExampleViewModel.EVENT_SUBMIT_LIST -> {
-                adapter.submitList(data as List<ExampleListAdapter.Item>)
-            }
-            ExampleViewModel.EVENT_NAVIGATE_FRAGMENT -> {
-                navigate(data as Int)
+            ExampleViewModel.EVENT_NAVIGATE_DIRECTION -> {
+                navController.navigate(data as NavDirections)
             }
         }
     }
-
-    private fun navigate(destinationId: Int) {
-        navController.navigate(destinationId)
-    }
-
-//    private fun initExampleList() {
-//        for (contentsFragment in exampleList) {
-//            /*
-//            Theme, Style 적용하여 뷰 생성
-//            val button = Button(ContextThemeWrapper(context, R.style.AppTheme), null, R.style.AppTheme)
-//             */
-//             // AppTheme이 Material 라이브러리 테마인 경우 Material View를 생성해주면 앱 테마에 맞는 뷰가 생성됨
-//            val button = MaterialButton(requireContext())
-//                .apply {
-//                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-//                    text = contentsFragment.title
-//                    setOnClickListener {
-//
-//                        /*
-//                        parentFragmentManager.beginTransaction()
-//                            // add는 Fragment가 오버랩되어 추가됨
-//                            // 일반적으로 생각하는 add를 하려면 replace -> addToBackStack으로 구현
-//                            .replace(R.id.fragmentContainer, contentsFragment)
-//                            // addToBackStack은 commit 전에 호출
-//                            // FragmentManager.BackStackEntry 등의 기능으로 백스택 추적, 관리하지 않으면 name은 null로 설정
-//                            // https://developer.android.com/training/basics/fragments/fragment-ui?hl=ko#Replace
-//                            .addToBackStack(null)
-//                            .commit()
-//                         */
-//                    }
-//                }
-//            contentsContainer.addView(button)
-//        }
-//    }
 }
