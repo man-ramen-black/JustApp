@@ -14,6 +14,7 @@ class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObs
     // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리
     private val itemList = listOf(
         ExampleListAdapter.Item(R.string.fragment_name_text_editor, R.drawable.ic_editor, ExampleListFragmentDirections.actionTextEditor()),
+        ExampleListAdapter.Item(R.string.fragment_name_black, R.drawable.ic_invisible, ExampleListFragmentDirections.actionBlack()),
         ExampleListAdapter.Item(R.string.fragment_name_service, R.drawable.ic_android, ExampleListFragmentDirections.actionService()),
         ExampleListAdapter.Item(R.string.fragment_name_study_popup, R.drawable.ic_quiz, ExampleListFragmentDirections.actionStudyPopup()),
         ExampleListAdapter.Item(R.string.fragment_name_usage_timer, R.drawable.ic_timer, ExampleListFragmentDirections.actionUsageTimer()),

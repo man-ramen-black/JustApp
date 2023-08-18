@@ -41,6 +41,9 @@
             android:id="@+id/action_alarm"
             app:destination="@id/alarm_fragment" />
         <action
+            android:id="@+id/action_black"
+            app:destination="@id/black_fragment" />
+        <action
             android:id="@+id/action_etc"
             app:destination="@id/etc_fragment" />
     </fragment>
@@ -106,6 +109,12 @@
         android:name="com.black.code.ui.example.etc.ETCFragment"
         android:label="ETC"
         tools:layout="@layout/fragment_etc" />
+
+    <fragment
+        android:id="@+id/black_fragment"
+        android:name="com.black.code.ui.example.etc.BlackFragment"
+        android:label="@string/fragment_name_black"
+        tools:layout="@layout/fragment_black" />
 
     <fragment
         android:id="@+id/notification_fragment"
