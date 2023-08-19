@@ -52,7 +52,7 @@ class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
         viewModel.initList()
     }
 
-    override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
         windowParams.apply {
             width = ViewGroup.LayoutParams.MATCH_PARENT
             height = ViewGroup.LayoutParams.MATCH_PARENT

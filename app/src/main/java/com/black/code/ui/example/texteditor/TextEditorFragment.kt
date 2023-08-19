@@ -11,7 +11,7 @@ import com.black.code.R
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentTextEditorBinding
 import com.black.code.model.preferences.TextEditorPreferences
-import com.black.code.base.component.ExampleFragment
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.util.FileUtil
 import com.black.code.util.Log
 import com.black.code.util.PermissionHelper

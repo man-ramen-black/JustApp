@@ -9,7 +9,7 @@ import com.black.code.base.view.MovableOverlayView
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentUsageTimerBinding
 import com.black.code.model.UsageTimerModel
-import com.black.code.base.component.ExampleFragment
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.ui.example.usagetimer.view.UsageTimerView
 
 class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(), EventObserver {

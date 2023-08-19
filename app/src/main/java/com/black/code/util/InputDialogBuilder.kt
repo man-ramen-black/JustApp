@@ -1,20 +1,18 @@
-package com.black.code.dialog
+package com.black.code.util
 
 import android.content.Context
 import android.content.DialogInterface
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import com.black.code.R
-import com.black.code.util.Util
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
  * Created by jinhyuk.lee on 2022/05/23
  **/
-class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(context) {
+class InputDialogBuilder(context: Context) : MaterialAlertDialogBuilder(context) {
     private val view by lazy { LayoutInflater.from(context).inflate(R.layout.view_edit_text_dialog, null) }
     private val editText by lazy { view.findViewById<EditText>(R.id.edit_text)}
 
@@ -23,7 +21,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
         return super.create()
     }
 
-    fun setEditText(text: String) : EditTextDialogBuilder {
+    fun setEditText(text: String) : InputDialogBuilder {
         editText.setText(text)
         return this
     }
@@ -31,7 +29,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setNeutralButton(
         textId: Int,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setNeutralButton(textId) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }
@@ -41,7 +39,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setNeutralButton(
         text: CharSequence?,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setNeutralButton(text) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }
@@ -51,7 +49,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setPositiveButton(
         textId: Int,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setPositiveButton(textId) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }
@@ -61,7 +59,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setPositiveButton(
         text: CharSequence?,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setPositiveButton(text) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }
@@ -71,7 +69,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setNegativeButton(
         textId: Int,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setNegativeButton(textId) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }
@@ -81,7 +79,7 @@ class EditTextDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
     fun setNegativeButton(
         text: CharSequence?,
         listener: ((dialog: DialogInterface, which: Int, text: String) -> Unit)?
-    ): EditTextDialogBuilder {
+    ): InputDialogBuilder {
         super.setNegativeButton(text) { dialog, which ->
             listener?.invoke(dialog, which, editText.text.toString())
         }

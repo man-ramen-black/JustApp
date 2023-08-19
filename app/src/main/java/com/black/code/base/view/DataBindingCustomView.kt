@@ -8,12 +8,13 @@ import android.widget.FrameLayout
 import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import com.google.android.material.button.MaterialButton
 
 // https://gun0912.tistory.com/38
-// CustomView 가이드
+// #CustomView 가이드
 // https://0391kjy.tistory.com/28
 // CustomView ViewBinding
-abstract class CustomView<T : ViewDataBinding> : FrameLayout {
+abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
 
     protected lateinit var binding : T
 

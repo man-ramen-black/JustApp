@@ -2,7 +2,7 @@ package com.black.code.ui.example.etc
 
 import androidx.appcompat.app.AppCompatActivity
 import com.black.code.R
-import com.black.code.base.component.ExampleFragment
+import com.black.code.ui.example.ExampleFragment
 import com.black.code.databinding.FragmentBlackBinding
 import com.black.code.util.Util
 

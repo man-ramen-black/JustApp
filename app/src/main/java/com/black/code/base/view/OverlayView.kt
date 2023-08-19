@@ -6,7 +6,7 @@ import android.view.WindowManager
 import androidx.databinding.ViewDataBinding
 import com.black.code.util.OverlayViewUtil
 
-abstract class OverlayView<T : ViewDataBinding> : CustomView<T> {
+abstract class OverlayView<T : ViewDataBinding> : DataBindingCustomView<T> {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
@@ -21,11 +21,11 @@ abstract class OverlayView<T : ViewDataBinding> : CustomView<T> {
         defStyleRes: Int
     ) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    abstract fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams)
+    abstract fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams)
 
     open fun attachView() {
         OverlayViewUtil.attachView(this) {
-            onSetWindowLayoutParams(it)
+            onInitializeWindowLayoutParams(it)
         }
     }
 

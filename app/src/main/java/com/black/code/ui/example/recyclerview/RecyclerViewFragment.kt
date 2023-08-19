@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.code.R
 import com.black.code.base.viewmodel.EventObserver
 import com.black.code.databinding.FragmentRecyclerviewBinding
-import com.black.code.base.component.ExampleFragment
+import com.black.code.ui.example.ExampleFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class RecyclerViewFragment : ExampleFragment<FragmentRecyclerviewBinding>(), EventObserver {

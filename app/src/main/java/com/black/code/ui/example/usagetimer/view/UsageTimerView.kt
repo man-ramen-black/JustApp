@@ -34,7 +34,7 @@ class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBindin
         isMovable = true
     }
 
-    override fun onSetWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
         windowParams.apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
             y = Util.dpToPx(context, 20f)
