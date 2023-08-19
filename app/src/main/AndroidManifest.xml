@@ -26,6 +26,9 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Android 13 이상 Notification, Toast 노출을 위한 권한 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
     <application
             android:allowBackup="true"
