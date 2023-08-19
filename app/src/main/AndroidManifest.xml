@@ -102,6 +102,20 @@
             </intent-filter>
         </receiver>
 
+        <service android:name=".ui.example.usagetimer.UsageTimerAccessibility"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="UsageTimer"
+            android:exported="true"
+            >
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/usage_timer_accessibility_config" />
+        </service>
+
         <!-- 동작하지 않음 -->
         <!-- 스토어를 통해서 업데이트하면 동작하지 않을까 추측 -->
         <receiver android:name=".broadcast.AppUpdateReceiver" android:exported="true">

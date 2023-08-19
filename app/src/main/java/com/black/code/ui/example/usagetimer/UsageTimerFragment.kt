@@ -1,5 +1,7 @@
 package com.black.code.ui.example.usagetimer
 
+import android.content.Intent
+import android.provider.Settings
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import com.black.code.R
@@ -35,6 +37,9 @@ class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(), EventOb
             }
             UsageTimerFragmentViewModel.EVENT_DETACH_VIEW_IN_SERVICE -> {
                 UsageTimerGlobal.detachView()
+            }
+            UsageTimerFragmentViewModel.EVENT_SHOW_ACCESSIBILITY -> {
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             }
         }
     }

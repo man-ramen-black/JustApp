@@ -17,57 +17,67 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             style="@style/RootLayout"
             android:orientation="vertical"
             >
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:id="@+id/title"
                 style="@style/TextViewTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
                 android:text="@{fragment.title}"
                 />
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/show"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="show"
+                app:layout_constraintTop_toBottomOf="@id/title"
+                android:text="Show"
                 android:onClick="@{() -> viewModel.onClickShow()}"
                 />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/pause_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/show"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/save_button"
+                >
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    >
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text='@={viewModel.pauseDurationMin + ""}'
-                        android:hint="Pause duration(min)"
-                        />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="save"
-                    android:layout_marginLeft="5dp"
-                    android:onClick="@{() -> viewModel.onClickSave()}"
+                    android:text='@={viewModel.pauseDurationMin + ""}'
+                    android:hint="Pause duration(min)"
                     />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            </LinearLayout>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="@id/pause_input"
+                app:layout_constraintLeft_toRightOf="@id/pause_input"
+                app:layout_constraintBottom_toBottomOf="@id/pause_input"
+                app:layout_constraintRight_toRightOf="parent"
+                android:layout_marginLeft="10dp"
+                android:text="save"
+                android:onClick="@{() -> viewModel.onClickSave()}"
+                />
 
             <LinearLayout
+                android:id="@+id/pause_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/pause_input"
+                android:paddingTop="15dp"
+                android:paddingBottom="15dp"
                 android:orientation="horizontal"
                 android:visibility="@{viewModel.pauseRemainTime == 0L ? View.GONE : View.VISIBLE}"
                 >
@@ -85,34 +95,38 @@
                     app:millisInFuture="@{viewModel.pauseRemainTime}"
                     app:onFinish="@{() -> viewModel.onFinishTimer()}"
                     />
-
             </LinearLayout>
 
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/pause_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/pause_info"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/cancel_button"
+                android:text="Pause"
+                android:onClick="@{() -> viewModel.onClickPause()}"
+                />
 
-            <LinearLayout
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/cancel_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="@id/pause_button"
+                app:layout_constraintLeft_toRightOf="@id/pause_button"
+                app:layout_constraintRight_toRightOf="parent"
+                android:text="Cancel"
+                android:onClick="@{() -> viewModel.onClickCancelPause()}"
+                />
+
+            <Button
+                android:id="@+id/accessibility_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Pause"
-                    android:onClick="@{() -> viewModel.onClickPause()}"
-                    />
-
-                <View
-                    android:layout_width="5dp"
-                    android:layout_height="wrap_content"/>
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Cancel"
-                    android:onClick="@{() -> viewModel.onClickCancelPause()}"
-                    />
-            </LinearLayout>
-        </LinearLayout>
+                app:layout_constraintTop_toBottomOf="@id/pause_button"
+                android:text="Accessibility"
+                android:onClick="@{_->viewModel.onClickAccessibility()}"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </layout>

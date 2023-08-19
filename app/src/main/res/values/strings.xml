@@ -19,4 +19,6 @@
     <string name="fragment_name_launcher">Launcher</string>
     <string name="fragment_name_black">Black</string>
     <string name="fragment_name_etc">ETC</string>
+
+    <string name="accessibility_usage_timer_description">특정 앱에서 UsageTimer를 실행하기 위해 접근성 서비스를 활성화합니다.</string>
 </resources>
