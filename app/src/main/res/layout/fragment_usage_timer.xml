@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <import type="android.text.TextUtils"/>
@@ -18,10 +19,9 @@
         android:layout_height="match_parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            style="@style/RootLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/RootLayout"
-            android:orientation="vertical"
             >
 
             <TextView
@@ -67,9 +67,9 @@
                 app:layout_constraintBottom_toBottomOf="@id/pause_input"
                 app:layout_constraintRight_toRightOf="parent"
                 android:layout_marginLeft="10dp"
-                android:text="save"
+                android:text="Save"
                 android:onClick="@{() -> viewModel.onClickSave()}"
-                />
+                tools:ignore="RtlHardcoded" />
 
             <LinearLayout
                 android:id="@+id/pause_info"
@@ -126,6 +126,15 @@
                 app:layout_constraintTop_toBottomOf="@id/pause_button"
                 android:text="Accessibility"
                 android:onClick="@{_->viewModel.onClickAccessibility()}"
+                />
+
+            <Button
+                android:id="@+id/select_app_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/accessibility_button"
+                android:text="Select app"
+                android:onClick="@{_->viewModel.onClickSelectApp()}"
                 />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

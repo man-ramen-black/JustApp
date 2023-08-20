@@ -102,7 +102,13 @@
         android:id="@+id/usage_timer_fragment"
         android:name="com.black.code.ui.example.usagetimer.UsageTimerFragment"
         android:label="UsageTimer"
-        tools:layout="@layout/fragment_usage_timer" />
+        tools:layout="@layout/fragment_usage_timer">
+        <action
+            android:id="@+id/action_select_app"
+            app:destination="@id/select_app_dialog"
+            app:launchSingleTop="true"
+            />
+    </fragment>
 
     <fragment
         android:id="@+id/etc_fragment"
@@ -121,4 +127,8 @@
         android:name="com.black.code.ui.example.notification.NotificationFragment"
         android:label="Notification" />
 
+    <dialog
+        android:id="@+id/select_app_dialog"
+        android:name="com.black.code.ui.common.selectapp.SelectAppDialogFragment"
+        android:label="@string/select_app" />
 </navigation>

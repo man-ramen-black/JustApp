@@ -15,6 +15,7 @@ class UsageTimerFragmentViewModel : EventViewModel() {
         const val EVENT_TOAST = "Toast"
         const val EVENT_DETACH_VIEW_IN_SERVICE = "DetachViewInService"
         const val EVENT_SHOW_ACCESSIBILITY = "ShowAccessibility"
+        const val EVENT_SHOW_SELECT_APP = "ShowSelectApp"
     }
 
     val pauseRemainTime = MutableLiveData(0L)
@@ -61,6 +62,10 @@ class UsageTimerFragmentViewModel : EventViewModel() {
 
     fun onClickAccessibility() {
         sendEvent(EVENT_SHOW_ACCESSIBILITY)
+    }
+
+    fun onClickSelectApp() {
+        sendEvent(EVENT_SHOW_SELECT_APP)
     }
 
     private fun updatePauseRemainTime() {
