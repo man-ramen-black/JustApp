@@ -12,7 +12,9 @@ import androidx.fragment.app.Fragment
 import com.black.code.util.Log
 
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
-    protected var binding: T? = null
+    private var _binding: T? = null
+    // onCreateView ~ onDestroyView까지 유효
+    protected val binding get() = _binding!!
     protected abstract val layoutResId : Int
 
     abstract fun bindVariable(binding: T)
@@ -41,13 +43,13 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        _binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
-        bindVariable(binding!!)
-        return binding!!.root
+        bindVariable(binding)
+        return binding.root
     }
 
     /**
@@ -93,7 +95,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(javaClass.simpleName)
-        binding = null
+        _binding = null
     }
 
     @CallSuper
