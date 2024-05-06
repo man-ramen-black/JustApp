@@ -65,7 +65,6 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
                 R.drawable.ic_etc
             ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
 
-
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc

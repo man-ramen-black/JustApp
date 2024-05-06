@@ -15,6 +15,10 @@
             app:destination="@id/text_editor_fragment"
             app:restoreState="true"
             app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
             />
 
         <action
@@ -22,61 +26,104 @@
             app:destination="@id/black_fragment"
             app:restoreState="true"
             app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
             />
 
         <action
             android:id="@+id/action_retrofit"
             app:destination="@id/retrofit_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_usage_timer"
             app:destination="@id/usage_timer_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_service"
             app:destination="@id/service_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_launcher"
             app:destination="@id/launcher_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_notification"
             app:destination="@id/notification_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_architecture"
             app:destination="@id/architecture_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
             android:id="@+id/action_study_popup"
             app:destination="@id/study_popup_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_recycler_view"
             app:destination="@id/recycler_view_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
         <action
             android:id="@+id/action_alarm"
             app:destination="@id/alarm_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
         <action
             android:id="@+id/action_etc"
             app:destination="@id/etc_fragment"
             app:restoreState="true"
-            app:popUpToSaveState="true" />
-
+            app:popUpToSaveState="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
 
     <fragment

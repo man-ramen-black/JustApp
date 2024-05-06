@@ -21,7 +21,7 @@
             android:id="@+id/icon"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@{data.iconResId, default=@drawable/ic_android}"
+            android:src="@{data.iconResId}"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -44,7 +44,7 @@
             android:paddingBottom="5dp"
             android:gravity="center"
             android:textColor="#FFFFFF"
-            android:text='@{data.name, default="Name"}'
+            android:text='@{data.name}'
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
