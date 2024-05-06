@@ -45,7 +45,7 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
         Log.d()
         binding.viewModel = viewModel.apply {
             setModel(StudyPopupModel(context))
-            observeEventForever(this@StudyPopupView::onReceivedEvent)
+            observeEventForever(this@StudyPopupView)
         }
         binding.adapter = adapter
         viewModel.initList()
@@ -80,7 +80,7 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
     }
 
     override fun onDetachedFromWindow() {
-        viewModel.removeEventObserver()
+        viewModel.removeEventObserver(this)
         super.onDetachedFromWindow()
     }
 }

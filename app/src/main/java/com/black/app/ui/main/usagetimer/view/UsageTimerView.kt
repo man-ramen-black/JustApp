@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
+import com.black.core.util.OnClick
 import com.black.core.util.UiUtil
 
 /**
@@ -20,13 +21,9 @@ import com.black.core.util.UiUtil
  * https://developer.android.com/topic/libraries/data-binding/binding-adapters?hl=ko#specify-method
  */
 class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<ViewUsageTimerBinding>(context) {
-    override val layoutId: Int
-        get() = R.layout.view_usage_timer
 
-    override val styleableId: IntArray?
-        get() = null
-
-    private val viewModel by lazy { ViewModel() }
+    override val layoutId: Int = R.layout.view_usage_timer
+    override val styleableId: IntArray? = null
 
     override fun initialize(binding: ViewUsageTimerBinding, typedArray: TypedArray?) {
         isMovable = true
@@ -54,29 +51,11 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
 
     override fun bindVariable(binding: ViewUsageTimerBinding) {
         super.bindVariable(binding)
-        binding.viewModel = viewModel
-        viewModel.event.observeForever(this::onReceivedEvent)
+        binding.onClickClose = OnClick { detachView() }
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         start()
-    }
-
-    override fun onDetachedFromWindow() {
-        viewModel.event.removeObserver()
-        super.onDetachedFromWindow()
-    }
-
-    private fun onReceivedEvent(action: String, data: Any?) {
-        detachView()
-    }
-
-    class ViewModel {
-        val event by lazy { com.black.core.viewmodel.LiveEvent() }
-
-        fun onClickClose() {
-            event.send()
-        }
     }
 }

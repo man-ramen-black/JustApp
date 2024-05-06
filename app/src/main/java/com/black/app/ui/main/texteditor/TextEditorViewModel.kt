@@ -51,18 +51,18 @@ class TextEditorViewModel : com.black.core.viewmodel.EventViewModel() {
         if (path.value.isNullOrEmpty()) {
             return
         }
-        event.send(EVENT_CLEAR)
+        sendEvent(EVENT_CLEAR)
     }
 
     fun onClickLoad(view: View?) {
-        event.send(EVENT_LOAD)
+        sendEvent(EVENT_LOAD)
     }
 
     fun onClickSave() {
         if (path.value.isNullOrEmpty()) {
-            event.send(EVENT_SAVE_NEW_DOCUMENT)
+            sendEvent(EVENT_SAVE_NEW_DOCUMENT)
         } else {
-            event.send(EVENT_SAVE_OVERWRITE)
+            sendEvent(EVENT_SAVE_OVERWRITE)
         }
     }
 
@@ -89,7 +89,7 @@ class TextEditorViewModel : com.black.core.viewmodel.EventViewModel() {
     fun saveNewFile(uri: Uri, path: String?, stream: OutputStream?) {
         this.path.value = path ?: ""
         if (path == null) {
-            event.send(EVENT_TOAST, "saveNewFile : path == null")
+            sendEvent(EVENT_TOAST, "saveNewFile : path == null")
             return
         }
         saveOverwrite(uri, stream)
@@ -97,7 +97,7 @@ class TextEditorViewModel : com.black.core.viewmodel.EventViewModel() {
 
     fun saveOverwrite(uri: Uri, stream: OutputStream?) {
         if (stream == null) {
-            event.send(EVENT_TOAST, "save : stream == null")
+            sendEvent(EVENT_TOAST, "save : stream == null")
             return
         }
 

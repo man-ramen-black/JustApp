@@ -2,46 +2,45 @@ package com.black.core.viewmodel
 
 import androidx.annotation.MainThread
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 
-open class EventViewModel : ViewModel() {
-    @Deprecated("Use method")
-    val event by lazy { LiveEvent() }
-
-    fun sendEvent(action: String = "", data: Any? = null) {
-        event.send(action, data)
-    }
-
-    fun postEvent(action: String = "", data: Any? = null) {
-        event.post(action, data)
-    }
+open class EventViewModel : ViewModel()  {
+    private val event = LiveEvent()
 
     @MainThread
-    fun observeEvent(owner: LifecycleOwner, onEvent: (action: String, data: Any?) -> Unit) {
-        event.observe(owner, onEvent)
-    }
+    fun sendEvent(action: String = "", data: Any? = null)
+        = event.send(action, data)
+
+    /**
+     * 백그라운드 스레드에서 전송 시 사용
+     */
+    fun postEvent(action: String = "", data: Any? = null)
+        = event.post(action, data)
 
     @MainThread
-    fun observeEvent(owner: LifecycleOwner, eventObserver: EventObserver) {
-        event.observe(owner, eventObserver)
-    }
+    fun observeEvent(owner: LifecycleOwner, eventObserver: EventObserver)
+        = event.observe(owner, eventObserver)
 
     @MainThread
-    fun observeEventForever(onEvent: (action: String, data: Any?) -> Unit) {
-        event.observeForever(onEvent)
-    }
+    fun removeEventObservers(owner: LifecycleOwner)
+        = event.removeObservers(owner)
 
     @MainThread
-    fun observeEventForever(eventObserver: EventObserver) {
-        event.observeForever(eventObserver)
-    }
+    fun observeEventForever(eventObserver: EventObserver)
+        = event.observeForever(eventObserver)
 
     @MainThread
-    fun removeEventObserver() {
-        event.removeObserver()
+    fun removeEventObserver(observer: EventObserver)
+        = event.removeObserver(observer)
+
+    fun <T> LiveData<T>.observe(observer: Observer<T>) {
+        this.observeForever(observer)
+        addCloseable { this.removeObserver(observer) }
     }
 }
 
-interface EventObserver {
+fun interface EventObserver {
     fun onReceivedEvent(action: String, data: Any?)
 }

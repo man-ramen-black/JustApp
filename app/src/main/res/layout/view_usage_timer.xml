@@ -4,8 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <variable
-            name="viewModel"
-            type="com.black.app.ui.main.usagetimer.view.UsageTimerView.ViewModel" />
+            name="onClickClose"
+            type="com.black.core.util.OnClick" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -43,7 +43,7 @@
             android:background="@drawable/bt_dark_circle"
             android:src="@drawable/ic_close"
             android:scaleType="fitCenter"
-            android:onClick="@{() -> viewModel.onClickClose()}"
+            android:onClick="@{() -> onClickClose.invoke()}"
             />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

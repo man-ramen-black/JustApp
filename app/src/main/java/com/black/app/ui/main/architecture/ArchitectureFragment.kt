@@ -3,10 +3,11 @@ package com.black.app.ui.main.architecture
 import android.content.Intent
 import androidx.fragment.app.viewModels
 import com.black.app.R
-import com.black.app.ui.main.architecture.mvc.MVCActivity
-import com.black.app.ui.main.architecture.mvvm.MVVMActivity
 import com.black.app.databinding.FragmentArchitectureBinding
 import com.black.app.ui.common.base.TitleFragment
+import com.black.app.ui.main.architecture.mvc.MVCActivity
+import com.black.app.ui.main.architecture.mvvm.MVVMActivity
+import com.black.core.viewmodel.EventViewModel
 
 class ArchitectureFragment : TitleFragment<FragmentArchitectureBinding>(),
     com.black.core.viewmodel.EventObserver {
@@ -20,7 +21,7 @@ class ArchitectureFragment : TitleFragment<FragmentArchitectureBinding>(),
 
     override fun bindVariable(binding: FragmentArchitectureBinding) {
         binding.viewModel = viewModel
-        viewModel.event.observe(this, this)
+        viewModel.observeEvent(viewLifecycleOwner, this)
     }
 
     override fun onReceivedEvent(action: String, data: Any?) {
@@ -34,9 +35,9 @@ class ArchitectureFragment : TitleFragment<FragmentArchitectureBinding>(),
         }
     }
 
-    class ViewModel : com.black.core.viewmodel.EventViewModel() {
+    class ViewModel : EventViewModel() {
         fun onClick(name: String) {
-            event.send(name)
+            sendEvent(name)
         }
     }
 }

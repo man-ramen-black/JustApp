@@ -4,6 +4,7 @@ import android.util.Log
 import com.black.core.BuildConfig
 
 object Log {
+    private data class MethodInfo(val className: String, val packageName: String, val simpleName: String, val methodName: String, val lineNumber: Int)
 
     private const val LOG_SPLIT_LENGTH = 3000
 
@@ -11,8 +12,8 @@ object Log {
         printLog("$obj", 'v')
     }
 
-    fun v(tag: String, obj: Any?) {
-        printLog("$obj", 'v', tag)
+    fun v(tag: String, message: Any?) {
+        printLog("$message", 'v', tag)
     }
 
     fun i(obj: Any? = "") {
@@ -48,56 +49,11 @@ object Log {
     }
 
     private fun printLog(message: String, level: Char, tag: String? = null) {
-        // release 빌드 시에 로그 미출력
-        if (!BuildConfig.DEBUG) {
-            return
-        }
-
         val methodInfo = getMethodInfo()
         val logTag = tag ?: methodInfo.simpleName
-        val prefix = "${methodInfo.methodName}: "
+        val prefix = methodInfo.methodName + ": ".takeIf { message.isNotBlank() }.orEmpty()
         val suffix = " [${methodInfo.simpleName}.${methodInfo.methodName}() : ${methodInfo.lineNumber}]"
         printLongLog(logTag, level, message, prefix, suffix)
-    }
-
-    private fun getMethodInfo() : MethodInfo {
-        val stackTraceArr = Thread.currentThread().stackTrace
-
-        // com.netmarble.proto.util.Log 다음에 오는 stackTrace를 검색 => Log를 호출한 StackTrace 검색
-        var isStart = false
-        var calledMethod: StackTraceElement? = null
-        for (stackTrace in stackTraceArr) {
-            if (stackTrace.className == this@Log::class.java.name && !isStart) {
-                isStart = true
-                continue
-            }
-
-            if (stackTrace.className != this@Log::class.java.name && isStart) {
-                calledMethod = stackTrace
-                break
-            }
-        }
-
-        if (calledMethod == null) {
-            return MethodInfo("Unknown", "Unknown", "Unknown", "Unknown", 0)
-        }
-
-        val classSplit = calledMethod.className.split("$")
-
-        // ex. com.netmarble.proto.util.Log
-        val className = classSplit[0]
-
-        // ex. NetworkHelper.callInternal or callInternal
-        val methodName = classSplit.getOrNull(1)?.plus("$" + calledMethod.methodName)
-            ?: calledMethod.methodName
-
-        // ex.com.netmarble.proto
-        val packageName = className.split(".").subList(0, 3).joinToString(".")
-
-        // ex.Log
-        val simpleName = className.substringAfterLast(".")
-
-        return MethodInfo(className, packageName, simpleName, methodName, calledMethod.lineNumber)
     }
 
     /**
@@ -105,6 +61,11 @@ object Log {
      * 로그캣 출력 제한은 Terminal에서 "adb logcat -g" 입력 시 확인 가능
      */
     private fun printLongLog(tag: String, level: Char, longLogMessage: String, prefix: String, suffix: String) {
+        // release 빌드에서 로그 미출력
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+
         val logList: List<String> = splitLog(longLogMessage)
         logList.forEachIndexed { index, log ->
             val logMessage = when (index) {
@@ -135,11 +96,11 @@ object Log {
      * split("12345", 2) => "12", "34", "5"
      */
     private fun splitLog(log: String): List<String> {
-        val list = ArrayList<String>()
         if (log.isEmpty()) {
             return listOf("")
         }
 
+        val list = ArrayList<String>()
         for (i in 0 .. log.length / LOG_SPLIT_LENGTH) {
             val start = i * LOG_SPLIT_LENGTH
             var end = (i + 1) * LOG_SPLIT_LENGTH
@@ -149,9 +110,50 @@ object Log {
         return list
     }
 
-    private data class MethodInfo(val className: String,
-                                  val packageName: String,
-                                  val simpleName: String,
-                                  val methodName: String,
-                                  val lineNumber: Int)
+    /**
+     * Log를 호출한 클래스, 메소드 정보를 획득
+     */
+    private fun getMethodInfo() : MethodInfo {
+        val stackTraceArr = Thread.currentThread().stackTrace
+
+        // com.netmarble.nmapp.util.Log 다음에 오는 stackTrace를 검색 => Log를 호출한 StackTrace 검색
+        var isStart = false
+        var calledMethod: StackTraceElement? = null
+        for (stackTrace in stackTraceArr) {
+            if (stackTrace.className == this@Log::class.java.name && !isStart) {
+                isStart = true
+                continue
+            }
+
+            if (stackTrace.className != this@Log::class.java.name && isStart) {
+                calledMethod = stackTrace
+                break
+            }
+        }
+
+        if (calledMethod == null) {
+            return MethodInfo("Unknown", "Unknown", "Unknown", "Unknown", 0)
+        }
+
+        val classSplit = calledMethod.className.split("$").filter { it.length != 1 && it != "Companion" }
+
+        // ex. com.netmarble.nmapp.util.Log
+        val className = classSplit[0]
+
+        // ex. NetworkHelper.callInternal or callInternal
+        val methodName = classSplit.getOrNull(1)?.plus("$" + calledMethod.methodName)
+            ?: calledMethod.methodName
+
+        // ex.com.netmarble.nmapp
+        val packageName = className.split(".")
+            .takeIf { it.size >= 3 }
+            ?.subList(0, 3)
+            ?.joinToString(".")
+            ?: "Unknown"
+
+        // ex.Log
+        val simpleName = className.substringAfterLast(".")
+
+        return MethodInfo(className, packageName, simpleName, methodName, calledMethod.lineNumber)
+    }
 }
