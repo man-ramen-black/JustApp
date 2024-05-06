@@ -13,6 +13,7 @@ import androidx.databinding.InverseBindingAdapter
 import androidx.databinding.InverseBindingListener
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.black.app.view.BKCountDownTimer
 import com.black.core.util.Log
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -180,5 +181,25 @@ object TextViewBindingAdapter {
             return
         }
         view.setText(stringResId)
+    }
+}
+
+/** BKCountDownTimer */
+object BKCountDownTimerBindingAdapter {
+    @BindingAdapter("millisInFuture")
+    @JvmStatic
+    fun setMillisInFuture(view: BKCountDownTimer, millisInFuture: Long) {
+        view.millisInFuture = millisInFuture
+        if (millisInFuture == 0L) {
+            view.stop()
+        } else {
+            view.start()
+        }
+    }
+
+    @BindingAdapter("onFinish")
+    @JvmStatic
+    fun setOnFinishListener(view: BKCountDownTimer, onFinishListener: BKCountDownTimer.OnFinishListener) {
+        view.onFinishListener = onFinishListener
     }
 }

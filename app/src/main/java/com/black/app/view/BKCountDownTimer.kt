@@ -14,26 +14,6 @@ import com.black.core.util.Log
  * Created by jinhyuk.lee on 2022/05/21
  **/
 class BKCountDownTimer: AppCompatTextView {
-
-    companion object {
-        @BindingAdapter("app:millisInFuture")
-        @JvmStatic
-        fun setMillisInFuture(view: BKCountDownTimer, millisInFuture: Long) {
-            view.millisInFuture = millisInFuture
-            if (millisInFuture == 0L) {
-                view.stop()
-            } else {
-                view.start()
-            }
-        }
-
-        @BindingAdapter("onFinish")
-        @JvmStatic
-        fun setOnFinishListener(view: BKCountDownTimer, onFinishListener: OnFinishListener) {
-            view.onFinishListener = onFinishListener
-        }
-    }
-
     constructor(context: Context) : super(context) {
         initializeInternal(null)
     }

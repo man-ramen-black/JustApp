@@ -92,7 +92,7 @@
                     android:id="@+id/timer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:millisInFuture="@{viewModel.pauseRemainTime}"
+                    millisInFuture="@{viewModel.pauseRemainTime}"
                     onFinish="@{() -> viewModel.onFinishTimer()}"
                     />
             </LinearLayout>
