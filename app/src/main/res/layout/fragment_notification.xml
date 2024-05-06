@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 style="@style/clickableLayout"
-                android:onClick="@{fragment.onClickContentIntentFlag}"
+                android:onClick="@{fragment::onClickContentIntentFlag}"
                 >
                 <TextView
                     android:layout_width="match_parent"

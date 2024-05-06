@@ -27,7 +27,7 @@ class BKCountDownTimer: AppCompatTextView {
             }
         }
 
-        @BindingAdapter("app:onFinish")
+        @BindingAdapter("onFinish")
         @JvmStatic
         fun setOnFinishListener(view: BKCountDownTimer, onFinishListener: OnFinishListener) {
             view.onFinishListener = onFinishListener

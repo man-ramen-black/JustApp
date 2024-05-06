@@ -5,10 +5,6 @@
         <variable
             name="data"
             type="com.black.app.ui.MainItem" />
-
-        <variable
-            name="viewModel"
-            type="com.black.app.ui.MainFragmentViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -18,7 +14,7 @@
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
         android:background="@drawable/bt_transparent_square"
-        android:onClick="@{() -> viewModel.onItemClick(data)}"
+        android:onClick="@{() -> data.onClick.invoke()}"
         >
 
         <ImageView
@@ -48,7 +44,7 @@
             android:paddingBottom="5dp"
             android:gravity="center"
             android:textColor="#FFFFFF"
-            textRes='@{data.nameResId, default=@string/fragment_name_service}'
+            android:text='@{data.name, default="Name"}'
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
