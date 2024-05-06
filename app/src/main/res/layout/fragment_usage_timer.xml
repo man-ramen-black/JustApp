@@ -8,10 +8,10 @@
 
         <variable
             name="fragment"
-            type="com.black.app.ui.example.usagetimer.UsageTimerFragment" />
+            type="com.black.app.ui.main.usagetimer.UsageTimerFragment" />
         <variable
             name="viewModel"
-            type="com.black.app.ui.example.usagetimer.UsageTimerFragmentViewModel" />
+            type="com.black.app.ui.main.usagetimer.UsageTimerFragmentViewModel" />
     </data>
 
     <ScrollView

@@ -9,7 +9,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.black.app.R
 import com.black.app.ui.MainActivity
-import com.black.app.ui.example.texteditor.TextEditorFragment
+import com.black.app.ui.main.texteditor.TextEditorFragment
 
 /**
  * https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=kdr0923&logNo=50087667730

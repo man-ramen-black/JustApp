@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.black.app.service.ForegroundService
-import com.black.app.ui.example.studypopup.StudyPopupGlobal
-import com.black.app.ui.example.usagetimer.UsageTimerGlobal
+import com.black.app.ui.main.studypopup.StudyPopupGlobal
+import com.black.app.ui.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.Log
 
 class ScreenReceiver : BroadcastReceiver() {
