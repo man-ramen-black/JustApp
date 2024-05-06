@@ -3,14 +3,15 @@ package com.black.app.ui.example.architecture
 import android.content.Intent
 import androidx.fragment.app.viewModels
 import com.black.app.R
-import com.black.app.base.viewmodel.EventObserver
-import com.black.app.base.viewmodel.EventViewModel
+import com.black.core.viewmodel.EventObserver
+import com.black.core.viewmodel.EventViewModel
 import com.black.app.ui.example.architecture.mvc.MVCActivity
 import com.black.app.ui.example.architecture.mvvm.MVVMActivity
 import com.black.app.databinding.FragmentArchitectureBinding
 import com.black.app.ui.example.ExampleFragment
 
-class ArchitectureFragment : ExampleFragment<FragmentArchitectureBinding>(), EventObserver {
+class ArchitectureFragment : ExampleFragment<FragmentArchitectureBinding>(),
+    com.black.core.viewmodel.EventObserver {
     override val layoutResId: Int
         get() = R.layout.fragment_architecture
 
@@ -35,7 +36,7 @@ class ArchitectureFragment : ExampleFragment<FragmentArchitectureBinding>(), Eve
         }
     }
 
-    class ViewModel : EventViewModel() {
+    class ViewModel : com.black.core.viewmodel.EventViewModel() {
         fun onClick(name: String) {
             event.send(name)
         }

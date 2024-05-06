@@ -8,8 +8,8 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.black.app.R
-import com.black.app.base.view.MovableOverlayView
-import com.black.app.base.viewmodel.EventObserver
+import com.black.core.view.MovableOverlayView
+import com.black.core.viewmodel.EventObserver
 import com.black.app.databinding.FragmentUsageTimerBinding
 import com.black.app.model.UsageTimerModel
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
@@ -18,7 +18,8 @@ import com.black.app.ui.example.usagetimer.view.UsageTimerView
 import com.black.app.util.FragmentExtension.navigateSafety
 import com.google.android.material.snackbar.Snackbar
 
-class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(), EventObserver {
+class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(),
+    com.black.core.viewmodel.EventObserver {
     override val layoutResId: Int = R.layout.fragment_usage_timer
     override val title: String = "UsageTimer"
     private val viewModel : UsageTimerFragmentViewModel by viewModels()
@@ -66,10 +67,10 @@ class UsageTimerFragment : ExampleFragment<FragmentUsageTimerBinding>(), EventOb
             .apply {
                 setOnMoveListener { view, action, x, y ->
                     when(action) {
-                        MovableOverlayView.ACTION_MOVE_STARTED -> {
+                        com.black.core.view.MovableOverlayView.ACTION_MOVE_STARTED -> {
                             Toast.makeText(requireContext(), "Move start", Toast.LENGTH_SHORT).show()
                         }
-                        MovableOverlayView.ACTION_MOVE_ENDED -> {
+                        com.black.core.view.MovableOverlayView.ACTION_MOVE_ENDED -> {
                             Toast.makeText(requireContext(), "Move end", Toast.LENGTH_SHORT).show()
                         }
                     }

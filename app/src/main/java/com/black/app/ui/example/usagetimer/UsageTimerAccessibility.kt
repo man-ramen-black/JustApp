@@ -3,7 +3,7 @@ package com.black.app.ui.example.usagetimer
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
-import com.black.app.util.Log
+import com.black.core.util.Log
 
 class UsageTimerAccessibility : AccessibilityService() {
 

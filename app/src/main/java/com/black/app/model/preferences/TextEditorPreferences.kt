@@ -2,12 +2,12 @@ package com.black.app.model.preferences
 
 import android.content.Context
 import android.net.Uri
-import com.black.app.base.model.BasePreferences
+import com.black.core.model.BasePreferences
 
 /**
  * Created by jinhyuk.lee on 2022/04/11
  **/
-class TextEditorPreferences(context: Context) : BasePreferences(context, "TextEditor") {
+class TextEditorPreferences(context: Context) : com.black.core.model.BasePreferences(context, "TextEditor") {
     companion object {
         private const val KEY_LATEST_URI = "LatestUri"
     }

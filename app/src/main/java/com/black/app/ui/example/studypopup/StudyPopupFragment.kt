@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
-import com.black.app.base.viewmodel.EventObserver
 import com.black.app.databinding.FragmentStudyPopupBinding
 import com.black.app.util.InputDialogBuilder
 import com.black.app.model.StudyPopupModel
@@ -18,14 +17,15 @@ import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.ui.example.ExampleFragment
 import com.black.app.ui.example.studypopup.popup.StudyPopupView
 import com.black.app.util.FileUtil
-import com.black.app.util.Log
-import com.black.app.util.PermissionHelper
+import com.black.core.util.Log
+import com.black.core.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
  * Created by jinhyuk.lee on 2022/05/22
  **/
-class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(), EventObserver {
+class StudyPopupFragment : ExampleFragment<FragmentStudyPopupBinding>(),
+    com.black.core.viewmodel.EventObserver {
 
     companion object {
         private val PERMISSIONS = arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)

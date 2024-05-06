@@ -11,8 +11,8 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.black.app.R
-import com.black.app.base.component.BaseDialogFragment
-import com.black.app.base.viewmodel.EventObserver
+import com.black.core.component.BaseDialogFragment
+import com.black.core.viewmodel.EventObserver
 import com.black.app.databinding.DialogSelectAppBinding
 import com.black.app.util.FragmentExtension.observePopBackStackArgsWithResumed
 import com.black.app.util.FragmentExtension.setPopBackStackArgs
@@ -20,7 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>(), EventObserver {
+class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<DialogSelectAppBinding>(),
+    com.black.core.viewmodel.EventObserver {
     companion object {
         private const val KEY_PACKAGE_NAME_LIST = "packageNameList"
         /**

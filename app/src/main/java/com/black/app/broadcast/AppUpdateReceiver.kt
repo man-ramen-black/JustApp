@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.black.app.service.ForegroundService
-import com.black.app.util.Log
+import com.black.core.util.Log
 
 /**
  * 동작하지 않음

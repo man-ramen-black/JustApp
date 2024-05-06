@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.MutableLiveData
 import com.black.app.R
-import com.black.app.base.view.BaseListAdapter
+import com.black.core.view.BaseListAdapter
 import com.black.app.databinding.ItemSelectAppBinding
 
 data class SelectAppItem(val packageName: String, val appLabel: CharSequence, val appIcon: Drawable) {
@@ -13,7 +13,7 @@ data class SelectAppItem(val packageName: String, val appLabel: CharSequence, va
 }
 
 class SelectAppAdapter(private val viewModel: SelectAppViewModel)
-    : BaseListAdapter<SelectAppItem>({old, new -> old.packageName == new.packageName})
+    : com.black.core.view.BaseListAdapter<SelectAppItem>({ old, new -> old.packageName == new.packageName})
 {
     private class ViewHolder(binding: ItemSelectAppBinding, private val viewModel: SelectAppViewModel) : BaseViewHolder<ItemSelectAppBinding, SelectAppItem>(binding) {
         override fun bind(item: SelectAppItem) {

@@ -1,7 +1,6 @@
 package com.black.app.ui.example.recyclerview
 
-import com.black.app.base.viewmodel.EventViewModel
-import com.black.app.util.Util
+import com.black.core.util.Util
 import kotlin.random.Random
 
 /**
@@ -9,7 +8,7 @@ import kotlin.random.Random
  * android recyclerview livedata
  * https://gwynn.tistory.com/59
  **/
-class RecyclerViewViewModel : EventViewModel() {
+class RecyclerViewViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_SHOW_DIALOG = "ShowDialog"
         const val EVENT_SHOW_TOAST = "ShowToast"

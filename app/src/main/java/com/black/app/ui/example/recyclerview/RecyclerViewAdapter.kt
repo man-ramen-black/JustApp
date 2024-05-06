@@ -3,7 +3,7 @@ package com.black.app.ui.example.recyclerview
 import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import com.black.app.R
-import com.black.app.base.view.BaseListAdapter
+import com.black.core.view.BaseListAdapter
 import com.black.app.databinding.ItemRecyclerviewDialogBinding
 import com.black.app.databinding.ItemRecyclerviewToastBinding
 
@@ -14,7 +14,7 @@ https://class-programming.tistory.com/139
 #Viewmodels for #RecyclerView #items
 https://stackoverflow.com/questions/61364874/view-models-for-recyclerview-items
  */
-class RecyclerViewAdapter(private val viewModel: RecyclerViewViewModel) : BaseListAdapter<RecyclerViewData>() {
+class RecyclerViewAdapter(private val viewModel: RecyclerViewViewModel) : com.black.core.view.BaseListAdapter<RecyclerViewData>() {
     companion object {
         private const val VIEW_TYPE_TOAST = 1
         private const val VIEW_TYPE_DIALOG = 2

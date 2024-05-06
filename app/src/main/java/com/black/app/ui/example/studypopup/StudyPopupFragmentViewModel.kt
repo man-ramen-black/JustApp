@@ -4,11 +4,10 @@ import android.net.Uri
 import android.util.Xml
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.black.app.base.viewmodel.EventViewModel
 import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.util.FileUtil
-import com.black.app.util.Log
+import com.black.core.util.Log
 import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -19,7 +18,7 @@ import java.io.*
  * https://blog.gangnamunni.com/post/mvvm_anti_pattern/
  * [StudyPopupFragment]
  */
-open class StudyPopupFragmentViewModel : EventViewModel() {
+open class StudyPopupFragmentViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_ATTACH_VIEW = "AttachView"
         const val EVENT_LOAD = "Load"

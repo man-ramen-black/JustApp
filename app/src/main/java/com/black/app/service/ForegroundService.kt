@@ -12,9 +12,9 @@ import com.black.app.broadcast.NotificationActionReceiver
 import com.black.app.broadcast.ScreenReceiver
 import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.ui.MainActivity
-import com.black.app.util.Log
+import com.black.core.util.Log
 import com.black.app.util.NotificationUtil
-import com.black.app.util.PermissionHelper
+import com.black.core.util.PermissionHelper
 
 class ForegroundService : Service() {
     companion object {

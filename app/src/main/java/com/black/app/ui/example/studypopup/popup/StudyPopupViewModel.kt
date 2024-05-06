@@ -2,12 +2,10 @@ package com.black.app.ui.example.studypopup.popup
 
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
-import com.black.app.base.view.LoopingPagerAdapter
-import com.black.app.base.viewmodel.EventViewModel
 import com.black.app.databinding.ViewStudyPopupBinding
 import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
-import com.black.app.util.Log
+import com.black.core.util.Log
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -16,7 +14,7 @@ import kotlin.random.Random
  * [ViewStudyPopupBinding]
  * Created by jinhyuk.lee on 2022/05/24
  **/
-class StudyPopupViewModel : EventViewModel() {
+class StudyPopupViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_CLOSE = "Close"
         const val EVENT_SUBMIT_LIST = "SubmitList"
@@ -46,7 +44,7 @@ class StudyPopupViewModel : EventViewModel() {
             isProgress.set(false)
             sendEvent(EVENT_SUBMIT_LIST, list)
             // submitList 시점과 맞추기 위해 sendEvent로 currentItem 설정
-            sendEvent(EVENT_SET_CURRENT_ITEM, LoopingPagerAdapter.INITIAL_POSITION)
+            sendEvent(EVENT_SET_CURRENT_ITEM, com.black.core.view.LoopingPagerAdapter.INITIAL_POSITION)
         }
     }
 

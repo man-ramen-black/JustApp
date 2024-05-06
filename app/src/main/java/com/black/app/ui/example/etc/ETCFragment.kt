@@ -8,7 +8,7 @@ import com.black.app.R
 import com.black.app.databinding.FragmentEtcBinding
 import com.black.app.ui.example.ExampleFragment
 import com.black.app.ui.MainActivity
-import com.black.app.util.PermissionHelper
+import com.black.core.util.PermissionHelper
 
 class ETCFragment : ExampleFragment<FragmentEtcBinding>() {
     override val title: String = "ETC"

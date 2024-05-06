@@ -3,10 +3,9 @@ package com.black.app.ui.example.texteditor
 import android.net.Uri
 import android.view.View
 import androidx.lifecycle.MutableLiveData
-import com.black.app.base.viewmodel.EventViewModel
 import com.black.app.model.preferences.TextEditorPreferences
 import com.black.app.util.FileUtil
-import com.black.app.util.Log
+import com.black.core.util.Log
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -15,7 +14,7 @@ import java.io.OutputStream
  * MVVM
  * https://blog.gangnamunni.com/post/mvvm_anti_pattern/
  */
-class TextEditorViewModel : EventViewModel() {
+class TextEditorViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_LOAD = "Load"
         const val EVENT_LOAD_LATEST = "LoadLatest"

@@ -8,7 +8,7 @@ import android.content.IntentFilter
 import android.os.Build
 import com.black.app.service.ForegroundService
 import com.black.app.ui.example.usagetimer.UsageTimerGlobal
-import com.black.app.util.Log
+import com.black.core.util.Log
 
 class NotificationActionReceiver : BroadcastReceiver() {
     companion object {

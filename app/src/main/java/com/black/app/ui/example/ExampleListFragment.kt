@@ -5,11 +5,12 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
-import com.black.app.base.component.BaseFragment
-import com.black.app.base.viewmodel.EventObserver
+import com.black.core.component.BaseFragment
+import com.black.core.viewmodel.EventObserver
 import com.black.app.databinding.FragmentExampleListBinding
 
-class ExampleListFragment : BaseFragment<FragmentExampleListBinding>(), EventObserver {
+class ExampleListFragment : com.black.core.component.BaseFragment<FragmentExampleListBinding>(),
+    com.black.core.viewmodel.EventObserver {
 
     // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리
     private val itemList = listOf(

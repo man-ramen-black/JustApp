@@ -1,7 +1,7 @@
 package com.black.app.ui.example.retrofit
 
 import androidx.lifecycle.MutableLiveData
-import com.black.app.base.viewmodel.EventViewModel
+import com.black.core.viewmodel.EventViewModel
 import com.black.app.model.network.NetworkResult
 import com.black.app.model.network.sample.NetworkSampleModel
 
@@ -9,7 +9,7 @@ import com.black.app.model.network.sample.NetworkSampleModel
  * [RetrofitFragment]
  * Created by jinhyuk.lee on 2022/05/02
  **/
-class RetrofitViewModel : EventViewModel() {
+class RetrofitViewModel : com.black.core.viewmodel.EventViewModel() {
     val errorCode = MutableLiveData(0)
     val statusCode = MutableLiveData(0)
     val errorMessage = MutableLiveData("")

@@ -3,14 +3,14 @@ package com.black.app.ui.common.selectapp
 import android.text.Editable
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.black.app.base.viewmodel.EventViewModel
+import com.black.core.viewmodel.EventViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
  * [SelectAppDialogFragment]
  */
-class SelectAppViewModel : EventViewModel() {
+class SelectAppViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_APP_SELECTED = "AppSelected" // Data : List<packageName : String>
         const val EVENT_CLOSE = "Close"

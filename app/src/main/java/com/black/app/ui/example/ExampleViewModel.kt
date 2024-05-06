@@ -1,8 +1,8 @@
 package com.black.app.ui.example
 
-import com.black.app.base.viewmodel.EventViewModel
+import com.black.core.viewmodel.EventViewModel
 
-class ExampleViewModel : EventViewModel() {
+class ExampleViewModel : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_NAVIGATE_DIRECTION = "NavigateDirection"
     }

@@ -10,7 +10,7 @@ import com.black.app.broadcast.ScreenReceiver
 import com.black.app.model.UsageTimerModel
 import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.ui.example.usagetimer.view.UsageTimerView
-import com.black.app.util.Log
+import com.black.core.util.Log
 import java.lang.ref.WeakReference
 
 /**

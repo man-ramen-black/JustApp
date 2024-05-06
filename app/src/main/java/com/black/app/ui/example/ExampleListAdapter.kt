@@ -6,10 +6,10 @@ import androidx.annotation.StringRes
 import androidx.databinding.ViewDataBinding
 import androidx.navigation.NavDirections
 import com.black.app.R
-import com.black.app.base.view.BaseListAdapter
+import com.black.core.view.BaseListAdapter
 import com.black.app.databinding.ItemExampleBinding
 
-class ExampleListAdapter(private val viewModel: ExampleViewModel) : BaseListAdapter<ExampleListAdapter.Item>() {
+class ExampleListAdapter(private val viewModel: ExampleViewModel) : com.black.core.view.BaseListAdapter<ExampleListAdapter.Item>() {
     data class Item(@StringRes val nameResId: Int, @DrawableRes val iconResId: Int, val navDirection: NavDirections)
 
     class ViewHolder(binding: ItemExampleBinding, private val viewModel: ExampleViewModel) : BaseViewHolder<ItemExampleBinding, Item>(binding) {

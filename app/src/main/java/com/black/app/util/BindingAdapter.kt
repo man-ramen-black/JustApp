@@ -13,6 +13,7 @@ import androidx.databinding.InverseBindingAdapter
 import androidx.databinding.InverseBindingListener
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.black.core.util.Log
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /*

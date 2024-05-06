@@ -1,13 +1,12 @@
 package com.black.app.ui.example.service
 
 import androidx.lifecycle.MutableLiveData
-import com.black.app.base.viewmodel.EventViewModel
-import com.black.app.util.Log
+import com.black.core.util.Log
 
 /**
  * Created by jinhyuk.lee on 2022/05/07
  **/
-class ServiceViewModel : EventViewModel() {
+class ServiceViewModel : com.black.core.viewmodel.EventViewModel() {
     private var model: ServiceModel? = null
     var foregroundServiceChecked = MutableLiveData(false)
 

@@ -6,12 +6,13 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
-import com.black.app.base.viewmodel.EventObserver
+import com.black.core.viewmodel.EventObserver
 import com.black.app.databinding.FragmentRecyclerviewBinding
 import com.black.app.ui.example.ExampleFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-class RecyclerViewFragment : ExampleFragment<FragmentRecyclerviewBinding>(), EventObserver {
+class RecyclerViewFragment : ExampleFragment<FragmentRecyclerviewBinding>(),
+    com.black.core.viewmodel.EventObserver {
     override val title: String = "RecyclerView"
     override val layoutResId: Int = R.layout.fragment_recyclerview
 

@@ -5,10 +5,8 @@ import android.content.res.TypedArray
 import android.view.Gravity
 import android.view.WindowManager
 import com.black.app.R
-import com.black.app.base.view.MovableOverlayView
-import com.black.app.base.viewmodel.LiveEvent
 import com.black.app.databinding.ViewUsageTimerBinding
-import com.black.app.util.Util
+import com.black.core.util.Util
 
 /**
  * CustomView 가이드
@@ -21,7 +19,7 @@ import com.black.app.util.Util
  * BindingMethods
  * https://developer.android.com/topic/libraries/data-binding/binding-adapters?hl=ko#specify-method
  */
-class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBinding>(context) {
+class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<ViewUsageTimerBinding>(context) {
     override val layoutId: Int
         get() = R.layout.view_usage_timer
 
@@ -75,7 +73,7 @@ class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBindin
     }
 
     class ViewModel {
-        val event by lazy { LiveEvent() }
+        val event by lazy { com.black.core.viewmodel.LiveEvent() }
 
         fun onClickClose() {
             event.send()

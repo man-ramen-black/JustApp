@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import com.black.core.util.Log
 import java.io.*
 import kotlin.jvm.Throws
 

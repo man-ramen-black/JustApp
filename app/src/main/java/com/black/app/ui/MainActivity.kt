@@ -10,10 +10,9 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.black.app.R
-import com.black.app.base.component.BaseSplashActivity
 import com.black.app.databinding.ActivityMainBinding
 import com.black.app.service.ForegroundService
-import com.black.app.util.Log
+import com.black.core.util.Log
 import java.util.*
 
 /*
@@ -24,7 +23,7 @@ https://lanace.github.io/articles/right-way-on-splash/
 https://vagabond95.me/posts/android-pakage-structure/
 https://infinum.com/handbook/android/project-structure/package-structure
  */
-class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
+class MainActivity : com.black.core.component.BaseSplashActivity<ActivityMainBinding>() {
 
     private var navController : NavController? = null
     private val handler = Handler(Looper.getMainLooper())

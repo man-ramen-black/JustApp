@@ -1,12 +1,12 @@
 package com.black.app.model.preferences
 
 import android.content.Context
-import com.black.app.base.model.BasePreferences
+import com.black.core.model.BasePreferences
 
 /**
  * Created by jinhyuk.lee on 2022/05/07
  **/
-class ForegroundServicePreference(context: Context) : BasePreferences(context) {
+class ForegroundServicePreference(context: Context) : com.black.core.model.BasePreferences(context) {
     companion object {
         private const val KEY_FOREGROUND_SERVICE_ACTIVATED = "ForegroundServiceActivated"
         private const val KEY_USAGE_TIMER_PAUSE_END_TIME = "UsageTimerPauseEndTime"

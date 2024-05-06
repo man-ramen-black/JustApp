@@ -4,7 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.black.app.R
 import com.black.app.ui.example.ExampleFragment
 import com.black.app.databinding.FragmentBlackBinding
-import com.black.app.util.Util
+import com.black.core.util.Util
 
 class BlackFragment : ExampleFragment<FragmentBlackBinding>() {
     override val title: String = ""

@@ -7,8 +7,8 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.databinding.BindingAdapter
 import com.black.app.R
-import com.black.app.util.Log
-import com.black.app.util.Util
+import com.black.core.util.Log
+import com.black.core.util.Util
 
 /**
  * Created by jinhyuk.lee on 2022/05/21

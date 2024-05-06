@@ -3,7 +3,7 @@ package com.black.app.ui.example.launcher.internal
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import com.black.app.R
-import com.black.app.base.component.BaseActivity
+import com.black.core.component.BaseActivity
 import com.black.app.databinding.ActivityLauncherBinding
 
 /**
@@ -13,7 +13,7 @@ import com.black.app.databinding.ActivityLauncherBinding
  * 드래그 앤 드롭, 뷰 사이즈 조정, 위젯 추가, 앱 서랍 등등등...
  * 그리고 구글 디스커버를 앱에 탑재시키는 방법은 찾아내지 못 함..
  */
-class LauncherActivity : BaseActivity<ActivityLauncherBinding>() {
+class LauncherActivity : com.black.core.component.BaseActivity<ActivityLauncherBinding>() {
     override val layoutResId: Int = R.layout.activity_launcher
 
     override fun onCreate(savedInstanceState: Bundle?) {

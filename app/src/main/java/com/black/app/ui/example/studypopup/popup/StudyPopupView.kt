@@ -7,17 +7,16 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Toast
 import com.black.app.R
-import com.black.app.base.view.OverlayView
-import com.black.app.base.viewmodel.EventObserver
 import com.black.app.databinding.ViewStudyPopupBinding
 import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
-import com.black.app.util.Log
+import com.black.core.util.Log
 
 /**
  * Created by jinhyuk.lee on 2022/05/24
  **/
-class StudyPopupView : OverlayView<ViewStudyPopupBinding>, EventObserver {
+class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
+    com.black.core.viewmodel.EventObserver {
     constructor(context: Context) : super(context)
 
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
