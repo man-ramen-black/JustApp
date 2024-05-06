@@ -7,8 +7,8 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.databinding.BindingAdapter
 import com.black.app.R
+import com.black.core.util.DataUtil
 import com.black.core.util.Log
-import com.black.core.util.Util
 
 /**
  * Created by jinhyuk.lee on 2022/05/21
@@ -77,7 +77,7 @@ class BKCountDownTimer: AppCompatTextView {
         Log.d("millisInFuture : $millisInFuture")
         timer = object : CountDownTimer(millisInFuture, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                text = Util.milliSecondsToTimeString(format, millisUntilFinished)
+                text = DataUtil.milliSecondsToTimeString(format, millisUntilFinished)
                 onTickListener?.onTick(this@BKCountDownTimer)
             }
             override fun onFinish() {
@@ -87,7 +87,7 @@ class BKCountDownTimer: AppCompatTextView {
     }
 
     fun stop() {
-        text = Util.milliSecondsToTimeString(format, millisInFuture)
+        text = DataUtil.milliSecondsToTimeString(format, millisInFuture)
         pause()
         timer = null
     }

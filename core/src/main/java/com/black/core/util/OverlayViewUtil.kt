@@ -89,7 +89,7 @@ object OverlayViewUtil {
     fun moveView(view: View, x: Float, y: Float) {
         updateView(view) {
             it.gravity = Gravity.TOP or Gravity.LEFT
-            val screenSize = Util.getScreenSize(view.context)
+            val screenSize = UiUtil.getScreenSize(view.context)
             // 뷰가 화면 밖으로 벗어나지 않게 제한
             it.x = min(max(x.toInt(), 0), screenSize.x - view.width)
             it.y = min(max(y.toInt(), 0), screenSize.y - view.height)
@@ -102,7 +102,7 @@ object OverlayViewUtil {
      */
     fun getAbsoluteWindowPosition(view: View) : Point {
         val context = view.context
-        val screenSize = Util.getScreenSize(context)
+        val screenSize = UiUtil.getScreenSize(context)
 
         val windowParams = view.layoutParams as? WindowManager.LayoutParams
             ?: throw ClassCastException("LayoutParams is not WindowManager.LayoutParams")

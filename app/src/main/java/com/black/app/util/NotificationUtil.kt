@@ -21,7 +21,8 @@ object NotificationUtil {
             .Builder(channelId, importance)
             .setName(channelName)
         onCustomizeChannel?.invoke(channelBuilder)
-        NotificationManagerCompat.from(context).createNotificationChannel(channelBuilder.build())
+        NotificationManagerCompat.from(context)
+            .createNotificationChannel(channelBuilder.build())
     }
 
     fun deleteNotificationChannel(context: Context, channelId: String) {
@@ -41,7 +42,7 @@ object NotificationUtil {
             .setContentText(message)
             .setSmallIcon(pushIconRes ?: R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_MAX)
-        onCustomizeNotification?.invoke(notificationBuilder)
+            .also { onCustomizeNotification?.invoke(it) }
         return notificationBuilder.build()
     }
 
@@ -55,6 +56,16 @@ object NotificationUtil {
         onCustomizeNotification: ((NotificationCompat.Builder) -> Unit)? = null
     ) {
         NotificationManagerCompat.from(context)
-            .notify(notificationId, createNotification(context, channelId, title, message, pushIconRes, onCustomizeNotification))
+            .notify(
+                notificationId,
+                createNotification(
+                    context,
+                    channelId,
+                    title,
+                    message,
+                    pushIconRes,
+                    onCustomizeNotification
+                )
+            )
     }
 }

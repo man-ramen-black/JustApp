@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
+import com.black.core.util.UiUtil
 import com.black.core.util.Util
 
 /**
@@ -35,7 +36,7 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
     override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
         windowParams.apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = Util.dpToPx(context, 20f)
+            y = UiUtil.dpToPx(context, 20f)
             windowAnimations = android.R.style.Animation_Toast
         }
     }

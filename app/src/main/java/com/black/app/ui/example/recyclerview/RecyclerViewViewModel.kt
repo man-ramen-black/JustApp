@@ -1,5 +1,6 @@
 package com.black.app.ui.example.recyclerview
 
+import com.black.core.util.DataUtil
 import com.black.core.util.Util
 import kotlin.random.Random
 
@@ -30,7 +31,7 @@ class RecyclerViewViewModel : com.black.core.viewmodel.EventViewModel() {
     }
 
     fun onClickAdd() {
-        val randomString = Util.generateRandomString(10)
+        val randomString = DataUtil.generateRandomString(10)
         val data = if (Random(System.currentTimeMillis()).nextInt() % 2 == 0) {
             RecyclerViewData.Dialog(randomString)
         } else {
