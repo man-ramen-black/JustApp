@@ -4,11 +4,11 @@
     <data>
         <variable
             name="data"
-            type="com.black.code.ui.example.ExampleListAdapter.Item" />
+            type="com.black.app.ui.example.ExampleListAdapter.Item" />
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.ExampleViewModel" />
+            type="com.black.app.ui.example.ExampleViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

@@ -4,11 +4,11 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.code.ui.example.service.ServiceFragment" />
+            type="com.black.app.ui.example.service.ServiceFragment" />
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.service.ServiceViewModel" />
+            type="com.black.app.ui.example.service.ServiceViewModel" />
     </data>
 
     <ScrollView

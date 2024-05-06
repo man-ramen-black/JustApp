@@ -4,7 +4,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.ExampleViewModel" />
+            type="com.black.app.ui.example.ExampleViewModel" />
     </data>
     <ScrollView
         android:layout_width="match_parent"

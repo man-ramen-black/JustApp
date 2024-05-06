@@ -6,7 +6,7 @@
 
         <variable
             name="data"
-            type="com.black.code.model.database.studypopup.StudyPopupData.Contents" />
+            type="com.black.app.model.database.studypopup.StudyPopupData.Contents" />
     </data>
 
     <LinearLayout

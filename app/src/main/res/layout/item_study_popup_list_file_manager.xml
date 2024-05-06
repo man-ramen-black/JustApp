@@ -4,7 +4,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.studypopup.StudyPopupFragmentViewModel" />
+            type="com.black.app.ui.example.studypopup.StudyPopupFragmentViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

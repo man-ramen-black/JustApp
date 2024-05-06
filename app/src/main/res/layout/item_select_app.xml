@@ -6,10 +6,10 @@
     <data>
         <variable
             name="item"
-            type="com.black.code.ui.common.selectapp.SelectAppItem" />
+            type="com.black.app.ui.common.selectapp.SelectAppItem" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.common.selectapp.SelectAppViewModel" />
+            type="com.black.app.ui.common.selectapp.SelectAppViewModel" />
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"

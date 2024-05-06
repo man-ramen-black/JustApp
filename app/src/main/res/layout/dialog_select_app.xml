@@ -5,10 +5,10 @@
         <import type="android.view.View" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.common.selectapp.SelectAppViewModel" />
+            type="com.black.app.ui.common.selectapp.SelectAppViewModel" />
         <variable
             name="adapter"
-            type="com.black.code.ui.common.selectapp.SelectAppAdapter" />
+            type="com.black.app.ui.common.selectapp.SelectAppAdapter" />
     </data>
     <FrameLayout
         android:layout_width="match_parent"

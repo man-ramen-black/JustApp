@@ -6,10 +6,10 @@
         <import type="android.view.View"/>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.studypopup.popup.StudyPopupViewModel" />
+            type="com.black.app.ui.example.studypopup.popup.StudyPopupViewModel" />
         <variable
             name="adapter"
-            type="com.black.code.ui.example.studypopup.popup.StudyPopupPagerAdapter" />
+            type="com.black.app.ui.example.studypopup.popup.StudyPopupPagerAdapter" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

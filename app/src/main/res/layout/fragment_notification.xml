@@ -4,13 +4,13 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.code.ui.example.notification.NotificationFragment"/>
+            type="com.black.app.ui.example.notification.NotificationFragment"/>
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.notification.NotificationViewModel" />
+            type="com.black.app.ui.example.notification.NotificationViewModel" />
 
-        <import type="com.black.code.ui.example.notification.NotificationViewModel" />
+        <import type="com.black.app.ui.example.notification.NotificationViewModel" />
     </data>
 
     <ScrollView

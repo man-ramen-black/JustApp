@@ -6,7 +6,7 @@
 
         <variable
             name="data"
-            type="com.black.code.model.database.studypopup.StudyPopupData.Contents" />
+            type="com.black.app.model.database.studypopup.StudyPopupData.Contents" />
 
         <variable
             name="viewHolder"
@@ -14,7 +14,7 @@
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.studypopup.StudyPopupFragmentViewModel" />
+            type="com.black.app.ui.example.studypopup.StudyPopupFragmentViewModel" />
     </data>
 
     <LinearLayout

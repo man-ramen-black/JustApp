@@ -8,10 +8,10 @@
 
         <variable
             name="fragment"
-            type="com.black.code.ui.example.usagetimer.UsageTimerFragment" />
+            type="com.black.app.ui.example.usagetimer.UsageTimerFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimer.UsageTimerFragmentViewModel" />
+            type="com.black.app.ui.example.usagetimer.UsageTimerFragmentViewModel" />
     </data>
 
     <ScrollView
@@ -88,7 +88,7 @@
                     android:text='Pause remain : '
                     />
 
-                <com.black.code.view.BKCountDownTimer
+                <com.black.app.view.BKCountDownTimer
                     android:id="@+id/timer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

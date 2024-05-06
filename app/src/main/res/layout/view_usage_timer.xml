@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.usagetimer.view.UsageTimerView.ViewModel" />
+            type="com.black.app.ui.example.usagetimer.view.UsageTimerView.ViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -18,7 +18,7 @@
         android:paddingBottom="8dp"
         >
 
-        <com.black.code.view.BKChronometer
+        <com.black.app.view.BKChronometer
             android:id="@+id/timer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

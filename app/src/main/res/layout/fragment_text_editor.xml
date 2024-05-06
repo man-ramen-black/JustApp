@@ -6,12 +6,12 @@
     <data>
        <variable
            name="fragment"
-           type="com.black.code.ui.example.texteditor.TextEditorFragment" />
+           type="com.black.app.ui.example.texteditor.TextEditorFragment" />
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.texteditor.TextEditorViewModel" />
+            type="com.black.app.ui.example.texteditor.TextEditorViewModel" />
 
-        <import type="com.black.code.util.BindingConverter"/>
+        <import type="com.black.app.util.BindingConverter"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

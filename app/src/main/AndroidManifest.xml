@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.black.code">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Android 11 이상에서 QUERY_ALL_PACKAGES 권한 우회 처리 (권장되지 않음...) -->
     <!-- https://soir1984.tistory.com/68 -->
     <queries>
@@ -63,7 +62,7 @@
         https://aroundck.tistory.com/63
         -->
         <activity
-            android:name="com.black.code.ui.MainActivity"
+            android:name="com.black.app.ui.MainActivity"
             android:theme="@style/Theme.Black.Starting"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
             android:launchMode="singleTop"

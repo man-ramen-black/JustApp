@@ -3,7 +3,7 @@
     <data>
         <variable
             name="data"
-            type="com.black.code.ui.example.recyclerview.RecyclerViewData.Toast" />
+            type="com.black.app.ui.example.recyclerview.RecyclerViewData.Toast" />
 
         <variable
             name="viewHolder"
@@ -11,7 +11,7 @@
 
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.recyclerview.RecyclerViewViewModel" />
+            type="com.black.app.ui.example.recyclerview.RecyclerViewViewModel" />
     </data>
 
     <LinearLayout

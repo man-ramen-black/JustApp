@@ -6,7 +6,7 @@
     <data>
        <variable
            name="fragment"
-           type="com.black.code.ui.example.etc.ETCFragment" />
+           type="com.black.app.ui.example.etc.ETCFragment" />
     </data>
 
     <LinearLayout
@@ -22,7 +22,7 @@
             android:text="@{fragment.title}"
             />
 
-        <com.black.code.view.CustomViewSample
+        <com.black.app.view.CustomViewSample
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:text="Custom View Sample"/>

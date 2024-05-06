@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.code.ui.example.recyclerview.RecyclerViewViewModel" />
+            type="com.black.app.ui.example.recyclerview.RecyclerViewViewModel" />
     </data>
 
     <LinearLayout
