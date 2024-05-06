@@ -12,6 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "CodeCollection"
+rootProject.name = "JustApp"
 include ':app'
 include ':core'
