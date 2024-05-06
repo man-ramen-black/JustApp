@@ -10,7 +10,7 @@ import com.black.app.ui.common.base.TitleFragment
 import com.black.app.ui.MainActivity
 import com.black.core.util.PermissionHelper
 
-class ETCFragment : TitleFragment<FragmentEtcBinding>() {
+class EtcFragment : TitleFragment<FragmentEtcBinding>() {
     override val title: String = "ETC"
     override val layoutResId: Int = R.layout.fragment_etc
 
@@ -19,7 +19,7 @@ class ETCFragment : TitleFragment<FragmentEtcBinding>() {
     }
 
     fun onClickShowEtcActivity() {
-        startActivity(Intent(requireActivity(), ETCActivity::class.java))
+        startActivity(Intent(requireActivity(), EtcActivity::class.java))
     }
 
     /**

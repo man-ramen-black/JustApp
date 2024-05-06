@@ -12,6 +12,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.black.app.R
 import com.black.app.databinding.ActivityMainBinding
 import com.black.app.service.ForegroundService
+import com.black.core.component.BaseSplashActivity
 import com.black.core.util.Log
 import java.util.*
 
@@ -23,7 +24,7 @@ https://lanace.github.io/articles/right-way-on-splash/
 https://vagabond95.me/posts/android-pakage-structure/
 https://infinum.com/handbook/android/project-structure/package-structure
  */
-class MainActivity : com.black.core.component.BaseSplashActivity<ActivityMainBinding>() {
+class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
 
     private var navController : NavController? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -63,31 +64,8 @@ class MainActivity : com.black.core.component.BaseSplashActivity<ActivityMainBin
         }
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-        /*
-        https://issuetracker.google.com/issues/142847973
-        onCreate 시점에는 Fragment가 아직 생성되지 않았기 때문에 findNavController가 null로 반환됨
-        onPostCreate에서 findNavController 호출하여 ActionBar 셋팅
-         */
-        navController = findNavController(R.id.nav_host).also {
-            setupActionBarWithNavController(it)
-        }
-        while (navControllerQueue.isNotEmpty()) {
-            navControllerQueue.pop().run()
-        }
-    }
-
     override fun bindVariable(binding: ActivityMainBinding) {
 
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            // 액션바 백버튼 터치 시 동작
-            android.R.id.home -> supportFragmentManager.popBackStack()
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onSplashStart(splash: Splash) {

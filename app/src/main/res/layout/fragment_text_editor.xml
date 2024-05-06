@@ -18,7 +18,8 @@
         android:id="@+id/linear_layout"
         style="@style/RootLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        fitsStatusBar="@{true}">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/path"
@@ -30,7 +31,7 @@
             app:layout_constraintTop_toTopOf="parent">
             <!-- SingleLine : inputType = "text" -->
             <com.google.android.material.textfield.TextInputEditText
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:cursorVisible="false"
                 android:focusableInTouchMode="false"

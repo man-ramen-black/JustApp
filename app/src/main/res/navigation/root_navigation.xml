@@ -1,52 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/navigation"
-    app:startDestination="@id/main_fragment"
-    android:label="navigation">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_navigation"
+    app:startDestination="@id/main_tab_fragment">
 
     <fragment
-        android:id="@+id/main_fragment"
-        android:name="com.black.app.ui.MainFragment"
-        android:label="CodeCollection" >
-        <action
-            android:id="@+id/action_retrofit"
-            app:destination="@id/retrofit_fragment" />
-        <action
-            android:id="@+id/action_usage_timer"
-            app:destination="@id/usage_timer_fragment" />
-        <action
-            android:id="@+id/action_service"
-            app:destination="@id/service_fragment" />
-        <action
-            android:id="@+id/action_launcher"
-            app:destination="@id/launcher_fragment" />
-        <action
-            android:id="@+id/action_notification"
-            app:destination="@id/notification_fragment" />
-        <action
-            android:id="@+id/action_architecture"
-            app:destination="@id/architecture_fragment" />
+        android:id="@+id/main_tab_fragment"
+        android:name="com.black.app.ui.MainTabFragment"
+        tools:layout="@layout/fragment_main_tab">
+
         <action
             android:id="@+id/action_text_editor"
-            app:destination="@id/text_editor_fragment" />
-        <action
-            android:id="@+id/action_study_popup"
-            app:destination="@id/study_popup_fragment" />
-        <action
-            android:id="@+id/action_recycler_view"
-            app:destination="@id/recycler_view_fragment" />
-        <action
-            android:id="@+id/action_alarm"
-            app:destination="@id/alarm_fragment" />
+            app:destination="@id/text_editor_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true"
+            />
+
         <action
             android:id="@+id/action_black"
-            app:destination="@id/black_fragment" />
+            app:destination="@id/black_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true"
+            />
+
+        <action
+            android:id="@+id/action_retrofit"
+            app:destination="@id/retrofit_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_usage_timer"
+            app:destination="@id/usage_timer_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_service"
+            app:destination="@id/service_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_launcher"
+            app:destination="@id/launcher_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_notification"
+            app:destination="@id/notification_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_architecture"
+            app:destination="@id/architecture_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+
+        <action
+            android:id="@+id/action_study_popup"
+            app:destination="@id/study_popup_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_recycler_view"
+            app:destination="@id/recycler_view_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+        <action
+            android:id="@+id/action_alarm"
+            app:destination="@id/alarm_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+
         <action
             android:id="@+id/action_etc"
-            app:destination="@id/etc_fragment" />
+            app:destination="@id/etc_fragment"
+            app:restoreState="true"
+            app:popUpToSaveState="true" />
+
     </fragment>
+
+    <fragment
+        android:id="@+id/black_fragment"
+        android:name="com.black.app.ui.main.etc.BlackFragment"
+        android:label="@string/fragment_name_black"
+        tools:layout="@layout/fragment_black" />
+
+    <fragment
+        android:id="@+id/text_editor_fragment"
+        android:name="com.black.app.ui.main.texteditor.TextEditorFragment"
+        android:label="TextEditor"
+        tools:layout="@layout/fragment_text_editor" />
 
     <fragment
         android:id="@+id/recycler_view_fragment"
@@ -93,12 +136,6 @@
         tools:layout="@layout/fragment_study_popup" />
 
     <fragment
-        android:id="@+id/text_editor_fragment"
-        android:name="com.black.app.ui.main.texteditor.TextEditorFragment"
-        android:label="TextEditor"
-        tools:layout="@layout/fragment_text_editor" />
-
-    <fragment
         android:id="@+id/usage_timer_fragment"
         android:name="com.black.app.ui.main.usagetimer.UsageTimerFragment"
         android:label="UsageTimer"
@@ -112,15 +149,9 @@
 
     <fragment
         android:id="@+id/etc_fragment"
-        android:name="com.black.app.ui.main.etc.ETCFragment"
+        android:name="com.black.app.ui.main.etc.EtcFragment"
         android:label="ETC"
         tools:layout="@layout/fragment_etc" />
-
-    <fragment
-        android:id="@+id/black_fragment"
-        android:name="com.black.app.ui.main.etc.BlackFragment"
-        android:label="@string/fragment_name_black"
-        tools:layout="@layout/fragment_black" />
 
     <fragment
         android:id="@+id/notification_fragment"
@@ -131,4 +162,5 @@
         android:id="@+id/select_app_dialog"
         android:name="com.black.app.ui.common.selectapp.SelectAppDialogFragment"
         android:label="@string/select_app" />
+
 </navigation>

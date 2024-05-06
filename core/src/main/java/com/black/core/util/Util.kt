@@ -13,12 +13,28 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.TypedValue
 import android.view.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.withStateAtLeast
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
 object Util {
+
+    /**
+     * 특정 lifecycle 시점에 로직 실행
+     */
+    fun launchWhenState(owner : LifecycleOwner, state: Lifecycle.State, runnable: () -> Unit): Job {
+        return owner.lifecycleScope.launch {
+            owner.lifecycle.withStateAtLeast(state, runnable)
+        }
+    }
+
     fun vibrateOneShot(context: Context, milliseconds: Long) {
         val vibrator : Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager

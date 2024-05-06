@@ -9,8 +9,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <!-- dumpysys alarm 쉘커맨드 동작용 -->
     <permission android:name="android.permission.DUMP"
@@ -29,8 +31,6 @@
 
     <!-- Floating View -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-
-    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Android 13 이상 Notification, Toast 노출을 위한 권한 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -91,7 +91,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.main.etc.ETCActivity"
+        <activity android:name=".ui.main.etc.EtcActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
         <activity android:name=".ui.main.architecture.mvc.MVCActivity"

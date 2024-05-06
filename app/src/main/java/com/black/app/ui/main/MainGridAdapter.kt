@@ -1,4 +1,4 @@
-package com.black.app.ui
+package com.black.app.ui.main
 
 import android.view.ViewGroup
 import androidx.annotation.DrawableRes

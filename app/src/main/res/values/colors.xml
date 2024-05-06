@@ -13,6 +13,7 @@
     <color name="color_control_normal">#888888</color>
     <color name="edit_text_under_line">#DDDDDD</color>
 
+    <color name="disabled_color">#606060</color>
     <color name="border">#555555</color>
     <color name="divider">#999999</color>
 

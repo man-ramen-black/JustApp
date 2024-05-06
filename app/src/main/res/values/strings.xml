@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name">Code Collection</string>
+    <string name="app_name">JustApp</string>
+
+    <string name="main">Main</string>
+    <string name="about">About</string>
 
     <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>
     <string name="study_popup_pager_contents_empty">[내용 없음]</string>
