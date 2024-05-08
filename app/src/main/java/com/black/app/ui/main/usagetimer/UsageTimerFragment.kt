@@ -62,18 +62,6 @@ class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
 
     private fun showUsageTimerView() {
         UsageTimerView(requireContext())
-            .apply {
-                setOnMoveListener { view, action, x, y ->
-                    when(action) {
-                        com.black.core.view.MovableOverlayView.ACTION_MOVE_STARTED -> {
-                            Toast.makeText(requireContext(), "Move start", Toast.LENGTH_SHORT).show()
-                        }
-                        com.black.core.view.MovableOverlayView.ACTION_MOVE_ENDED -> {
-                            Toast.makeText(requireContext(), "Move end", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
             .attachView()
     }
 }

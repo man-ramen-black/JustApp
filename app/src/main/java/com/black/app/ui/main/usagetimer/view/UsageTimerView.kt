@@ -22,8 +22,8 @@ import com.black.core.util.UiUtil
  */
 class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<ViewUsageTimerBinding>(context) {
 
-    override val layoutId: Int = R.layout.view_usage_timer
-    override val styleableId: IntArray? = null
+    override val layoutId: Int get() = R.layout.view_usage_timer
+    override val styleableId: IntArray? get() = null
 
     override fun initialize(binding: ViewUsageTimerBinding, typedArray: TypedArray?) {
         isMovable = true

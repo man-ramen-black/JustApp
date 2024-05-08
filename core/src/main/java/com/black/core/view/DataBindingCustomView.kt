@@ -17,11 +17,16 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
 
     protected lateinit var binding : T
 
-    /*
-     layoutId, styleableId는 get() = 형태로 구현 필수
-     = 또는 by lazy로 할 경우 생성자 완료 후 초기화되므로 initialize에서 접근 시 NPE 발생
+    /**
+     * get() = 형태로 필수 구현
+     * = 또는 by lazy로 할 경우 생성자 완료 후 초기화되므로 initialize에서 접근 시 NPE 발생
      */
     protected abstract val layoutId: Int
+
+    /**
+     * get() = 형태로 필수 구현
+     * = 또는 by lazy로 할 경우 생성자 완료 후 초기화되므로 initialize에서 접근 시 NPE 발생
+     */
     protected abstract val styleableId: IntArray?
 
     constructor(context: Context) : super(context) {
