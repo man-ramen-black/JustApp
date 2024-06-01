@@ -5,7 +5,7 @@
     <color name="color_accent">#DDDDDD</color>
     <color name="color_primary">#121212</color>
     <color name="window_background">#000000</color>
-    <color name="ripple_effect">#7F7F7F</color>
+    <color name="ripple_color">#60A0A0A0</color>
 
     <color name="text_color">@color/color_accent</color>
     <color name="text_color_sub">#BBBBBB</color>
@@ -16,6 +16,8 @@
     <color name="disabled_color">#606060</color>
     <color name="border">#555555</color>
     <color name="divider">#999999</color>
+
+    <color name="black_22">#FF222222</color>
 
     <!-- TextInputLayout 포커스 없을 때 stroke color -->
     <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">@color/border</color>

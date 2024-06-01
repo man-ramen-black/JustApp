@@ -5,19 +5,27 @@
         <item name="android:windowBackground">@color/window_background</item>
 
         <!-- 버튼 배경 색상 -->
-        <item name="android:colorPrimary">@color/color_primary</item>
         <item name="colorPrimary">@color/color_primary</item>
 
         <!-- 버튼 텍스트 색상 -->
         <item name="colorOnPrimary">@color/color_accent</item>
 
+        <!-- colorSecondary : EditText 커서 색상 -->
+        <item name="colorSecondary">@color/black_22</item>
+
         <!-- 텍스트뷰 텍스트 색상 -->
         <item name="android:colorAccent">@color/color_accent</item>
         <item name="colorAccent">@color/color_accent</item>
 
+        <!-- Ripple 이펙트 색상 -->
+        <item name="colorControlHighlight">@color/ripple_color</item>
+
         <!-- StatusBar 색상 -->
         <item name="colorPrimaryVariant">?attr/colorPrimaryVariant</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <!-- alertDialog 배경색 -->
+        <item name="colorSurface">@android:color/white</item>
 
         <!-- DialogFragment -->
         <item name="android:dialogTheme">@style/Theme.Black.Dialog</item>
@@ -34,9 +42,7 @@
         <item name="editTextColor">@color/text_color</item>
         <item name="android:editTextColor">@color/text_color</item>
         <item name="android:textColorHint">@color/text_color_hint</item>
-        <item name="android:textSize">15dp</item>
-
-        <item name="colorSecondary">#FF0000</item>
+        <item name="android:textSize">15sp</item>
 
         <item name="android:textViewStyle">@style/Widget.Black.TextView</item>
         <item name="android:editTextStyle">@style/Widget.Black.EditText</item>
@@ -106,9 +112,11 @@
     <!-- https://pluu.github.io/blog/android/2016/10/31/editText-color/ -->
     <style name="Widget.Black.EditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColor">@color/text_color</item>
+
         <!-- API 21 이하 EditText 포커스 없을 때 하단 라인색 -->
         <item name="android:colorControlNormal">@color/color_control_normal</item>
         <item name="colorControlNormal">@color/color_control_normal</item>
+
         <!-- API 21 이상 EditText 하단 라인색 -->
         <item name="android:tint">@color/edit_text_under_line</item>
         <item name="backgroundTint">@color/edit_text_under_line</item>
@@ -131,11 +139,25 @@
         <item name="android:windowCloseOnTouchOutside">true</item>
     </style>
 
+    <!-- 참고 : https://m2.material.io/components/dialogs/android#theming-dialogs -->
     <style name="Theme.Black.Dialog.Alert" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="materialAlertDialogTitleTextStyle">@style/Theme.Black.Dialog.Alert.Title.Text</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/Theme.Black.Dialog.Alert.Body.Text</item>
+
         <item name="buttonBarNegativeButtonStyle">@style/Widget.Black.Dialog.Alert.Button</item>
         <item name="buttonBarPositiveButtonStyle">@style/Widget.Black.Dialog.Alert.Button</item>
         <item name="buttonBarNeutralButtonStyle">@style/Widget.Black.Dialog.Alert.Button</item>
         <item name="buttonBarButtonStyle">@style/Widget.Black.Dialog.Alert.Button</item>
+    </style>
+
+    <style name="Theme.Black.Dialog.Alert.Title.Text" parent="@style/MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/black_22</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:maxLines">99</item>
+    </style>
+
+    <style name="Theme.Black.Dialog.Alert.Body.Text" parent="@style/MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/black_22</item>
     </style>
 
     <style name="Widget.Black.Dialog.Alert.Button" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
@@ -168,12 +190,12 @@
     </style>
 
     <style name="TextViewTitle" parent="Widget.Black.TextView">
-        <item name="android:textSize">18dp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:layout_marginBottom">10dp</item>
     </style>
 
     <style name="TextViewSub" parent="Widget.Black.TextView">
-        <item name="android:textSize">13dp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/text_color_sub</item>
     </style>
 
