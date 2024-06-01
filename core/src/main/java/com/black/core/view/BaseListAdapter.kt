@@ -60,7 +60,7 @@ open class SimpleItemCallback<T>(private val areItemTheSame:(old:T, new:T) -> Bo
      * 이전 객체와 새로운 객체가 같은 객체인지 비교 : 리스트의 구조 변경(추가, 삭제, 이동)이 필요한지 비교
      * 객체를 사용하는 Adapter에서 Override 필수
      */
-    override fun areItemsTheSame(oldItem: T, newItem: T): Boolean {
+    override fun areItemsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
         return areItemTheSame(oldItem, newItem)
     }
 
@@ -70,7 +70,7 @@ open class SimpleItemCallback<T>(private val areItemTheSame:(old:T, new:T) -> Bo
      * 같은 객체가 아닌 경우 굳이 데이터가 같은지 비교할 필요가 없기 때문
      */
     @SuppressLint("DiffUtilEquals")
-    override fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
+    override fun areContentsTheSame(oldItem: T & Any, newItem: T & Any): Boolean {
         return oldItem == newItem
     }
 }
