@@ -13,7 +13,7 @@ import com.black.app.model.UsageTimerModel
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.base.TitleFragment
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
-import com.black.app.util.FragmentExtension.navigateSafety
+import com.black.core.util.FragmentExtension.navigateSafety
 import com.google.android.material.snackbar.Snackbar
 
 class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),

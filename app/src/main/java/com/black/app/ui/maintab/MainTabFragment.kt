@@ -5,9 +5,11 @@ import android.view.View
 import androidx.navigation.ui.setupWithNavController
 import com.black.app.R
 import com.black.app.databinding.FragmentMainTabBinding
-import com.black.app.util.FragmentExtension.findChildNavController
+import com.black.core.util.FragmentExtension.findChildNavController
 import com.black.core.component.BaseFragment
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainTabFragment: BaseFragment<FragmentMainTabBinding>() {
     override val layoutResId: Int = R.layout.fragment_main_tab
 

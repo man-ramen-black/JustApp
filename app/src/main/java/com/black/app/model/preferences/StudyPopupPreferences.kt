@@ -1,15 +1,23 @@
 package com.black.app.model.preferences
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import com.black.core.model.BasePreferences
+import com.black.core.model.preferences
 
 /**
  * Created by jinhyuk.lee on 2022/04/11
  **/
-class StudyPopupPreferences(context: Context) : com.black.core.model.BasePreferences(context, "StudyPopup") {
+class StudyPopupPreferences(context: Context) : BasePreferences(context) {
     companion object {
+        private val Context.studyPopupPreferences by preferences("StudyPopup")
+
         private const val KEY_LATEST_URI = "LatestUri"
+    }
+
+    override fun getPreferences(context: Context): SharedPreferences {
+        return context.studyPopupPreferences
     }
 
     fun saveLatestUri(uri: Uri) {

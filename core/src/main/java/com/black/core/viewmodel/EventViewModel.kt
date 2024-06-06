@@ -5,8 +5,18 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.black.core.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 open class EventViewModel : ViewModel()  {
+    private val jobs = ConcurrentHashMap<String, Job>()
     private val event = LiveEvent()
 
     @MainThread
@@ -38,6 +48,24 @@ open class EventViewModel : ViewModel()  {
     fun <T> LiveData<T>.observe(observer: Observer<T>) {
         this.observeForever(observer)
         addCloseable { this.removeObserver(observer) }
+    }
+
+    fun launchSingle(
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+    ) {
+        val methodName = Thread.currentThread().stackTrace[3].methodName
+        if (jobs[methodName]?.isCompleted == false) {
+            Log.v("$methodName job is not completed")
+            return
+        }
+        jobs[methodName] = viewModelScope.launch(context, start, block)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        Log.v(this::class.java.simpleName)
     }
 }
 

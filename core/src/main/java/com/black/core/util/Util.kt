@@ -104,4 +104,8 @@ object Util {
             e.printStackTrace()
         }
     }
+
+    fun <T> T.ifThen(isTrue: Boolean, then: T.() -> Unit): T = apply {
+        if (isTrue) then()
+    }
 }

@@ -14,6 +14,7 @@ import com.black.app.databinding.ActivityMainBinding
 import com.black.app.service.ForegroundService
 import com.black.core.component.BaseSplashActivity
 import com.black.core.util.Log
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 
 /*
@@ -24,6 +25,7 @@ https://lanace.github.io/articles/right-way-on-splash/
 https://vagabond95.me/posts/android-pakage-structure/
 https://infinum.com/handbook/android/project-structure/package-structure
  */
+@AndroidEntryPoint
 class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
 
     private var navController : NavController? = null

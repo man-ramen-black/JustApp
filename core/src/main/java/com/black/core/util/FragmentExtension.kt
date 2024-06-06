@@ -1,4 +1,4 @@
-package com.black.app.util
+package com.black.core.util
 
 import android.content.res.Resources
 import android.view.ViewGroup
@@ -14,11 +14,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDirections
-import androidx.navigation.NavGraph
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import com.black.core.util.Log
-import com.black.core.util.Util
 import kotlinx.coroutines.launch
 
 /**

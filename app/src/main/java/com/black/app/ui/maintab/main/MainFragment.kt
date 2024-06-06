@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentMainBinding
 import com.black.app.ui.maintab.MainTabFragmentDirections
-import com.black.app.util.FragmentExtension.navigate
+import com.black.core.util.FragmentExtension.navigate
 import com.black.core.component.BaseFragment
 import com.black.core.viewmodel.EventObserver
 

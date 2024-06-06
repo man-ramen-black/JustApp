@@ -11,11 +11,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.black.app.R
-import com.black.core.component.BaseDialogFragment
-import com.black.core.viewmodel.EventObserver
 import com.black.app.databinding.DialogSelectAppBinding
-import com.black.app.util.FragmentExtension.observePopBackStackArgsWithResumed
-import com.black.app.util.FragmentExtension.setPopBackStackArgs
+import com.black.core.util.FragmentExtension.observePopBackStackArgsWithResumed
+import com.black.core.util.FragmentExtension.setPopBackStackArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

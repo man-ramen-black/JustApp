@@ -75,7 +75,8 @@ dependencies {
 
     implementation(libs.glide)
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
+    //noinspection KaptUsageInsteadOfKsp
+    kapt(libs.androidx.room.compiler)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.glide.compiler)
     implementation(libs.androidx.preference.ktx)
@@ -88,7 +89,6 @@ dependencies {
     implementation(libs.retrofit2.kotlinx.serialization.converter)
 
     implementation(libs.hilt)
-    annotationProcessor(libs.hilt.compiler)
     kapt(libs.hilt.compiler)
 
     testImplementation(libs.junit)
