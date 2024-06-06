@@ -87,7 +87,7 @@ abstract class BaseSplashActivity<T : ViewDataBinding>  : BaseActivity<T>() {
      * onPause -> onNewIntent -> onResume 순서로 실행됨
      * https://developer.android.com/reference/android/app/Activity#onNewIntent(android.content.Intent)
      */
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         Log.d(this::class.java.simpleName)
         super.onNewIntent(intent)
         // startNextActivity()에서 onNewIntent의 intent를 사용하도록 setIntent 호출

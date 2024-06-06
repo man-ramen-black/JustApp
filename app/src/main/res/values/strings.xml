@@ -2,6 +2,7 @@
     <string name="app_name">JustApp</string>
 
     <string name="main">Main</string>
+    <string name="image_searcher">ImageSearcher</string>
     <string name="about">About</string>
 
     <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>

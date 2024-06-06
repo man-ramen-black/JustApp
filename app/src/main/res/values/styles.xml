@@ -5,12 +5,16 @@
         <item name="android:windowBackground">@color/window_background</item>
 
         <!-- 버튼 배경 색상 -->
-        <item name="colorPrimary">@color/color_primary</item>
+        <!-- TabLayout Selected TextColor -->
+        <item name="colorPrimary">@color/white_f7</item>
 
         <!-- 버튼 텍스트 색상 -->
         <item name="colorOnPrimary">@color/color_accent</item>
 
-        <!-- colorSecondary : EditText 커서 색상 -->
+        <!-- TabLayout Default TextColor -->
+        <item name="colorOnSurface">@color/grey_88</item>
+
+        <!-- EditText 커서 색상 -->
         <item name="colorSecondary">@color/black_22</item>
 
         <!-- 텍스트뷰 텍스트 색상 -->
@@ -25,7 +29,8 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
 
         <!-- alertDialog 배경색 -->
-        <item name="colorSurface">@android:color/white</item>
+        <!-- TabLayout 배경색 -->
+        <item name="colorSurface">@color/black</item>
 
         <!-- DialogFragment -->
         <item name="android:dialogTheme">@style/Theme.Black.Dialog</item>
@@ -51,12 +56,13 @@
         <item name="buttonStyle">@style/Widget.Black.Button</item>
         <item name="android:buttonStyle">@style/Widget.Black.Button</item>
         <item name="materialButtonStyle">@style/Widget.Black.MaterialButton</item>
-        <item name="imageButtonStyle">@style/Widget.Black.Button</item>
+        <item name="imageButtonStyle">@style/Widget.Black.ImageButton</item>
         <item name="actionBarStyle">@style/Widget.Black.ActionBar</item>
         <item name="circularProgressIndicatorStyle">@style/Widget.App.CircularProgressIndicator</item>
         <item name="progressBarStyle">@style/Widget.App.ProgressBar</item>
         <item name="snackbarStyle">@style/Widget.Black.SnackBar</item>
         <item name="snackbarTextViewStyle">@style/Widget.Black.SnackBar.TextView</item>
+        <item name="tabStyle">@style/Widget.Black.TabLayout</item>
     </style>
 
     <style name="Theme.Black.Starting" parent="Theme.SplashScreen">
@@ -82,8 +88,11 @@
         <item name="backgroundTint">@null</item>
     </style>
 
-    <style name="Widget.Black.ImageButton" parent="Widget.Black.Button">
-        <item name="android:padding">8dp</item>
+    <style name="Widget.Black.ImageButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:button">@null</item>
+        <item name="android:background">@null</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:scaleType">fitCenter</item>
     </style>
 
     <!--
@@ -174,6 +183,9 @@
 
     <style name="Widget.Black.SnackBar.TextView" parent="Widget.MaterialComponents.Snackbar.TextView">
         <item name="android:textColor">@color/text_color</item>
+    </style>
+
+    <style name="Widget.Black.TabLayout" parent="Widget.MaterialComponents.TabLayout">
     </style>
 
     <style name="RootLayout">

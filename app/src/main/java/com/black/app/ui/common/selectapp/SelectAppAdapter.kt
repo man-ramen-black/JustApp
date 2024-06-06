@@ -5,8 +5,8 @@ import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.MutableLiveData
 import com.black.app.R
-import com.black.core.view.BaseListAdapter
 import com.black.app.databinding.ItemSelectAppBinding
+import com.black.core.view.BaseViewHolder
 
 data class SelectAppItem(val packageName: String, val appLabel: CharSequence, val appIcon: Drawable) {
     val isChecked = MutableLiveData(false)

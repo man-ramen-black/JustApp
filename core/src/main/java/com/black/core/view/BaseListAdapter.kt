@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 https://youngest-programming.tistory.com/474
  */
 abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> = SimpleItemCallback())
-    : ListAdapter<DATA, BaseListAdapter.BaseViewHolder<ViewDataBinding, DATA>>(itemCallback) {
+    : ListAdapter<DATA, BaseViewHolder<ViewDataBinding, DATA>>(itemCallback) {
 
     constructor(areItemTheSame:(old:DATA, new:DATA) -> Boolean) : this(SimpleItemCallback(areItemTheSame))
 
@@ -42,11 +42,11 @@ abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> =
     override fun submitList(list: List<DATA>?) {
         super.submitList(list?.toMutableList())
     }
+}
 
-    abstract class BaseViewHolder<out BINDING : ViewDataBinding, DATA>(protected val binding: BINDING)
-        : RecyclerView.ViewHolder(binding.root) {
-        abstract fun bind(item : DATA)
-    }
+abstract class BaseViewHolder<out BINDING : ViewDataBinding, DATA>(protected val binding: BINDING)
+    : RecyclerView.ViewHolder(binding.root) {
+    abstract fun bind(item : DATA)
 }
 
 /*

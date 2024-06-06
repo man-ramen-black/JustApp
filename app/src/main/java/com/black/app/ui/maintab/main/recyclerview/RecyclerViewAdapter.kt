@@ -5,6 +5,7 @@ import androidx.databinding.ViewDataBinding
 import com.black.app.R
 import com.black.app.databinding.ItemRecyclerviewDialogBinding
 import com.black.app.databinding.ItemRecyclerviewToastBinding
+import com.black.core.view.BaseViewHolder
 
 /*
 android #recyclerview multiple data type

@@ -59,6 +59,7 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":feature:imagesearcher"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -73,10 +74,10 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
-    implementation(libs.glide)
     implementation(libs.androidx.room.runtime)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.androidx.room.compiler)
+    implementation(libs.glide)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.glide.compiler)
     implementation(libs.androidx.preference.ktx)

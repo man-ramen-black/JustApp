@@ -17,8 +17,6 @@
     <color name="border">#555555</color>
     <color name="divider">#999999</color>
 
-    <color name="black_22">#FF222222</color>
-
     <!-- TextInputLayout 포커스 없을 때 stroke color -->
     <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">@color/border</color>
 </resources>

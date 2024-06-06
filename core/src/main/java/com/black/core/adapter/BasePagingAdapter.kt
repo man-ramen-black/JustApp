@@ -7,7 +7,7 @@ import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import com.black.core.view.BaseListAdapter
+import com.black.core.view.BaseViewHolder
 import com.black.core.view.SimpleItemCallback
 
 /*
@@ -15,7 +15,7 @@ import com.black.core.view.SimpleItemCallback
 https://youngest-programming.tistory.com/474
  */
 abstract class BasePagingAdapter<DATA : Any>(itemCallback: DiffUtil.ItemCallback<DATA> = SimpleItemCallback())
-    : PagingDataAdapter<DATA, BaseListAdapter.BaseViewHolder<ViewDataBinding, DATA>>(itemCallback) {
+    : PagingDataAdapter<DATA, BaseViewHolder<ViewDataBinding, DATA>>(itemCallback) {
 
     constructor(areItemsTheSame : (oldItem: DATA, newItem: DATA) -> Boolean)
             : this(SimpleItemCallback<DATA>(areItemsTheSame))
@@ -28,7 +28,7 @@ abstract class BasePagingAdapter<DATA : Any>(itemCallback: DiffUtil.ItemCallback
     }
 
     override fun onBindViewHolder(
-        holder: BaseListAdapter.BaseViewHolder<ViewDataBinding, DATA>,
+        holder: BaseViewHolder<ViewDataBinding, DATA>,
         position: Int
     ) {
         holder.bind(getItem(position) ?: return)

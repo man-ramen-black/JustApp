@@ -10,7 +10,7 @@
         tools:layout="@layout/fragment_main" />
 
     <fragment
-        android:id="@+id/blank_fragment"
-        android:name="com.black.app.ui.common.BlankFragment"
-        tools:layout="@layout/view_empty" />
+        android:id="@+id/image_searcher_fragment"
+        android:name="com.black.feature.imagesearcher.ui.MainFragment"
+        tools:layout="@layout/image_searcher_fragment_main" />
 </navigation>

@@ -6,6 +6,7 @@ import com.black.app.R
 import com.black.app.databinding.ItemStudyPopupListContentsBinding
 import com.black.app.databinding.ItemStudyPopupListFileManagerBinding
 import com.black.app.model.database.studypopup.StudyPopupData
+import com.black.core.view.BaseViewHolder
 
 /**
  * Created by jinhyuk.lee on 2022/05/23
@@ -17,7 +18,7 @@ class StudyPopupListAdapter(private val viewModel: StudyPopupFragmentViewModel) 
     }
 
     class FileManagerViewHolder(binding: ItemStudyPopupListFileManagerBinding, private val viewModel: StudyPopupFragmentViewModel)
-        : com.black.core.view.BaseListAdapter.BaseViewHolder<ItemStudyPopupListFileManagerBinding, StudyPopupData>(binding)
+        : com.black.core.view.BaseViewHolder<ItemStudyPopupListFileManagerBinding, StudyPopupData>(binding)
     {
         override fun bind(item: StudyPopupData) {
             binding.viewModel = viewModel
@@ -25,7 +26,7 @@ class StudyPopupListAdapter(private val viewModel: StudyPopupFragmentViewModel) 
     }
 
     class ContentsViewHolder(binding: ItemStudyPopupListContentsBinding, private val viewModel: StudyPopupFragmentViewModel)
-        : com.black.core.view.BaseListAdapter.BaseViewHolder<ItemStudyPopupListContentsBinding, StudyPopupData>(binding)
+        : com.black.core.view.BaseViewHolder<ItemStudyPopupListContentsBinding, StudyPopupData>(binding)
     {
         override fun bind(item: StudyPopupData) {
             binding.viewModel = viewModel

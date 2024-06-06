@@ -39,9 +39,9 @@ class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
         ForegroundService.start(this, false)
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent?.data?.host == "navigate") {
+        if (intent.data?.host == "navigate") {
             navControllerQueue.push {
                 val path = intent.data?.pathSegments?.getOrNull(0)
                 Log.d("path : $path")

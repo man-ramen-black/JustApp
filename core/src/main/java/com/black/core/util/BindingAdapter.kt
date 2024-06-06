@@ -2,23 +2,17 @@ package com.black.core.util
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebChromeClient
-import android.webkit.WebView
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageView
@@ -27,10 +21,8 @@ import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.Dimension
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.SwitchCompat
-import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.ViewCompat
@@ -41,8 +33,6 @@ import androidx.core.view.isVisible
 import androidx.databinding.BindingAdapter
 import androidx.databinding.InverseBindingAdapter
 import androidx.databinding.InverseBindingListener
-import androidx.databinding.ViewDataBinding
-import androidx.navigation.NavController
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ListAdapter
@@ -51,11 +41,13 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
-import com.black.core.R
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.target.Target
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
-import java.util.Date
+import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.roundToInt
@@ -194,6 +186,27 @@ object ViewBindingAdapter {
  * ImageView
  */
 object ImageViewBindingAdapter {
+
+    @BindingAdapter("glideUrl", "glideCircle", "glideErrorDrawable", "glidePlaceholder", "glideErrorUrl", requireAll = false)
+    @JvmStatic
+    fun setGlideImage(view: ImageView, url: String?, isCircle: Boolean?, errorDrawable: Drawable?, placeholder: Drawable?, errorUrl: String?) {
+        if (url == null) {
+            return
+        }
+
+        Glide.with(view)
+            .load(url)
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .override(Target.SIZE_ORIGINAL) // 이미지 원본 사이즈 사용
+            .run { if (isCircle == true) circleCrop() else this }
+            .run {
+                errorUrl ?: return@run this
+                error(Glide.with(view).load(errorUrl))
+            }
+            .run { error(errorDrawable ?: return@run this) }
+            .run { placeholder(placeholder ?: return@run this) }
+            .into(view)
+    }
 
     @BindingAdapter("android:src")
     @JvmStatic
@@ -432,6 +445,24 @@ object TextViewBindingAdapter {
         } else {
             view.paintFlags xor Paint.UNDERLINE_TEXT_FLAG
         }
+    }
+
+    @BindingAdapter("time", "dateFormat")
+    @JvmStatic
+    fun setDateTime(view: TextView, timeMs: Long, dateFormat: String?) {
+        if (timeMs == 0L || dateFormat.isNullOrEmpty()) {
+            return
+        }
+
+        val text = try {
+            SimpleDateFormat(dateFormat, Locale.getDefault())
+                .format(timeMs)
+        } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
+            return
+        }
+
+        view.text = text
     }
 }
 

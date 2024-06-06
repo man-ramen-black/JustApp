@@ -5,6 +5,7 @@ import androidx.databinding.ViewDataBinding
 import com.black.app.R
 import com.black.app.databinding.ItemStudyPopupPagerContentsBinding
 import com.black.app.model.database.studypopup.StudyPopupData
+import com.black.core.view.BaseViewHolder
 
 /**
  * Created by jinhyuk.lee on 2022/05/24

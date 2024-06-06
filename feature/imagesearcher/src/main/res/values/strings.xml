@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_tab_search">검색</string>
+    <string name="main_tab_favorite">즐겨찾기</string>
+
+    <string name="date_format_search">yyyy년 M월 d일 H시 m분 s초</string>
+    <string name="date_format_favorite">yyyy년 M월 d일</string>
+
+    <string name="search_last_page">마지막</string>
+
+    <string name="search_empty_message">검색 결과가 없습니다.</string>
+    <string name="search_error_message">검색 중 에러가 발생하였습니다.\n%s</string>
+
+    <string name="favorite_empty_message">보관된 항목이 없습니다.</string>
+</resources>
