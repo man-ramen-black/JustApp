@@ -6,7 +6,7 @@
     <data>
        <variable
            name="fragment"
-           type="com.black.app.ui.main.etc.EtcFragment" />
+           type="com.black.app.ui.maintab.main.etc.EtcFragment" />
     </data>
 
     <LinearLayout

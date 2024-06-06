@@ -3,7 +3,7 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.app.ui.main.launcher.LauncherFragment"/>
+            type="com.black.app.ui.maintab.main.launcher.LauncherFragment"/>
     </data>
 
     <FrameLayout

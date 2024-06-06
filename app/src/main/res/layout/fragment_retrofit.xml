@@ -4,10 +4,10 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.app.ui.main.retrofit.RetrofitFragment" />
+            type="com.black.app.ui.maintab.main.retrofit.RetrofitFragment" />
         <variable
             name="viewModel"
-            type="com.black.app.ui.main.retrofit.RetrofitViewModel" />
+            type="com.black.app.ui.maintab.main.retrofit.RetrofitViewModel" />
     </data>
     <ScrollView
         android:layout_width="match_parent"

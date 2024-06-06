@@ -1,7 +1,7 @@
 package com.black.app.util
 
 import androidx.databinding.InverseMethod
-import com.black.app.ui.main.notification.NotificationViewModel
+import com.black.app.ui.maintab.main.notification.NotificationViewModel
 
 object BindingConverter {
     @JvmStatic

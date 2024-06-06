@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/main_tab_fragment"
-        android:name="com.black.app.ui.MainTabFragment"
+        android:name="com.black.app.ui.maintab.MainTabFragment"
         tools:layout="@layout/fragment_main_tab">
 
         <action
@@ -128,63 +128,63 @@
 
     <fragment
         android:id="@+id/black_fragment"
-        android:name="com.black.app.ui.main.etc.BlackFragment"
+        android:name="com.black.app.ui.maintab.main.etc.BlackFragment"
         android:label="@string/fragment_name_black"
         tools:layout="@layout/fragment_black" />
 
     <fragment
         android:id="@+id/text_editor_fragment"
-        android:name="com.black.app.ui.main.texteditor.TextEditorFragment"
+        android:name="com.black.app.ui.maintab.main.texteditor.TextEditorFragment"
         android:label="TextEditor"
         tools:layout="@layout/fragment_text_editor" />
 
     <fragment
         android:id="@+id/recycler_view_fragment"
-        android:name="com.black.app.ui.main.recyclerview.RecyclerViewFragment"
+        android:name="com.black.app.ui.maintab.main.recyclerview.RecyclerViewFragment"
         android:label="RecyclerView"
         tools:layout="@layout/fragment_recyclerview" />
 
     <fragment
         android:id="@+id/retrofit_fragment"
-        android:name="com.black.app.ui.main.retrofit.RetrofitFragment"
+        android:name="com.black.app.ui.maintab.main.retrofit.RetrofitFragment"
         android:label="Retrofit"
         tools:layout="@layout/fragment_retrofit" />
 
     <fragment
         android:id="@+id/service_fragment"
-        android:name="com.black.app.ui.main.service.ServiceFragment"
+        android:name="com.black.app.ui.maintab.main.service.ServiceFragment"
         android:label="Service"
         tools:layout="@layout/fragment_service" />
 
 
     <fragment
         android:id="@+id/alarm_fragment"
-        android:name="com.black.app.ui.main.alarm.AlarmFragment"
+        android:name="com.black.app.ui.maintab.main.alarm.AlarmFragment"
         android:label="Alarm"
         tools:layout="@layout/fragment_alarm" />
 
     <fragment
         android:id="@+id/architecture_fragment"
-        android:name="com.black.app.ui.main.architecture.ArchitectureFragment"
+        android:name="com.black.app.ui.maintab.main.architecture.ArchitectureFragment"
         android:label="Architecture"
         tools:layout="@layout/fragment_architecture" />
 
     <fragment
         android:id="@+id/launcher_fragment"
-        android:name="com.black.app.ui.main.launcher.LauncherFragment"
+        android:name="com.black.app.ui.maintab.main.launcher.LauncherFragment"
         android:label="Launcher"
         tools:layout="@layout/fragment_launcher" />
 
 
     <fragment
         android:id="@+id/study_popup_fragment"
-        android:name="com.black.app.ui.main.studypopup.StudyPopupFragment"
+        android:name="com.black.app.ui.maintab.main.studypopup.StudyPopupFragment"
         android:label="StudyPopup"
         tools:layout="@layout/fragment_study_popup" />
 
     <fragment
         android:id="@+id/usage_timer_fragment"
-        android:name="com.black.app.ui.main.usagetimer.UsageTimerFragment"
+        android:name="com.black.app.ui.maintab.main.usagetimer.UsageTimerFragment"
         android:label="UsageTimer"
         tools:layout="@layout/fragment_usage_timer">
         <action
@@ -196,13 +196,13 @@
 
     <fragment
         android:id="@+id/etc_fragment"
-        android:name="com.black.app.ui.main.etc.EtcFragment"
+        android:name="com.black.app.ui.maintab.main.etc.EtcFragment"
         android:label="ETC"
         tools:layout="@layout/fragment_etc" />
 
     <fragment
         android:id="@+id/notification_fragment"
-        android:name="com.black.app.ui.main.notification.NotificationFragment"
+        android:name="com.black.app.ui.maintab.main.notification.NotificationFragment"
         android:label="Notification" />
 
     <dialog

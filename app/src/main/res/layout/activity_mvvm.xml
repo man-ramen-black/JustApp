@@ -3,7 +3,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.black.app.ui.main.architecture.mvvm.MVVMViewModel" />
+            type="com.black.app.ui.maintab.main.architecture.mvvm.MVVMViewModel" />
     </data>
     <LinearLayout
         android:layout_width="match_parent"

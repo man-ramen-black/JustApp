@@ -82,7 +82,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.main.launcher.internal.LauncherActivity"
+        <activity android:name=".ui.maintab.launcher.internal.LauncherActivity"
             android:theme="@style/Theme.Black.Launcher"
             android:exported="true">
             <intent-filter>
@@ -91,13 +91,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.main.etc.EtcActivity"
+        <activity android:name=".ui.maintab.etc.EtcActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".ui.main.architecture.mvc.MVCActivity"
+        <activity android:name=".ui.maintab.architecture.mvc.MVCActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".ui.main.architecture.mvvm.MVVMActivity"
+        <activity android:name=".ui.maintab.architecture.mvvm.MVVMActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
         <service android:name=".service.ForegroundService"/>
@@ -108,7 +108,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".ui.main.usagetimer.UsageTimerAccessibility"
+        <service android:name=".ui.maintab.usagetimer.UsageTimerAccessibility"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="UsageTimer"
             android:exported="true"

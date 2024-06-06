@@ -3,7 +3,7 @@
     <data>
         <variable
             name="fragment"
-            type="com.black.app.ui.main.alarm.AlarmFragment"/>
+            type="com.black.app.ui.maintab.main.alarm.AlarmFragment"/>
 
         <variable
             name="nextAlarmText"
