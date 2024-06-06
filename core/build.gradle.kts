@@ -39,14 +39,14 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.core.ktx)
-    api(libs.androidx.appcompat) // AppCompatActivity, LiveData, ViewModel
-    api(libs.material)
-    api(libs.androidx.preference.ktx)
-    api(libs.androidx.navigation.fragment.ktx)
-    api(libs.androidx.navigation.ui.ktx)
-    api(libs.androidx.core.splashscreen)
-    api(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat) // AppCompatActivity, LiveData, ViewModel
+    implementation(libs.material)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.swiperefreshlayout)
 
     testImplementation(libs.junit)
 
