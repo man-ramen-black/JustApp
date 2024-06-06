@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.parcelize)
     alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.androidx.navigation.safeargs)
-    id("project-report") // 터미널에 ./gradlew app:htmlDependencyReport 입력 시 디펜던시 리포트 확인 가능 (...classpath 폴더 확인)
+    id("project-report") // 터미널에 ./gradlew app:htmlDependencyReport 입력하여 디펜던시 리포트 확인 가능 (...classpath 폴더 확인)
 }
 
 android {
@@ -32,6 +32,12 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+        dataBinding = true
+    }
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -39,11 +45,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-    }
-
-    buildFeatures {
-        buildConfig = true
-        dataBinding = true
     }
 
     kapt {
@@ -62,10 +63,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
-
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
@@ -79,6 +76,7 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
+    //noinspection KaptUsageInsteadOfKsp
     kapt(libs.glide.compiler)
 
     implementation(libs.kotlinx.serialization.json)
