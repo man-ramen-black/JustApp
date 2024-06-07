@@ -63,7 +63,6 @@ dependencies {
     implementation(libs.hilt)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
-    annotationProcessor(libs.hilt.compiler)
     kapt(libs.hilt.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

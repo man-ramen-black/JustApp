@@ -5,6 +5,7 @@ import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Point
 import android.os.Build
@@ -13,6 +14,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.TypedValue
 import android.view.*
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -103,9 +105,5 @@ object Util {
         } catch (e: ActivityNotFoundException) {
             e.printStackTrace()
         }
-    }
-
-    fun <T> T.ifThen(isTrue: Boolean, then: T.() -> Unit): T = apply {
-        if (isTrue) then()
     }
 }

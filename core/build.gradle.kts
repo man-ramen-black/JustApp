@@ -1,10 +1,10 @@
 plugins {
     alias(libs.plugins.android.library)
-//    alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.kapt)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrains.kotlin.parcelize)
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
@@ -58,9 +58,9 @@ dependencies {
     implementation(libs.glide)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.glide.compiler)
-
+    implementation(libs.hilt)
+    kapt(libs.hilt.compiler)
     testImplementation(libs.junit)
-
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

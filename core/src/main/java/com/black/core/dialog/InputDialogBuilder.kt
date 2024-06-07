@@ -1,4 +1,4 @@
-package com.black.app.util
+package com.black.core.dialog
 
 import android.content.Context
 import android.content.DialogInterface
@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import com.black.app.R
+import com.black.core.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
