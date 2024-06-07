@@ -5,26 +5,19 @@ import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.graphics.Point
+import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.TypedValue
-import android.view.*
-import androidx.activity.ComponentActivity
+import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withStateAtLeast
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.security.SecureRandom
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.*
 
 object Util {
 
@@ -103,6 +96,36 @@ object Util {
         try {
             context.startActivity(Intent.createChooser(intent, null))
         } catch (e: ActivityNotFoundException) {
+            e.printStackTrace()
+        }
+    }
+
+    /** 딥링크 실행 */
+    fun startDeepLink(context: Context?, url: String?)
+            = startDeepLink(context, Uri.parse(url ?: ""))
+
+    fun startDeepLink(context: Context?, uri: Uri) {
+        if(context == null){
+            Log.w("context is null")
+            return
+        }
+
+        val scheme = uri.scheme
+        if (scheme == null) {
+            Log.e("invalid uri : $uri")
+            return
+        }
+
+        Log.v("deeplink : $uri")
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            if(context !is Activity) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        }
+
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
