@@ -29,6 +29,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.view.doOnAttach
 import androidx.core.view.doOnDetach
 import com.black.core.BuildConfig
 import com.black.core.util.Log
@@ -128,17 +129,17 @@ open class BKWebView : WebView {
         // (최초 페이지 로드 시 뒤에 있는 뷰가 노출되도록 설정)
         setBackgroundColor(Color.TRANSPARENT)
 
-        doOnDetach {
-            Log.d("WebView detached")
+        doOnAttach {
+            doOnDetach {
+                Log.d("WebView detached")
 
-            // 메모리 최적화
-            (parent as? ViewGroup)?.removeView(this)
-            removeAllViews()
-            clearCache(false)
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
-                destroyDrawingCache()
+                // 메모리 최적화
+                clearCache(false)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
+                    destroyDrawingCache()
+                }
+                destroy()
             }
-            destroy()
         }
     }
 
@@ -172,6 +173,16 @@ open class BKWebView : WebView {
     @SuppressLint("JavascriptInterface")
     fun addJavascriptInterface(obj: Any) {
         addJavascriptInterface(obj, "native")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        resumeTimers()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        pauseTimers()
     }
 
     fun onBackPressed() : Boolean {

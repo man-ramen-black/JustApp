@@ -37,7 +37,6 @@ android {
         dataBinding = true
     }
 
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -60,6 +59,7 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":feature:imagesearcher"))
+    implementation(project(":feature:pokerogue"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

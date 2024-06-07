@@ -8,12 +8,14 @@ plugins {
 }
 
 android {
-    namespace = "com.black.core"
+    namespace = "com.black.feature.pokerogue"
     compileSdk = 34
 
     defaultConfig {
         minSdk = 24
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -26,11 +28,6 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-        dataBinding = true
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -39,43 +36,19 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    buildFeatures {
+        buildConfig = true
+        dataBinding = true
+    }
 }
 
 dependencies {
-    api(libs.androidx.core.ktx)
-    api(libs.androidx.appcompat)
-    api(libs.material)
 
-    api(libs.androidx.lifecycle.livedata.ktx)
-    api(libs.androidx.lifecycle.viewmodel.ktx)
-
-    api(libs.androidx.paging)
-    api(libs.androidx.datastore)
-
-    api(libs.retrofit)
-    api(libs.converter.gson)
-    api(libs.logging.interceptor)
-
-    api(libs.androidx.room.runtime)
-    //noinspection KaptUsageInsteadOfKsp
-    kapt(libs.androidx.room.compiler)
-    api(libs.glide)
-    //noinspection KaptUsageInsteadOfKsp
-    kapt(libs.glide.compiler)
-    api(libs.androidx.preference.ktx)
-    api(libs.androidx.navigation.fragment.ktx)
-    api(libs.androidx.navigation.ui.ktx)
-    api(libs.androidx.core.splashscreen)
-    api(libs.androidx.swiperefreshlayout)
-
-    api(libs.kotlinx.serialization.json)
-    api(libs.retrofit2.kotlinx.serialization.converter)
-
-    api(libs.hilt)
+    implementation(project(":core"))
+    implementation(libs.hilt)
     kapt(libs.hilt.compiler)
-
     testImplementation(libs.junit)
-
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

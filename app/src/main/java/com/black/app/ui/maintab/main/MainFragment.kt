@@ -9,12 +9,19 @@ import com.black.app.ui.maintab.MainTabFragmentDirections
 import com.black.core.util.FragmentExtension.navigate
 import com.black.core.component.BaseFragment
 import com.black.core.viewmodel.EventObserver
+import com.black.feature.pokerogue.ui.PokeRogueFragment
 
 class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
 
     // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리
     private val itemList by lazy {
         listOf(
+            /** [PokeRogueFragment] */
+            MainItem(
+                getString(com.black.feature.pokerogue.R.string.poke_rogue),
+                com.black.feature.pokerogue.R.drawable.ic_poke_rogue,
+            ) { navigateByActivity(MainTabFragmentDirections.actionPokeRogue()) },
+
             MainItem(
                 getString(R.string.fragment_name_text_editor),
                 R.drawable.ic_editor,

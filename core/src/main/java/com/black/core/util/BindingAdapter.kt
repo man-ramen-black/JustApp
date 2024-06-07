@@ -4,15 +4,18 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebView
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageView
@@ -41,6 +44,9 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.black.core.webkit.BKWebChromeClient
+import com.black.core.webkit.BKWebView
+import com.black.core.webkit.BKWebViewClient
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.Target
@@ -735,6 +741,62 @@ object CompoundButtonBindingAdapter {
         view.setOnCheckedChangeListener { _, _ ->
             attrChanged.onChange()
         }
+    }
+}
+
+object WebViewBindingAdapter {
+    @BindingAdapter("url")
+    @JvmStatic
+    fun setUrl(view: WebView, url: String) {
+        if (view.url != url) {
+            view.loadUrl(url)
+        }
+    }
+
+    @BindingAdapter(value = ["onPageStarted", "onPageLoading", "onPageFinished", "onVisitedHistoryUpdated"], requireAll = false)
+    @JvmStatic
+    fun setWebViewClientCallback(
+        view: BKWebView,
+        onPageStarted: BKWebViewClient.OnPageStarted?,
+        onPageLoading: BKWebViewClient.OnPageLoading?,
+        onPageFinished: BKWebViewClient.OnPageFinished?,
+        onVisitedHistoryUpdated: BKWebViewClient.OnVisitedHistoryUpdated?,
+    ) {
+        view.addWebViewClientCallback(object: BKWebViewClient.Callback {
+            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                onPageStarted?.onPageStarted(view, url, favicon)
+            }
+
+            override fun onPageLoading(view: WebView, uri: Uri): Boolean {
+                return onPageLoading?.onPageLoading(view, uri) ?: false
+            }
+
+            override fun onPageFinished(view: WebView, url: String, isError: Boolean) {
+                onPageFinished?.onPageFinished(view, url, isError)
+            }
+
+            override fun onVisitedHistoryUpdated(view: WebView, url: String, isReload: Boolean) {
+                onVisitedHistoryUpdated?.onVisitedHistoryUpdated(view, url, isReload)
+            }
+        })
+    }
+
+    @BindingAdapter(value = ["onReceivedTitle", "onProgressChanged"], requireAll = false)
+    @JvmStatic
+    fun setWebChromeClientCallback(
+        view: BKWebView,
+        onReceivedTitle: BKWebChromeClient.OnReceivedTitle?,
+        onProgressChanged: BKWebChromeClient.OnProgressChanged?
+    ) {
+        view.addWebChromeClientCallback(object: BKWebChromeClient.Callback {
+            override fun onReceivedTitle(view: WebView, title: String) {
+                onReceivedTitle?.onReceivedTitle(view, title)
+            }
+
+            override fun onProgressChanged(view: WebView, newProgress: Int) {
+                onProgressChanged?.onProgressChanged(view, newProgress)
+            }
+        })
     }
 }
 

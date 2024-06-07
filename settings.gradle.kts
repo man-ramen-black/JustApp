@@ -23,3 +23,4 @@ rootProject.name = "JustApp"
 include(":app")
 include(":core")
 include(":feature:imagesearcher")
+include(":feature:pokerogue")

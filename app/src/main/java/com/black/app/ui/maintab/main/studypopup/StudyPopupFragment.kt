@@ -11,7 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentStudyPopupBinding
-import com.black.app.util.InputDialogBuilder
+import com.black.core.dialog.InputDialogBuilder
 import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.ui.common.base.TitleFragment
