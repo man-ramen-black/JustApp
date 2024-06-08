@@ -19,7 +19,7 @@ class ArchitectureFragment : TitleFragment<FragmentArchitectureBinding>(),
 
     private val viewModel : ViewModel by viewModels()
 
-    override fun bindVariable(binding: FragmentArchitectureBinding) {
+    override fun onBindVariable(binding: FragmentArchitectureBinding) {
         binding.viewModel = viewModel
         viewModel.observeEvent(viewLifecycleOwner, this)
     }

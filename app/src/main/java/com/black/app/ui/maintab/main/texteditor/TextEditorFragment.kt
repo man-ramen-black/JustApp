@@ -45,7 +45,7 @@ class TextEditorFragment : TitleFragment<FragmentTextEditorBinding>(),
         createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(), this::saveDocument)
     }
 
-    override fun bindVariable(binding: FragmentTextEditorBinding) {
+    override fun onBindVariable(binding: FragmentTextEditorBinding) {
         binding.fragment = this
         binding.viewModel = viewModel.apply {
             setModel(TextEditorPreferences(requireContext()))

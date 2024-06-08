@@ -1,21 +1,27 @@
 package com.black.feature.pokerogue.ui
 
+import android.content.Context
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.eventFlow
 import androidx.lifecycle.lifecycleScope
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialog
 import com.black.core.util.UiUtil
+import com.black.core.webkit.BKWebView
 import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -34,7 +40,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
 
     override val layoutResId: Int = R.layout.pkrg_fragment_poke_rogue
 
-    override fun bindVariable(binding: PkrgFragmentPokeRogueBinding) {
+    override fun onBindVariable(binding: PkrgFragmentPokeRogueBinding) {
         binding.viewModel = viewModel
 
         selectedTypeAdapter = TypeAdapter()
@@ -65,7 +71,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                         BKAlertDialog(requireActivity())
                             .setMessage(R.string.reload_confirm_message)
                             .setPositiveButton(R.string.ok) { dialog, _ ->
-                                binding.webView.reload()
+                                viewModel.webView.reload()
                                 dialog.dismiss()
                             }
                             .setNegativeButton(R.string.cancel) { dialog, _ ->
@@ -73,30 +79,58 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                             }
                             .show()
                     }
+
+                    PokeRogueViewModel.EVENT_ROTATE -> {
+                        val orientation = requireActivity().resources.configuration.orientation
+                        requireActivity().requestedOrientation = if (orientation == ORIENTATION_PORTRAIT) {
+                            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        } else {
+                            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                        }
+                    }
                 }
             }
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) {
+            viewModel.webView = BKWebView(requireActivity())
+                .apply { addWebViewClientCallback(viewModel) }
+        }
+        lifecycleScope.launch(Dispatchers.Main) {
+            delay(3000)
+            viewModel.webView.invalidate()
+        }
+
         super.onViewCreated(view, savedInstanceState)
 
         viewLifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
             val window = requireActivity().window
             when (event) {
                 Lifecycle.Event.ON_CREATE -> {
+                    if (isRestoring) {
+                        return@LifecycleEventObserver
+                    }
+
+                    requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     UiUtil.setImmersiveMode(window, true)
                     UiUtil.setCutout(window, WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS)
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    binding.webView.onResume()
+                    viewModel.webView.onResume()
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    binding.webView.onPause()
+                    viewModel.webView.onPause()
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    UiUtil.setImmersiveMode(window, false)
-                    UiUtil.setCutout(window, WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER)
+                    if (isRestoring) {
+                        return@LifecycleEventObserver
+                    }
+                    viewModel.webView.clear()
+                    requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+                    UiUtil.setImmersiveMode(requireActivity().window, false)
+                    UiUtil.setCutout(requireActivity().window, WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER)
                 }
                 else -> {}
             }

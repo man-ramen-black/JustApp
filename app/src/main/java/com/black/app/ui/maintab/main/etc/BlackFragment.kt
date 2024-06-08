@@ -9,7 +9,7 @@ import com.black.core.util.UiUtil
 class BlackFragment : TitleFragment<FragmentBlackBinding>() {
     override val title: String = ""
     override val layoutResId: Int = R.layout.fragment_black
-    override fun bindVariable(binding: FragmentBlackBinding) { }
+    override fun onBindVariable(binding: FragmentBlackBinding) { }
 
     override fun onResume() {
         super.onResume()

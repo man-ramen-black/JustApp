@@ -16,8 +16,13 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     // onCreateView ~ onDestroyView까지 유효
     protected val binding get() = _binding!!
     protected abstract val layoutResId : Int
+    protected var isRestoring = false
 
-    abstract fun bindVariable(binding: T)
+    abstract fun onBindVariable(binding: T)
+
+    open fun onBindVariable(binding: T, savedInstanceState: Bundle?) {
+        onBindVariable(binding)
+    }
 
     @CallSuper
     override fun onAttach(context: Context) {
@@ -48,7 +53,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
-        bindVariable(binding)
+        onBindVariable(binding)
         return binding.root
     }
 
@@ -108,5 +113,17 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onDetach() {
         super.onDetach()
         Log.d(javaClass.simpleName)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.v(javaClass.simpleName)
+        isRestoring = true
+    }
+
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        Log.v(javaClass.simpleName)
+        isRestoring = false
     }
 }

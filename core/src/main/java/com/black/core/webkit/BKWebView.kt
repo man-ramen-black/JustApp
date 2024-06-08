@@ -127,19 +127,6 @@ open class BKWebView : WebView {
         // 페이지 로드 시 흰색 화면 또는 검은색 화면이 노출되지 않도록 배경 투명 설정
         // (최초 페이지 로드 시 뒤에 있는 뷰가 노출되도록 설정)
         setBackgroundColor(Color.TRANSPARENT)
-
-        doOnAttach {
-            doOnDetach {
-                Log.d("WebView detached")
-
-                // 메모리 최적화
-                clearCache(false)
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
-                    destroyDrawingCache()
-                }
-                destroy()
-            }
-        }
     }
 
     override fun setWebChromeClient(client: WebChromeClient?) {
@@ -182,6 +169,15 @@ open class BKWebView : WebView {
     override fun onPause() {
         super.onPause()
         pauseTimers()
+    }
+
+    /** 메모리 최적화 */
+    fun clear() {
+        clearCache(false)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
+            destroyDrawingCache()
+        }
+        destroy()
     }
 
     fun onBackPressed() : Boolean {

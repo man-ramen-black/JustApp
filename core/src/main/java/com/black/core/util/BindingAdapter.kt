@@ -2,7 +2,6 @@ package com.black.core.util
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -19,13 +18,11 @@ import android.webkit.WebView
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.Dimension
 import androidx.annotation.StringRes
-import androidx.appcompat.widget.SwitchCompat
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.ViewCompat
@@ -33,6 +30,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.view.doOnDetach
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.databinding.BindingAdapter
 import androidx.databinding.InverseBindingAdapter
 import androidx.databinding.InverseBindingListener
@@ -50,7 +48,6 @@ import com.black.core.webkit.BKWebViewClient
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.Target
-import com.google.android.flexbox.AlignContent
 import com.google.android.flexbox.AlignItems
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexWrap
@@ -62,7 +59,6 @@ import com.google.android.material.tabs.TabLayout
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.roundToInt
 
 /*
 #twoway #databinding #양방향 #데이터바인딩
@@ -749,6 +745,20 @@ object WebViewBindingAdapter {
                 onProgressChanged?.onProgressChanged(view, newProgress)
             }
         })
+    }
+
+    @BindingAdapter("webView")
+    @JvmStatic
+    fun addWebView(parent: ViewGroup, webView: WebView?) {
+        webView ?: return
+        webView.layoutParams = (webView.layoutParams ?: ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            .apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+            }
+
+        (webView.parent as? ViewGroup)?.removeView(webView)
+        parent.addView(webView)
     }
 }
 

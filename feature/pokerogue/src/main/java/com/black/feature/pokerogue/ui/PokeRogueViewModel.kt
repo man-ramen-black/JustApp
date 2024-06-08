@@ -1,8 +1,14 @@
 package com.black.feature.pokerogue.ui
 
+import android.graphics.Bitmap
+import android.net.Uri
+import android.webkit.WebView
 import androidx.lifecycle.viewModelScope
+import com.black.core.util.Log
 import com.black.core.viewmodel.Event
 import com.black.core.viewmodel.EventViewModel
+import com.black.core.webkit.BKWebView
+import com.black.core.webkit.BKWebViewClient
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,15 +21,21 @@ import javax.inject.Inject
 @HiltViewModel
 class PokeRogueViewModel @Inject constructor(
     private val repo: PokeRepository
-): EventViewModel() {
+): EventViewModel(), BKWebViewClient.Callback {
 
     companion object {
         const val EVENT_RELOAD = "reload"
+        const val EVENT_ROTATE = "rotate"
     }
 
-    val url = MutableStateFlow<String?>(null)
+    // 화면 회전 시 객체 유지를 위해 ViewModel에서 관리
+    lateinit var webView: BKWebView
+
     val isLoading = MutableStateFlow(false)
+    val isStarted = MutableStateFlow(false)
+    val isMatchUpOpen = MutableStateFlow(false)
     val selectedTypes = MutableStateFlow(emptyList<TypeUIState>())
+
     val attackItemList = selectedTypes
         .map { it ->
             repo.getAttackMatchUp(it.map { it.type })
@@ -45,23 +57,28 @@ class PokeRogueViewModel @Inject constructor(
             }
         }
 
-    fun onPageStarted(url: String) {
-        isLoading.value = true
-    }
-
-    fun onPageFinished(url: String, isError: Boolean) {
-        isLoading.value = false
-    }
-
     fun onClickPlay() {
-        url.value = "https://pokerogue.net/"
+        webView.loadUrl("https://pokerogue.net/")
+        isStarted.value = true
     }
 
     fun onClickReload() = viewModelScope.launch {
         eventFlow.emit(Event(EVENT_RELOAD, null))
     }
 
+    fun onClickRotate() = viewModelScope.launch {
+        if (webView.url != null) {
+            return@launch
+        }
+        eventFlow.emit(Event(EVENT_ROTATE, null))
+    }
+
+    fun onClickMatchUp() = viewModelScope.launch {
+        isMatchUpOpen.value = !isMatchUpOpen.value
+    }
+
     fun onTypeClick(type: PokeType) {
+        Log.d(type)
         if (selectedTypes.value.all { it.type != type }) {
             if (selectedTypes.value.size < 2) {
                 selectedTypes.value += TypeUIState(type) { onSelectedTypeClick(it) }
@@ -71,6 +88,20 @@ class PokeRogueViewModel @Inject constructor(
         }
     }
 
-    private fun onSelectedTypeClick(typeUIState: TypeUIState) {
+    private fun onSelectedTypeClick(typeUIState: TypeUIState) { }
+
+    override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+        isLoading.value = true
+    }
+
+    override fun onPageLoading(view: WebView, uri: Uri): Boolean {
+        return false
+    }
+
+    override fun onPageFinished(view: WebView, url: String, isError: Boolean) {
+        isLoading.value = false
+    }
+
+    override fun onVisitedHistoryUpdated(view: WebView, url: String, isReload: Boolean) {
     }
 }

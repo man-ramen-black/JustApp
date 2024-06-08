@@ -17,7 +17,7 @@ class RetrofitFragment : TitleFragment<FragmentRetrofitBinding>() {
 
     private val viewModel: RetrofitViewModel by viewModels()
 
-    override fun bindVariable(binding: FragmentRetrofitBinding) {
+    override fun onBindVariable(binding: FragmentRetrofitBinding) {
         binding.fragment = this
         binding.viewModel = viewModel.apply {
             setModel(NetworkSampleModel(requireContext()))

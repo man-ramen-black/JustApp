@@ -6,8 +6,8 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentMainBinding
 import com.black.app.ui.maintab.MainTabFragmentDirections
-import com.black.core.util.FragmentExtension.navigate
 import com.black.core.component.BaseFragment
+import com.black.core.util.FragmentExtension.navigate
 import com.black.core.viewmodel.EventObserver
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -108,7 +108,7 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
 
     override val layoutResId: Int = R.layout.fragment_main
 
-    override fun bindVariable(binding: FragmentMainBinding) {
+    override fun onBindVariable(binding: FragmentMainBinding) {
         // ViewModel 생략
         binding.recyclerView.apply {
             adapter = this@MainFragment.adapter

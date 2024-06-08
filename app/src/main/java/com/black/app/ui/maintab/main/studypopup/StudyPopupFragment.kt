@@ -55,7 +55,7 @@ class StudyPopupFragment : TitleFragment<FragmentStudyPopupBinding>(),
         createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument(), this::onCreatedDocument)
     }
 
-    override fun bindVariable(binding: FragmentStudyPopupBinding) {
+    override fun onBindVariable(binding: FragmentStudyPopupBinding) {
         binding.viewModel = viewModel.apply {
             setModel(StudyPopupModel(requireContext()))
         }

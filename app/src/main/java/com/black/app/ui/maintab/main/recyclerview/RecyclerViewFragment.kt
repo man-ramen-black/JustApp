@@ -29,7 +29,7 @@ class RecyclerViewFragment : TitleFragment<FragmentRecyclerviewBinding>(),
         }
     }
 
-    override fun bindVariable(binding: FragmentRecyclerviewBinding) {
+    override fun onBindVariable(binding: FragmentRecyclerviewBinding) {
         binding.viewModel = viewModel.apply {
             observeEvent(viewLifecycleOwner, this@RecyclerViewFragment)
         }

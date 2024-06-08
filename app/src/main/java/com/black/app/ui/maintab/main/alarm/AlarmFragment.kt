@@ -17,7 +17,7 @@ class AlarmFragment : TitleFragment<FragmentAlarmBinding>() {
     override val title: String = "Alarm"
     override val layoutResId: Int = R.layout.fragment_alarm
 
-    override fun bindVariable(binding: FragmentAlarmBinding) {
+    override fun onBindVariable(binding: FragmentAlarmBinding) {
         binding.fragment = this
     }
 

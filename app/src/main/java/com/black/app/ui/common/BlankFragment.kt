@@ -6,5 +6,5 @@ import com.black.core.component.BaseFragment
 
 class BlankFragment: BaseFragment<ViewEmptyBinding>() {
     override val layoutResId: Int = R.layout.view_empty
-    override fun bindVariable(binding: ViewEmptyBinding) { }
+    override fun onBindVariable(binding: ViewEmptyBinding) { }
 }

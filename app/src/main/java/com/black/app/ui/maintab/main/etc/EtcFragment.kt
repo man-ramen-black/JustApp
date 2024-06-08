@@ -14,7 +14,7 @@ class EtcFragment : TitleFragment<FragmentEtcBinding>() {
     override val title: String = "ETC"
     override val layoutResId: Int = R.layout.fragment_etc
 
-    override fun bindVariable(binding: FragmentEtcBinding) {
+    override fun onBindVariable(binding: FragmentEtcBinding) {
         binding.fragment = this
     }
 

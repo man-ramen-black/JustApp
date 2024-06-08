@@ -22,7 +22,7 @@ class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
     override val title: String = "UsageTimer"
     private val viewModel : UsageTimerFragmentViewModel by viewModels()
 
-    override fun bindVariable(binding: FragmentUsageTimerBinding) {
+    override fun onBindVariable(binding: FragmentUsageTimerBinding) {
         binding.fragment = this
         binding.viewModel = viewModel.apply {
             setModel(UsageTimerModel(requireContext()))

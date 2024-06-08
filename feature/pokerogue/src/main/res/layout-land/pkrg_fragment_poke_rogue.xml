@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="android.view.View" />
+        <import type="com.google.android.flexbox.FlexDirection" />
+        <import type="com.google.android.flexbox.AlignItems" />
+        <import type="com.google.android.flexbox.JustifyContent" />
+        <import type="com.google.android.flexbox.FlexWrap" />
+        <variable
+            name="viewModel"
+            type="com.black.feature.pokerogue.ui.PokeRogueViewModel" />
+        <variable
+            name="selectedTypeAdapter"
+            type="com.black.feature.pokerogue.ui.TypeAdapter" />
+        <variable
+            name="typeSelectAdapter"
+            type="com.black.feature.pokerogue.ui.TypeAdapter" />
+        <variable
+            name="attackAdapter"
+            type="com.black.feature.pokerogue.ui.AttackAdapter" />
+        <variable
+            name="defenceListAdapter"
+            type="com.black.feature.pokerogue.ui.DefenceListAdapter" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true" >
+
+        <FrameLayout
+            android:id="@+id/web_view_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            webView="@{viewModel.webView}"
+            />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintTop_toTopOf="@id/web_view_container"
+            app:layout_constraintBottom_toBottomOf="@id/web_view_container"
+            app:layout_constraintLeft_toLeftOf="@id/web_view_container"
+            app:layout_constraintRight_toRightOf="@id/web_view_container"
+            android:visibility="@{viewModel.isLoading ? View.VISIBLE : View.GONE}"
+            />
+
+        <ImageButton
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            app:layout_constraintTop_toTopOf="@id/web_view_container"
+            app:layout_constraintBottom_toBottomOf="@id/web_view_container"
+            app:layout_constraintLeft_toLeftOf="@id/web_view_container"
+            app:layout_constraintRight_toRightOf="@id/web_view_container"
+            android:src="@drawable/ic_play"
+            android:onClick="@{_->viewModel.onClickPlay()}"
+            android:visibility="@{viewModel.isStarted ? View.GONE : View.VISIBLE}"
+            />
+
+        <FrameLayout
+            android:id="@+id/match_up_container"
+            android:layout_width="500dp"
+            android:layout_height="270dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/match_up_button"
+            android:layout_marginTop="15dp"
+            android:layout_marginRight="15dp"
+            android:background="@drawable/bg_match_up"
+            android:padding="5dp"
+            android:visibility="@{viewModel.isMatchUpOpen ? View.VISIBLE : View.GONE}"
+            >
+            <include
+                android:id="@+id/match_up"
+                layout="@layout/pkrg_view_match_up"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:selectedTypeAdapter="@{selectedTypeAdapter}"
+                app:typeSelectAdapter="@{typeSelectAdapter}"
+                app:attackAdapter="@{attackAdapter}"
+                app:defenceListAdapter="@{defenceListAdapter}"
+                />
+        </FrameLayout>
+
+        <ImageButton
+            android:id="@+id/match_up_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintTop_toTopOf="@id/reload_button"
+            app:layout_constraintBottom_toBottomOf="@id/reload_button"
+            app:layout_constraintRight_toLeftOf="@id/rotate_button"
+            android:layout_margin="15dp"
+            android:padding="5dp"
+            android:src="@{viewModel.isMatchUpOpen ? @drawable/ic_close : @drawable/ic_menu}"
+            android:onClick="@{_-> viewModel.onClickMatchUp()}"
+            />
+
+        <ImageButton
+            android:id="@+id/rotate_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintTop_toTopOf="@id/reload_button"
+            app:layout_constraintBottom_toBottomOf="@id/reload_button"
+            app:layout_constraintRight_toLeftOf="@id/reload_button"
+            android:layout_margin="15dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_screen_rotate"
+            android:onClick="@{_-> viewModel.onClickRotate()}"
+            />
+
+        <ImageButton
+            android:id="@+id/reload_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_margin="15dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_refresh"
+            android:onClick="@{_-> viewModel.onClickReload()}"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

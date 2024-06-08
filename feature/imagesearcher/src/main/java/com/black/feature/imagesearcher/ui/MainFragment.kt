@@ -26,7 +26,7 @@ class MainFragment: BaseFragment<ImageSearcherFragmentMainBinding>() {
 
     override val layoutResId: Int = R.layout.image_searcher_fragment_main
 
-    override fun bindVariable(binding: ImageSearcherFragmentMainBinding) {
+    override fun onBindVariable(binding: ImageSearcherFragmentMainBinding) {
         adapter = MainTabAdapter(this, tabs)
         binding.adapter = adapter
     }

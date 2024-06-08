@@ -30,7 +30,7 @@ class NotificationFragment : TitleFragment<FragmentNotificationBinding>() {
         NotificationUtil.createNotificationChannel(requireContext(), NOTIFICATION_CHANNEL_ID, "Default", NotificationManagerCompat.IMPORTANCE_MAX)
     }
 
-    override fun bindVariable(binding: FragmentNotificationBinding) {
+    override fun onBindVariable(binding: FragmentNotificationBinding) {
         binding.fragment = this
         binding.viewModel = viewModel
     }

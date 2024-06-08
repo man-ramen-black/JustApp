@@ -20,7 +20,7 @@ class SearchFragment: BaseFragment<ImageSearcherFragmentSearchBinding>(), EventO
 
     override val layoutResId: Int = R.layout.image_searcher_fragment_search
 
-    override fun bindVariable(binding: ImageSearcherFragmentSearchBinding) {
+    override fun onBindVariable(binding: ImageSearcherFragmentSearchBinding) {
         adapter = SearchAdapter()
         binding.adapter = adapter
         binding.viewModel = viewModel

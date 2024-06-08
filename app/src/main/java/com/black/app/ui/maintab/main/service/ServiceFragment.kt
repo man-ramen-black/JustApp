@@ -15,7 +15,7 @@ class ServiceFragment : TitleFragment<FragmentServiceBinding>() {
 
     private val viewModel : ServiceViewModel by viewModels()
 
-    override fun bindVariable(binding: FragmentServiceBinding) {
+    override fun onBindVariable(binding: FragmentServiceBinding) {
         binding.fragment = this
         binding.viewModel = viewModel.apply {
             setModel(ServiceModel(requireContext()))

@@ -63,7 +63,6 @@
         <activity
             android:name="com.black.app.ui.MainActivity"
             android:theme="@style/Theme.Black.Starting"
-            android:configChanges="orientation|screenSize|keyboardHidden|keyboard"
             android:launchMode="singleTop"
             android:exported="true">
             <!-- #Android13에서는 #IntentFilter가 정확히 매칭되야지만 #startActivity가 동작-->

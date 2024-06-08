@@ -13,7 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainTabFragment: BaseFragment<FragmentMainTabBinding>() {
     override val layoutResId: Int = R.layout.fragment_main_tab
 
-    override fun bindVariable(binding: FragmentMainTabBinding) { }
+    override fun onBindVariable(binding: FragmentMainTabBinding) { }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

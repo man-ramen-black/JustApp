@@ -12,7 +12,7 @@ class LauncherFragment : TitleFragment<FragmentLauncherBinding>() {
     override val title: String = "Launcher"
     override val layoutResId: Int = R.layout.fragment_launcher
 
-    override fun bindVariable(binding: FragmentLauncherBinding) {
+    override fun onBindVariable(binding: FragmentLauncherBinding) {
         binding.fragment = this
     }
 
