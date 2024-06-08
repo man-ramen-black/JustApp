@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="uiState"
+            type="com.black.feature.pokerogue.ui.TypeUIState" />
+    </data>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@{uiState.type.iconRes}"
+            android:padding="1dp"
+            android:onClick="@{_ -> uiState.onClick.invoke(uiState)}"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
