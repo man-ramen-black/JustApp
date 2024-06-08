@@ -47,8 +47,8 @@ class StudyPopupListAdapter(private val viewModel: StudyPopupFragmentViewModel) 
         viewType: Int
     ): BaseViewHolder<ViewDataBinding, StudyPopupData> {
         return when (viewType) {
-            VIEW_TYPE_FILE_MANAGER -> FileManagerViewHolder(inflateForViewHolder(parent, R.layout.item_study_popup_list_file_manager), viewModel)
-            else -> ContentsViewHolder(inflateForViewHolder(parent, R.layout.item_study_popup_list_contents), viewModel)
+            VIEW_TYPE_FILE_MANAGER -> FileManagerViewHolder(inflate(parent, R.layout.item_study_popup_list_file_manager), viewModel)
+            else -> ContentsViewHolder(inflate(parent, R.layout.item_study_popup_list_contents), viewModel)
         }
     }
 }

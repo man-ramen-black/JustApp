@@ -3,6 +3,7 @@ package com.black.core.view
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.findViewTreeLifecycleOwner
@@ -23,14 +24,14 @@ abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> =
     constructor(areItemTheSame:(old:DATA, new:DATA) -> Boolean) : this(SimpleItemCallback(areItemTheSame))
 
     override fun onBindViewHolder(holder: BaseViewHolder<ViewDataBinding, DATA>, position: Int) {
-        holder.bind(getItem(position))
+        holder.itemView.doOnAttach {
+            holder.binding.lifecycleOwner = holder.itemView.findViewTreeLifecycleOwner()
+            holder.bind(getItem(position))
+        }
     }
 
-    protected fun <BINDING : ViewDataBinding> inflateForViewHolder(parent: ViewGroup, layoutId: Int) : BINDING {
-        return DataBindingUtil.inflate<BINDING>(LayoutInflater.from(parent.context), layoutId, parent, false)
-            .apply {
-                lifecycleOwner = parent.findViewTreeLifecycleOwner()
-            }
+    protected fun <BINDING : ViewDataBinding> inflate(parent: ViewGroup, layoutId: Int) : BINDING {
+        return DataBindingUtil.inflate(LayoutInflater.from(parent.context), layoutId, parent, false)
     }
 
     /*
@@ -40,11 +41,11 @@ abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> =
     https://stackoverflow.com/a/58080105
      */
     override fun submitList(list: List<DATA>?) {
-        super.submitList(list?.toMutableList())
+        super.submitList(list?.toList())
     }
 }
 
-abstract class BaseViewHolder<out BINDING : ViewDataBinding, DATA>(protected val binding: BINDING)
+abstract class BaseViewHolder<out BINDING : ViewDataBinding, DATA>(val binding: BINDING)
     : RecyclerView.ViewHolder(binding.root) {
     abstract fun bind(item : DATA)
 }

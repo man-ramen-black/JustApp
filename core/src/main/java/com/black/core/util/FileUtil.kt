@@ -1,4 +1,4 @@
-package com.black.app.util
+package com.black.core.util
 
 import android.content.ContentUris
 import android.content.Context
@@ -7,16 +7,20 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import com.black.core.util.Log
 import java.io.*
 import kotlin.jvm.Throws
 
 object FileUtil {
     @Throws(IOException::class)
     fun read(inputStream: InputStream, onRead: (text: String) -> Unit) {
-        inputStream.use { stream ->
+        onRead(read(inputStream))
+    }
+
+    @Throws(IOException::class)
+    fun read(inputStream: InputStream): String {
+        return inputStream.use { stream ->
             InputStreamReader(stream).use { reader ->
-                onRead(reader.readLines().joinToString("\n"))
+                reader.readLines().joinToString("\n")
             }
         }
     }

@@ -21,6 +21,6 @@ class MainGridAdapter : BaseListAdapter<MainItem>() {
         parent: ViewGroup,
         viewType: Int
     ): BaseViewHolder<ViewDataBinding, MainItem> {
-        return ViewHolder(inflateForViewHolder(parent, R.layout.item_main))
+        return ViewHolder(inflate(parent, R.layout.item_main))
     }
 }

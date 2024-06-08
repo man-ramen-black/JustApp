@@ -246,11 +246,11 @@ class BKWebChromeClient : WebChromeClient() {
         }
     }
 
-    fun addListener(callback: Callback) {
+    fun addCallback(callback: Callback) {
         callbackList.add(callback)
     }
 
-    fun removeListener(callback: Callback) {
+    fun removeCallback(callback: Callback) {
         callbackList.remove(callback)
     }
 }

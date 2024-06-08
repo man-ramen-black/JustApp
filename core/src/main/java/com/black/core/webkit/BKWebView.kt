@@ -23,7 +23,6 @@ import android.graphics.Color
 import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -198,23 +197,23 @@ open class BKWebView : WebView {
     }
 
     fun addWebViewClientCallback(callback: BKWebViewClient.Callback) {
-        bkWebViewClient?.addListener(callback)
-            ?: run { Log.w("nmWebViewClient is null") }
+        bkWebViewClient?.addCallback(callback)
+            ?: run { Log.w("${BKWebViewClient::class.java.simpleName} is null") }
     }
 
     fun removeWebViewClientCallback(callback: BKWebViewClient.Callback) {
-        bkWebViewClient?.removeListener(callback)
-            ?: run { Log.v("nmWebViewClient is null") }
+        bkWebViewClient?.removeCallback(callback)
+            ?: run { Log.v("${BKWebViewClient::class.java.simpleName} is null") }
     }
 
     fun addWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.addListener(callback)
-            ?: run { Log.w("nmWebChromeClient is null") }
+        bkWebChromeClient?.addCallback(callback)
+            ?: run { Log.w("${BKWebChromeClient::class.java.simpleName} is null") }
     }
 
     fun removeWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.removeListener(callback)
-            ?: run { Log.v("nmWebChromeClient is null") }
+        bkWebChromeClient?.removeCallback(callback)
+            ?: run { Log.v("${BKWebChromeClient::class.java.simpleName} is null") }
     }
 
     /**

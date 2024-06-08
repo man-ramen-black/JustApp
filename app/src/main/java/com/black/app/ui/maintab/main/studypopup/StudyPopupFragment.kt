@@ -16,7 +16,7 @@ import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.ui.common.base.TitleFragment
 import com.black.app.ui.maintab.main.studypopup.popup.StudyPopupView
-import com.black.app.util.FileUtil
+import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder

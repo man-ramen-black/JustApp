@@ -10,7 +10,9 @@ import com.black.core.util.FragmentExtension.navigate
 import com.black.core.component.BaseFragment
 import com.black.core.viewmodel.EventObserver
 import com.black.feature.pokerogue.ui.PokeRogueFragment
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
 
     // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리

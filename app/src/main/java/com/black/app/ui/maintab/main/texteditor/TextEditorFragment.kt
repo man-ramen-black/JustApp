@@ -11,7 +11,7 @@ import com.black.app.R
 import com.black.app.databinding.FragmentTextEditorBinding
 import com.black.app.model.preferences.TextEditorPreferences
 import com.black.app.ui.common.base.TitleFragment
-import com.black.app.util.FileUtil
+import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder

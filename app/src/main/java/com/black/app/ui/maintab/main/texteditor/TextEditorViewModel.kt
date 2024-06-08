@@ -4,7 +4,7 @@ import android.net.Uri
 import android.view.View
 import androidx.lifecycle.MutableLiveData
 import com.black.app.model.preferences.TextEditorPreferences
-import com.black.app.util.FileUtil
+import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import java.io.IOException
 import java.io.InputStream

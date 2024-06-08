@@ -22,6 +22,6 @@ class StudyPopupPagerAdapter : com.black.core.view.LoopingPagerAdapter<StudyPopu
         parent: ViewGroup,
         viewType: Int
     ): BaseViewHolder<ViewDataBinding, StudyPopupData.Contents> {
-        return ViewHolder(inflateForViewHolder(parent, R.layout.item_study_popup_pager_contents))
+        return ViewHolder(inflate(parent, R.layout.item_study_popup_pager_contents))
     }
 }

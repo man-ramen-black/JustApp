@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
-import com.black.app.util.FileUtil
+import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser

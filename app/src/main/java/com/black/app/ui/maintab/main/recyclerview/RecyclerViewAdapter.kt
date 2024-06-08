@@ -53,11 +53,11 @@ class RecyclerViewAdapter(private val viewModel: RecyclerViewViewModel) : com.bl
     ): BaseViewHolder<ViewDataBinding, RecyclerViewData> {
         return when(viewType) {
             VIEW_TYPE_TOAST -> {
-                ToastViewHolder(inflateForViewHolder(parent, R.layout.item_recyclerview_toast), viewModel)
+                ToastViewHolder(inflate(parent, R.layout.item_recyclerview_toast), viewModel)
             }
 
             VIEW_TYPE_DIALOG -> {
-                DialogViewHolder(inflateForViewHolder(parent, R.layout.item_recyclerview_dialog), viewModel)
+                DialogViewHolder(inflate(parent, R.layout.item_recyclerview_dialog), viewModel)
             }
 
             else -> {

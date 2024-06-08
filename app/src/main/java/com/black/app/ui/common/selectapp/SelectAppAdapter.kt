@@ -26,6 +26,6 @@ class SelectAppAdapter(private val viewModel: SelectAppViewModel)
         parent: ViewGroup,
         viewType: Int
     ): BaseViewHolder<ViewDataBinding, SelectAppItem> {
-        return ViewHolder(inflateForViewHolder(parent, R.layout.item_select_app), viewModel)
+        return ViewHolder(inflate(parent, R.layout.item_select_app), viewModel)
     }
 }

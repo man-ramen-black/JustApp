@@ -747,9 +747,9 @@ object CompoundButtonBindingAdapter {
 object WebViewBindingAdapter {
     @BindingAdapter("url")
     @JvmStatic
-    fun setUrl(view: WebView, url: String) {
+    fun setUrl(view: WebView, url: String?) {
         if (view.url != url) {
-            view.loadUrl(url)
+            view.loadUrl(url ?: return)
         }
     }
 
