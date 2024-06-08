@@ -8,13 +8,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.black.core.component.BaseFragment
+import com.black.core.dialog.BKAlertDialog
 import com.black.core.util.UiUtil
 import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -27,7 +28,8 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
 
     private val viewModel: PokeRogueViewModel by viewModels()
     private lateinit var selectedTypeAdapter: TypeAdapter
-    private lateinit var damageAdapter: DamageAdapter
+    private lateinit var attackAdapter: AttackAdapter
+    private lateinit var defenceListAdapter: DefenceListAdapter
     private lateinit var typeAdapter: TypeAdapter
 
     override val layoutResId: Int = R.layout.pkrg_fragment_poke_rogue
@@ -41,14 +43,39 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
             viewModel.selectedTypes.collect { selectedTypeAdapter.submitList(it) }
         }
 
-        damageAdapter = DamageAdapter()
-        binding.damageAdapter = damageAdapter
+        attackAdapter = AttackAdapter()
+        binding.attackAdapter = attackAdapter
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.damageItemList.collect { damageAdapter.submitList(it) }
+            viewModel.attackItemList.collect { attackAdapter.submitList(it) }
+        }
+
+        defenceListAdapter = DefenceListAdapter()
+        binding.defenceListAdapter = defenceListAdapter
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.defenceListItemList.collect { defenceListAdapter.submitList(it) }
         }
 
         typeAdapter = TypeAdapter().also { it.submitList(typeList) }
         binding.typeSelectAdapter = typeAdapter
+
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            viewModel.eventFlow.collect {
+                when (it.action) {
+                    PokeRogueViewModel.EVENT_RELOAD -> {
+                        BKAlertDialog(requireActivity())
+                            .setMessage(R.string.reload_confirm_message)
+                            .setPositiveButton(R.string.ok) { dialog, _ ->
+                                binding.webView.reload()
+                                dialog.dismiss()
+                            }
+                            .setNegativeButton(R.string.cancel) { dialog, _ ->
+                                dialog.cancel()
+                            }
+                            .show()
+                    }
+                }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

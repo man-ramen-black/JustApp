@@ -7,13 +7,12 @@
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
+        android:layout_height="wrap_content"
+        android:padding="@dimen/damage_type_icon_padding">
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/damage_type_icon_size"
+            android:layout_height="@dimen/damage_type_icon_size"
             android:src="@{type.iconRes}"
             />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -50,6 +50,12 @@ import com.black.core.webkit.BKWebViewClient
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.Target
+import com.google.android.flexbox.AlignContent
+import com.google.android.flexbox.AlignItems
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
+import com.google.android.flexbox.JustifyContent
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
@@ -599,6 +605,40 @@ object RecyclerViewBindingAdapter {
         }
     }
 
+    @BindingAdapter("hasFixedSize")
+    @JvmStatic
+    fun setHasFixedSize(view: RecyclerView, value: Boolean) {
+        view.setHasFixedSize(value)
+    }
+
+    @BindingAdapter("flexDirection")
+    @JvmStatic
+    fun setFlexDirection(view: RecyclerView, @FlexDirection value: Int) {
+        val layoutManager = view.layoutManager as? FlexboxLayoutManager
+        layoutManager?.flexDirection = value
+    }
+
+    @BindingAdapter("alignItems")
+    @JvmStatic
+    fun setAlignItems(view: RecyclerView, @AlignItems value: Int) {
+        val layoutManager = view.layoutManager as? FlexboxLayoutManager
+        layoutManager?.alignItems = value
+    }
+
+    @BindingAdapter("justifyContent")
+    @JvmStatic
+    fun setJustifyContent(view: RecyclerView, @JustifyContent value: Int) {
+        val layoutManager = view.layoutManager as? FlexboxLayoutManager
+        layoutManager?.justifyContent = value
+    }
+
+    @BindingAdapter("flexWrap")
+    @JvmStatic
+    fun setFlexWrap(view: RecyclerView, @FlexWrap value: Int) {
+        val layoutManager = view.layoutManager as? FlexboxLayoutManager
+        layoutManager?.flexWrap = value
+    }
+
     @BindingAdapter("onItemTouchDisabled")
     @JvmStatic
     fun setOnItemTouchDisabled(view: RecyclerView, disabled: Boolean) {
@@ -626,94 +666,6 @@ object SwipeRefreshLayoutBindingAdapter {
     @JvmStatic
     fun setRefreshing(view: SwipeRefreshLayout, refreshing: Boolean) {
         view.isRefreshing = refreshing
-    }
-}
-
-object SwitchRowBindingAdapter {
-    /**
-     * [ItemSwitchRowBinding] onClick 처리를 위한 BindingAdapter
-     *
-     * @param onClick 스위치 변경없이 onClick 이벤트 발생, 미설정 시 스위치 변경
-     */
-    @BindingAdapter("switchRowOnClick")
-    @JvmStatic
-    fun setOnClickForSwitchRow(view: ViewGroup, onClick: OnClick?) {
-        ViewBindingAdapter.setOnClickListener(view) {
-            // onClick이 설정된 경우 onClick만 호출
-            if (onClick != null) {
-                onClick.invoke()
-            }
-            // 아무것도 설정하지 않은 경우 switch 변경
-            else {
-                val switch = view.children.find { it is SwitchCompat } as? SwitchCompat
-                if (switch == null) {
-                    Log.w("switch is null")
-                    return@setOnClickListener
-                }
-                val checked = !switch.isChecked
-                switch.isChecked = checked
-            }
-        }
-    }
-}
-
-/**
- * ConstraintLayoutBindingAdapter
- */
-object ConstraintLayoutBindingAdapter {
-    @BindingAdapter("tabletViewSupported")
-    @JvmStatic
-    fun adjustWidthForTabletView(view: ConstraintLayout, enabled: Boolean) {
-        // enabled 가 false 이거나, 기존 width 가 MATCH_PARENT 가 아닌 경우 return
-        if (!enabled || view.layoutParams.width != ViewGroup.LayoutParams.MATCH_PARENT)
-            return
-
-        // 기존 ConstraintLayout 의 하위 childView 를 복사
-        val originalChildViewList = ArrayList<View>().apply { view.children.forEach { add(it) } }
-
-        // 기존 ConstraintLayout 의 하위 childView 제거
-        view.removeAllViews()
-
-        // ConstraintLayout 생성 하여, 기존 childView 추가
-        val constraintLayout = ConstraintLayout(view.context).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-
-            for (childViewList in originalChildViewList)
-                addView(childViewList)
-        }
-
-        // 가운데 정렬을 위한 LinearLayout 을 생성 하여, 기존 childView 가 추가된 ConstraintLayout 하위로 추가
-        val linearLayout = LinearLayout(view.context).apply {
-            id = View.generateViewId() // ConstraintSet 을 사용 하기 위해 id 를 부여
-            layoutParams = LinearLayout.LayoutParams(0, 0)
-            addView(constraintLayout)
-        }
-
-        // 신규로 생성한 LinearLayout 을 하위로 추가
-        // 기존 (ConstraintLayout > ChildView) -> 변경 (ConstraintLayout > LinearLayout > ConstraintLayout > ChildView)
-        view.addView(linearLayout)
-
-        // 하위 뷰인 LinearLayout 에 ConstraintLayout 제약 조건 추가
-        if (linearLayout.parent is ConstraintLayout) {
-            val parentView = linearLayout.parent as ConstraintLayout
-            val targetId = linearLayout.id
-
-            ConstraintSet().apply {
-                clone(parentView)
-                // 최대로 늘어날 수 있는 width 를 594dp (기본 550dp + 양쪽 기본 여백 (22dp + 22dp)) 로 제한
-                constrainMaxWidth(targetId, convertDpToPx(view.context, 594))
-                connect(targetId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP)
-                connect(targetId, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM)
-                connect(targetId, ConstraintSet.LEFT, ConstraintSet.PARENT_ID, ConstraintSet.LEFT)
-                connect(targetId, ConstraintSet.RIGHT, ConstraintSet.PARENT_ID, ConstraintSet.RIGHT)
-                applyTo(parentView)
-            }
-        }
-    }
-
-    private fun convertDpToPx(context: Context, dp: Int): Int {
-        val density = context.resources.displayMetrics.density
-        return (dp.toFloat() * density).roundToInt()
     }
 }
 

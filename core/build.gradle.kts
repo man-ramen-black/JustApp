@@ -57,6 +57,7 @@ dependencies {
     api(libs.logging.interceptor)
 
     api(libs.androidx.room.runtime)
+    api(libs.flexbox)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.androidx.room.compiler)
     api(libs.glide)

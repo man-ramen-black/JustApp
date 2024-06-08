@@ -10,6 +10,7 @@ import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
@@ -18,6 +19,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 open class EventViewModel : ViewModel()  {
     private val jobs = ConcurrentHashMap<String, Job>()
     private val event = LiveEvent()
+
+    val eventFlow = MutableSharedFlow<Event>()
 
     @MainThread
     fun sendEvent(action: String = "", data: Any? = null)

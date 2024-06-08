@@ -10,9 +10,10 @@
         android:layout_height="wrap_content"
         >
         <ImageButton
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:src="@{uiState.type.iconRes}"
+            android:foreground="@drawable/bt_poke_type"
             android:padding="1dp"
             android:onClick="@{_ -> uiState.onClick.invoke(uiState)}"
             />

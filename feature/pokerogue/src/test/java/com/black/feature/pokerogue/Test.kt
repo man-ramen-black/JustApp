@@ -1,6 +1,5 @@
 package com.black.feature.pokerogue
 
-import com.black.core.util.FileUtil
 import com.black.core.util.JsonUtil
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.feature.pokerogue.model.PokeType
@@ -8,12 +7,9 @@ import com.black.feature.pokerogue.model.PokeTypeChart
 import com.black.test.BaseTest
 import com.black.test.TestUtil
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.spyk
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -45,7 +41,7 @@ class Test: BaseTest() {
         val repo = spyk(PokeRepository(TestUtil.getTestContext()))
         coEvery { repo["getPokeTypeCharts"]() } returns JsonUtil.from<List<PokeTypeChart>>(pokeTypeChartsJson, true)!!
 
-        val result = repo.getDefenceMatchUp(listOf(PokeType.Fire, PokeType.Dragon))
+        val result = repo.getAttackMatchUp(listOf(PokeType.Fire, PokeType.Dragon))
             .entries
             .groupBy({it.value}, {it.key})
         println(result)

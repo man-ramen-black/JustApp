@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="damage_type_icon_size">23dp</dimen>
+    <dimen name="damage_type_icon_padding">1dp</dimen>
+    <dimen name="damage_type_item_height">25dp</dimen>
+    <dimen name="damage_arrow_size">25dp</dimen>
+    <dimen name="damage_label_width">35dp</dimen>
+</resources>

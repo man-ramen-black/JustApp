@@ -9,7 +9,6 @@ import com.black.feature.pokerogue.model.PokeTypeChart
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.SortedMap
 import javax.inject.Inject
 
 class PokeRepository @Inject constructor(
@@ -28,9 +27,9 @@ class PokeRepository @Inject constructor(
             .also { pokeTypeChart = it }
     }
 
-    suspend fun getAttackMatchUp(type: PokeType): Map<PokeType, Damage> = withContext(Dispatchers.IO) {
+    suspend fun getDefenceMatchUp(attackType: PokeType): Map<PokeType, Damage> = withContext(Dispatchers.IO) {
         getPokeTypeCharts()
-            .filter { chart -> type.name == chart.name }
+            .filter { chart -> attackType.name == chart.name }
             .flatMap { chart ->
                 listOf(
                     chart.immunes.map { it to Damage.X0 },
@@ -47,8 +46,8 @@ class PokeRepository @Inject constructor(
             .filterValues { it != Damage.X1 }
     }
 
-    suspend fun getDefenceMatchUp(types: List<PokeType>): Map<PokeType, Damage> = withContext(Dispatchers.IO) {
-        val typeNames = types.map { it.name }
+    suspend fun getAttackMatchUp(defenceTypes: List<PokeType>): Map<PokeType, Damage> = withContext(Dispatchers.IO) {
+        val typeNames = defenceTypes.map { it.name }
         getPokeTypeCharts()
             .flatMap { chart ->
                 listOf(

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="poke_rogue">PokéRogue</string>
+
+    <string name="reload_confirm_message">새로고침 하시겠습니까?</string>
 </resources>

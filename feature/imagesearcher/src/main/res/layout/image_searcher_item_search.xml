@@ -54,7 +54,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             android:padding="2dp"
-            android:background="@drawable/bt_transparent_circle"
+            android:background="@drawable/bt_circle_transparent"
             android:src="@{item.isFavorite ? @drawable/icon_like_on : @drawable/icon_like_off}"
             onClick="@{_->item.onClickFavorite.invoke(item.content)}"
             />
