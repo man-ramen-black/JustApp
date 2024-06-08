@@ -3,4 +3,6 @@
     <string name="poke_rogue">PokéRogue</string>
 
     <string name="reload_confirm_message">새로고침 하시겠습니까?</string>
+
+    <string name="poke_rogue_back_pressed_message">\'뒤로\' 버튼을 한 번 더 누르면 게임이 종료됩니다.</string>
 </resources>

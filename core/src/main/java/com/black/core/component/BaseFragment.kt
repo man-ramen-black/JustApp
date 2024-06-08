@@ -15,13 +15,23 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     private var _binding: T? = null
     // onCreateView ~ onDestroyView까지 유효
     protected val binding get() = _binding!!
-    protected abstract val layoutResId : Int
+
     protected var isRestoring = false
+    val onBackPressedDispatcher get() = requireActivity().onBackPressedDispatcher
+    private var onBackPressed: (() -> Unit)? = null
+    private val onBackPressedCallback = OnBackPressedCallback(false) { onBackPressed?.invoke() }
+
+    protected abstract val layoutResId : Int
 
     abstract fun onBindVariable(binding: T)
 
     open fun onBindVariable(binding: T, savedInstanceState: Bundle?) {
         onBindVariable(binding)
+    }
+
+    fun setOnBackPressed(onBackPressed: (() -> Unit)?) {
+        onBackPressedCallback.isEnabled = onBackPressed != null
+        this.onBackPressed = onBackPressed
     }
 
     @CallSuper
@@ -35,6 +45,13 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(javaClass.simpleName)
+
+        isRestoring = savedInstanceState != null
+
+        // >> https://developer.android.com/guide/navigation/navigation-custom-back?hl=ko
+        // https://stackoverflow.com/questions/63376684/onbackpressedcallback-not-trigger-after-screen-rotation
+        // LifecycleOwner 설정 시 LifeCycle에 따라 자동으로 enabled가 on/off되며 remove 처리 생략 가능
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
     }
 
     /*
@@ -53,6 +70,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
+
         onBindVariable(binding)
         return binding.root
     }
@@ -70,6 +88,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onStart() {
         super.onStart()
         Log.d(javaClass.simpleName)
+        isRestoring = false
     }
 
     @CallSuper
@@ -124,6 +143,5 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         Log.v(javaClass.simpleName)
-        isRestoring = false
     }
 }

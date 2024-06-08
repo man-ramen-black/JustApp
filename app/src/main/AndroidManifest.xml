@@ -40,9 +40,11 @@
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
+        android:supportsRtl="false"
+        android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.Black">
+        android:theme="@style/Theme.Black"
+        android:enableOnBackInvokedCallback="true">
 
         <!--
         [configChanges]

@@ -31,6 +31,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/type_select_recycler_view"
             android:layout_margin="10dp"
+            app:layout_constraintVertical_chainStyle="packed"
             />
 
         <androidx.recyclerview.widget.RecyclerView
@@ -91,8 +92,8 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/attack_recycler_view"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintHeight_default="wrap"
+            android:layout_height="wrap_content"
+            app:layout_constrainedHeight="true"
             app:layout_constraintTop_toTopOf="@id/match_up_background"
             app:layout_constraintBottom_toBottomOf="@id/match_up_background"
             app:layout_constraintLeft_toRightOf="@id/arrow_attack"

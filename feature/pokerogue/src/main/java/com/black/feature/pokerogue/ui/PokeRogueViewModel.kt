@@ -34,6 +34,7 @@ class PokeRogueViewModel @Inject constructor(
     val isLoading = MutableStateFlow(false)
     val isStarted = MutableStateFlow(false)
     val isMatchUpOpen = MutableStateFlow(false)
+    val isLandscapeButtonShowing = MutableStateFlow(true)
     val selectedTypes = MutableStateFlow(emptyList<TypeUIState>())
 
     val attackItemList = selectedTypes
@@ -77,6 +78,10 @@ class PokeRogueViewModel @Inject constructor(
         isMatchUpOpen.value = !isMatchUpOpen.value
     }
 
+    fun onClickHide() {
+        isLandscapeButtonShowing.value = false
+    }
+
     fun onTypeClick(type: PokeType) {
         Log.d(type)
         if (selectedTypes.value.all { it.type != type }) {
@@ -88,7 +93,23 @@ class PokeRogueViewModel @Inject constructor(
         }
     }
 
-    private fun onSelectedTypeClick(typeUIState: TypeUIState) { }
+    private fun onSelectedTypeClick(typeUIState: TypeUIState) {
+        selectedTypes.value -= typeUIState
+    }
+
+    fun onBackPressed(): Boolean {
+        return if (isMatchUpOpen.value) {
+            isMatchUpOpen.value = false
+            true
+
+        } else if (!isLandscapeButtonShowing.value) {
+            isLandscapeButtonShowing.value = true
+            true
+
+        } else {
+            false
+        }
+    }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         isLoading.value = true

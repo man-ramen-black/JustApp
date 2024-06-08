@@ -60,7 +60,6 @@ class DefenceAdapter: BaseListAdapter<DamageUiState>() {
     class ViewHolder(binding: PkrgItemDefenceBinding): BaseViewHolder<PkrgItemDefenceBinding, DamageUiState>(binding) {
         override fun bind(item: DamageUiState) {
             binding.damage = item.damage
-            Log.e(item.typeList)
             binding.adapter = DamageTypeAdapter()
                 .also { it.submitList(item.typeList) }
         }

@@ -56,6 +56,7 @@
             android:padding="5dp"
             android:src="@drawable/ic_screen_rotate"
             android:onClick="@{_-> viewModel.onClickRotate()}"
+            android:visibility="@{viewModel.isStarted ? View.GONE : View.VISIBLE}"
             />
 
         <ImageButton
