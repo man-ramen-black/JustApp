@@ -3,6 +3,7 @@ package com.black.feature.pokerogue.ui
 import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.WebView
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.black.core.util.Log
 import com.black.core.viewmodel.Event
@@ -15,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.lang.ref.SoftReference
 import javax.inject.Inject
 
 /** [PokeRogueFragment] */
@@ -29,15 +31,18 @@ class PokeRogueViewModel @Inject constructor(
     }
 
     // 화면 회전 시 객체 유지를 위해 ViewModel에서 관리
-    lateinit var webView: BKWebView
+    lateinit var webView: SoftReference<BKWebView>
+        private set
 
     val isLoading = MutableStateFlow(false)
     val isStarted = MutableStateFlow(false)
     val isMatchUpOpen = MutableStateFlow(false)
     val isLandscapeButtonShowing = MutableStateFlow(true)
-    val selectedTypes = MutableStateFlow(emptyList<TypeUIState>())
 
-    val attackItemList = selectedTypes
+    private val setSelectedTypes = MutableStateFlow(emptyList<TypeUIState>())
+    val selectedTypes = setSelectedTypes.asLiveData()
+
+    val attackItemList = setSelectedTypes
         .map { it ->
             repo.getAttackMatchUp(it.map { it.type })
                 .entries
@@ -45,8 +50,9 @@ class PokeRogueViewModel @Inject constructor(
                 .map { DamageUiState(it.key, it.value) }
                 .sortedByDescending { it.damage.multiplier }
         }
+        .asLiveData()
 
-    val defenceListItemList = selectedTypes
+    val defenceListItemList = setSelectedTypes
         .map { it ->
             it.map { type ->
                 repo.getDefenceMatchUp(type.type)
@@ -57,9 +63,15 @@ class PokeRogueViewModel @Inject constructor(
                     .let { DamageListUiState(type.type, it) }
             }
         }
+        .asLiveData()
+
+    fun init(webView: SoftReference<BKWebView>) {
+        this.webView = webView
+        isStarted.value = false
+    }
 
     fun onClickPlay() {
-        webView.loadUrl("https://pokerogue.net/")
+        webView.get()?.loadUrl("https://pokerogue.net/")
         isStarted.value = true
     }
 
@@ -68,7 +80,7 @@ class PokeRogueViewModel @Inject constructor(
     }
 
     fun onClickRotate() = viewModelScope.launch {
-        if (webView.url != null) {
+        if (webView.get()?.url != null) {
             return@launch
         }
         eventFlow.emit(Event(EVENT_ROTATE, null))
@@ -84,17 +96,17 @@ class PokeRogueViewModel @Inject constructor(
 
     fun onTypeClick(type: PokeType) {
         Log.d(type)
-        if (selectedTypes.value.all { it.type != type }) {
-            if (selectedTypes.value.size < 2) {
-                selectedTypes.value += TypeUIState(type) { onSelectedTypeClick(it) }
+        if (setSelectedTypes.value.all { it.type != type }) {
+            if (setSelectedTypes.value.size < 2) {
+                setSelectedTypes.value += TypeUIState(type) { onSelectedTypeClick(it) }
             }
         } else {
-            selectedTypes.value -= TypeUIState(type) { onSelectedTypeClick(it) }
+            setSelectedTypes.value -= TypeUIState(type) { onSelectedTypeClick(it) }
         }
     }
 
     private fun onSelectedTypeClick(typeUIState: TypeUIState) {
-        selectedTypes.value -= typeUIState
+        setSelectedTypes.value -= typeUIState
     }
 
     fun onBackPressed(): Boolean {

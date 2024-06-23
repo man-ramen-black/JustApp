@@ -4,24 +4,23 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Bundle
 import android.view.View
-import android.view.WindowManager
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialog
 import com.black.core.util.BackPressHelper
-import com.black.core.util.Log
+import com.black.core.util.Cutout
+import com.black.core.util.Extensions.collect
+import com.black.core.util.FragmentExtension.viewLifecycleScope
 import com.black.core.util.UiUtil
 import com.black.core.webkit.BKWebView
 import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import java.lang.ref.SoftReference
 
 @AndroidEntryPoint
 class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
@@ -60,49 +59,47 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
 
         selectedTypeAdapter = TypeAdapter()
         binding.selectedTypeAdapter = selectedTypeAdapter
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.selectedTypes.collect { selectedTypeAdapter.submitList(it) }
+        viewModel.selectedTypes.observe(viewLifecycleOwner) {
+            selectedTypeAdapter.submitList(it)
         }
 
         attackAdapter = AttackAdapter()
         binding.attackAdapter = attackAdapter
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.attackItemList.collect { attackAdapter.submitList(it) }
+        viewModel.attackItemList.observe(viewLifecycleOwner) {
+            attackAdapter.submitList(it)
         }
 
         defenceListAdapter = DefenceListAdapter()
         binding.defenceListAdapter = defenceListAdapter
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.defenceListItemList.collect { defenceListAdapter.submitList(it) }
+        viewModel.defenceListItemList.observe(viewLifecycleOwner) {
+            defenceListAdapter.submitList(it)
         }
 
         typeAdapter = TypeAdapter().also { it.submitList(typeList) }
         binding.typeSelectAdapter = typeAdapter
 
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-            viewModel.eventFlow.collect {
-                when (it.action) {
-                    PokeRogueViewModel.EVENT_RELOAD -> {
-                        BKAlertDialog(requireActivity())
-                            .setMessage(R.string.reload_confirm_message)
-                            .setPositiveButton(R.string.ok) { dialog, _ ->
-                                viewModel.webView.reload()
-                                dialog.dismiss()
-                            }
-                            .setNegativeButton(R.string.cancel) { dialog, _ ->
-                                dialog.cancel()
-                            }
-                            .show()
-                    }
-
-                    PokeRogueViewModel.EVENT_ROTATE -> {
-                        val orientation = requireActivity().resources.configuration.orientation
-                        requireActivity().requestedOrientation = if (orientation == ORIENTATION_PORTRAIT) {
-                            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                        } else {
-                            viewModel.isLandscapeButtonShowing.value = true
-                            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        viewModel.eventFlow.collect(viewLifecycleScope) {
+            when (it.action) {
+                PokeRogueViewModel.EVENT_RELOAD -> {
+                    BKAlertDialog(requireActivity())
+                        .setMessage(R.string.reload_confirm_message)
+                        .setPositiveButton(R.string.ok) { dialog, _ ->
+                            viewModel.webView.get()?.reload()
+                            dialog.dismiss()
                         }
+                        .setNegativeButton(R.string.cancel) { dialog, _ ->
+                            dialog.cancel()
+                        }
+                        .show()
+                }
+
+                PokeRogueViewModel.EVENT_ROTATE -> {
+                    val orientation = requireActivity().resources.configuration.orientation
+                    requireActivity().requestedOrientation = if (orientation == ORIENTATION_PORTRAIT) {
+                        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    } else {
+                        viewModel.isLandscapeButtonShowing.value = true
+                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                     }
                 }
             }
@@ -113,8 +110,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
         super.onViewCreated(view, savedInstanceState)
 
         if (savedInstanceState == null) {
-            viewModel.webView = BKWebView(requireActivity())
-                .apply { addWebViewClientCallback(viewModel) }
+            initViewModel()
         }
 
         viewLifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
@@ -122,7 +118,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
             when (event) {
                 Lifecycle.Event.ON_CREATE -> {
                     UiUtil.setImmersiveMode(window, true)
-                    UiUtil.setCutout(window, WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS)
+                    UiUtil.setCutout(window, Cutout.SHORT_EDGES)
 
                     if (isRestoring) {
                         return@LifecycleEventObserver
@@ -131,23 +127,34 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                     requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    viewModel.webView.onResume()
+                    viewModel.webView.get()?.onResume()
+                        // WebView 객체가 제거된 경우 ViewModel을 다시 초기화
+                        ?: run { initViewModel() }
+
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.webView.onPause()
+                    viewModel.webView.get()?.onPause()
                 }
                 Lifecycle.Event.ON_DESTROY -> {
                     if (isRestoring) {
                         return@LifecycleEventObserver
                     }
 
+                    viewModel.webView.get()?.clear()
                     viewModel.webView.clear()
                     requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
                     UiUtil.setImmersiveMode(requireActivity().window, false)
-                    UiUtil.setCutout(requireActivity().window, WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER)
+                    UiUtil.setCutout(requireActivity().window, Cutout.DEFAULT)
                 }
                 else -> {}
             }
         })
+    }
+
+    private fun initViewModel() {
+        val webView = BKWebView(requireContext().applicationContext)
+            .apply { addWebViewClientCallback(viewModel) }
+            .let { SoftReference(it) }
+        viewModel.init(webView)
     }
 }

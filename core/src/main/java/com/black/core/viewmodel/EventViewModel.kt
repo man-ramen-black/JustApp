@@ -48,11 +48,6 @@ open class EventViewModel : ViewModel()  {
     fun removeEventObserver(observer: EventObserver)
         = event.removeObserver(observer)
 
-    fun <T> LiveData<T>.observe(observer: Observer<T>) {
-        this.observeForever(observer)
-        addCloseable { this.removeObserver(observer) }
-    }
-
     fun launchSingle(
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,

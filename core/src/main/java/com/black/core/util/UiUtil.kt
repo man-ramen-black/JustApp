@@ -80,7 +80,7 @@ object UiUtil {
      * Cutout 설정
      * @param cutoutMode ex) WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
      */
-    fun setCutout(window: Window?, cutoutMode: Int) {
+    fun setCutout(window: Window?, @Cutout cutoutMode: Int) {
         window ?: run {
             Log.w("window is null")
             return
@@ -102,5 +102,14 @@ object UiUtil {
         TabLayoutMediator(this, viewPager, autoRefresh, smoothScroll) { tab, position ->
             tab.text = tabText?.invoke(tab, position) ?: ""
         }.attach()
+    }
+}
+
+annotation class Cutout {
+    companion object {
+        const val DEFAULT = 0
+        const val SHORT_EDGES = 1
+        const val NEVER = 2
+        const val ALWAYS = 3
     }
 }

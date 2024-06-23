@@ -159,4 +159,7 @@ object FragmentExtension {
             view as? ViewGroup
         }
     }
+
+    val Fragment.viewLifecycle get() = viewLifecycleOwner.lifecycle
+    val Fragment.viewLifecycleScope get() = viewLifecycleOwner.lifecycleScope
 }
