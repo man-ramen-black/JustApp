@@ -8,6 +8,7 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -70,16 +71,33 @@ open class BaseTest {
         println("--------------------------------------------------------------------------------")
         println("--------------------------------------------------------------------------------")
     }
+
+    /**
+     * launch, delay 등 코루틴이 끝날 때까지 대기
+     * https://one-delay.tistory.com/116
+     */
+    protected fun waitCoroutine() {
+        testDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    protected fun assert(name: String, value: Any?, expected: Any?) {
+        assert(value == expected) {
+            "Unexpected $name: $value, Expected: $expected"
+        }
+        println("Expected $name : $value")
+    }
 }
 
 /**
  * https://lovestudycom.tistory.com/entry/Testing-Kotlin-coroutines-on-Android
  */
-class TestDispatcherRule(private val testDispatcher: TestDispatcher = StandardTestDispatcher()): TestWatcher() {
+class TestDispatcherRule(val testDispatcher: TestDispatcher = StandardTestDispatcher()): TestWatcher() {
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun starting(description: Description) {
         Dispatchers.setMain(testDispatcher)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun finished(description: Description) {
         Dispatchers.resetMain()
     }

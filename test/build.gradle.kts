@@ -27,8 +27,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    testOptions {
+        unitTests {
+            // 테스트 코드의 API가 구현되어있지 않으면 null 또는 0등을 리턴하도록하여 테스트를 진행
+            isReturnDefaultValues = true
+
+            // Robolectric을 사용하여 Unit Test에 안드로이드 리소스 포함
+            isIncludeAndroidResources = true
+        }
     }
 }
 
