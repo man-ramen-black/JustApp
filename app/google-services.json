@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "443891919213",
+    "project_id": "justapp-15891",
+    "storage_bucket": "justapp-15891.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443891919213:android:530f192cbc44c9c560d264",
+        "android_client_info": {
+          "package_name": "com.black.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCcAn8lOfNVgC_5J3Ey87hlSElhM101Qk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
