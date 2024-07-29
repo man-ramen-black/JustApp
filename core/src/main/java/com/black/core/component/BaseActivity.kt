@@ -27,7 +27,10 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
             lifecycleOwner = this@BaseActivity
         }
         bindVariable(binding)
-        onNewIntent(intent)
+
+        if (savedInstanceState == null) {
+            onReceivedIntent(intent ?: return)
+        }
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -113,5 +116,9 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d("${javaClass.simpleName} : intent : $intent")
+        onReceivedIntent(intent)
     }
+
+    /** onCreate, onNewIntent 인텐트 공통 처리용 콜백 */
+    protected open fun onReceivedIntent(intent: Intent) { }
 }
