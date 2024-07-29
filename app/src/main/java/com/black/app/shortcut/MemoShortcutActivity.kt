@@ -22,7 +22,7 @@ class MemoShortcutActivity : Activity() {
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
             val shortcutIntent = Intent(this, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                data = Uri.parse("black://navigate/${TextEditorFragment::class.java.simpleName.replace("Fragment", "")}")
+                data = Uri.parse("black://navigate/memo")
             }
 
             val pinShortcutInfo = ShortcutInfoCompat.Builder(this, getString(R.string.shortcut_memo_id))

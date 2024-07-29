@@ -5,12 +5,18 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentMainBinding
+import com.black.app.deeplink.Deeplink
+import com.black.app.deeplink.DeeplinkManager
 import com.black.app.ui.maintab.MainTabFragmentDirections
 import com.black.core.component.BaseFragment
 import com.black.core.util.FragmentExtension.navigate
+import com.black.core.util.FragmentExtension.viewLifecycleScope
 import com.black.core.viewmodel.EventObserver
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
@@ -104,6 +110,11 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
         )
     }
 
+    private val activityNavController by lazy { requireActivity().findNavController(R.id.root_nav_host) }
+
+    @Inject
+    lateinit var deeplinkManager: DeeplinkManager
+
     private val adapter by lazy { MainGridAdapter() }
 
     override val layoutResId: Int = R.layout.fragment_main
@@ -115,6 +126,19 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
             addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
         }
         adapter.submitList(itemList)
+
+        viewLifecycleScope.launch {
+            deeplinkManager.getDeeplinkFlow(this)
+                .map { Deeplink.parse(it) }
+                .collect {
+                    when (it) {
+                        is Deeplink.NavigateSimple -> {
+                            activityNavController.navigate(it.idRes)
+                        }
+                        else -> {}
+                    }
+                }
+        }
     }
 
     override fun onReceivedEvent(action: String, data: Any?) { }
