@@ -113,6 +113,12 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
         Log.d("${javaClass.simpleName} : requestCode : $requestCode, permissions : $permissions, grantResults : $grantResults")
     }
 
+    /**
+     * launchMode가 singleTop, singleTask인 경우,
+     * Intent.FLAG_ACTIVITY_SINGLE_TOP로 Activity를 실행한 경우
+     * onPause -> onNewIntent -> onResume 순서로 실행됨
+     * https://developer.android.com/reference/android/app/Activity#onNewIntent(android.content.Intent)
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d("${javaClass.simpleName} : intent : $intent")

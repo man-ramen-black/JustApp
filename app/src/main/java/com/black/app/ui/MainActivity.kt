@@ -7,11 +7,13 @@ import com.black.app.R
 import com.black.app.databinding.ActivityMainBinding
 import com.black.app.deeplink.DeeplinkManager
 import com.black.app.service.ForegroundService
-import com.black.core.component.BaseSplashActivity
+import com.black.app.util.ComponentExtensions.launch
+import com.black.core.component.SplashActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /*
@@ -23,7 +25,7 @@ https://vagabond95.me/posts/android-pakage-structure/
 https://infinum.com/handbook/android/project-structure/package-structure
  */
 @AndroidEntryPoint
-class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
+class MainActivity : SplashActivity<ActivityMainBinding>() {
 
     @Inject lateinit var deeplinkManager: DeeplinkManager
 
@@ -33,34 +35,21 @@ class MainActivity : BaseSplashActivity<ActivityMainBinding>() {
         super.onCreate(savedInstanceState)
         // 앱 디버깅 시에 서비스가 실행되도록 설정
         ForegroundService.start(this, false)
-    }
 
-    override fun onReceivedIntent(intent: Intent) {
-        super.onReceivedIntent(intent)
-        lifecycleScope.launch {
-            deeplinkManager.receiveDeeplink(intent.data)
+        launch {
+            doSomething()
+            keepOnSplashScreen = false
         }
     }
 
     override fun bindVariable(binding: ActivityMainBinding) {}
 
-    override fun onSplashStart(splash: Splash) {
-        doSomething {
-            splash.hide()
-        }
+    override fun onReceivedIntent(intent: Intent) {
+        super.onReceivedIntent(intent)
+        launch { deeplinkManager.receiveDeeplink(intent.data) }
     }
 
-    override fun onSplashCanceled() {
-        cancelDoSomething()
-    }
-
-    private fun doSomething(callback: () -> Unit) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            delay(500)
-            callback()
-        }
-    }
-
-    private fun cancelDoSomething() {
+    private suspend fun doSomething() = withContext(Dispatchers.IO) {
+        delay(500)
     }
 }

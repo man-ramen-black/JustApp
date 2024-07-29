@@ -28,6 +28,9 @@
         <item name="colorPrimaryVariant">?attr/colorPrimaryVariant</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
 
+        <!-- NavigationBar 색상 -->
+        <item name="android:navigationBarColor">@color/window_background</item>
+
         <!-- alertDialog 배경색 -->
         <!-- TabLayout 배경색 -->
         <item name="colorSurface">@color/black</item>
