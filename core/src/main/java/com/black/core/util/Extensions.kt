@@ -16,8 +16,35 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 object Extensions {
-    fun <T> T.ifThen(isTrue: Boolean, then: T.() -> Unit): T = apply {
-        if (isTrue) then()
+
+    inline fun <T> T.letIf(ifBlock: (T) -> Boolean, thenBlock: (T) -> T): T {
+        return if (ifBlock(this)) {
+            thenBlock(this)
+        } else {
+            this
+        }
+    }
+
+    inline fun <T> T.alsoIf(ifBlock: (T) -> Boolean, thenBlock: (T) -> Unit): T {
+        if (ifBlock(this)) {
+            thenBlock(this)
+        }
+        return this
+    }
+
+    inline fun <T> T.runIf(ifBlock: (T) -> Boolean, thenBlock: T.() -> T): T {
+        return if (ifBlock(this)) {
+            thenBlock()
+        } else {
+            this
+        }
+    }
+
+    inline fun <T> T.applyIf(ifBlock: (T) -> Boolean, thenBlock: T.() -> Unit): T {
+        if (ifBlock(this)) {
+            thenBlock()
+        }
+        return this
     }
 
     /**  Context에서 activity 획득 */
