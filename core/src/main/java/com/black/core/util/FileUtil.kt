@@ -36,9 +36,42 @@ object FileUtil {
     }
 
     /**
-     * Uri to String
+     * 권한 불필요
+     * @return ex. /data/user/0/com.black.app/files
+     */
+    fun getPrivateFilesDir(context: Context): File {
+        return context.filesDir
+    }
+
+    /**
+     * 권한 불필요
+     * @param type ex. [Environment.DIRECTORY_DOWNLOADS]
+     * @return ex. /storage/emulated/0/Android/data/com.black.app/files
+     */
+    fun getExternalPrivateDir(context: Context, type: String? = null): File? {
+        return context.getExternalFilesDir(type)
+    }
+
+    /**
+     * READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE 권한 필요
+     * Android 10(API 29) 이상에서는 EXTERNAL_STORAGE 권한이 동작하지 않아서 해당 코드 사용 불가능
+     * Android 10(API 29) 이상에서 외부 스토리지 저장은 SAF를 통해서만 가능하고,
+     * download 폴더 한정으로 ContentResolver를 통해 권한 없이 파일을 저장할 수 있음
+     *
+     * @param type ex. [Environment.DIRECTORY_DOWNLOADS]
+     * @return ex. /storage/emulated/0/Download
+     */
+    fun getExternalPublicDir(type: String): File {
+        return Environment.getExternalStoragePublicDirectory(type)
+    }
+
+    /**
+     * (권장하지 않음) Uri to String
      * https://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
      */
+    fun Uri.toFilePath(context: Context): String?
+        = getPath(context, this)
+
     fun getPath(context: Context, uri: Uri): String? {
         // DocumentProvider
         if (DocumentsContract.isDocumentUri(context, uri)) {
