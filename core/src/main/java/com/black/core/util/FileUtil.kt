@@ -12,12 +12,12 @@ import kotlin.jvm.Throws
 
 object FileUtil {
     @Throws(IOException::class)
-    fun read(inputStream: InputStream, onRead: (text: String) -> Unit) {
-        onRead(read(inputStream))
+    fun readText(inputStream: InputStream, onRead: (text: String) -> Unit) {
+        onRead(readText(inputStream))
     }
 
     @Throws(IOException::class)
-    fun read(inputStream: InputStream): String {
+    fun readText(inputStream: InputStream): String {
         return inputStream.use { stream ->
             InputStreamReader(stream).use { reader ->
                 reader.readLines().joinToString("\n")
@@ -26,7 +26,7 @@ object FileUtil {
     }
 
     @Throws(IOException::class)
-    fun write(outputStream: OutputStream, onWrite: (writer: BufferedWriter) -> Unit) {
+    fun writeText(outputStream: OutputStream, onWrite: (writer: BufferedWriter) -> Unit) {
         outputStream.use { stream ->
             OutputStreamWriter(stream).use { writer ->
                 writer.buffered()

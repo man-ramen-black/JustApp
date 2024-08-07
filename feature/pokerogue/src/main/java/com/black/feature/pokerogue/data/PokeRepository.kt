@@ -23,7 +23,7 @@ class PokeRepository @Inject constructor(
         }
 
         val inputStream = context.assets.open("poke_type_chart.json")
-        return@withContext JsonUtil.from<List<PokeTypeChart>>(FileUtil.read(inputStream), true)!!
+        return@withContext JsonUtil.from<List<PokeTypeChart>>(FileUtil.readText(inputStream), true)!!
             .also { pokeTypeChart = it }
     }
 

@@ -16,7 +16,11 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Created by jinhyuk.lee on 2023/07/07
@@ -162,4 +166,10 @@ object FragmentExtension {
 
     val Fragment.viewLifecycle get() = viewLifecycleOwner.lifecycle
     val Fragment.viewLifecycleScope get() = viewLifecycleOwner.lifecycleScope
+
+    fun Fragment.launch(
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+    ) = viewLifecycleScope.launch(context, start, block)
 }

@@ -4,6 +4,8 @@
     <string name="main">Main</string>
     <string name="image_searcher">ImageSearcher</string>
     <string name="about">About</string>
+    <string name="ok">확인</string>
+    <string name="cancel">취소</string>
 
     <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>
     <string name="study_popup_pager_contents_empty">[내용 없음]</string>
@@ -25,6 +27,12 @@
     <string name="fragment_name_etc">ETC</string>
 
     <string name="accessibility_usage_timer_description">특정 앱에서 UsageTimer를 실행하기 위해 접근성 서비스를 활성화합니다.</string>
+
+    <string name="text_editor_hint">내용을 작성해주세요.</string>
+    <string name="text_editor_new_file">새 문서를 작성하시겠습니까?</string>
+    <string name="text_editor_load_failed_latest_file">최근 문서를 불러올 수 없습니다.</string>
+    <string name="text_editor_load_failed">문서를 불러올 수 없습니다.</string>
+    <string name="text_editor_save_completed">저장되었습니다.</string>
 
     <string name="select_app">앱 선택</string>
     <string name="select_app_filter">검색</string>

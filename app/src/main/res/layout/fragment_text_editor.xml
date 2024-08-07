@@ -4,91 +4,97 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-       <variable
-           name="fragment"
-           type="com.black.app.ui.maintab.main.texteditor.TextEditorFragment" />
+        <import type="android.view.View" />
+        <variable
+            name="navContoller"
+            type="androidx.navigation.NavController" />
         <variable
             name="viewModel"
             type="com.black.app.ui.maintab.main.texteditor.TextEditorViewModel" />
 
-        <import type="com.black.app.util.BindingConverter"/>
+        <variable
+            name="titleProvider"
+            type="com.black.app.ui.common.base.TitleFragment" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/linear_layout"
-        style="@style/RootLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        fitsStatusBar="@{true}">
+        fitsStatusBar="@{true}"
+        android:animateLayoutChanges="true">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/path"
-            android:layout_width="0dp"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/tool_bar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
-            app:layout_constraintEnd_toStartOf="@id/new_button"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-            <!-- SingleLine : inputType = "text" -->
-            <com.google.android.material.textfield.TextInputEditText
-                android:layout_width="match_parent"
+            app:layout_constraintTop_toTopOf="parent"
+            navController="@{navContoller}"
+            app:navigationIcon="@drawable/ic_back"
+            >
+            <ImageButton
+                style="@style/Widget.Black.Toolbar.ImageButton"
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:cursorVisible="false"
-                android:focusableInTouchMode="false"
-                android:hint="Path"
-                android:inputType="text"
-                android:text='@={viewModel.path}' />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:scaleType="centerCrop"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_save"
+                android:onClick="@{_->viewModel.onClickSave()}"
+                />
+            <ImageButton
+                style="@style/Widget.Black.Toolbar.ImageButton"
+                android:id="@+id/load_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_load"
+                android:onClick="@{_->viewModel.onClickLoad()}"
+                />
+            <ImageButton
+                style="@style/Widget.Black.Toolbar.ImageButton"
+                android:id="@+id/new_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scaleType="centerCrop"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_add"
+                android:onClick="@{_->viewModel.onClickNew()}"
+                />
+        </com.google.android.material.appbar.MaterialToolbar>
 
-        <ImageButton
-            android:id="@+id/new_button"
-            android:layout_width="@dimen/image_button_size"
-            android:layout_height="@dimen/image_button_size"
-            android:layout_marginRight="5dp"
-            android:baselineAlignBottom="true"
-            android:onClick="@{() -> viewModel.onClickNewFile()}"
-            android:layout_marginTop="4dp"
-            android:src="@drawable/ic_add"
-            app:layout_constraintBottom_toTopOf="@+id/edit_text"
-            app:layout_constraintEnd_toStartOf="@id/load_button"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@id/path"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/load_button"
-            android:layout_width="@dimen/image_button_size"
-            android:layout_height="@dimen/image_button_size"
-            android:layout_marginRight="4dp"
-            android:onClick="@{viewModel::onClickLoad}"
-            android:src="@drawable/ic_load"
-            app:layout_constraintBottom_toBottomOf="@+id/new_button"
-            app:layout_constraintEnd_toStartOf="@id/save_button"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@id/new_button"
-            app:layout_constraintTop_toTopOf="@+id/new_button" />
-
-        <ImageButton
-            android:id="@+id/save_button"
-            android:layout_width="@dimen/image_button_size"
-            android:layout_height="@dimen/image_button_size"
-            android:onClick="@{() -> viewModel.onClickSave()}"
-            android:src="@drawable/ic_save"
-            app:layout_constraintBottom_toBottomOf="@id/new_button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/load_button"
-            app:layout_constraintTop_toTopOf="@id/new_button" />
+        <TextView
+            android:id="@+id/file_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/tool_bar"
+            app:layout_constraintBottom_toTopOf="@id/edit_text"
+            android:textAppearance="@style/TextAppearance.Black.Title"
+            android:paddingTop="15dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:visibility='@{viewModel.fileName == "" ? View.GONE : View.VISIBLE}'
+            android:text="@{viewModel.fileName}"
+            />
 
         <EditText
             android:id="@+id/edit_text"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:gravity="top"
+            android:hint=""
+            android:inputType="textMultiLine"
             android:text="@={viewModel.text}"
+            app:layout_constraintTop_toBottomOf="@id/file_name"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/path" />
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            app:backgroundTint="@color/window_background"
+            />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

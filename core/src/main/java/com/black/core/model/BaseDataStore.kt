@@ -37,7 +37,7 @@ abstract class BaseDataStore(private val context: Context) {
         return data
     }
 
-    protected fun <T> flow(key: Preferences.Key<T>, def: T): Flow<T> {
+    protected fun <T> flow(key: Preferences.Key<T>): Flow<T?> {
         return getDataStore(context).data
             .catch {
                 when (it) {
@@ -46,13 +46,25 @@ abstract class BaseDataStore(private val context: Context) {
                     else -> throw it
                 }
             }
-            .map { it[key] ?: def }
+            .map { it[key] }
     }
 
     protected suspend fun <T> update(key: Preferences.Key<T>, data: T): Throwable? {
         Log.v("[${key.name}] $data")
         return try {
             getDataStore(context).edit { it[key] = data }
+            null
+        } catch (e: IOException) {
+            e
+        } catch (e: Exception) {
+            e
+        }
+    }
+
+    protected suspend fun <T> remove(key: Preferences.Key<T>): Throwable? {
+        Log.v("[${key.name}]")
+        return try {
+            getDataStore(context).edit { it.remove(key) }
             null
         } catch (e: IOException) {
             e

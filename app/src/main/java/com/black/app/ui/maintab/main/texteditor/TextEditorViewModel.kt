@@ -1,122 +1,97 @@
 package com.black.app.ui.maintab.main.texteditor
 
 import android.net.Uri
-import android.view.View
-import androidx.lifecycle.MutableLiveData
-import com.black.app.model.preferences.TextEditorPreferences
-import com.black.core.util.FileUtil
+import androidx.lifecycle.viewModelScope
+import com.black.app.R
+import com.black.app.model.database.studypopup.TextEditorRepository
+import com.black.core.util.Extensions.launch
 import com.black.core.util.Log
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import com.black.core.viewmodel.EventViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /**
- * MVVM
- * https://blog.gangnamunni.com/post/mvvm_anti_pattern/
+ * [TextEditorFragment]
  */
-class TextEditorViewModel : com.black.core.viewmodel.EventViewModel() {
+@HiltViewModel
+class TextEditorViewModel @Inject constructor(
+    private val textEditorRepo: TextEditorRepository
+) : EventViewModel() {
     companion object {
         const val EVENT_LOAD = "Load"
-        const val EVENT_LOAD_LATEST = "LoadLatest"
-        const val EVENT_SAVE_NEW_DOCUMENT = "SaveNewDocument"
-        const val EVENT_SAVE_OVERWRITE = "SaveOverwrite"
-        const val EVENT_CLEAR = "Clear"
+        const val EVENT_SAVE_NEW_FILE = "SaveNewFile"
+        const val EVENT_RESET = "Reset"
         const val EVENT_TOAST = "Toast"
     }
 
-    val text = MutableLiveData("")
-    val path = MutableLiveData("")
-    var openedFileUri : Uri? = null
-    private var preferences : TextEditorPreferences? = null
+    private val currentFileUriFlow = textEditorRepo.currentFileUriFlow
 
-    fun loadLatestFile() {
-        if (!path.value.isNullOrEmpty()) {
-            Log.i("File already loaded")
-            return
+    val fileName = textEditorRepo.fileNameFlow
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            ""
+        )
+
+    val text = MutableStateFlow("")
+
+    init {
+        launch(Dispatchers.IO) {
+            val uri = currentFileUriFlow.firstOrNull()
+                ?: return@launch
+            text.value = textEditorRepo.loadTextFile(uri)
+                ?: run {
+                    postEvent(EVENT_TOAST, R.string.text_editor_load_failed_latest_file)
+                    ""
+                }
         }
-
-        val uri = preferences?.loadLatestUri() ?: run {
-            Log.w("LatestFile is null")
-            return
-        }
-
-        sendEvent(EVENT_LOAD_LATEST, uri)
     }
 
-    fun setModel(preferences: TextEditorPreferences) {
-        this.preferences = preferences
+    fun onClickNew() {
+        Log.v()
+        sendEvent(EVENT_RESET)
     }
 
-    fun onClickNewFile() {
-        if (path.value.isNullOrEmpty()) {
-            return
-        }
-        sendEvent(EVENT_CLEAR)
-    }
-
-    fun onClickLoad(view: View?) {
+    fun onClickLoad() {
+        Log.v()
         sendEvent(EVENT_LOAD)
     }
 
     fun onClickSave() {
-        if (path.value.isNullOrEmpty()) {
-            sendEvent(EVENT_SAVE_NEW_DOCUMENT)
-        } else {
-            sendEvent(EVENT_SAVE_OVERWRITE)
-        }
-    }
-
-    fun loadFile(uri: Uri, path: String?, stream: InputStream?) {
-        this.path.value = path ?: ""
-
-        if (path == null || stream == null) {
-            sendEvent(EVENT_TOAST, "onLoadedFile : path == $path, stream == $stream")
-            return
-        }
-
-        try {
-            FileUtil.read(stream) {
-                text.value = it
+        Log.v()
+        launch {
+            val currentFileUri = currentFileUriFlow.firstOrNull()
+            if (currentFileUri == null) {
+                sendEvent(EVENT_SAVE_NEW_FILE)
+                return@launch
             }
-            openedFileUri = uri
-            preferences?.saveLatestUri(uri)
-            sendEvent(EVENT_TOAST, "Loaded")
-        } catch (e: IOException) {
-            e.printStackTrace()
+            saveFile(currentFileUri)
         }
     }
 
-    fun saveNewFile(uri: Uri, path: String?, stream: OutputStream?) {
-        this.path.value = path ?: ""
-        if (path == null) {
-            sendEvent(EVENT_TOAST, "saveNewFile : path == null")
-            return
-        }
-        saveOverwrite(uri, stream)
-    }
-
-    fun saveOverwrite(uri: Uri, stream: OutputStream?) {
-        if (stream == null) {
-            sendEvent(EVENT_TOAST, "save : stream == null")
-            return
-        }
-
-        try {
-            FileUtil.write(stream) {
-                it.write(text.value)
+    suspend fun loadFile(uri: Uri) = withContext(Dispatchers.IO) {
+        text.value = textEditorRepo.loadTextFile(uri)
+            ?: run {
+                postEvent(EVENT_TOAST, R.string.text_editor_load_failed)
+                ""
             }
-            openedFileUri = uri
-            preferences?.saveLatestUri(uri)
-            sendEvent(EVENT_TOAST, "Saved")
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
     }
 
-    fun clear() {
-        openedFileUri = null
-        preferences?.removeLatestUri()
-        path.value = ""
+    suspend fun saveFile(uri: Uri) = withContext(Dispatchers.IO) {
+        textEditorRepo.saveTextFile(uri, text.value)
+        postEvent(EVENT_TOAST, R.string.text_editor_save_completed)
+    }
+
+    fun reset() {
         text.value = ""
+        launch(Dispatchers.IO) {
+            textEditorRepo.reset()
+        }
     }
 }

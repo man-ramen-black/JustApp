@@ -118,7 +118,7 @@ open class StudyPopupFragmentViewModel : com.black.core.viewmodel.EventViewModel
         initList()
 
         try {
-            FileUtil.read(stream) {
+            FileUtil.readText(stream) {
                 text.value = it
                 Log.e("RawText : $it")
 
@@ -164,7 +164,7 @@ open class StudyPopupFragmentViewModel : com.black.core.viewmodel.EventViewModel
 
         viewModelScope.launch {
             try {
-                FileUtil.write(stream) {
+                FileUtil.writeText(stream) {
                     it.write(text.value)
                 }
                 openedFileUri = uri

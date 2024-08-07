@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -37,10 +38,10 @@ class SAFHelper(
         }
 
         @SuppressLint("Recycle")
-        fun Uri.toInputStream(context: Context, keepPermission: Boolean = true): InputStream? {
+        fun Uri.openInputStream(context: Context, keepPermission: Boolean = true): InputStream? {
             return try {
                 context.contentResolver
-                    .applyIf({ keepPermission }) { keepUriPermission(context, this@toInputStream) }
+                    .applyIf({ keepPermission }) { keepUriPermission(context, this@openInputStream) }
                     .openInputStream(this)
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
@@ -52,10 +53,10 @@ class SAFHelper(
          * @param mode "w" : 덮어쓰기, "a" : 내용 추가, "t" : 텍스트 모드, "b" : 바이너리 모드
          */
         @SuppressLint("Recycle")
-        fun Uri.toOutputStream(context: Context, mode: String = "w", keepPermission: Boolean = true): OutputStream? {
+        fun Uri.openOutputStream(context: Context, mode: String = "w", keepPermission: Boolean = true): OutputStream? {
             return try {
                 context.contentResolver
-                    .applyIf({ keepPermission }) { keepUriPermission(context, this@toOutputStream) }
+                    .applyIf({ keepPermission }) { keepUriPermission(context, this@openOutputStream) }
                     .openOutputStream(this, mode)
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
@@ -68,6 +69,26 @@ class SAFHelper(
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             val permission = context.checkUriPermission(this, android.os.Process.myPid(), android.os.Process.myUid(), flags)
             return permission == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+
+        fun Uri.getFileName(context: Context): String? {
+            return when (scheme) {
+                "content" -> {
+                    context.contentResolver.query(this, null, null, null, null)
+                        ?.use {
+                            if (it.moveToFirst()) {
+                                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                                it.getString(nameIndex)
+                            } else {
+                                null
+                            }
+                        }
+                }
+
+                "file" -> lastPathSegment
+
+                else -> null
+            }
         }
     }
 
