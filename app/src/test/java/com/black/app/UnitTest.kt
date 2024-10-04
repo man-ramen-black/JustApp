@@ -1,5 +1,6 @@
 package com.black.app
 
+import com.black.test.BaseTest
 import org.junit.Assert
 import org.junit.Test
 
@@ -8,7 +9,7 @@ import org.junit.Test
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-class UnitTest {
+class UnitTest : BaseTest(){
     @Test
     fun unitTest() {
         val text = "com.black.study.base.BaseActivity".split(".").subList(0, 3).joinToString(".")

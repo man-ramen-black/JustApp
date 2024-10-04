@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.firebase.bom)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    testImplementation(project(":test"))
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.androidx.room.compiler)
     implementation(libs.glide)
