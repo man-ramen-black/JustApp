@@ -1,12 +1,15 @@
 package com.black.core.util
 
 import android.content.res.Resources
+import android.os.Bundle
 import android.view.ViewGroup
+import androidx.annotation.IdRes
 import androidx.annotation.MainThread
 import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -14,8 +17,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDirections
+import androidx.navigation.NavOptions
+import androidx.navigation.Navigator
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import com.black.core.util.Extensions.navigateSafety
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
@@ -172,4 +178,38 @@ object FragmentExtension {
         start: CoroutineStart = CoroutineStart.DEFAULT,
         block: suspend CoroutineScope.() -> Unit
     ) = viewLifecycleScope.launch(context, start, block)
+
+    fun Fragment.addLifecycleEventObserver(observer: LifecycleEventObserver) {
+        viewLifecycle.addObserver(observer)
+    }
+
+    fun Fragment.removeLifecycleEventObserver(observer: LifecycleEventObserver) {
+        viewLifecycle.removeObserver(observer)
+    }
+
+    fun Fragment.doOnDestroyView(block: () -> Unit) {
+        addLifecycleEventObserver(object: LifecycleEventObserver {
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                if (event == Lifecycle.Event.ON_DESTROY) {
+                    block()
+                    removeLifecycleEventObserver(this)
+                }
+            }
+        })
+    }
+
+    fun Fragment.runOnResume(block: () -> Unit) {
+        Util.launchWhenState(viewLifecycleOwner, Lifecycle.State.RESUMED) {
+            block()
+        }
+    }
+
+    fun Fragment.navigate(@IdRes actionId: Int, args: Bundle? = null, navOptions: NavOptions? = null, navigatorExtras: Navigator.Extras? = null) {
+        // java.lang.IllegalStateExeption: Can not perform this action after onSaveInstatnceState
+        // Exception 방지를 위해 onResume 상태에서만 navigateSafety
+        runOnResume { findNavController().navigateSafety(actionId, args, navOptions, navigatorExtras) }
+    }
+
+    fun Fragment.navigate(directions: NavDirections, navOptions: NavOptions? = null, navigatorExtras: Navigator.Extras? = null)
+            = navigate(directions.actionId, directions.arguments, navOptions, navigatorExtras)
 }

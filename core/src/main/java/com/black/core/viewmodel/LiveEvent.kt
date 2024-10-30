@@ -64,5 +64,3 @@ open class LiveEvent {
         })
     }
 }
-
-data class Event(val action: String, val data: Any?)
