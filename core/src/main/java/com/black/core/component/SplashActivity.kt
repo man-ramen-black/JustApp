@@ -31,6 +31,8 @@ abstract class SplashActivity<T : ViewDataBinding>  : BaseActivity<T>() {
             // setKeepOnScreenCondition에 설정한 Block은 짧은 주기로 계속 호출되면서 상태를 확인한다.
             setKeepOnScreenCondition { keepOnSplashScreen }
             setOnExitAnimationListener { provider ->
+                onSplashFinished()
+
                 // 페이드인 애니메이션 적용
                 ObjectAnimator.ofFloat(provider.view, View.ALPHA, 1f, 0f).apply {
                     duration = 300L
@@ -46,4 +48,7 @@ abstract class SplashActivity<T : ViewDataBinding>  : BaseActivity<T>() {
             }
         super.onCreate(savedInstanceState)
     }
+
+    /** 스플래시 종료 콜백 */
+    open fun onSplashFinished() {}
 }

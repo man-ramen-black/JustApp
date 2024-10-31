@@ -1,25 +1,21 @@
 package com.black.app.ui.maintab.main
 
+import android.os.Bundle
 import androidx.navigation.NavDirections
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentMainBinding
-import com.black.app.deeplink.Deeplink
 import com.black.app.deeplink.DeeplinkManager
 import com.black.app.ui.maintab.MainTabFragmentDirections
 import com.black.core.component.BaseFragment
 import com.black.core.util.FragmentExtension.navigate
-import com.black.core.util.FragmentExtension.viewLifecycleScope
-import com.black.core.viewmodel.EventObserver
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
+class MainFragment : BaseFragment<FragmentMainBinding>() {
 
     // static list이고, 리소스 디펜던시가 있기 때문에 View에서 관리
     private val itemList by lazy {
@@ -114,14 +110,17 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
         )
     }
 
-    private val activityNavController by lazy { requireActivity().findNavController(R.id.root_nav_host) }
-
     @Inject
     lateinit var deeplinkManager: DeeplinkManager
 
-    private val adapter by lazy { MainGridAdapter() }
+    private lateinit var adapter: MainGridAdapter
 
     override val layoutResId: Int = R.layout.fragment_main
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        adapter = MainGridAdapter()
+    }
 
     override fun onBindVariable(binding: FragmentMainBinding) {
         // ViewModel 생략
@@ -130,22 +129,7 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
             addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
         }
         adapter.submitList(itemList)
-
-        viewLifecycleScope.launch {
-            deeplinkManager.getDeeplinkFlow(this)
-                .map { Deeplink.parse(it) }
-                .collect {
-                    when (it) {
-                        is Deeplink.NavigateSimple -> {
-                            activityNavController.navigate(it.idRes)
-                        }
-                        else -> {}
-                    }
-                }
-        }
     }
-
-    override fun onReceivedEvent(action: String, data: Any?) { }
 
     private fun navigateByActivity(directions: NavDirections) {
         navigate(directions, requireActivity().findNavController(R.id.root_nav_host))
