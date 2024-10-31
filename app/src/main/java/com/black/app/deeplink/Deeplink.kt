@@ -42,7 +42,7 @@ sealed interface Deeplink {
 
         private fun parseNavigateDeeplink(uri: Uri): Deeplink? {
             return when (val page = uri.pathSegments.firstOrNull()) {
-                PathNavigate.MEMO -> NavigateSimple(R.id.text_editor_fragment)
+                PathNavigate.MEMO -> NavigateSimple(R.id.action_text_editor_with_clear)
                 else -> null
             }
         }

@@ -8,6 +8,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.black.app.R
+import com.black.app.deeplink.Deeplink
 import com.black.app.ui.MainActivity
 import com.black.app.ui.maintab.main.texteditor.TextEditorFragment
 
@@ -22,7 +23,11 @@ class MemoShortcutActivity : Activity() {
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
             val shortcutIntent = Intent(this, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
-                data = Uri.parse("black://navigate/memo")
+                data = Uri.Builder()
+                    .scheme(Deeplink.Scheme.APP)
+                    .authority(Deeplink.Host.NAVIGATE)
+                    .path(Deeplink.PathNavigate.MEMO)
+                    .build()
             }
 
             val pinShortcutInfo = ShortcutInfoCompat.Builder(this, getString(R.string.shortcut_memo_id))
