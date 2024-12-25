@@ -39,6 +39,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>(), EventObserver {
                 R.drawable.ic_invisible,
             ) { navigateByActivity(MainTabFragmentDirections.actionBlack()) },
             MainItem(
+                getString(R.string.fragment_name_floating),
+                R.drawable.ic_floating,
+            ) { navigateByActivity(MainTabFragmentDirections.actionFloating()) },
+            MainItem(
                 getString(R.string.fragment_name_service),
                 R.drawable.ic_android,
             ) { navigateByActivity(MainTabFragmentDirections.actionService()) },

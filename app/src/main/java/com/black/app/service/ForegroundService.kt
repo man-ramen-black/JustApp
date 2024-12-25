@@ -13,7 +13,7 @@ import com.black.app.broadcast.ScreenReceiver
 import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.ui.MainActivity
 import com.black.core.util.Log
-import com.black.app.util.NotificationUtil
+import com.black.core.util.NotificationUtil
 import com.black.core.util.PermissionHelper
 
 class ForegroundService : Service() {

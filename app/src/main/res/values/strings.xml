@@ -14,6 +14,7 @@
     <string name="shortcut_memo_label">메모</string>
 
     <string name="fragment_name_service">Service</string>
+    <string name="fragment_name_floating">FloatingButton</string>
     <string name="fragment_name_study_popup">StudyPopup</string>
     <string name="fragment_name_text_editor">TextEditor</string>
     <string name="fragment_name_usage_timer">UsageTimer</string>

@@ -6,7 +6,7 @@ import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import com.black.app.service.ForegroundService
 import com.black.core.util.Log
-import com.black.app.util.NotificationUtil
+import com.black.core.util.NotificationUtil
 
 // 앱 업데이트 시 Service 자동 시작하려면 ACTION_MY_PACKAGE_REPLACED
 // https://developer.android.com/reference/android/content/Intent#ACTION_MY_PACKAGE_REPLACED

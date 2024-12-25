@@ -12,7 +12,7 @@ import com.black.app.R
 import com.black.app.databinding.FragmentNotificationBinding
 import com.black.app.ui.common.base.TitleFragment
 import com.black.app.util.DialogUtil
-import com.black.app.util.NotificationUtil
+import com.black.core.util.NotificationUtil
 
 class NotificationFragment : TitleFragment<FragmentNotificationBinding>() {
 
