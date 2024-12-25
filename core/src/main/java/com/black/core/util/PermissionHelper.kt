@@ -1,7 +1,9 @@
 package com.black.core.util
 
+import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -102,6 +104,27 @@ class PermissionHelper(private val activity: Activity, private val activityResul
 
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        }
+
+        /** 접근성 권한 있는지 체크 */
+        fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
+            val expectedComponentName = ComponentName(context, service)
+
+            val enabledServicesSetting = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
+
+            return enabledServicesSetting
+                .split(":")
+                .mapNotNull { ComponentName.unflattenFromString(it) }
+                .any { it == expectedComponentName }
+        }
+
+        fun openAccessibilitySetting(context: Context) {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+            context.startActivity(intent)
         }
     }
 

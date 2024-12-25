@@ -21,7 +21,7 @@ abstract class OverlayView<T : ViewDataBinding> : DataBindingCustomView<T> {
         defStyleRes: Int
     ) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    abstract fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams)
+    open fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {}
 
     open fun attachView() {
         OverlayViewUtil.attachView(this) {

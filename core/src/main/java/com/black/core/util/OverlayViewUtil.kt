@@ -19,13 +19,6 @@ object OverlayViewUtil {
         Log.d()
 
         val context = view.context
-        if (!PermissionHelper.canDrawOverlays(context)) {
-            Toast.makeText(context, "다른 앱 위에 그리기 권한 허용이 필요합니다.", Toast.LENGTH_SHORT)
-                .show()
-            PermissionHelper.showDrawOverlaysSetting(context)
-            return
-        }
-
         if (view.parent != null) {
             Log.w("view is already attached")
             return

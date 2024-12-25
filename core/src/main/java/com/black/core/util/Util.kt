@@ -1,11 +1,9 @@
 package com.black.core.util
 
-import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.ClipboardManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -13,7 +11,6 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.provider.Settings
 import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -131,29 +128,5 @@ object Util {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-    }
-
-    /** 접근성 권한 있는지 체크 */
-    fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
-        val expectedComponentName = ComponentName(context, service)
-
-        val enabledServicesSetting = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-
-        return enabledServicesSetting
-            .split(":")
-            .mapNotNull { ComponentName.unflattenFromString(it) }
-            .any { it == expectedComponentName }
-    }
-
-    fun openAccessibilitySetting(context: Context) {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            .apply {
-                setData(Uri.fromParts("package", context.packageName, null))
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-        context.startActivity(intent)
     }
 }

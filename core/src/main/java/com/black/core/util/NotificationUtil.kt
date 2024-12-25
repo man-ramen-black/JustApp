@@ -1,4 +1,4 @@
-package com.black.app.util
+package com.black.core.util
 
 import android.app.Notification
 import android.content.Context
@@ -6,7 +6,6 @@ import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.black.app.R
 
 object NotificationUtil {
     /**
@@ -40,7 +39,7 @@ object NotificationUtil {
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setContentTitle(title)
             .setContentText(message)
-            .setSmallIcon(pushIconRes ?: R.drawable.ic_notification)
+            .setSmallIcon(pushIconRes ?: context.applicationInfo.icon)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .also { onCustomizeNotification?.invoke(it) }
         return notificationBuilder.build()

@@ -3,4 +3,18 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <activity android:name=".service.ServiceActivity"
+            android:theme="@style/Theme.Transparent"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="com.black.app.service"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>
