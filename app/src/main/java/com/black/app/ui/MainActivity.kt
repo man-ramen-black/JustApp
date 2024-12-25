@@ -11,7 +11,6 @@ import com.black.app.deeplink.DeeplinkManager
 import com.black.app.service.ForegroundService
 import com.black.app.util.ComponentExtensions.launch
 import com.black.core.component.SplashActivity
-import com.black.core.util.Extensions.navigateSafety
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -58,7 +57,7 @@ class MainActivity : SplashActivity<ActivityMainBinding>() {
                         is Deeplink.NavigateSimple -> {
                             // 다른 fragment가 노출 중인 경우 MainFragment navController는 동작하지 않으므로
                             // Activity NavController를 통해 화면 이동
-                            findNavController(R.id.root_nav_host).navigateSafety(it.idRes)
+                            findNavController(R.id.root_nav_host).navigate(it.idRes)
                         }
                         else -> {}
                     }
