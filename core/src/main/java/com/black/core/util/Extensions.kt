@@ -3,7 +3,9 @@ package com.black.core.util
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -12,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -61,9 +64,21 @@ object Extensions {
         block: suspend CoroutineScope.() -> Unit
     ) = viewModelScope.launch(context, start, block)
 
-    fun <T> Flow<T>.collect(
+    inline fun <reified T> Flow<T>.collect(
+        lifecycleOwner: LifecycleOwner,
+        coroutineContext: CoroutineContext = Dispatchers.Main,
+        collector: FlowCollector<T>
+    ): Job = collect(lifecycleOwner.lifecycleScope, coroutineContext, collector)
+
+    inline fun <reified T> Flow<T>.collect(
         scope: CoroutineScope,
         coroutineContext: CoroutineContext = Dispatchers.Main,
-        flowCollector: FlowCollector<T>
-    ): Job = scope.launch(coroutineContext) { collect(flowCollector) }
+        collector: FlowCollector<T>
+    ): Job = scope.launch(coroutineContext) {
+        collect {
+            withContext(Dispatchers.Main) {
+                collector.emit(it)
+            }
+        }
+    }
 }
