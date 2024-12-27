@@ -4,8 +4,10 @@
     <string name="special_use_description">SpecialUse</string>
 
     <string name="shortcut_floating_on_id">floating_on</string>
-    <string name="shortcut_floating_on_label">플로팅 On</string>
+    <string name="shortcut_floating_on_label">JustApp - 플로팅 On</string>
 
     <string name="shortcut_floating_off_id">floating_off</string>
-    <string name="shortcut_floating_off_label">플로팅 Off</string>
+    <string name="shortcut_floating_off_label">JustApp - 플로팅 Off</string>
+
+    <string name="accessibility_service_label_floating">JustApp - FloatingButton</string>
 </resources>

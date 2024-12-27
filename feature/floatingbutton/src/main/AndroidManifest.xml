@@ -12,6 +12,7 @@
 
         <service
             android:name=".service.FloatingAccessibilityService"
+            android:label="@string/accessibility_service_label_floating"
             android:exported="false"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

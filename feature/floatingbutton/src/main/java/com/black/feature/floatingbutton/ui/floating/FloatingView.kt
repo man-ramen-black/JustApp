@@ -14,6 +14,7 @@ import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.databinding.ViewFloatingBinding
 import com.black.feature.floatingbutton.service.FloatingAccessibilityService
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
 class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
 
@@ -87,5 +88,10 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
                 )
             }
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        mainScope.cancel()
     }
 }
