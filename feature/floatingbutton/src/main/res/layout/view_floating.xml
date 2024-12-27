@@ -14,14 +14,6 @@
         backgroundRadius="@{viewModel.radius}"
         paddingDp="@{viewModel.padding}">
 
-        <View
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:background="@drawable/ic_handle"
-            sizeDp="@{viewModel.size}"
-            marginRightDp="@{viewModel.margin}"
-            />
-
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,6 +31,17 @@
             android:src="@drawable/ic_back"
             android:scaleType="fitCenter"
             android:onClick="@{_->viewModel.onClickBack()}"
+            android:background="?android:attr/selectableItemBackground"
+            sizeDp="@{viewModel.size}"
+            marginRightDp="@{viewModel.margin}"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_open_status_bar"
+            android:scaleType="fitCenter"
+            android:onClick="@{_->viewModel.onClickStatusBar()}"
             android:background="?android:attr/selectableItemBackground"
             sizeDp="@{viewModel.size}"
             marginRightDp="@{viewModel.margin}"

@@ -34,6 +34,7 @@ class FloatingViewModel @Inject constructor(
     companion object {
         const val EVENT_HOME = "home"
         const val EVENT_BACK = "back"
+        const val EVENT_STATUS_BAR = "statusBar"
         const val EVENT_VOLUME_UP = "volumeUp"
         const val EVENT_VOLUME_DOWN = "volumeDown"
     }
@@ -63,6 +64,10 @@ class FloatingViewModel @Inject constructor(
 
     fun onClickBack() {
         sendEvent(EVENT_BACK)
+    }
+
+    fun onClickStatusBar() {
+        sendEvent(EVENT_STATUS_BAR)
     }
 
     fun onClickVolumeUp() {

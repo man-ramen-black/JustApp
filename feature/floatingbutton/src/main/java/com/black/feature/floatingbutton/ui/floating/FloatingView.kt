@@ -1,11 +1,14 @@
 package com.black.feature.floatingbutton.ui.floating
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.TypedArray
 import android.media.AudioManager
 import android.util.AttributeSet
 import android.view.WindowManager
+import androidx.core.content.ContextCompat
 import com.black.core.di.Hilt
 import com.black.core.util.Log
 import com.black.core.view.MovableOverlayView
@@ -87,11 +90,33 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
                     AudioManager.FLAG_SHOW_UI
                 )
             }
+
+            FloatingViewModel.EVENT_STATUS_BAR -> {
+                expandStatusBar(context)
+            }
         }
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         mainScope.cancel()
+    }
+
+    private fun expandStatusBar(context: Context) {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.EXPAND_STATUS_BAR
+            ) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("EXPAND_STATUS_BAR permission denied")
+            return
+        }
+
+        try {
+            Class.forName("android.app.StatusBarManager")
+                .getMethod("expandNotificationsPanel")
+                .invoke(context.getSystemService("statusbar"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
