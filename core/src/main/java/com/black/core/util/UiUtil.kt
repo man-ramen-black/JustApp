@@ -8,6 +8,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -27,6 +28,24 @@ object UiUtil {
     fun getScreenSize(context: Context) : Point {
         val metrics = context.resources.displayMetrics
         return Point(metrics.widthPixels, metrics.heightPixels)
+    }
+
+    fun getScreenSizeWithoutSystemBars(context: Context): Point {
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val windowMetrics = windowManager.currentWindowMetrics
+            val windowInsets = windowMetrics.windowInsets
+
+            val insets = windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.navigationBars() or WindowInsets.Type.statusBars()
+            )
+
+            val bounds =  windowMetrics.bounds
+            Point(bounds.width() - insets.left - insets.right, bounds.height() - insets.top - insets.bottom)
+        } else {
+            getScreenSize(context)
+        }
     }
 
     /**

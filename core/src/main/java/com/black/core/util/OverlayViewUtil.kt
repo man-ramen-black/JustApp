@@ -1,5 +1,6 @@
 package com.black.core.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.PixelFormat
 import android.graphics.Point
@@ -79,10 +80,11 @@ object OverlayViewUtil {
     /**
      * 화면의 x, y 좌표로 뷰를 이동
      */
+    @SuppressLint("RtlHardcoded")
     fun moveView(view: View, x: Float, y: Float) {
         updateView(view) {
             it.gravity = Gravity.TOP or Gravity.LEFT
-            val screenSize = UiUtil.getScreenSize(view.context)
+            val screenSize = UiUtil.getScreenSizeWithoutSystemBars(view.context)
             // 뷰가 화면 밖으로 벗어나지 않게 제한
             it.x = min(max(x.toInt(), 0), screenSize.x - view.width)
             it.y = min(max(y.toInt(), 0), screenSize.y - view.height)
@@ -93,6 +95,7 @@ object OverlayViewUtil {
      * Gravity가 right인 경우 x값은 오른쪽에서부터의 x이고, bottom도 아래부터의 y이기 때문에,
      * 화면 사이즈, view size를 계산하여 Top, Left 기준의 x, y 위치를 반환
      */
+    @SuppressLint("RtlHardcoded")
     fun getAbsoluteWindowPosition(view: View) : Point {
         val context = view.context
         val screenSize = UiUtil.getScreenSize(context)

@@ -1,6 +1,7 @@
 package com.black.core.view
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -66,6 +67,12 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
     override fun onTouchEvent(event: MotionEvent): Boolean {
         handleTouchEvent(event)
         return super.onTouchEvent(event)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        val viewPosition = OverlayViewUtil.getAbsoluteWindowPosition(this)
+        OverlayViewUtil.moveView(this, viewPosition.x.toFloat(), viewPosition.y.toFloat())
     }
 
     private fun handleTouchEvent(event: MotionEvent) {
