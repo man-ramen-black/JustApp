@@ -73,12 +73,9 @@ class TextEditorViewModel @Inject constructor(
     fun onClickSave() {
         Log.v()
         launch {
-            val currentFileUri = currentFileUriFlow.firstOrNull()
-            if (currentFileUri == null) {
+            if (saveCurrentFile().exceptionOrNull() is IllegalAccessException) {
                 sendEvent(EVENT_SAVE_NEW_FILE)
-                return@launch
             }
-            saveFile(currentFileUri)
         }
     }
 
@@ -94,9 +91,21 @@ class TextEditorViewModel @Inject constructor(
             }
     }
 
-    suspend fun saveFile(uri: Uri) = withContext(Dispatchers.IO) {
+    suspend fun saveCurrentFile(): Result<Unit> {
+        return currentFileUriFlow.firstOrNull()
+            ?.let { saveFile(it) }
+            ?: Result.failure(IllegalAccessException("currentFileUri is null"))
+    }
+
+    suspend fun saveFile(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
         textEditorRepo.saveTextFile(uri, text.value)
-        postEvent(EVENT_TOAST, R.string.text_editor_save_completed)
+            .also {
+                if (it.isSuccess) {
+                    postEvent(EVENT_TOAST, R.string.text_editor_save_completed)
+                } else {
+                    postEvent(EVENT_TOAST, R.string.text_editor_save_failed)
+                }
+            }
     }
 
     fun reset() {

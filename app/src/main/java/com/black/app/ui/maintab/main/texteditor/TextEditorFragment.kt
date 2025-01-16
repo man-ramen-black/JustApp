@@ -3,19 +3,32 @@ package com.black.app.ui.maintab.main.texteditor
 import android.os.Bundle
 import android.widget.Toast
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.fragment.findNavController
 import com.black.app.R
 import com.black.app.databinding.FragmentTextEditorBinding
 import com.black.app.ui.common.base.TitleFragment
+import com.black.core.di.HiltModule
 import com.black.core.file.SAFHelper
 import com.black.core.util.FragmentExtension.launch
+import com.black.core.util.FragmentExtension.viewLifecycle
 import com.black.core.util.Log
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Named
 
 @AndroidEntryPoint
-class TextEditorFragment : TitleFragment<FragmentTextEditorBinding>(),
+class TextEditorFragment
+    : TitleFragment<FragmentTextEditorBinding>(),
     com.black.core.viewmodel.EventObserver {
+
+    @Named(HiltModule.NAME_MAIN_SCOPE)
+    @Inject lateinit var mainScope: CoroutineScope
+    private val appContext by lazy { requireContext().applicationContext }
 
     override val layoutResId: Int
         get() = R.layout.fragment_text_editor
@@ -29,6 +42,7 @@ class TextEditorFragment : TitleFragment<FragmentTextEditorBinding>(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appContext
         safHelper.init()
     }
 
@@ -37,6 +51,24 @@ class TextEditorFragment : TitleFragment<FragmentTextEditorBinding>(),
         binding.titleProvider = this
         binding.navContoller = findNavController()
         viewModel.observeEvent(viewLifecycleOwner, this)
+
+        // onPause 시 자동 저장
+        viewLifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                mainScope.launch {
+                    val result = viewModel.saveCurrentFile()
+
+                    val messageResId = if (result.isSuccess) {
+                        R.string.text_editor_save_completed
+                    } else {
+                        R.string.text_editor_save_failed
+                    }
+
+                    Toast.makeText(appContext, messageResId, Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        })
     }
 
     override fun onReceivedEvent(action: String, data: Any?) {
@@ -52,7 +84,7 @@ class TextEditorFragment : TitleFragment<FragmentTextEditorBinding>(),
                 val message = data as? String
                     ?: (data as? Int)?.let { getString(it) }
                     ?: ""
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT)
+                Toast.makeText(appContext, message, Toast.LENGTH_SHORT)
                     .show()
             }
         }
