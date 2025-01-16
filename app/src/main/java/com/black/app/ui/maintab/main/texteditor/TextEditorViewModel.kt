@@ -45,10 +45,17 @@ class TextEditorViewModel @Inject constructor(
         launch(Dispatchers.IO) {
             val uri = currentFileUriFlow.firstOrNull()
                 ?: return@launch
+
             text.value = textEditorRepo.loadTextFile(uri)
-                ?: run {
-                    postEvent(EVENT_TOAST, R.string.text_editor_load_failed_latest_file)
-                    ""
+                .let {
+                    it.getOrNull()
+                        ?: run {
+                            it.exceptionOrNull()?.printStackTrace()
+                            // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화
+                            textEditorRepo.reset()
+                            postEvent(EVENT_TOAST, R.string.text_editor_load_failed_latest_file)
+                            ""
+                        }
                 }
         }
     }
@@ -77,9 +84,13 @@ class TextEditorViewModel @Inject constructor(
 
     suspend fun loadFile(uri: Uri) = withContext(Dispatchers.IO) {
         text.value = textEditorRepo.loadTextFile(uri)
-            ?: run {
-                postEvent(EVENT_TOAST, R.string.text_editor_load_failed)
-                ""
+            .let {
+                it.getOrNull()
+                    ?: run {
+                        it.exceptionOrNull()?.printStackTrace()
+                        postEvent(EVENT_TOAST, R.string.text_editor_load_failed)
+                        ""
+                    }
             }
     }
 

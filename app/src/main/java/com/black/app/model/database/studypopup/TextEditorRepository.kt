@@ -24,34 +24,33 @@ class TextEditorRepository @Inject constructor(
     val fileNameFlow = currentFileUriFlow
         .map { it?.getFileName(context) ?: "" }
 
-    suspend fun saveTextFile(uri: Uri?, text: String) {
-        try {
+    suspend fun saveTextFile(uri: Uri?, text: String): Result<Unit> {
+        return try {
             val stream = uri?.openOutputStream(context, "wt")
                 ?: run {
-                    Log.w("openOutputStream failed, uri : $uri")
-                    return
+                    return Result.failure(IllegalStateException("openOutputStream failed, uri : $uri"))
                 }
 
             FileUtil.writeText(stream) { it.write(text) }
                 .also { dataStore.updateLatestFileUri(uri) }
-        } catch (e: IOException) {
-            e.printStackTrace()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    suspend fun loadTextFile(uri: Uri?): String? {
+    suspend fun loadTextFile(uri: Uri?): Result<String> {
         return try {
             val stream = uri?.openInputStream(context)
                 ?: run {
-                    Log.w("openInputStream failed, uri : $uri")
-                    return null
+                    return Result.failure(IllegalStateException("openInputStream failed, uri : $uri"))
                 }
 
-            FileUtil.readText(stream)
+            val text = FileUtil.readText(stream)
                 .also { dataStore.updateLatestFileUri(uri) }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
+            Result.success(text)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
