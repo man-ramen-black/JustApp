@@ -30,20 +30,23 @@ object UiUtil {
         return Point(metrics.widthPixels, metrics.heightPixels)
     }
 
-    fun getScreenSizeWithoutSystemBars(context: Context): Point {
+    /** 현재 시스템바를 제외한 콘텐츠 영역 반환 */
+    fun getCurrentViewportSize(context: Context): Point {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val windowMetrics = windowManager.currentWindowMetrics
             val windowInsets = windowMetrics.windowInsets
 
-            val insets = windowInsets.getInsetsIgnoringVisibility(
+            val insets = windowInsets.getInsets(
                 WindowInsets.Type.navigationBars() or WindowInsets.Type.statusBars()
             )
 
             val bounds =  windowMetrics.bounds
             Point(bounds.width() - insets.left - insets.right, bounds.height() - insets.top - insets.bottom)
         } else {
+            // Android R 이전엔 추가 처리가 필요하지만 임시로 화면 전체 사이즈 반환
+            // 전체화면 여부 확인 후 getIdentifier 로 시스템 바 높이 획득 후 계산 필요
             getScreenSize(context)
         }
     }

@@ -8,7 +8,6 @@ import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
-import android.widget.Toast
 import kotlin.math.max
 import kotlin.math.min
 
@@ -84,7 +83,7 @@ object OverlayViewUtil {
     fun moveView(view: View, x: Float, y: Float) {
         updateView(view) {
             it.gravity = Gravity.TOP or Gravity.LEFT
-            val screenSize = UiUtil.getScreenSizeWithoutSystemBars(view.context)
+            val screenSize = UiUtil.getCurrentViewportSize(view.context)
             // 뷰가 화면 밖으로 벗어나지 않게 제한
             it.x = min(max(x.toInt(), 0), screenSize.x - view.width)
             it.y = min(max(y.toInt(), 0), screenSize.y - view.height)

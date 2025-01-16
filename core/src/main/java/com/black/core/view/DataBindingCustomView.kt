@@ -8,6 +8,8 @@ import android.widget.FrameLayout
 import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
 // https://gun0912.tistory.com/38
 // #CustomView 가이드
@@ -28,6 +30,8 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
      * = 또는 by lazy로 할 경우 생성자 완료 후 초기화되므로 initialize에서 접근 시 NPE 발생
      */
     protected abstract val styleableId: IntArray?
+
+    protected val viewScope = MainScope()
 
     constructor(context: Context) : super(context) {
         initializeInternal(null)
@@ -74,6 +78,12 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
     override fun onAttachedToWindow() {
         bindVariable(binding)
         super.onAttachedToWindow()
+    }
+
+    @CallSuper
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        viewScope.cancel()
     }
 
     protected open fun bindVariable(binding: T) {
