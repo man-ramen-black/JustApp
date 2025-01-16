@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.black.app.R
 import com.black.app.model.database.studypopup.TextEditorRepository
 import com.black.core.util.Extensions.launch
+import com.black.core.util.Extensions.letIf
 import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,6 +40,7 @@ class TextEditorViewModel @Inject constructor(
             ""
         )
 
+    private val originText = MutableStateFlow("")
     val text = MutableStateFlow("")
 
     init {
@@ -46,16 +48,15 @@ class TextEditorViewModel @Inject constructor(
             val uri = currentFileUriFlow.firstOrNull()
                 ?: return@launch
 
-            text.value = textEditorRepo.loadTextFile(uri)
-                .let {
-                    it.getOrNull()
-                        ?: run {
-                            it.exceptionOrNull()?.printStackTrace()
-                            // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화
-                            textEditorRepo.reset()
-                            postEvent(EVENT_TOAST, R.string.text_editor_load_failed_latest_file)
-                            ""
-                        }
+            val result = loadFile(uri)
+
+            // 실패 시 처리
+            result.exceptionOrNull()
+                ?.let {
+                    it.printStackTrace()
+                    // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화
+                    textEditorRepo.reset()
+                    postEvent(EVENT_TOAST, R.string.text_editor_load_failed_latest_file)
                 }
         }
     }
@@ -79,22 +80,39 @@ class TextEditorViewModel @Inject constructor(
         }
     }
 
-    suspend fun loadFile(uri: Uri) = withContext(Dispatchers.IO) {
-        text.value = textEditorRepo.loadTextFile(uri)
-            .let {
-                it.getOrNull()
-                    ?: run {
-                        it.exceptionOrNull()?.printStackTrace()
-                        postEvent(EVENT_TOAST, R.string.text_editor_load_failed)
-                        ""
-                    }
-            }
+    suspend fun loadFile(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+        val loadResult = textEditorRepo.loadTextFile(uri)
+        if (loadResult.isFailure) {
+            return@withContext Result.failure(loadResult.exceptionOrNull()!!)
+        }
+
+        val loadedText = loadResult.getOrNull()!!
+        text.value = loadedText
+        originText.value = loadedText
+        Result.success(Unit)
     }
 
-    suspend fun saveCurrentFile(): Result<Unit> {
-        return currentFileUriFlow.firstOrNull()
-            ?.let { saveFile(it) }
-            ?: Result.failure(IllegalAccessException("currentFileUri is null"))
+    /**
+     * 현재 파일 저장
+     * @return 텍스트 변경 사항이 없어서 저장을 건너 뛴 경우 false
+     */
+    suspend fun saveCurrentFile(): Result<Boolean> {
+        if (text.value == originText.value) {
+            // 텍스트 변경 사항 없음
+            return Result.success(false)
+        }
+
+        val uri = currentFileUriFlow.firstOrNull()
+            ?: return Result.failure(IllegalAccessException("currentFileUri is null"))
+
+        return saveFile(uri)
+            .let {
+                if (it.isSuccess) {
+                    Result.success(true)
+                } else {
+                    Result.failure(it.exceptionOrNull()!!)
+                }
+            }
     }
 
     suspend fun saveFile(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
@@ -109,9 +127,10 @@ class TextEditorViewModel @Inject constructor(
     }
 
     fun reset() {
-        text.value = ""
         launch(Dispatchers.IO) {
             textEditorRepo.reset()
+            text.value = ""
+            originText.value = ""
         }
     }
 }

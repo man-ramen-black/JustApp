@@ -57,6 +57,10 @@ class TextEditorFragment
             if (event == Lifecycle.Event.ON_PAUSE) {
                 mainScope.launch {
                     val result = viewModel.saveCurrentFile()
+                    if (result.getOrNull() == false) {
+                        // 텍스트 변경 사항 없는 케이스
+                        return@launch
+                    }
 
                     val messageResId = if (result.isSuccess) {
                         R.string.text_editor_save_completed
@@ -93,7 +97,15 @@ class TextEditorFragment
     private fun load() {
         launch {
             val uri = safHelper.load(arrayOf("text/plain"))
-            viewModel.loadFile(uri ?: return@launch)
+            val result = viewModel.loadFile(uri ?: return@launch)
+
+            // 실패 시 동작
+            result.exceptionOrNull()
+                ?.let {
+                    it.printStackTrace()
+                    Toast.makeText(appContext, R.string.text_editor_load_failed, Toast.LENGTH_SHORT)
+                        .show()
+                }
         }
     }
 
