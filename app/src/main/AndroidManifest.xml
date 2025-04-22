@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Android 11 이상에서 QUERY_ALL_PACKAGES 권한 우회 처리 (권장되지 않음...) -->
     <!-- https://soir1984.tistory.com/68 -->
     <queries>
@@ -26,6 +27,8 @@
     Android 9(API 레벨 28) 이상에서 ForegroundService를 사용하기 위한 퍼미션 (퍼미션 허용은 따로 하지 않아도됨)
     -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- Android 14 (API 수준 34) 타겟팅 시 추가 필요 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <!-- Floating View -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
@@ -44,7 +47,8 @@
         android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Black"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33">
 
         <!--
         [configChanges]
@@ -100,7 +104,8 @@
         <activity android:name=".ui.maintab.architecture.mvvm.MVVMActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <service android:name=".service.ForegroundService"/>
+        <service android:name=".service.ForegroundService"
+            android:foregroundServiceType="specialUse" />
 
         <receiver android:name=".broadcast.BootReceiver" android:exported="true">
             <intent-filter>
