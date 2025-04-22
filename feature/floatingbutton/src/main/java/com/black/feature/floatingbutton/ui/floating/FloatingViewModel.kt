@@ -40,7 +40,7 @@ class FloatingViewModel @Inject constructor(
     }
 
     val size = dataStore.getSizeFlow()
-        .stateIn(35f)
+        .stateIn(45f)
 
     val padding = dataStore.getPaddingFlow()
         .mapNotNull { it ?: 3f }

@@ -43,8 +43,8 @@ object OverlayViewUtil {
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        onSetWindowParams?.invoke(layoutParams)
         layoutParams.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        onSetWindowParams?.invoke(layoutParams)
 
         Log.d("isCenter : ${layoutParams.gravity and Gravity.CENTER == Gravity.CENTER}")
 

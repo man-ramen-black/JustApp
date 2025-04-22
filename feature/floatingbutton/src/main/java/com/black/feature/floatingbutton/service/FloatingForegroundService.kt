@@ -82,7 +82,7 @@ class FloatingForegroundService: ForegroundService() {
 
         if (view == null) {
             view = FloatingView(this)
-                .also { OverlayViewUtil.attachView(it) }
+                .also { it.attachView() }
         }
 
         return result
@@ -91,7 +91,7 @@ class FloatingForegroundService: ForegroundService() {
     override fun onDestroy() {
         super.onDestroy()
         view?.let {
-            OverlayViewUtil.detachView(it)
+            it.detachView()
             view = null
         }
     }

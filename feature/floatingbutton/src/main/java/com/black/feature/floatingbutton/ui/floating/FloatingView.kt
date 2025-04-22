@@ -49,7 +49,9 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
         isMovable = true
     }
 
-    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {}
+    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+        windowParams.y = 70
+    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
