@@ -1,6 +1,7 @@
 package com.black.app.ui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
@@ -11,6 +12,7 @@ import com.black.app.deeplink.DeeplinkManager
 import com.black.app.service.ForegroundService
 import com.black.app.util.ComponentExtensions.launch
 import com.black.core.component.SplashActivity
+import com.black.core.util.PermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -32,12 +34,15 @@ class MainActivity : SplashActivity<ActivityMainBinding>() {
 
     @Inject lateinit var deeplinkManager: DeeplinkManager
 
+    private val permissionHelper = PermissionHelper(this)
+
     override val layoutResId: Int = R.layout.activity_main
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 앱 디버깅 시에 서비스가 실행되도록 설정
         ForegroundService.start(this, false)
+        permissionHelper.init()
 
         launch {
             doSomething()
@@ -48,6 +53,8 @@ class MainActivity : SplashActivity<ActivityMainBinding>() {
     override fun bindVariable(binding: ActivityMainBinding) { }
 
     override fun onSplashFinished() {
+        requestPermission()
+
         // navController destination 셋팅 완료 후 collect 시작
         lifecycleScope.launch {
             deeplinkManager.getDeeplinkFlow(this)
@@ -72,5 +79,21 @@ class MainActivity : SplashActivity<ActivityMainBinding>() {
 
     private suspend fun doSomething() = withContext(Dispatchers.IO) {
         delay(500)
+    }
+
+    private fun requestPermission() {
+        val permissions = listOfNotNull(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                android.Manifest.permission.POST_NOTIFICATIONS
+            } else {
+                null
+            }
+        ).toTypedArray()
+
+        if (permissionHelper.checkPermissions(permissions).isGranted) {
+            return
+        }
+
+        permissionHelper.requestPermissions(permissions) {}
     }
 }
