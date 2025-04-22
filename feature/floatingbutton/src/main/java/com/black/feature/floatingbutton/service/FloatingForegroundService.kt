@@ -3,6 +3,7 @@ package com.black.feature.floatingbutton.service
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.widget.Toast
@@ -37,6 +38,18 @@ class FloatingForegroundService: ForegroundService() {
             "Floating Button",
             "터치 시 종료",
         ) {
+            val notificationIconResId = this.packageManager
+                .getApplicationInfo(
+                    this.packageName,
+                    PackageManager.GET_META_DATA
+                )
+                .metaData
+                .getInt("NOTIFICATION_ICON", -1)
+                .takeIf { it != -1 }
+
+            if (notificationIconResId != null) {
+                it.setSmallIcon(notificationIconResId)
+            }
             it.setOngoing(true)
             val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             val stopIntent = createStopIntent(this, FloatingForegroundService::class.java)

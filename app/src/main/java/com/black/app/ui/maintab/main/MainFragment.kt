@@ -52,7 +52,7 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
             ) { navigateByActivity(MainTabFragmentDirections.actionUsageTimer()) },
             MainItem(
                 getString(R.string.fragment_name_notification),
-                R.drawable.ic_notification,
+                R.drawable.ic_notify,
             ) { navigateByActivity(MainTabFragmentDirections.actionNotification()) },
             MainItem(
                 getString(R.string.fragment_name_recycler_view),

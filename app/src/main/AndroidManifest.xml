@@ -86,6 +86,11 @@
             </intent-filter>
         </activity>
 
+        <!-- 각 모듈에서 참조할 Notification 아이콘 -->
+        <meta-data
+            android:name="NOTIFICATION_ICON"
+            android:resource="@drawable/ic_notification" />
+
         <activity android:name=".ui.maintab.launcher.internal.LauncherActivity"
             android:theme="@style/Theme.Black.Launcher"
             android:exported="true">

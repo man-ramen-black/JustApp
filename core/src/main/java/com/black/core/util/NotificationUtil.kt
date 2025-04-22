@@ -1,8 +1,10 @@
 package com.black.core.util
 
+import android.Manifest
 import android.app.Notification
 import android.content.Context
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -45,6 +47,7 @@ object NotificationUtil {
         return notificationBuilder.build()
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun showNotification(
         context: Context,
         channelId: String,
