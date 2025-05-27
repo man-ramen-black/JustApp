@@ -91,7 +91,7 @@
             android:name="NOTIFICATION_ICON"
             android:resource="@drawable/ic_notification" />
 
-        <activity android:name=".ui.maintab.launcher.internal.LauncherActivity"
+        <activity android:name=".ui.maintab.main.launcher.internal.LauncherActivity"
             android:theme="@style/Theme.Black.Launcher"
             android:exported="true">
             <intent-filter>
@@ -100,13 +100,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.maintab.etc.EtcActivity"
+        <activity android:name=".ui.maintab.main.etc.EtcActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".ui.maintab.architecture.mvc.MVCActivity"
+        <activity android:name=".ui.maintab.main.architecture.mvc.MVCActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
-        <activity android:name=".ui.maintab.architecture.mvvm.MVVMActivity"
+        <activity android:name=".ui.maintab.main.architecture.mvvm.MVVMActivity"
             android:parentActivityName=".ui.MainActivity"/>
 
         <service android:name=".service.ForegroundService"
@@ -118,7 +118,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".ui.maintab.usagetimer.UsageTimerAccessibility"
+        <service android:name=".ui.maintab.main.usagetimer.UsageTimerAccessibility"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="JustApp - UsageTimer"
             android:exported="true"
