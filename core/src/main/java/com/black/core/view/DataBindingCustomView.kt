@@ -8,14 +8,21 @@ import android.widget.FrameLayout
 import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.setViewTreeLifecycleOwner
 
 // https://gun0912.tistory.com/38
 // #CustomView 가이드
 // https://0391kjy.tistory.com/28
 // CustomView ViewBinding
-abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
+abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout, LifecycleOwner {
+
+    private lateinit var lifecycleRegistry: LifecycleRegistry
+
+    override val lifecycle: Lifecycle
+        get() = lifecycleRegistry
 
     protected lateinit var binding : T
 
@@ -30,8 +37,6 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
      * = 또는 by lazy로 할 경우 생성자 완료 후 초기화되므로 initialize에서 접근 시 NPE 발생
      */
     protected abstract val styleableId: IntArray?
-
-    protected val viewScope = MainScope()
 
     constructor(context: Context) : super(context) {
         initializeInternal(null)
@@ -61,7 +66,10 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
     protected abstract fun initialize(binding: T, typedArray: TypedArray?)
 
     private fun initializeInternal(attrs: AttributeSet?) {
-        binding = DataBindingUtil.inflate(LayoutInflater.from(context), layoutId, this, true)
+        lifecycleRegistry = LifecycleRegistry(this)
+
+        binding = DataBindingUtil.inflate<T>(LayoutInflater.from(context), layoutId, this, true)
+            .apply { lifecycleOwner = this@DataBindingCustomView }
 
         val typedArray = let {
             context.obtainStyledAttributes(
@@ -76,17 +84,15 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout {
 
     @CallSuper
     override fun onAttachedToWindow() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         bindVariable(binding)
         super.onAttachedToWindow()
     }
 
-    @CallSuper
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        viewScope.cancel()
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
-    protected open fun bindVariable(binding: T) {
-
-    }
+    protected open fun bindVariable(binding: T) {}
 }

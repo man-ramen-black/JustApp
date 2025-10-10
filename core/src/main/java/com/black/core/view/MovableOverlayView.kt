@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.core.view.children
 import androidx.databinding.ViewDataBinding
+import androidx.lifecycle.lifecycleScope
 import com.black.core.util.Log
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.UiUtil
@@ -79,7 +80,7 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
         // 화면 회전 시 뷰 위치를 유지할 경우 화면 밖으로 벗어날 수 있으므로 화면 회전 시 뷰 위치 이동
         // 유튜브 전체화면 등 화면 회전과 함께 상단바, 네비바 숨김 처리되는 경우 화면 사이즈 계산에 오차가 생기므로
         // 일정 시간 지연 후 위치 변경
-        viewScope.launch {
+        lifecycleScope.launch {
             delay(300)
             val viewPosition = OverlayViewUtil.getAbsoluteWindowPosition(this@MovableOverlayView)
             OverlayViewUtil.moveView(this@MovableOverlayView, viewPosition.x.toFloat(), viewPosition.y.toFloat())

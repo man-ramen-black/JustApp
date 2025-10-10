@@ -1,17 +1,22 @@
 package com.black.feature.floatingbutton.ui.floating
 
-import com.black.core.di.Hilt
 import com.black.core.di.HiltModule
 import com.black.core.viewmodel.EventViewModel
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -39,6 +44,24 @@ class FloatingViewModel @Inject constructor(
         const val EVENT_VOLUME_DOWN = "volumeDown"
     }
 
+    val clock = flow {
+            while (true) {
+                delay(100)
+                emit(System.currentTimeMillis())
+            }
+        }
+        .map { Calendar.getInstance().apply { timeInMillis = it } }
+        .map {
+            val pattern = if (it.get(Calendar.SECOND) % 2 == 0) {
+                "hh:mm"
+            } else {
+                "hh mm"
+            }
+            SimpleDateFormat(pattern, Locale.getDefault(Locale.Category.FORMAT))
+                .format(it.time)
+        }
+        .stateIn(mainScope, SharingStarted.Eagerly, "")
+
     val size = dataStore.getSizeFlow()
         .stateIn(45f)
 
@@ -58,7 +81,6 @@ class FloatingViewModel @Inject constructor(
         .stateIn(0.3f)
 
     fun onClickHome() {
-        Hilt
         sendEvent(EVENT_HOME)
     }
 
