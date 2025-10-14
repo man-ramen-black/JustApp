@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -60,24 +61,26 @@ class FloatingViewModel @Inject constructor(
             SimpleDateFormat(pattern, Locale.getDefault(Locale.Category.FORMAT))
                 .format(it.time)
         }
-        .stateIn(mainScope, SharingStarted.Eagerly, "")
+        .stateIn("")
 
     val size = dataStore.getSizeFlow()
+        .filterNotNull()
         .stateIn(45f)
 
     val padding = dataStore.getPaddingFlow()
-        .mapNotNull { it ?: 3f }
+        .filterNotNull()
         .stateIn(3f)
 
     val margin = dataStore.getMarginFlow()
-        .mapNotNull { it ?: 2f }
+        .filterNotNull()
         .stateIn(2f)
 
     val radius = dataStore.getRadiusFlow()
-        .mapNotNull { it ?: 3f }
+        .filterNotNull()
         .stateIn(3f)
 
     val opacity = dataStore.getOpacityFlow()
+        .filterNotNull()
         .stateIn(0.3f)
 
     fun onClickHome() {
@@ -103,7 +106,7 @@ class FloatingViewModel @Inject constructor(
     private fun <T> Flow<T>.stateIn(initialValue: T): StateFlow<T> {
         return stateIn(
             mainScope,
-            SharingStarted.WhileSubscribed(5000),
+            SharingStarted.Eagerly,
             initialValue
         )
     }

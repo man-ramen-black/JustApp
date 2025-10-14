@@ -8,9 +8,11 @@ import android.content.res.TypedArray
 import android.media.AudioManager
 import android.util.AttributeSet
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.black.core.di.Hilt
 import com.black.core.util.Log
+import com.black.core.util.PermissionHelper
 import com.black.core.view.MovableOverlayView
 import com.black.core.viewmodel.EventCollector
 import com.black.feature.floatingbutton.R
@@ -72,6 +74,13 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
             }
 
             FloatingViewModel.EVENT_BACK -> {
+                if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
+                    Toast.makeText(context, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
+                        .show()
+                    PermissionHelper.openAccessibilitySetting(context)
+                    return
+                }
+
                 context.sendBroadcast(Intent(FloatingAccessibilityService.ACTION_REQUEST_BACK))
             }
 

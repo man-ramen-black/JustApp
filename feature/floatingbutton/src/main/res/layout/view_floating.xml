@@ -36,7 +36,7 @@
                 android:src="@drawable/ic_home"
                 android:scaleType="fitCenter"
                 android:onClick="@{_->viewModel.onClickHome()}"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/bt_ripple"
                 sizeDp="@{viewModel.size}"
                 marginRightDp="@{viewModel.margin}"
                 />
@@ -48,7 +48,7 @@
                 android:src="@drawable/ic_back"
                 android:scaleType="fitCenter"
                 android:onClick="@{_->viewModel.onClickBack()}"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/bt_ripple"
                 sizeDp="@{viewModel.size}"
                 marginRightDp="@{viewModel.margin}"
                 />
@@ -60,7 +60,7 @@
                 android:src="@drawable/ic_open_status_bar"
                 android:scaleType="fitCenter"
                 android:onClick="@{_->viewModel.onClickStatusBar()}"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/bt_ripple"
                 sizeDp="@{viewModel.size}"
                 marginRightDp="@{viewModel.margin}"
                 />
@@ -72,7 +72,7 @@
                 android:src="@drawable/ic_volume_down"
                 android:scaleType="fitCenter"
                 android:onClick="@{_->viewModel.onClickVolumeDown()}"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/bt_ripple"
                 sizeDp="@{viewModel.size}"
                 marginRightDp="@{viewModel.margin}"
                 />
@@ -84,7 +84,7 @@
                 android:src="@drawable/ic_volume_up"
                 android:scaleType="fitCenter"
                 android:onClick="@{_->viewModel.onClickVolumeUp()}"
-                android:background="?android:attr/selectableItemBackground"
+                android:background="@drawable/bt_ripple"
                 sizeDp="@{viewModel.size}"
                 marginRightDp="@{viewModel.margin}"
                 />

@@ -73,13 +73,6 @@ class FloatingForegroundService: ForegroundService() {
             return result
         }
 
-        if (!PermissionHelper.isAccessibilityServiceEnabled(this, FloatingAccessibilityService::class.java)) {
-            Toast.makeText(this, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
-                .show()
-            PermissionHelper.openAccessibilitySetting(this)
-            return result
-        }
-
         if (view == null) {
             view = FloatingView(this)
                 .also { it.attachView() }
