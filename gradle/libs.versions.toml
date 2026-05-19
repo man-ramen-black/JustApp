@@ -1,28 +1,29 @@
 [versions]
-agp = "8.9.0"
+agp = "9.1.1"
 glide = "4.16.0"
-kotlin = "2.0.21"
+kotlin = "2.3.21"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 appcompat = "1.6.1"
 kotlinxSerializationJson = "1.6.0"
-kotlinxSerializationPlugin = "1.9.10"
+kotlinxSerializationPlugin = "2.3.21"
 lifecycleLivedataKtx = "2.7.0"
 loggingInterceptor = "4.2.1"
 material = "1.12.0"
-navigationFragmentKtx = "2.7.7"
-navigationSafeArgs = "2.5.3"
+navigationFragmentKtx = "2.9.8"
+navigationSafeArgs = "2.9.8"
 preferenceKtx = "1.2.1"
 retrofit = "2.9.0"
-hilt = "2.51.1"
+hilt = "2.59.2"
+ksp = "2.3.8"
 paging = "3.2.1"
 datastore = "1.1.1"
-parcelize = "1.8.22"
+parcelize = "2.3.21"
 retrofit2KotlinxSerializationConverter = "1.0.0"
-roomRuntime = "2.6.1"
-roomCompiler = "2.6.1"
+roomRuntime = "2.8.4"
+roomCompiler = "2.8.4"
 coreSplashscreen = "1.0.1"
 swiperefreshlayout = "1.1.0"
 activity = "1.9.0"
@@ -31,11 +32,11 @@ mockk = "1.13.11"
 robolectric = "4.12.2"
 kotlinxCoroutinesTest = "1.9.0-RC"
 flexbox = "3.0.0"
-googleServices = "4.4.2"
+googleServices = "4.4.4"
 firebaseBom = "33.1.1"
 firebaseAnalytics = "22.0.2"
 firebaseCrashlytics = "19.0.2"
-firebaseCrashlyticsPlugin = "2.9.9"
+firebaseCrashlyticsPlugin = "3.0.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,7 +50,6 @@ androidx-datastore = { module = "androidx.datastore:datastore-preferences", vers
 
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
-glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -78,8 +78,8 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-jetbrains-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+android-legacy-kapt = { id = "com.android.legacy-kapt", version.ref = "agp" }
+google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinxSerializationPlugin" }
 jetbrains-kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "parcelize" }
 dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

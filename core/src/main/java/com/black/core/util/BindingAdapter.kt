@@ -195,7 +195,13 @@ object ViewBindingAdapter {
  */
 object ImageViewBindingAdapter {
 
-    @BindingAdapter("glideUrl", "glideCircle", "glideErrorDrawable", "glidePlaceholder", "glideErrorUrl", requireAll = false)
+    @BindingAdapter("glideUrl")
+    @JvmStatic
+    fun setGlideImageUrl(view: ImageView, url: String?) {
+        setGlideImage(view, url, null, null, null, null)
+    }
+
+    @BindingAdapter(value = ["glideUrl", "glideCircle", "glideErrorDrawable", "glidePlaceholder", "glideErrorUrl"], requireAll = false)
     @JvmStatic
     fun setGlideImage(view: ImageView, url: String?, isCircle: Boolean?, errorDrawable: Drawable?, placeholder: Drawable?, errorUrl: String?) {
         if (url == null) {

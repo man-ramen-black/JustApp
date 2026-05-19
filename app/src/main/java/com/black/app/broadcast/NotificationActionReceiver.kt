@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import androidx.core.content.ContextCompat
 import com.black.app.service.ForegroundService
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.Log
@@ -48,7 +49,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         override fun onForegroundServiceCreate(context: Context) {
             receiver = NotificationActionReceiver()
-            context.registerReceiver(receiver, IntentFilter(ACTION_PAUSE_USAGE_TIMER))
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                IntentFilter(ACTION_PAUSE_USAGE_TIMER),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
         }
 
         override fun onForegroundServiceDestroy(context: Context) {

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import com.black.app.service.ForegroundService
 import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
@@ -38,7 +39,12 @@ class ScreenReceiver : BroadcastReceiver() {
                             addAction(Intent.ACTION_SCREEN_ON)
                             addAction(Intent.ACTION_SCREEN_OFF)
                         }
-                    context.registerReceiver(it, filter)
+                    ContextCompat.registerReceiver(
+                        context,
+                        it,
+                        filter,
+                        ContextCompat.RECEIVER_NOT_EXPORTED
+                    )
                 }
         }
 

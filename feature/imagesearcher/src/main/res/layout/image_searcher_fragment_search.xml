@@ -78,7 +78,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="18dp"
             android:src="@drawable/icon_delete"
-            onClick="@{_->viewModel.onClickDelete()}"
+            android:onClick="@{_->viewModel.onClickDelete()}"
             />
 
         <androidx.recyclerview.widget.RecyclerView

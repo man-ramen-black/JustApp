@@ -1,5 +1,7 @@
 package com.black.feature.floatingbutton.ui.floating
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
 import com.black.core.di.HiltModule
 import com.black.core.viewmodel.EventViewModel
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
@@ -9,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -45,7 +46,7 @@ class FloatingViewModel @Inject constructor(
         const val EVENT_VOLUME_DOWN = "volumeDown"
     }
 
-    val clock = flow {
+    val clock: LiveData<String> = flow {
             while (true) {
                 delay(100)
                 emit(System.currentTimeMillis())
@@ -61,27 +62,27 @@ class FloatingViewModel @Inject constructor(
             SimpleDateFormat(pattern, Locale.getDefault(Locale.Category.FORMAT))
                 .format(it.time)
         }
-        .stateIn("")
+        .asLiveDataWithInitial("")
 
-    val size = dataStore.getSizeFlow()
+    val size: LiveData<Float> = dataStore.getSizeFlow()
         .filterNotNull()
-        .stateIn(45f)
+        .asLiveDataWithInitial(45f)
 
-    val padding = dataStore.getPaddingFlow()
+    val padding: LiveData<Float> = dataStore.getPaddingFlow()
         .filterNotNull()
-        .stateIn(3f)
+        .asLiveDataWithInitial(3f)
 
-    val margin = dataStore.getMarginFlow()
+    val margin: LiveData<Float> = dataStore.getMarginFlow()
         .filterNotNull()
-        .stateIn(2f)
+        .asLiveDataWithInitial(2f)
 
-    val radius = dataStore.getRadiusFlow()
+    val radius: LiveData<Float> = dataStore.getRadiusFlow()
         .filterNotNull()
-        .stateIn(3f)
+        .asLiveDataWithInitial(3f)
 
-    val opacity = dataStore.getOpacityFlow()
+    val opacity: LiveData<Float> = dataStore.getOpacityFlow()
         .filterNotNull()
-        .stateIn(0.3f)
+        .asLiveDataWithInitial(0.3f)
 
     fun onClickHome() {
         sendEvent(EVENT_HOME)
@@ -103,11 +104,11 @@ class FloatingViewModel @Inject constructor(
         sendEvent(EVENT_VOLUME_DOWN)
     }
 
-    private fun <T> Flow<T>.stateIn(initialValue: T): StateFlow<T> {
+    private fun <T> Flow<T>.asLiveDataWithInitial(initialValue: T): LiveData<T> {
         return stateIn(
             mainScope,
             SharingStarted.Eagerly,
             initialValue
-        )
+        ).asLiveData()
     }
 }
