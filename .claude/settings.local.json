@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($cmd = Get-Command claude -ErrorAction SilentlyContinue; if \\($cmd\\) { \"Found: $\\($cmd.Source\\)\" } else { \"claude NOT found in PATH\" })",
+      "Skill(keybindings-help)"
+    ]
+  }
+}
