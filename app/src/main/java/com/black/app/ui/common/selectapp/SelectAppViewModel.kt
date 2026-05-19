@@ -46,6 +46,6 @@ class SelectAppViewModel : com.black.core.viewmodel.EventViewModel() {
             itemList.value = itemListOrigin
             return
         }
-        itemList.value = itemListOrigin.filter { it.appLabel.contains(text) }
+        itemList.value = itemListOrigin.filter { it.appLabel.contains(text, ignoreCase = true) }
     }
 }

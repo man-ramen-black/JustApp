@@ -1,7 +1,7 @@
 package com.black.app.ui.common.selectapp
 
 import android.annotation.SuppressLint
-import android.content.pm.ApplicationInfo
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
@@ -67,13 +67,17 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
     @SuppressLint("QueryPermissionsNeeded")
     private fun generateSelectAppItemList() : List<SelectAppItem> {
         val pm = requireContext().packageManager
-        // 실행할 수 있는 앱 조회 (PackageManager.GET_ACTIVITIES)
-        val infoList = pm.getInstalledApplications(PackageManager.GET_ACTIVITIES)
-        return infoList
-            // 시스템 앱 제외
-            .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
+        // 런처에서 실행 가능한 앱만 조회 (사전 설치된 YouTube, Instagram 등도 포함되도록 FLAG_SYSTEM 필터 대신 사용)
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(intent, 0)
+            .distinctBy { it.activityInfo.packageName }
             .map {
-                SelectAppItem(it.packageName, pm.getApplicationLabel(it), pm.getApplicationIcon(it))
+                val applicationInfo = it.activityInfo.applicationInfo
+                SelectAppItem(
+                    applicationInfo.packageName,
+                    pm.getApplicationLabel(applicationInfo),
+                    pm.getApplicationIcon(applicationInfo)
+                )
             }
     }
 }
