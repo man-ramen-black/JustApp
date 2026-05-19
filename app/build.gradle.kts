@@ -10,12 +10,13 @@ plugins {
     alias(libs.plugins.androidx.navigation.safeargs)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.firebase.crashlytics)
+    alias(libs.plugins.jetbrains.kotlin.compose)
     id("project-report") // 터미널에 ./gradlew app:htmlDependencyReport 입력하여 디펜던시 리포트 확인 가능 (...classpath 폴더 확인)
 }
 
 android {
     namespace = "com.black.app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.black.app"
@@ -39,6 +40,7 @@ android {
     buildFeatures {
         buildConfig = true
         dataBinding = true
+        compose = true
     }
 
     compileOptions {
@@ -94,6 +96,14 @@ dependencies {
 
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
 
