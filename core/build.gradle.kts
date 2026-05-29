@@ -76,6 +76,7 @@ dependencies {
     api(libs.hilt)
     ksp(libs.hilt.compiler)
 
+    testImplementation(project(":test"))
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.junit)
