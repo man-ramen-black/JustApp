@@ -9,13 +9,14 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.black.app.R
 import com.black.app.databinding.FragmentUsageTimerBinding
-import com.black.app.model.UsageTimerModel
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.base.TitleFragment
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.core.util.FragmentExtension.navigateSafety
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
     com.black.core.viewmodel.EventObserver {
     override val layoutResId: Int = R.layout.fragment_usage_timer
@@ -25,7 +26,6 @@ class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
     override fun onBindVariable(binding: FragmentUsageTimerBinding) {
         binding.fragment = this
         binding.viewModel = viewModel.apply {
-            setModel(UsageTimerModel(requireContext()))
             observeEvent(viewLifecycleOwner, this@UsageTimerFragment)
         }
         viewModel.init()

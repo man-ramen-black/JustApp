@@ -4,13 +4,16 @@ import android.text.Editable
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.black.core.viewmodel.EventViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * [SelectAppDialogFragment]
  */
-class SelectAppViewModel : com.black.core.viewmodel.EventViewModel() {
+@HiltViewModel
+class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventViewModel() {
     companion object {
         const val EVENT_APP_SELECTED = "AppSelected" // Data : List<packageName : String>
         const val EVENT_CLOSE = "Close"

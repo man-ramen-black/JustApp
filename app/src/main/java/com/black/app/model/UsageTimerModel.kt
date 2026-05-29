@@ -2,11 +2,13 @@ package com.black.app.model
 
 import android.content.Context
 import com.black.app.model.preferences.ForegroundServicePreference
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
 /**
  * Created by jinhyuk.lee on 2022/05/09
  **/
-class UsageTimerModel(context: Context) {
+class UsageTimerModel @Inject constructor(@ApplicationContext context: Context) {
     private val preference = ForegroundServicePreference(context)
 
     fun savePauseDuration(pauseDurationMin: Int) {

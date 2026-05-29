@@ -14,10 +14,12 @@ import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
 import com.black.core.util.FragmentExtension.observePopBackStackArgsWithResumed
 import com.black.core.util.FragmentExtension.setPopBackStackArgs
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
+@AndroidEntryPoint
 class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<DialogSelectAppBinding>(),
     com.black.core.viewmodel.EventObserver {
     companion object {
