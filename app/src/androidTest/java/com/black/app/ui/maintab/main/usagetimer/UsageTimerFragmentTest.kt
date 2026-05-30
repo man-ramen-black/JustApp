@@ -5,7 +5,13 @@ import android.widget.FrameLayout
 import androidx.lifecycle.ViewModelStore
 import androidx.navigation.Navigation
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.platform.app.InstrumentationRegistry
 import com.black.app.R
+import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.testutil.BaseUiTest
 import com.black.app.testutil.assertDisplayed
 import com.black.app.testutil.assertEffectiveGone
@@ -29,6 +35,22 @@ import org.junit.runners.MethodSorters
 class UsageTimerFragmentTest : BaseUiTest() {
 
     private lateinit var navController: TestNavHostController
+
+    private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
+
+    /**
+     * 각 테스트 전 선택 앱 저장소 초기화
+     */
+    override fun setup() {
+        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(emptyList())
+    }
+
+    /**
+     * 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리)
+     */
+    override fun teardown() {
+        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(emptyList())
+    }
 
     /**
      * UsageTimerFragment가 계측 환경에서 핵심 View들을 정상 노출하는지 검증
@@ -121,6 +143,53 @@ class UsageTimerFragmentTest : BaseUiTest() {
             R.id.select_app_dialog,
             navController.currentDestination?.id,
         )
+    }
+
+    /**
+     * 선택 앱이 저장된 상태로 진입하면 아이콘 목록에 해당 앱이 표시되는지 검증
+     *
+     * Given:
+     * - 존재하지 않는 packageName을 선택 앱으로 저장(라벨 조회 실패 시 packageName 그대로 표시되어 검증이 결정적)
+     * When:
+     * - UsageTimerFragment 호스팅
+     * Then:
+     * - 선택 앱 RecyclerView 노출 + 저장한 packageName 라벨 표시
+     */
+    @Test
+    fun test_04_selectedAppsDisplayedFromStorage() {
+        /** Given **/
+        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(listOf("com.nonexistent.testapp"))
+
+        /** When **/
+        hostUsageTimerFragment()
+
+        /** Then **/
+        assertDisplayed(R.id.selected_apps_recycler)
+        // 라벨 조회 실패 시 packageName이 그대로 라벨로 노출되므로 결정적으로 검증
+        onView(withText("com.nonexistent.testapp")).check(matches(isDisplayed()))
+    }
+
+    /**
+     * 선택 앱이 없으면 안내 문구가 표시되고 목록은 숨겨지는지 검증
+     *
+     * Given:
+     * - 선택 앱 저장소 비어있음(setup에서 초기화)
+     * When:
+     * - UsageTimerFragment 호스팅
+     * Then:
+     * - 안내 문구 "No apps selected" 표시 + 선택 앱 RecyclerView 숨김
+     */
+    @Test
+    fun test_05_noAppsSelectedShowsPlaceholder() {
+        /** Given **/
+        // setup에서 저장소 초기화됨
+
+        /** When **/
+        hostUsageTimerFragment()
+
+        /** Then **/
+        assertText(R.id.selected_apps_empty, "No apps selected")
+        assertEffectiveGone(R.id.selected_apps_recycler)
     }
 
     /**
