@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.black.app.R
 import com.black.app.databinding.FragmentUsageTimerBinding
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
@@ -37,8 +36,6 @@ class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.selectedAppsRecycler.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         binding.selectedAppsRecycler.adapter = selectedAppAdapter
 
         SelectAppDialogFragment.observeSelectedApp(this) {
@@ -62,8 +59,6 @@ class UsageTimerFragment : TitleFragment<FragmentUsageTimerBinding>(),
             }
         }
         selectedAppAdapter.submitList(items)
-        binding.selectedAppsEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-        binding.selectedAppsRecycler.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
     }
 
     override fun onReceivedEvent(action: String, data: Any?) {

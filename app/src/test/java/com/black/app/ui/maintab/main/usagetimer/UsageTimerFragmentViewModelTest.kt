@@ -64,4 +64,24 @@ class UsageTimerFragmentViewModelTest : BaseTest() {
         verify { model.saveSelectedApps(listOf("com.x")) }
         assertEquals(listOf("com.x"), viewModel.selectedApps.value)
     }
+
+    /**
+     * 선택 앱 유무에 따라 selectedAppsEmpty가 갱신되는지 검증
+     *
+     * Given: model.saveSelectedApps 모킹
+     * When: 빈 목록 → 비어있지 않은 목록으로 onAppsSelected 호출
+     * Then: selectedAppsEmpty가 true → false로 전환
+     */
+    @Test
+    fun test_03_selectedAppsEmptyReflectsList() {
+        /** Given **/
+        every { model.saveSelectedApps(any()) } just Runs
+
+        /** When / Then **/
+        viewModel.onAppsSelected(emptyList())
+        assertEquals(true, viewModel.selectedAppsEmpty.value)
+
+        viewModel.onAppsSelected(listOf("com.x"))
+        assertEquals(false, viewModel.selectedAppsEmpty.value)
+    }
 }

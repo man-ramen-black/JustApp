@@ -5,6 +5,7 @@ import com.black.app.model.UsageTimerModel
 import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 /**
@@ -27,10 +28,13 @@ class UsageTimerFragmentViewModel @Inject constructor(
     val pauseDurationMin = MutableLiveData(0)
     val selectedApps = MutableLiveData<List<String>>(emptyList())
 
+    /** 선택 앱 비어있음 여부(빈 안내 문구·목록 표시 전환용) */
+    val selectedAppsEmpty = MutableStateFlow(true)
+
     fun init() {
         updatePauseRemainTime()
         pauseDurationMin.value = model.getPauseDuration()
-        selectedApps.value = model.getSelectedApps()
+        setSelectedApps(model.getSelectedApps())
     }
 
     fun onClickShow() {
@@ -72,7 +76,13 @@ class UsageTimerFragmentViewModel @Inject constructor(
 
     fun onAppsSelected(packageNames: List<String>) {
         model.saveSelectedApps(packageNames)
+        setSelectedApps(packageNames)
+    }
+
+    /** 선택 앱 목록 갱신 및 비어있음 상태 동기화 */
+    private fun setSelectedApps(packageNames: List<String>) {
         selectedApps.value = packageNames
+        selectedAppsEmpty.value = packageNames.isEmpty()
     }
 
     private fun updatePauseRemainTime() {
