@@ -13,7 +13,11 @@ import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 /**
@@ -29,11 +33,8 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /** 앱 전환 시 짧은 시간에 발생하는 창 이벤트 버스트로 인한 깜빡임 방지용 지연 숨김 시간(ms) */
     const val HIDE_DEBOUNCE_MILLIS = 500L
 
-    private val hideDebouncer = UsageTimerHideDebouncer(
-        scope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
-        hideDelayMillis = HIDE_DEBOUNCE_MILLIS,
-        onHide = { detachView() },
-    )
+    private val hideScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var hideJob: Job? = null
 
     /**
      * 포그라운드 창 이벤트에 대한 타이머 동작 종류
@@ -70,7 +71,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         }
 
         // 표시 요청 시 예약된 지연 숨김 취소(앱 전환 버스트로 인한 깜빡임 방지)
-        hideDebouncer.cancel()
+        cancelHide()
 
         // 같은 앱으로 이미 표시 중이면 재생성하지 않음(깜빡임 방지)
         if (usageTimerView != null && currentPackageName == packageName) {
@@ -93,10 +94,22 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
 
     /**
      * 선택 앱이 백그라운드로 갈 때 타이머 제거
-     * 앱 전환 직후 표시가 재요청되는 깜빡임을 막기 위해 지연 숨김 예약
+     * 앱 전환 직후 표시가 재요청되는 깜빡임을 막기 위해 지연 숨김 예약(이미 예약 중이면 유지)
      */
     fun hideIfShown() {
-        hideDebouncer.schedule()
+        if (hideJob?.isActive == true) return
+        hideJob = hideScope.launch {
+            delay(HIDE_DEBOUNCE_MILLIS)
+            detachView()
+        }
+    }
+
+    /**
+     * 예약된 지연 숨김 취소(표시 요청 시 깜빡임 방지)
+     */
+    private fun cancelHide() {
+        hideJob?.cancel()
+        hideJob = null
     }
 
     fun detachView() {
