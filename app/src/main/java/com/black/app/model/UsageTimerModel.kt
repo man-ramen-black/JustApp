@@ -30,4 +30,12 @@ class UsageTimerModel @Inject constructor(@ApplicationContext context: Context) 
     fun getPauseEndTime() : Long {
         return preference.getUsageTimerPauseEndTime()
     }
+
+    fun saveSelectedApps(packageNames: List<String>) {
+        preference.putUsageTimerSelectedApps(packageNames)
+    }
+
+    fun getSelectedApps() : List<String> {
+        return preference.getUsageTimerSelectedApps()
+    }
 }

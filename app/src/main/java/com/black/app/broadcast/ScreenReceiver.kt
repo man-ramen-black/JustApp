@@ -59,8 +59,8 @@ class ScreenReceiver : BroadcastReceiver() {
     }
 
     private val interfaces : List<Interface> = listOf(
-        UsageTimerGlobal,
-        StudyPopupGlobal
+        StudyPopupGlobal,
+        UsageTimerGlobal
     )
 
     override fun onReceive(context: Context?, intent: Intent?) {

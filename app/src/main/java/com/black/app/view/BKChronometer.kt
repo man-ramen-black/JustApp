@@ -52,6 +52,14 @@ class BKChronometer : Chronometer{
         pauseTime = 0
     }
 
+    /**
+     * 경과 시간을 0으로 초기화 후 재시작
+     */
+    fun restart() {
+        pauseTime = 0
+        start()
+    }
+
     fun pause() {
         super.stop()
         pauseTime = SystemClock.elapsedRealtime() - base

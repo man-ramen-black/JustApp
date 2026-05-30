@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
+import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.OnClick
 import com.black.core.util.UiUtil
 
@@ -41,12 +42,21 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
         binding.timer.start()
     }
 
+    fun restart() {
+        binding.timer.restart()
+    }
+
     fun pause() {
         binding.timer.pause()
     }
 
     fun stop() {
         binding.timer.stop()
+    }
+
+    override fun detachView() {
+        super.detachView()
+        UsageTimerGlobal.onViewDetached()
     }
 
     override fun bindVariable(binding: ViewUsageTimerBinding) {
