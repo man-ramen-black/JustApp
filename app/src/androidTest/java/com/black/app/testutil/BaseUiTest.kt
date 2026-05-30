@@ -1,8 +1,12 @@
 package com.black.app.testutil
 
 import android.app.Activity
+import android.content.Context
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.junit.After
 import org.junit.Before
@@ -27,6 +31,15 @@ abstract class BaseUiTest {
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)
+
+    /** 계측 인스트루먼테이션 */
+    protected val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+    /** UiAutomator 디바이스 핸들 */
+    protected val device = UiDevice.getInstance(instrumentation)
+
+    /** 애플리케이션 컨텍스트 */
+    protected val context = ApplicationProvider.getApplicationContext<Context>()
 
     private var scenario: ActivityScenario<out Activity>? = null
 

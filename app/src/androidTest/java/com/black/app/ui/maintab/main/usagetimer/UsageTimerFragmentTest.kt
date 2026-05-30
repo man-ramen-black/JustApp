@@ -9,7 +9,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.platform.app.InstrumentationRegistry
 import com.black.app.R
 import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.testutil.BaseUiTest
@@ -36,20 +35,18 @@ class UsageTimerFragmentTest : BaseUiTest() {
 
     private lateinit var navController: TestNavHostController
 
-    private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
-
     /**
      * 각 테스트 전 선택 앱 저장소 초기화
      */
     override fun setup() {
-        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(emptyList())
+        ForegroundServicePreference(context).putUsageTimerSelectedApps(emptyList())
     }
 
     /**
      * 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리)
      */
     override fun teardown() {
-        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(emptyList())
+        ForegroundServicePreference(context).putUsageTimerSelectedApps(emptyList())
     }
 
     /**
@@ -158,7 +155,7 @@ class UsageTimerFragmentTest : BaseUiTest() {
     @Test
     fun test_04_selectedAppsDisplayedFromStorage() {
         /** Given **/
-        ForegroundServicePreference(targetContext).putUsageTimerSelectedApps(listOf("com.nonexistent.testapp"))
+        ForegroundServicePreference(context).putUsageTimerSelectedApps(listOf("com.nonexistent.testapp"))
 
         /** When **/
         hostUsageTimerFragment()

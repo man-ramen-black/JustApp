@@ -1,22 +1,16 @@
 package com.black.app.ui.maintab.main.usagetimer
 
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.black.app.model.preferences.ForegroundServicePreference
-import org.junit.After
+import com.black.app.testutil.BaseUiTest
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 
 /**
@@ -38,14 +32,11 @@ import org.junit.runners.MethodSorters
  *
  * 표시 판정 로직은 [UsageTimerGlobalTest]가 단위 테스트로 검증한다.
  */
-@RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Ignore("계측 중인 앱은 자기 자신의 AccessibilityService가 바인딩되지 않아 자동 검증 불가, KDoc의 수동 절차로 검증")
-class UsageTimerAccessibilityUiTest {
+class UsageTimerAccessibilityUiTest : BaseUiTest() {
 
-    private val instrumentation = InstrumentationRegistry.getInstrumentation()
-    private val device = UiDevice.getInstance(instrumentation)
-    private val context = ApplicationProvider.getApplicationContext<Context>()
     private val preference = ForegroundServicePreference(context)
 
     private val accessibilityComponent =
@@ -58,8 +49,7 @@ class UsageTimerAccessibilityUiTest {
             ?.activityInfo?.packageName ?: "com.android.settings"
     }
 
-    @Before
-    fun setUp() {
+    override fun setup() {
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용)
         device.executeShellCommand("appops set $PACKAGE_NAME SYSTEM_ALERT_WINDOW allow")
         // 설정 화면 앱을 선택 앱으로 저장
@@ -71,8 +61,7 @@ class UsageTimerAccessibilityUiTest {
         waitUntilServiceBound()
     }
 
-    @After
-    fun tearDown() {
+    override fun teardown() {
         // 오버레이 제거(같은 프로세스 싱글톤이므로 메인 스레드에서 직접 정리)
         instrumentation.runOnMainSync { UsageTimerGlobal.detachView() }
         // 접근성 서비스 비활성화 및 선택 앱 저장 초기화

@@ -29,7 +29,9 @@ description: 이 저장소 컨벤션(BaseUiTest 상속, @HiltAndroidTest, Espres
 class XxxFragmentTest : BaseUiTest() { ... }
 ```
 
-`BaseUiTest`가 Hilt 룰·`onHostActivity`(HiltTestActivity 호스팅)·scenario 자동 close를 제공하므로 `@RunWith`/`@get:Rule`을 직접 쓰지 않는다. `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으니 클래스마다 직접 단다 — `NAME_ASCENDING`이 있어야 `test_01`, `test_02` 순번이 실행 순서가 된다. `@AndroidEntryPoint`가 아닌 Fragment도 동일 구조를 쓴다.
+**모든 계측(UI) 테스트는 예외 없이 `BaseUiTest`를 상속한다** — Fragment·Espresso 테스트뿐 아니라 UiAutomator 기반 테스트도 포함한다.
+
+`BaseUiTest`가 Hilt 룰·`onHostActivity`(HiltTestActivity 호스팅)·scenario 자동 close를 제공하므로 `@RunWith`/`@get:Rule`을 직접 쓰지 않는다. 공통 필드 `instrumentation`·`device`·`context`(applicationContext)도 제공하므로 하위 클래스에서 다시 선언하지 않고 그대로 쓴다. 셋업·정리는 `@Before`/`@After` 대신 `setup()`/`teardown()` 훅을 override 한다(`baseSetup`/`baseTeardown`이 호출). `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으니 클래스마다 직접 단다 — `NAME_ASCENDING`이 있어야 `test_01`, `test_02` 순번이 실행 순서가 된다. `@AndroidEntryPoint`가 아닌 Fragment도 동일 구조를 쓴다.
 
 ## Espresso 헬퍼
 
