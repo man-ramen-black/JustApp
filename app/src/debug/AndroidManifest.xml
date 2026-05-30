@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 테스트에서 Hilt Fragment를 호스팅하기 위한 전용 Activity 등록 (debug 전용) -->
+    <application>
+        <activity
+            android:name="com.black.app.testutil.HiltTestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Black" />
+    </application>
+</manifest>
