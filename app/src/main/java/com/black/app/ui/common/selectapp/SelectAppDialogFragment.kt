@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
 import com.black.core.util.FragmentExtension.observePopBackStackArgsWithResumed
@@ -36,6 +37,7 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
     private val viewModel: SelectAppViewModel by viewModels()
     private val adapter by lazy { SelectAppAdapter(viewModel) }
     private val navController by lazy { findNavController() }
+    private val args : SelectAppDialogFragmentArgs by navArgs()
 
     override val layoutResId: Int = R.layout.dialog_select_app
 
@@ -49,7 +51,7 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.init(generateSelectAppItemList())
+            viewModel.init(generateSelectAppItemList(), args.checkedPackageNames?.toList() ?: emptyList())
         }
     }
 

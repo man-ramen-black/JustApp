@@ -3,6 +3,7 @@ package com.black.app.ui.maintab.main.usagetimer
 import androidx.lifecycle.MutableLiveData
 import com.black.app.model.UsageTimerModel
 import com.black.core.util.Log
+import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -13,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class UsageTimerFragmentViewModel @Inject constructor(
     private val model: UsageTimerModel
-) : com.black.core.viewmodel.EventViewModel() {
+) : EventViewModel() {
     companion object {
         const val EVENT_SHOW = "Show"
         const val EVENT_TOAST = "Toast"
@@ -24,10 +25,12 @@ class UsageTimerFragmentViewModel @Inject constructor(
 
     val pauseRemainTime = MutableLiveData(0L)
     val pauseDurationMin = MutableLiveData(0)
+    val selectedApps = MutableLiveData<List<String>>(emptyList())
 
     fun init() {
         updatePauseRemainTime()
         pauseDurationMin.value = model.getPauseDuration()
+        selectedApps.value = model.getSelectedApps()
     }
 
     fun onClickShow() {
@@ -65,6 +68,11 @@ class UsageTimerFragmentViewModel @Inject constructor(
 
     fun onClickSelectApp() {
         sendEvent(EVENT_SHOW_SELECT_APP)
+    }
+
+    fun onAppsSelected(packageNames: List<String>) {
+        model.saveSelectedApps(packageNames)
+        selectedApps.value = packageNames
     }
 
     private fun updatePauseRemainTime() {

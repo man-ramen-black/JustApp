@@ -136,6 +136,25 @@
                 android:text="Select app"
                 android:onClick="@{_->viewModel.onClickSelectApp()}"
                 />
+
+            <TextView
+                android:id="@+id/selected_apps_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/select_app_button"
+                android:paddingTop="15dp"
+                android:text="No apps selected"
+                />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/selected_apps_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/select_app_button"
+                android:paddingTop="15dp"
+                android:orientation="horizontal"
+                tools:listitem="@layout/item_selected_app"
+                />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </layout>

@@ -251,6 +251,12 @@
     <dialog
         android:id="@+id/select_app_dialog"
         android:name="com.black.app.ui.common.selectapp.SelectAppDialogFragment"
-        android:label="@string/select_app" />
+        android:label="@string/select_app">
+        <argument
+            android:name="checkedPackageNames"
+            app:argType="string[]"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </dialog>
 
 </navigation>
