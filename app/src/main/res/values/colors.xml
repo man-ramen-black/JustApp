@@ -5,6 +5,7 @@
     <color name="color_accent">#DDDDDD</color>
     <color name="color_primary">#121212</color>
     <color name="window_background">#000000</color>
+    <color name="usage_timer_background">#4C000000</color>
     <color name="ripple_color">#60A0A0A0</color>
 
     <color name="text_color">@color/color_accent</color>
