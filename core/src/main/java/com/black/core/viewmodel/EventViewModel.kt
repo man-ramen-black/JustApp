@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.black.core.util.Extensions.collect
-import com.black.core.util.Extensions.launch
 import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -60,6 +59,13 @@ open class EventViewModel : ViewModel()  {
     @MainThread
     fun removeEventObserver(observer: EventObserver)
         = event.removeObserver(observer)
+
+    /** [viewModelScope]에서 코루틴 실행 */
+    protected fun launch(
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job = viewModelScope.launch(context, start, block)
 
     fun launchSingle(
         context: CoroutineContext = EmptyCoroutineContext,
