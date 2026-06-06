@@ -69,25 +69,26 @@ fun UsageTimerScreen(
     // 일회성 이벤트 처리(STARTED 이상에서만 수신해 비가시 구간 side effect 차단)
     LaunchedEffect(Unit) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.usageTimerEvents.collect { event ->
+            viewModel.events.collect { event ->
                 when (event) {
-                    is UsageTimerEvent.ShowTimerView -> {
+                    is UsageTimerEvent.EventShowTimerView -> {
                         UsageTimerView(context).attachView()
                     }
-                    is UsageTimerEvent.ShowToast -> {
+                    is UsageTimerEvent.EventShowToast -> {
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
-                    is UsageTimerEvent.DetachTimerView -> {
+                    is UsageTimerEvent.EventDetachTimerView -> {
                         UsageTimerGlobal.detachView()
                     }
-                    is UsageTimerEvent.OpenAccessibilitySettings -> {
+                    is UsageTimerEvent.EventOpenAccessibilitySettings -> {
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                     }
-                    is UsageTimerEvent.OpenSelectApp -> {
+                    is UsageTimerEvent.EventOpenSelectApp -> {
                         val activity = context as? AppCompatActivity ?: return@collect
                         SelectAppDialogFragment.newInstance(event.checkedPackageNames)
                             .show(activity.supportFragmentManager, SelectAppDialogFragment.TAG)
                     }
+                    else -> Unit
                 }
             }
         }

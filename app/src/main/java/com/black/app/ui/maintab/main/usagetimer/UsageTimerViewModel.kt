@@ -5,12 +5,9 @@ import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
 import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -23,9 +20,6 @@ class UsageTimerViewModel @Inject constructor(
 
     private val mutableUiState = MutableStateFlow(UsageTimerUiState())
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
-
-    private val eventChannel = Channel<UsageTimerEvent>(Channel.BUFFERED)
-    val usageTimerEvents: Flow<UsageTimerEvent> = eventChannel.receiveAsFlow()
 
     init {
         launch {
@@ -47,13 +41,13 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickShow() {
-        sendEvent(UsageTimerEvent.ShowTimerView)
+        sendEvent(UsageTimerEvent.EventShowTimerView)
     }
 
     fun onClickSave() {
         launch {
             repository.savePauseDuration(pauseDurationMinutes())
-            sendEvent(UsageTimerEvent.ShowToast("Saved"))
+            sendEvent(UsageTimerEvent.EventShowToast("Saved"))
         }
     }
 
@@ -63,8 +57,8 @@ class UsageTimerViewModel @Inject constructor(
             repository.savePauseDuration(pauseDuration)
             repository.pause(pauseDuration)
             updatePauseRemainTime()
-            sendEvent(UsageTimerEvent.DetachTimerView)
-            sendEvent(UsageTimerEvent.ShowToast("Pause : ${pauseDuration}m"))
+            sendEvent(UsageTimerEvent.EventDetachTimerView)
+            sendEvent(UsageTimerEvent.EventShowToast("Pause : ${pauseDuration}m"))
         }
     }
 
@@ -72,7 +66,7 @@ class UsageTimerViewModel @Inject constructor(
         launch {
             repository.cancelPause()
             updatePauseRemainTime()
-            sendEvent(UsageTimerEvent.ShowToast("Pause canceled"))
+            sendEvent(UsageTimerEvent.EventShowToast("Pause canceled"))
         }
     }
 
@@ -81,12 +75,12 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickAccessibility() {
-        sendEvent(UsageTimerEvent.OpenAccessibilitySettings)
+        sendEvent(UsageTimerEvent.EventOpenAccessibilitySettings)
     }
 
     fun onClickSelectApp() {
         sendEvent(
-            UsageTimerEvent.OpenSelectApp(uiState.value.selectedApps.map { it.packageName })
+            UsageTimerEvent.EventOpenSelectApp(uiState.value.selectedApps.map { it.packageName })
         )
     }
 
@@ -112,9 +106,5 @@ class UsageTimerViewModel @Inject constructor(
     private suspend fun currentPauseRemainTimeMillis(): Long {
         val remain = repository.getPauseEndTime() - System.currentTimeMillis()
         return remain.coerceAtLeast(0L)
-    }
-
-    private fun sendEvent(event: UsageTimerEvent) {
-        launch { eventChannel.send(event) }
     }
 }

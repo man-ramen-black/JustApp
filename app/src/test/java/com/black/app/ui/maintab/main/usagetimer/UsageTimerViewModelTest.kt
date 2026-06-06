@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
+import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -110,17 +111,17 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.pause(any()) } just Runs
         val viewModel = createViewModel()
         viewModel.onPauseDurationInputChanged("5")
-        val receivedEvents = mutableListOf<UsageTimerEvent>()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickPause()
-        viewModel.usageTimerEvents.collectEvents(receivedEvents, count = 2)
+        viewModel.events.collectEvents(receivedEvents, count = 2)
 
         /** Then **/
         coVerify { repository.savePauseDuration(5) }
         coVerify { repository.pause(5) }
-        assertEquals(UsageTimerEvent.DetachTimerView, receivedEvents[0])
-        assertEquals(UsageTimerEvent.ShowToast("Pause : 5m"), receivedEvents[1])
+        assertEquals(UsageTimerEvent.EventDetachTimerView, receivedEvents[0])
+        assertEquals(UsageTimerEvent.EventShowToast("Pause : 5m"), receivedEvents[1])
     }
 
     /**
@@ -134,15 +135,15 @@ class UsageTimerViewModelTest : BaseTest() {
     fun test_04_onClickSelectAppSendsCheckedPackages() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<UsageTimerEvent>()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickSelectApp()
-        viewModel.usageTimerEvents.collectEvents(receivedEvents, count = 1)
+        viewModel.events.collectEvents(receivedEvents, count = 1)
 
         /** Then **/
         assertEquals(
-            UsageTimerEvent.OpenSelectApp(listOf("com.a", "com.b")),
+            UsageTimerEvent.EventOpenSelectApp(listOf("com.a", "com.b")),
             receivedEvents[0],
         )
     }
@@ -194,8 +195,8 @@ class UsageTimerViewModelTest : BaseTest() {
 }
 
 /** Flow에서 [count]개 이벤트를 수집하는 테스트 헬퍼 */
-private suspend fun Flow<UsageTimerEvent>.collectEvents(
-    into: MutableList<UsageTimerEvent>,
+private suspend fun Flow<ViewModelEvent>.collectEvents(
+    into: MutableList<ViewModelEvent>,
     count: Int,
 ) {
     take(count).toList(into)
