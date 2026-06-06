@@ -1,14 +1,14 @@
 package com.black.app.ui.maintab.main.usagetimer
 
 import android.accessibilityservice.AccessibilityService
-import android.content.ComponentName
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.view.accessibility.AccessibilityEvent
 import com.black.app.model.UsageTimerModel
-import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal.ForegroundAction
+import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal.TimerAction
 import com.black.core.util.Log
 
+@SuppressLint("AccessibilityPolicy")
 class UsageTimerAccessibility : AccessibilityService() {
 
     /**
@@ -25,30 +25,17 @@ class UsageTimerAccessibility : AccessibilityService() {
         event ?: return
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
 
-        val packageName = event.packageName?.toString()
-        val isActivityWindow = isActivityWindow(packageName, event.className?.toString())
-
+        // 이벤트의 packageName·className은 현재 포그라운드를 신뢰성 있게 반영하지 못해(늦은 이벤트·비-Activity className)
+        // 실제 활성 창(rootInActiveWindow)의 패키지로 판정
+        val activePackage = rootInActiveWindow?.packageName?.toString()
         val selectedApps = UsageTimerModel(this).getSelectedApps()
         val isPaused = UsageTimerGlobal.isUsageTimerPaused(this)
-        val action = UsageTimerGlobal.resolveForegroundAction(isActivityWindow, packageName, selectedApps, isPaused)
-        Log.d("packageName=$packageName, isActivityWindow=$isActivityWindow, selectedApps=$selectedApps, isPaused=$isPaused, action=$action")
+        val action = UsageTimerGlobal.resolveTimerAction(activePackage, selectedApps, isPaused)
+        Log.d("activePackage=$activePackage, selectedApps=$selectedApps, isPaused=$isPaused, action=$action")
         when (action) {
-            ForegroundAction.SHOW -> packageName?.let { UsageTimerGlobal.showForApp(this, it) }
-            ForegroundAction.HIDE -> UsageTimerGlobal.hideIfShown()
-            ForegroundAction.IGNORE -> {}
-        }
-    }
-
-    /**
-     * 이벤트 창이 실제 Activity인지 여부(IME·다이얼로그·오버레이 등 비-Activity 창 구분)
-     */
-    private fun isActivityWindow(packageName: String?, className: String?) : Boolean {
-        if (packageName == null || className == null) return false
-        return try {
-            packageManager.getActivityInfo(ComponentName(packageName, className), 0)
-            true
-        } catch (notFound: PackageManager.NameNotFoundException) {
-            false
+            TimerAction.SHOW -> activePackage?.let { UsageTimerGlobal.showForApp(this, it) }
+            TimerAction.HIDE -> UsageTimerGlobal.hideIfShown()
+            TimerAction.IGNORE -> {}
         }
     }
 

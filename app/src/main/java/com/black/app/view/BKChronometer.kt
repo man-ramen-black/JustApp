@@ -60,6 +60,16 @@ class BKChronometer : Chronometer{
         start()
     }
 
+    /**
+     * 지정한 기준 시각(elapsedRealtime)부터 이어서 시작
+     */
+    fun startFrom(baseElapsedRealtime: Long) {
+        isRunning = true
+        pauseTime = 0
+        base = baseElapsedRealtime
+        super.start()
+    }
+
     fun pause() {
         super.stop()
         pauseTime = SystemClock.elapsedRealtime() - base

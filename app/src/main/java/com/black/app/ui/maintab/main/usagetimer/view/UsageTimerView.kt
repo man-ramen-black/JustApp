@@ -38,8 +38,19 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
         }
     }
 
+    /** attach 시 적용할 타이머 기준 시각(elapsedRealtime ms). null이면 0부터 시작 */
+    var baseElapsedRealtime: Long? = null
+
     fun start() {
         binding.timer.start()
+    }
+
+    /**
+     * 지정한 기준 시각부터 이어서 표시(세션 유지 시 뷰 재생성 없이 기준점만 반영)
+     */
+    fun startFrom(baseElapsedRealtime: Long) {
+        this.baseElapsedRealtime = baseElapsedRealtime
+        binding.timer.startFrom(baseElapsedRealtime)
     }
 
     fun restart() {
@@ -66,6 +77,11 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        start()
+        val base = baseElapsedRealtime
+        if (base != null) {
+            binding.timer.startFrom(base)
+        } else {
+            start()
+        }
     }
 }
