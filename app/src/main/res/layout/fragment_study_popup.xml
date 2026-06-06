@@ -13,9 +13,11 @@
         android:layout_height="match_parent"
         style="@style/RootLayout"
         android:orientation="vertical"
+        fitsStatusBar="@{true}"
         >
 
         <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/attach_view_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="AttachView"
