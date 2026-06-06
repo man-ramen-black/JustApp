@@ -1,9 +1,9 @@
 package com.black.app.ui.maintab.main.usagetimer
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.black.app.model.UsageTimerModel
+import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
+import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
+import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -12,15 +12,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** UsageTimer 화면 상태·이벤트 관리 ViewModel */
+/** UsageTimer 화면 상태·이벤트 관리 ViewModel [UsageTimerScreen] */
 @HiltViewModel
 class UsageTimerViewModel @Inject constructor(
-    private val model: UsageTimerModel,
+    private val repository: UsageTimerRepository,
     private val installedAppResolver: InstalledAppResolver,
-) : ViewModel() {
+) : EventViewModel() {
 
     private val mutableUiState = MutableStateFlow(UsageTimerUiState())
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
@@ -29,12 +28,17 @@ class UsageTimerViewModel @Inject constructor(
     val events: Flow<UsageTimerEvent> = eventChannel.receiveAsFlow()
 
     init {
-        mutableUiState.update {
-            it.copy(
-                pauseRemainTimeMillis = currentPauseRemainTimeMillis(),
-                pauseDurationInput = model.getPauseDuration().toString(),
-                selectedApps = model.getSelectedApps().map(installedAppResolver::resolve),
-            )
+        launch {
+            val pauseRemainTimeMillis = currentPauseRemainTimeMillis()
+            val pauseDurationInput = repository.getPauseDuration().toString()
+            val selectedApps = repository.getSelectedApps().map(installedAppResolver::resolve)
+            mutableUiState.update {
+                it.copy(
+                    pauseRemainTimeMillis = pauseRemainTimeMillis,
+                    pauseDurationInput = pauseDurationInput,
+                    selectedApps = selectedApps,
+                )
+            }
         }
     }
 
@@ -47,23 +51,29 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickSave() {
-        model.savePauseDuration(pauseDurationMinutes())
-        sendEvent(UsageTimerEvent.ShowToast("Saved"))
+        launch {
+            repository.savePauseDuration(pauseDurationMinutes())
+            sendEvent(UsageTimerEvent.ShowToast("Saved"))
+        }
     }
 
     fun onClickPause() {
-        val pauseDuration = pauseDurationMinutes()
-        model.savePauseDuration(pauseDuration)
-        model.pause(pauseDuration)
-        updatePauseRemainTime()
-        sendEvent(UsageTimerEvent.DetachTimerView)
-        sendEvent(UsageTimerEvent.ShowToast("Pause : ${pauseDuration}m"))
+        launch {
+            val pauseDuration = pauseDurationMinutes()
+            repository.savePauseDuration(pauseDuration)
+            repository.pause(pauseDuration)
+            updatePauseRemainTime()
+            sendEvent(UsageTimerEvent.DetachTimerView)
+            sendEvent(UsageTimerEvent.ShowToast("Pause : ${pauseDuration}m"))
+        }
     }
 
     fun onClickCancelPause() {
-        model.cancelPause()
-        updatePauseRemainTime()
-        sendEvent(UsageTimerEvent.ShowToast("Pause canceled"))
+        launch {
+            repository.cancelPause()
+            updatePauseRemainTime()
+            sendEvent(UsageTimerEvent.ShowToast("Pause canceled"))
+        }
     }
 
     fun onFinishTimer() {
@@ -81,9 +91,11 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onAppsSelected(packageNames: List<String>) {
-        model.saveSelectedApps(packageNames)
-        mutableUiState.update {
-            it.copy(selectedApps = packageNames.map(installedAppResolver::resolve))
+        launch {
+            repository.saveSelectedApps(packageNames)
+            mutableUiState.update {
+                it.copy(selectedApps = packageNames.map(installedAppResolver::resolve))
+            }
         }
     }
 
@@ -91,17 +103,18 @@ class UsageTimerViewModel @Inject constructor(
         return uiState.value.pauseDurationInput.toIntOrNull() ?: 0
     }
 
-    private fun updatePauseRemainTime() {
-        mutableUiState.update { it.copy(pauseRemainTimeMillis = currentPauseRemainTimeMillis()) }
+    private suspend fun updatePauseRemainTime() {
+        val pauseRemainTimeMillis = currentPauseRemainTimeMillis()
+        mutableUiState.update { it.copy(pauseRemainTimeMillis = pauseRemainTimeMillis) }
     }
 
     /** 일시정지 종료 시각까지 남은 시간(ms). 지났으면 0 */
-    private fun currentPauseRemainTimeMillis(): Long {
-        val remain = model.getPauseEndTime() - System.currentTimeMillis()
+    private suspend fun currentPauseRemainTimeMillis(): Long {
+        val remain = repository.getPauseEndTime() - System.currentTimeMillis()
         return remain.coerceAtLeast(0L)
     }
 
     private fun sendEvent(event: UsageTimerEvent) {
-        viewModelScope.launch { eventChannel.send(event) }
+        launch { eventChannel.send(event) }
     }
 }

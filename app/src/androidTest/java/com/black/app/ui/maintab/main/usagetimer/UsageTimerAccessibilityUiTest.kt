@@ -4,9 +4,10 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
-import com.black.app.model.preferences.ForegroundServicePreference
+import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Ignore
@@ -24,7 +25,7 @@ import org.junit.runners.MethodSorters
  *
  * [수동 검증 방법] 정상 설치 앱에서 다음 절차로 실기기 검증 완료(오버레이 표시·유지 확인)
  * 1. ./gradlew :app:installDebug
- * 2. 선택 앱 저장: shared_prefs/com.black.app.Foreground.xml의 UsageTimerSelectedApps에 패키지명 기록
+ * 2. 선택 앱 저장: 앱의 UsageTimer 화면에서 Select app으로 대상 앱 선택
  * 3. adb shell appops set com.black.app SYSTEM_ALERT_WINDOW allow
  * 4. adb shell settings put secure enabled_accessibility_services com.black.app/...UsageTimerAccessibility
  *    adb shell settings put secure accessibility_enabled 1
@@ -37,7 +38,7 @@ import org.junit.runners.MethodSorters
 @Ignore("계측 중인 앱은 자기 자신의 AccessibilityService가 바인딩되지 않아 자동 검증 불가, KDoc의 수동 절차로 검증")
 class UsageTimerAccessibilityUiTest : BaseUiTest() {
 
-    private val preference = ForegroundServicePreference(context)
+    private val repository = UsageTimerRepository(context)
 
     private val accessibilityComponent =
         "$PACKAGE_NAME/$PACKAGE_NAME.ui.maintab.main.usagetimer.UsageTimerAccessibility"
@@ -53,7 +54,7 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용)
         device.executeShellCommand("appops set $PACKAGE_NAME SYSTEM_ALERT_WINDOW allow")
         // 설정 화면 앱을 선택 앱으로 저장
-        preference.putUsageTimerSelectedApps(listOf(settingsPackage))
+        runBlocking { repository.saveSelectedApps(listOf(settingsPackage)) }
         // 접근성 서비스 직접 활성화
         device.executeShellCommand("settings put secure enabled_accessibility_services $accessibilityComponent")
         device.executeShellCommand("settings put secure accessibility_enabled 1")
@@ -67,7 +68,7 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         // 접근성 서비스 비활성화 및 선택 앱 저장 초기화
         device.executeShellCommand("settings put secure enabled_accessibility_services \"\"")
         device.executeShellCommand("settings put secure accessibility_enabled 0")
-        preference.putUsageTimerSelectedApps(emptyList())
+        runBlocking { repository.saveSelectedApps(emptyList()) }
         device.pressHome()
     }
 

@@ -13,9 +13,6 @@ class ForegroundServicePreference(context: Context) : BasePreferences(context) {
         private val Context.foregroundPreferences by preferences("Foreground")
 
         private const val KEY_FOREGROUND_SERVICE_ACTIVATED = "ForegroundServiceActivated"
-        private const val KEY_USAGE_TIMER_PAUSE_END_TIME = "UsageTimerPauseEndTime"
-        private const val KEY_USAGE_TIMER_PAUSE_DURATION = "UsageTimerPauseDuration"
-        private const val KEY_USAGE_TIMER_SELECTED_APPS = "UsageTimerSelectedApps"
     }
 
     override fun getPreferences(context: Context): SharedPreferences {
@@ -28,30 +25,5 @@ class ForegroundServicePreference(context: Context) : BasePreferences(context) {
 
     fun getForegroundServiceActivated() : Boolean {
         return get(KEY_FOREGROUND_SERVICE_ACTIVATED, false)
-    }
-
-    fun putUsageTimerPauseEndTime(timestamp: Long) {
-        putLong(KEY_USAGE_TIMER_PAUSE_END_TIME, timestamp)
-    }
-
-    fun getUsageTimerPauseEndTime() : Long {
-        return getLong(KEY_USAGE_TIMER_PAUSE_END_TIME, 0)
-    }
-
-    fun putUsageTimerPauseDuration(durationMinutes: Int) {
-        put(KEY_USAGE_TIMER_PAUSE_DURATION, durationMinutes)
-    }
-
-    fun getUsageTimerPauseDuration() : Int {
-        return get(KEY_USAGE_TIMER_PAUSE_DURATION, 3)
-    }
-
-    fun putUsageTimerSelectedApps(packageNames: List<String>) {
-        put(KEY_USAGE_TIMER_SELECTED_APPS, packageNames.joinToString(","))
-    }
-
-    fun getUsageTimerSelectedApps() : List<String> {
-        val joined = get(KEY_USAGE_TIMER_SELECTED_APPS, "")
-        return if (joined.isEmpty()) emptyList() else joined.split(",")
     }
 }

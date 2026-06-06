@@ -3,24 +3,25 @@ package com.black.app.model
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 /**
- * [UsageTimerModel]의 선택 앱 저장/조회 동작 검증
+ * [UsageTimerRepository]의 선택 앱 저장/조회 동작 검증
  */
-class UsageTimerModelTest : BaseTest() {
+class UsageTimerRepositoryTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val model = UsageTimerModel(context)
+    private val repository = UsageTimerRepository(context)
 
     /**
      * 각 테스트 전 선택 앱 저장소 초기화(테스트 간 격리)
      */
     @Before
     fun clearSelectedApps() {
-        model.saveSelectedApps(emptyList())
+        runTest { repository.saveSelectedApps(emptyList()) }
     }
 
     /**
@@ -31,12 +32,12 @@ class UsageTimerModelTest : BaseTest() {
      * Then: 저장한 순서·내용 그대로 반환
      */
     @Test
-    fun test_01_saveAndGetSelectedAppsRoundTrip() {
+    fun test_01_saveAndGetSelectedAppsRoundTrip() = runTest {
         /** Given / When **/
-        model.saveSelectedApps(listOf("com.a", "com.b"))
+        repository.saveSelectedApps(listOf("com.a", "com.b"))
 
         /** Then **/
-        assertEquals(listOf("com.a", "com.b"), model.getSelectedApps())
+        assertEquals(listOf("com.a", "com.b"), repository.getSelectedApps())
     }
 
     /**
@@ -47,12 +48,12 @@ class UsageTimerModelTest : BaseTest() {
      * Then: 빈 목록 반환(빈 문자열 split로 [""]가 되지 않음)
      */
     @Test
-    fun test_02_getSelectedAppsReturnsEmptyWhenEmptySaved() {
+    fun test_02_getSelectedAppsReturnsEmptyWhenEmptySaved() = runTest {
         /** Given / When **/
-        model.saveSelectedApps(emptyList())
+        repository.saveSelectedApps(emptyList())
 
         /** Then **/
-        assertEquals(emptyList<String>(), model.getSelectedApps())
+        assertEquals(emptyList<String>(), repository.getSelectedApps())
     }
 
     /**
@@ -63,11 +64,11 @@ class UsageTimerModelTest : BaseTest() {
      * Then: 단일 항목 목록 반환
      */
     @Test
-    fun test_03_saveSingleApp() {
+    fun test_03_saveSingleApp() = runTest {
         /** Given / When **/
-        model.saveSelectedApps(listOf("com.only"))
+        repository.saveSelectedApps(listOf("com.only"))
 
         /** Then **/
-        assertEquals(listOf("com.only"), model.getSelectedApps())
+        assertEquals(listOf("com.only"), repository.getSelectedApps())
     }
 }

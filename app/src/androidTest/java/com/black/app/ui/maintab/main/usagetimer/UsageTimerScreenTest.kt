@@ -14,10 +14,11 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.black.app.R
-import com.black.app.model.preferences.ForegroundServicePreference
+import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
 import com.black.app.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.runBlocking
 import org.junit.FixMethodOrder
 import org.junit.Rule
 import org.junit.Test
@@ -35,18 +36,20 @@ class UsageTimerScreenTest : BaseUiTest() {
     @get:Rule(order = 1)
     val composeRule = createEmptyComposeRule()
 
+    private val repository = UsageTimerRepository(context)
+
     /**
      * 각 테스트 전 선택 앱 저장소 초기화
      */
     override fun setup() {
-        ForegroundServicePreference(context).putUsageTimerSelectedApps(emptyList())
+        runBlocking { repository.saveSelectedApps(emptyList()) }
     }
 
     /**
      * 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리)
      */
     override fun teardown() {
-        ForegroundServicePreference(context).putUsageTimerSelectedApps(emptyList())
+        runBlocking { repository.saveSelectedApps(emptyList()) }
     }
 
     /**
@@ -146,7 +149,7 @@ class UsageTimerScreenTest : BaseUiTest() {
     @Test
     fun test_04_selectedAppsDisplayedFromStorage() {
         /** Given **/
-        ForegroundServicePreference(context).putUsageTimerSelectedApps(listOf("com.nonexistent.testapp"))
+        runBlocking { repository.saveSelectedApps(listOf("com.nonexistent.testapp")) }
 
         /** When **/
         hostUsageTimerScreen()

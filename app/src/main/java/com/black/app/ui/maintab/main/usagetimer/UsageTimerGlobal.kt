@@ -8,8 +8,7 @@ import android.widget.Toast
 import com.black.app.R
 import com.black.app.broadcast.NotificationActionReceiver
 import com.black.app.broadcast.ScreenReceiver
-import com.black.app.model.UsageTimerModel
-import com.black.app.model.preferences.ForegroundServicePreference
+import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -28,8 +27,7 @@ import java.lang.ref.WeakReference
 object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.Interface {
     private var usageTimerView : UsageTimerView? = null
     private var currentPackageName : String? = null
-    private var preference :  WeakReference<ForegroundServicePreference>? = null
-    private var model :  WeakReference<UsageTimerModel>? = null
+    private var repository :  WeakReference<UsageTimerRepository>? = null
 
     /** 앱 전환 시 짧은 시간에 발생하는 창 이벤트 버스트로 인한 깜빡임 방지용 지연 숨김 시간(ms) */
     const val HIDE_DEBOUNCE_MILLIS = 500L
@@ -46,7 +44,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /** 뷰가 숨겨진 시각(elapsedRealtime ms). 유예 판정 기준, 표시 중이면 null */
     private var sessionHiddenElapsedMillis: Long? = null
 
-    private val hideScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hideJob: Job? = null
 
     /**
@@ -106,7 +104,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
      * 선택 앱이 포그라운드가 될 때 타이머 표시
      * 세션 시작 시각은 UsageTimerGlobal이 보유, 뷰는 시작 시각을 주입받아 렌더링만 담당
      */
-    fun showForApp(context: Context, packageName: String) {
+    suspend fun showForApp(context: Context, packageName: String) {
         if (isUsageTimerPaused(context)) {
             Log.d("UsageTimer paused")
             return
@@ -152,7 +150,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
      */
     fun hideIfShown() {
         if (hideJob?.isActive == true) return
-        hideJob = hideScope.launch {
+        hideJob = mainScope.launch {
             delay(HIDE_DEBOUNCE_MILLIS)
             detachView()
         }
@@ -210,12 +208,8 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         sessionHiddenElapsedMillis = SystemClock.elapsedRealtime()
     }
 
-    fun isUsageTimerPaused(context: Context) : Boolean {
-        val currentPreference = preference?.get() ?: ForegroundServicePreference(context).also {
-            preference = WeakReference(it)
-        }
-
-        val endTime = currentPreference.getUsageTimerPauseEndTime()
+    suspend fun isUsageTimerPaused(context: Context) : Boolean {
+        val endTime = usageTimerRepository(context).getPauseEndTime()
         if (endTime == 0L) {
             return false
         }
@@ -225,21 +219,26 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
 
     override fun onNotificationAction(context: Context, intent: Intent): Boolean {
         if (intent.action == NotificationActionReceiver.ACTION_PAUSE_USAGE_TIMER) {
-            pauseUsageTimerInNotificationAction(context)
+            mainScope.launch { pauseUsageTimerInNotificationAction(context) }
             return true
         }
         return false
     }
 
-    private fun pauseUsageTimerInNotificationAction(context: Context) {
-        val model = model?.get() ?: WeakReference(UsageTimerModel(context)).also { model = it }.get()!!
+    private suspend fun pauseUsageTimerInNotificationAction(context: Context) {
+        val repository = usageTimerRepository(context)
 
-        val pauseDuration = model.getPauseDuration()
-        model.pause(pauseDuration)
+        val pauseDuration = repository.getPauseDuration()
+        repository.pause(pauseDuration)
         detachView()
         clearSession()
 
         Toast.makeText(context, "UsageTimer paused", Toast.LENGTH_SHORT)
             .show()
+    }
+
+    /** 약참조로 캐시된 UsageTimerRepository 반환(없으면 생성 후 캐시) */
+    private fun usageTimerRepository(context: Context): UsageTimerRepository {
+        return repository?.get() ?: UsageTimerRepository(context).also { repository = WeakReference(it) }
     }
 }
