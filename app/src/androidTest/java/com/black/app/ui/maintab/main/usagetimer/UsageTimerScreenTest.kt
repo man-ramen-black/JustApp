@@ -3,7 +3,6 @@ package com.black.app.ui.maintab.main.usagetimer
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -20,7 +19,6 @@ import com.black.app.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.FixMethodOrder
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
@@ -32,9 +30,6 @@ import org.junit.runners.MethodSorters
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerScreenTest : BaseUiTest() {
-
-    @get:Rule(order = 1)
-    val composeRule = createEmptyComposeRule()
 
     private val repository = UsageTimerRepository(context)
 
