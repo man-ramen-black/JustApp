@@ -7,7 +7,6 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.fragment.findNavController
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialog
 import com.black.core.util.BackPressHelper
@@ -49,7 +48,9 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                 requireActivity(),
                 getString(R.string.poke_rogue_back_pressed_message)
             ) {
-                findNavController().popBackStack()
+                // Compose NavHost 호스팅으로 Fragment NavController 부재 — 콜백 해제 후 시스템 뒤로가기 위임
+                setOnBackPressed(null)
+                onBackPressedDispatcher.onBackPressed()
             }
         }
     }

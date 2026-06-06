@@ -1,15 +1,13 @@
 package com.black.app.ui.maintab.main
 
 import android.os.Bundle
-import androidx.navigation.NavDirections
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentMainBinding
 import com.black.app.deeplink.DeeplinkManager
-import com.black.app.ui.maintab.MainTabFragmentDirections
+import com.black.app.ui.navigation.AppNavigator
+import com.black.app.ui.navigation.AppRoute
 import com.black.core.component.BaseFragment
-import com.black.core.util.FragmentExtension.navigate
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -24,94 +22,97 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
             MainItem(
                 getString(com.black.feature.pokerogue.R.string.poke_rogue),
                 com.black.feature.pokerogue.R.drawable.ic_poke_rogue,
-            ) { navigateByActivity(MainTabFragmentDirections.actionPokeRogue()) },
+            ) { navigateByActivity(AppRoute.PokeRogue) },
 
             MainItem(
                 getString(R.string.fragment_name_text_editor),
                 R.drawable.ic_editor,
-            ) { navigateByActivity(MainTabFragmentDirections.actionTextEditor()) },
+            ) { navigateByActivity(AppRoute.TextEditor) },
             MainItem(
                 getString(R.string.fragment_name_black),
                 R.drawable.ic_invisible,
-            ) { navigateByActivity(MainTabFragmentDirections.actionBlack()) },
+            ) { navigateByActivity(AppRoute.Black) },
             MainItem(
                 getString(R.string.fragment_name_floating),
                 R.drawable.ic_floating,
-            ) { navigateByActivity(MainTabFragmentDirections.actionFloating()) },
+            ) { navigateByActivity(AppRoute.Floating) },
             MainItem(
                 getString(R.string.fragment_name_service),
                 R.drawable.ic_android,
-            ) { navigateByActivity(MainTabFragmentDirections.actionService()) },
+            ) { navigateByActivity(AppRoute.Service) },
             MainItem(
                 getString(R.string.fragment_name_study_popup),
                 R.drawable.ic_quiz,
-            ) { navigateByActivity(MainTabFragmentDirections.actionStudyPopup()) },
+            ) { navigateByActivity(AppRoute.StudyPopup) },
             MainItem(
                 getString(R.string.fragment_name_usage_timer),
                 R.drawable.ic_timer,
-            ) { navigateByActivity(MainTabFragmentDirections.actionUsageTimer()) },
+            ) { navigateByActivity(AppRoute.UsageTimer) },
             MainItem(
                 getString(R.string.fragment_name_notification),
                 R.drawable.ic_notify,
-            ) { navigateByActivity(MainTabFragmentDirections.actionNotification()) },
+            ) { navigateByActivity(AppRoute.Notification) },
             MainItem(
                 getString(R.string.fragment_name_recycler_view),
                 R.drawable.ic_list,
-            ) { navigateByActivity(MainTabFragmentDirections.actionRecyclerView()) },
+            ) { navigateByActivity(AppRoute.RecyclerView) },
             MainItem(
                 getString(R.string.fragment_name_retrofit),
                 R.drawable.ic_http,
-            ) { navigateByActivity(MainTabFragmentDirections.actionRetrofit()) },
+            ) { navigateByActivity(AppRoute.Retrofit) },
             MainItem(
                 getString(R.string.fragment_name_alarm),
                 R.drawable.ic_alarm,
-            ) { navigateByActivity(MainTabFragmentDirections.actionAlarm()) },
+            ) { navigateByActivity(AppRoute.Alarm) },
             MainItem(
                 getString(R.string.fragment_name_architecture),
                 R.drawable.ic_architecture,
-            ) { navigateByActivity(MainTabFragmentDirections.actionArchitecture()) },
+            ) { navigateByActivity(AppRoute.Architecture) },
             MainItem(
                 getString(R.string.fragment_name_launcher),
                 R.drawable.ic_home,
-            ) { navigateByActivity(MainTabFragmentDirections.actionLauncher()) },
+            ) { navigateByActivity(AppRoute.Launcher) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
 
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
             MainItem(
                 getString(R.string.fragment_name_etc),
                 R.drawable.ic_etc
-            ) { navigateByActivity(MainTabFragmentDirections.actionEtc()) },
+            ) { navigateByActivity(AppRoute.Etc) },
         )
     }
 
     @Inject
     lateinit var deeplinkManager: DeeplinkManager
+
+    @Inject
+    lateinit var appNavigator: AppNavigator
 
     private lateinit var adapter: MainGridAdapter
 
@@ -131,7 +132,11 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
         adapter.submitList(itemList)
     }
 
-    private fun navigateByActivity(directions: NavDirections) {
-        navigate(directions, requireActivity().findNavController(R.id.root_nav_host))
+    /** 루트 Compose NavController를 통한 화면 이동 */
+    private fun navigateByActivity(route: AppRoute) {
+        appNavigator.navigateSafely(route) {
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 }

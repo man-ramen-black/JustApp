@@ -1,7 +1,7 @@
 package com.black.app.deeplink
 
 import android.net.Uri
-import com.black.app.R
+import com.black.app.ui.navigation.AppRoute
 import com.black.core.util.Log
 
 /**
@@ -19,8 +19,11 @@ sealed interface Deeplink {
     object PathNavigate {
         const val MEMO = "memo"
     }
-    
-    data class NavigateSimple(val idRes: Int) : Deeplink
+
+    /**
+     * @param clearBackStack true면 MainTab까지 백스택 정리 후 이동
+     */
+    data class Navigate(val route: AppRoute, val clearBackStack: Boolean = false) : Deeplink
 
     companion object {
         fun parse(uri: Uri?): Deeplink? {
@@ -41,8 +44,8 @@ sealed interface Deeplink {
         }
 
         private fun parseNavigateDeeplink(uri: Uri): Deeplink? {
-            return when (val page = uri.pathSegments.firstOrNull()) {
-                PathNavigate.MEMO -> NavigateSimple(R.id.action_text_editor_with_clear)
+            return when (uri.pathSegments.firstOrNull()) {
+                PathNavigate.MEMO -> Navigate(AppRoute.TextEditor, clearBackStack = true)
                 else -> null
             }
         }

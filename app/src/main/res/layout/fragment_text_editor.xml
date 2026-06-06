@@ -6,9 +6,6 @@
     <data>
         <import type="android.view.View" />
         <variable
-            name="navContoller"
-            type="androidx.navigation.NavController" />
-        <variable
             name="viewModel"
             type="com.black.app.ui.maintab.main.texteditor.TextEditorViewModel" />
 
@@ -29,7 +26,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintTop_toTopOf="parent"
-            navController="@{navContoller}"
             app:navigationIcon="@drawable/ic_back"
             >
             <ImageButton

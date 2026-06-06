@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.fragment.findNavController
 import com.black.app.R
 import com.black.app.databinding.FragmentTextEditorBinding
 import com.black.app.ui.common.base.TitleFragment
@@ -49,7 +48,9 @@ class TextEditorFragment
     override fun onBindVariable(binding: FragmentTextEditorBinding) {
         binding.viewModel = viewModel
         binding.titleProvider = this
-        binding.navContoller = findNavController()
+        // Compose NavHost 호스팅으로 Fragment NavController 부재 — 툴바 타이틀·뒤로가기 직접 처리
+        binding.toolBar.title = title
+        binding.toolBar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
         viewModel.observeEvent(viewLifecycleOwner, this)
 
         // onPause 시 자동 저장
