@@ -5,16 +5,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.Fragment
+import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
-import com.black.core.util.FragmentExtension.observePopBackStackArgsWithResumed
-import com.black.core.util.FragmentExtension.setPopBackStackArgs
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,20 +21,35 @@ import kotlinx.coroutines.launch
 class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<DialogSelectAppBinding>(),
     com.black.core.viewmodel.EventObserver {
     companion object {
-        private const val KEY_PACKAGE_NAME_LIST = "packageNameList"
+        const val TAG = "SelectAppDialog"
+        private const val REQUEST_KEY_SELECT_APP = "selectApp"
+        private const val RESULT_KEY_PACKAGE_NAME_LIST = "packageNameList"
+        private const val ARGUMENT_KEY_CHECKED_PACKAGE_NAMES = "checkedPackageNames"
+
+        fun newInstance(checkedPackageNames: List<String>): SelectAppDialogFragment {
+            return SelectAppDialogFragment().apply {
+                arguments = bundleOf(
+                    ARGUMENT_KEY_CHECKED_PACKAGE_NAMES to ArrayList(checkedPackageNames)
+                )
+            }
+        }
+
         /**
-         * @param observer List<packageName: String>
+         * 앱 선택 완료 결과(List<packageName: String>) 관찰
          */
-        fun observeSelectedApp(fragment: Fragment, observer: Observer<List<String>>) {
-            fragment.findNavController()
-                .observePopBackStackArgsWithResumed(fragment.viewLifecycleOwner, KEY_PACKAGE_NAME_LIST, observer)
+        fun observeSelectedApp(
+            fragmentManager: FragmentManager,
+            lifecycleOwner: LifecycleOwner,
+            listener: (List<String>) -> Unit,
+        ) {
+            fragmentManager.setFragmentResultListener(REQUEST_KEY_SELECT_APP, lifecycleOwner) { _, result ->
+                listener(result.getStringArrayList(RESULT_KEY_PACKAGE_NAME_LIST) ?: emptyList())
+            }
         }
     }
 
     private val viewModel: SelectAppViewModel by viewModels()
     private val adapter by lazy { SelectAppAdapter(viewModel) }
-    private val navController by lazy { findNavController() }
-    private val args : SelectAppDialogFragmentArgs by navArgs()
 
     override val layoutResId: Int = R.layout.dialog_select_app
 
@@ -50,8 +62,10 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val checkedPackageNames =
+            arguments?.getStringArrayList(ARGUMENT_KEY_CHECKED_PACKAGE_NAMES) ?: emptyList<String>()
         lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.init(generateSelectAppItemList(), args.checkedPackageNames?.toList() ?: emptyList())
+            viewModel.init(generateSelectAppItemList(), checkedPackageNames.toList())
         }
     }
 
@@ -59,11 +73,14 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
     override fun onReceivedEvent(action: String, data: Any?) {
         when (action) {
             SelectAppViewModel.EVENT_APP_SELECTED -> {
-                navController.setPopBackStackArgs(KEY_PACKAGE_NAME_LIST, data as List<String>)
+                parentFragmentManager.setFragmentResult(
+                    REQUEST_KEY_SELECT_APP,
+                    bundleOf(RESULT_KEY_PACKAGE_NAME_LIST to ArrayList(data as List<String>)),
+                )
             }
 
             SelectAppViewModel.EVENT_CLOSE -> {
-                navController.popBackStack()
+                dismiss()
             }
         }
     }
