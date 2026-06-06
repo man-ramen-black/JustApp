@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
@@ -30,6 +31,34 @@ open class EventViewModel : ViewModel()  {
     private val event = LiveEvent()
 
     val eventFlow = MutableSharedFlow<Event>()
+
+    private val pendingEvents = ArrayDeque<ViewModelEvent>()
+    private val mutableEvents = MutableSharedFlow<ViewModelEvent>()
+
+    /**
+     * 타입 이벤트 스트림. 구독 전 누적분은 첫 구독자에게 순서대로 전달, 이후 구독자는 구독 후 발생분만 수신.
+     * 구독자가 없는 동안의 이벤트는 ViewModel 수명 동안 누적되므로 화면(구독자)이 곧 붙는 일회성 이벤트 용도
+     */
+    val events: Flow<ViewModelEvent> = mutableEvents.onSubscription {
+        while (true) {
+            val pending = synchronized(pendingEvents) { pendingEvents.removeFirstOrNull() } ?: break
+            emit(pending)
+        }
+    }
+
+    /**
+     * 타입 이벤트 전송. 구독자가 없으면 누적, 있으면 즉시 전달.
+     * 전송은 [viewModelScope](Main)로 직렬화되어 호출 순서 보장 — Main 디스패처 단일 구독 전제의 계약
+     */
+    fun sendEvent(event: ViewModelEvent) {
+        launch {
+            if (mutableEvents.subscriptionCount.value == 0) {
+                synchronized(pendingEvents) { pendingEvents.addLast(event) }
+            } else {
+                mutableEvents.emit(event)
+            }
+        }
+    }
 
     @MainThread
     fun sendEvent(action: String = "", data: Any? = null) {
