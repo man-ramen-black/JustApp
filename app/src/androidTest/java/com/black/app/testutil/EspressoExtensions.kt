@@ -2,6 +2,8 @@ package com.black.app.testutil
 
 import android.content.res.Resources
 import androidx.annotation.IdRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewAssertion
@@ -40,6 +42,30 @@ fun assertEffectiveVisible(@IdRes viewId: Int): ViewInteraction =
 /** [viewId] 뷰의 effectiveVisibility가 GONE 인지 검증한다. */
 fun assertEffectiveGone(@IdRes viewId: Int): ViewInteraction =
     checkView(viewId, "effectiveVisibility가 GONE이 아닙니다", matches(withEffectiveVisibility(Visibility.GONE)))
+
+/**
+ * [viewId] 뷰의 상단이 status bar 영역 아래에 위치하여 겹치지 않는지 검증한다.
+ *
+ * 콘텐츠가 status bar 뒤까지 그려지는 edge-to-edge 환경에서, fitsStatusBar 처리로
+ * 뷰 상단이 status bar 높이만큼 내려갔는지(화면 절대 y 좌표 기준) 확인한다.
+ */
+fun assertBelowStatusBar(@IdRes viewId: Int): ViewInteraction =
+    checkView(viewId, "뷰 상단이 status bar 영역과 겹칩니다", ViewAssertion { view, notFound ->
+        view ?: throw (notFound ?: AssertionError("뷰를 찾을 수 없습니다"))
+
+        val location = IntArray(2)
+        view.getLocationOnScreen(location)
+        val viewTop = location[1]
+        val statusBarHeight = ViewCompat.getRootWindowInsets(view)
+            ?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+
+        if (statusBarHeight <= 0) {
+            throw AssertionError("status bar 높이를 가져올 수 없어 겹침 검증 불가(statusBarHeight=$statusBarHeight)")
+        }
+        if (viewTop < statusBarHeight) {
+            throw AssertionError("뷰 상단(y=$viewTop)이 status bar 높이($statusBarHeight)보다 위에 있어 겹칩니다")
+        }
+    })
 
 /** [viewId] 뷰를 클릭한다. [scrollTo]가 true면 먼저 화면에 보이도록 스크롤한다. */
 fun clickView(@IdRes viewId: Int, scrollTo: Boolean = false): ViewInteraction {
