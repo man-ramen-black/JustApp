@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
@@ -127,21 +128,44 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             context.startActivity(intent)
         }
 
-        /** 특정 접근성 서비스 상세 설정 화면 표시(미지원 시 접근성 설정 목록으로 폴백) */
+        /** 특정 접근성 서비스 상세 설정 화면 표시(차단·미지원 시 접근성 설정 목록에서 해당 서비스 하이라이트) */
         fun openAccessibilityServiceDetailSetting(context: Context, service: Class<out AccessibilityService>) {
-            // Settings에 공개 상수가 없는 액션(Android 10 이상 설정 앱에서 처리)
-            val intent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
+            val componentName = ComponentName(context, service).flattenToString()
+
+            // Settings에 공개 상수가 없는 액션, Android 16부터 시스템 권한이 필요해 SecurityException 발생
+            val detailIntent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
                 .apply {
-                    putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(context, service).flattenToString())
+                    putExtra(Intent.EXTRA_COMPONENT_NAME, componentName)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
             try {
-                context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
+                context.startActivity(detailIntent)
+                return
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // 폴백: 접근성 설정 목록을 열고 해당 서비스 항목 하이라이트(미지원 설정 앱은 단순 목록 표시)
+            val highlightIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                .apply {
+                    putExtra(EXTRA_FRAGMENT_ARG_KEY, componentName)
+                    putExtra(
+                        EXTRA_SHOW_FRAGMENT_ARGUMENTS,
+                        Bundle().apply { putString(EXTRA_FRAGMENT_ARG_KEY, componentName) },
+                    )
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            try {
+                context.startActivity(highlightIntent)
+            } catch (e: Exception) {
                 e.printStackTrace()
                 openAccessibilitySetting(context)
             }
         }
+
+        // 설정 앱이 특정 항목을 스크롤·하이라이트할 때 사용하는 비공개 extras 키
+        private const val EXTRA_FRAGMENT_ARG_KEY = ":settings:fragment_args_key"
+        private const val EXTRA_SHOW_FRAGMENT_ARGUMENTS = ":settings:show_fragment_args"
     }
 
     private lateinit var launcher : ActivityResultLauncher<Array<String>>
