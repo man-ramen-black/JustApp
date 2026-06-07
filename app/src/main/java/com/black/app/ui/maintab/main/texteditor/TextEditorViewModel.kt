@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.model.database.studypopup.TextEditorRepository
+import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
 import com.black.core.di.HiltModule
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
@@ -87,8 +88,11 @@ class TextEditorViewModel @Inject constructor(
 
     fun onClickSave() {
         launch {
-            if (saveCurrentFile().exceptionOrNull() is IllegalAccessException) {
-                sendEvent(EventCreateDocument)
+            val result = saveCurrentFile()
+            when {
+                result.exceptionOrNull() is IllegalAccessException -> sendEvent(EventCreateDocument)
+                // 변경 사항이 없어 저장을 건너뛴 경우에도 저장 완료 피드백 제공
+                result.getOrNull() == false -> sendEvent(EventShowToast(R.string.text_editor_save_completed))
             }
         }
     }
