@@ -129,20 +129,18 @@ class PermissionHelper(private val activity: Activity, private val activityResul
 
         /** 특정 접근성 서비스 상세 설정 화면 표시(미지원 시 접근성 설정 목록으로 폴백) */
         fun openAccessibilityServiceDetailSetting(context: Context, service: Class<out AccessibilityService>) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_DETAILS_SETTINGS)
-                    .apply {
-                        putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(context, service).flattenToString())
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                try {
-                    context.startActivity(intent)
-                    return
-                } catch (e: ActivityNotFoundException) {
-                    e.printStackTrace()
+            // Settings에 공개 상수가 없는 액션(Android 10 이상 설정 앱에서 처리)
+            val intent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
+                .apply {
+                    putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(context, service).flattenToString())
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
+            try {
+                context.startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                e.printStackTrace()
+                openAccessibilitySetting(context)
             }
-            openAccessibilitySetting(context)
         }
     }
 
