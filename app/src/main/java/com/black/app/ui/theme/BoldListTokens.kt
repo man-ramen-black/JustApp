@@ -17,5 +17,5 @@ object BoldListTokens {
     val DividerColor = Color(0xFF1A1B1E)
 
     /** 아이콘 박스·버튼·다이얼로그 공용 모서리 shape */
-    val ContainerShape = RoundedCornerShape(8.dp)
+    val ContainerShape = RoundedCornerShape(4.dp)
 }

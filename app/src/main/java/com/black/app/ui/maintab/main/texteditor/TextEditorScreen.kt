@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -115,18 +114,51 @@ private fun TextEditorContent(
             .statusBarsPadding()
             .padding(horizontal = 24.dp),
     ) {
-        // 상단 액션 바
+        // 헤더(캡션+타이틀) + 우측 액션 버튼
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 14.dp),
+                .padding(top = 26.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.weight(1f))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "TOOL",
+                    color = BoldListTokens.CaptionColor,
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 2.5.sp,
+                )
+                Text(
+                    text = "Memo",
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .testTag("text_editor_title"),
+                    color = BoldListTokens.TitleColor,
+                    fontSize = 34.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-1).sp,
+                )
+                if (uiState.fileName.isNotEmpty()) {
+                    Text(
+                        text = uiState.fileName,
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .testTag("file_name"),
+                        color = BoldListTokens.CaptionColor,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 1.5.sp,
+                    )
+                }
+            }
             ToolbarIconButton(
                 iconResId = R.drawable.ic_save,
                 onClick = onClickSave,
                 testTag = "save_button",
+                modifier = Modifier.padding(start = 8.dp),
             )
             ToolbarIconButton(
                 iconResId = R.drawable.ic_folder_open,
@@ -140,41 +172,6 @@ private fun TextEditorContent(
                 testTag = "new_button",
                 modifier = Modifier.padding(start = 8.dp),
             )
-        }
-
-        // 헤더
-        Column(modifier = Modifier.padding(top = 18.dp)) {
-            Text(
-                text = "TOOL",
-                color = BoldListTokens.CaptionColor,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 2.5.sp,
-            )
-            Text(
-                text = "Memo",
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .testTag("text_editor_title"),
-                color = BoldListTokens.TitleColor,
-                fontSize = 34.sp,
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-1).sp,
-            )
-            if (uiState.fileName.isNotEmpty()) {
-                Text(
-                    text = uiState.fileName,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .testTag("file_name"),
-                    color = BoldListTokens.CaptionColor,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
-                    letterSpacing = 1.5.sp,
-                )
-            }
         }
 
         HorizontalDivider(
