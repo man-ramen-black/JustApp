@@ -58,7 +58,7 @@ class UsageTimerAccessibility : AccessibilityService() {
         Log.d("activePackage=$activePackage, selectedApps=$selectedApps, isPaused=$isPaused, action=$action")
         when (action) {
             TimerAction.SHOW -> activePackage?.let { UsageTimerGlobal.showForApp(this, it) }
-            TimerAction.HIDE -> UsageTimerGlobal.hideIfShown()
+            TimerAction.HIDE -> UsageTimerGlobal.hideIfShown(activePackage)
             TimerAction.IGNORE -> {}
         }
     }

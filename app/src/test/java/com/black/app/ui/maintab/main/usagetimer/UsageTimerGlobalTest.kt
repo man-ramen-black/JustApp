@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 /**
- * [UsageTimerGlobal.resolveTimerAction] 타이머 동작 결정 검증
+ * [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정 검증
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerGlobalTest : BaseTest() {
@@ -180,6 +180,72 @@ class UsageTimerGlobalTest : BaseTest() {
         assertEquals(
             5_000L,
             UsageTimerGlobal.resolveSessionStart("com.b", "com.a", 1_000L, null, 5_000L),
+        )
+    }
+
+    /**
+     * 닫은 앱이 그대로 활성이면 닫기 유지
+     * 닫기 후 같은 앱 내 activity 전환 시 타이머가 재노출되지 않음
+     *
+     * Given: 활성 앱과 닫은 앱이 동일
+     * When: resolveDismissedPackage 호출
+     * Then: 닫은 앱 유지
+     */
+    @Test
+    fun test_13_keepDismissedWhenSameAppActive() {
+        /** Given / When / Then **/
+        assertEquals(
+            "com.a",
+            UsageTimerGlobal.resolveDismissedPackage("com.a", "com.a"),
+        )
+    }
+
+    /**
+     * 다른 앱이 활성으로 확정되면 닫기 해제
+     * 다른 앱에 갔다가 닫은 앱으로 복귀하면 타이머가 다시 노출됨
+     *
+     * Given: 활성 앱과 닫은 앱이 다름
+     * When: resolveDismissedPackage 호출
+     * Then: null (닫기 해제)
+     */
+    @Test
+    fun test_14_clearDismissedWhenOtherAppActive() {
+        /** Given / When / Then **/
+        assertEquals(
+            null,
+            UsageTimerGlobal.resolveDismissedPackage("com.b", "com.a"),
+        )
+    }
+
+    /**
+     * 활성 앱을 알 수 없으면(전환 순간 노드 미준비) 닫기 유지
+     *
+     * Given: activePackage null, 닫은 앱 있음
+     * When: resolveDismissedPackage 호출
+     * Then: 닫은 앱 유지
+     */
+    @Test
+    fun test_15_keepDismissedWhenActiveUnknown() {
+        /** Given / When / Then **/
+        assertEquals(
+            "com.a",
+            UsageTimerGlobal.resolveDismissedPackage(null, "com.a"),
+        )
+    }
+
+    /**
+     * 닫은 앱이 없으면 결과도 없음
+     *
+     * Given: 닫은 앱 없음
+     * When: resolveDismissedPackage 호출
+     * Then: null
+     */
+    @Test
+    fun test_16_nullWhenNoDismissed() {
+        /** Given / When / Then **/
+        assertEquals(
+            null,
+            UsageTimerGlobal.resolveDismissedPackage("com.a", null),
         )
     }
 }

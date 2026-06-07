@@ -44,6 +44,9 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /** 뷰가 숨겨진 시각(elapsedRealtime ms). 유예 판정 기준, 표시 중이면 null */
     private var sessionHiddenElapsedMillis: Long? = null
 
+    /** 닫기 버튼으로 닫은 앱 패키지명. 같은 앱에 머무는 동안 재표시 차단 기준, 없으면 null */
+    private var dismissedPackageName: String? = null
+
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hideJob: Job? = null
 
@@ -101,6 +104,22 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     }
 
     /**
+     * 활성 앱 확정 시 유지할 닫은 앱 패키지 결정
+     * - 닫은 앱이 그대로 활성: 닫기 유지(같은 앱 내 창 전환에 재표시하지 않음)
+     * - 다른 앱이 활성으로 확정: 닫기 해제(이후 닫은 앱 복귀 시 재표시)
+     * - 활성 앱 불명(activePackage null): 현재 상태 유지
+     *
+     * @param activePackage 현재 활성 앱 패키지명(불명이면 null)
+     * @param dismissedPackage 닫은 앱 패키지명(없으면 null)
+     * @return 유지할 닫은 앱 패키지명(해제 시 null)
+     */
+    fun resolveDismissedPackage(activePackage: String?, dismissedPackage: String?) : String? {
+        dismissedPackage ?: return null
+        activePackage ?: return dismissedPackage
+        return if (activePackage == dismissedPackage) dismissedPackage else null
+    }
+
+    /**
      * 선택 앱이 포그라운드가 될 때 타이머 표시
      * 세션 시작 시각은 UsageTimerGlobal이 보유, 뷰는 시작 시각을 주입받아 렌더링만 담당
      */
@@ -112,6 +131,13 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
 
         // 표시 요청 시 예약된 지연 숨김 취소(앱 전환 버스트로 인한 깜빡임 방지)
         cancelHide()
+
+        // 닫은 앱이 그대로 활성이면 재표시 차단, 다른 앱이면 닫기 해제 후 표시 진행
+        dismissedPackageName = resolveDismissedPackage(packageName, dismissedPackageName)
+        if (dismissedPackageName != null) {
+            Log.d("UsageTimer dismissed : $packageName")
+            return
+        }
 
         val now = SystemClock.elapsedRealtime()
         val sessionStart = resolveSessionStart(
@@ -147,12 +173,14 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /**
      * 선택 앱이 백그라운드로 갈 때 타이머 제거
      * 앱 전환 직후 표시가 재요청되는 깜빡임을 막기 위해 지연 숨김 예약(이미 예약 중이면 유지)
+     * 디바운스를 통과해 다른 앱이 활성으로 확정되면 닫기 해제(닫은 앱 복귀 시 재표시 허용)
      */
-    fun hideIfShown() {
+    fun hideIfShown(activePackage: String?) {
         if (hideJob?.isActive == true) return
         hideJob = mainScope.launch {
             delay(HIDE_DEBOUNCE_MILLIS)
             detachView()
+            dismissedPackageName = resolveDismissedPackage(activePackage, dismissedPackageName)
         }
     }
 
@@ -166,6 +194,15 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
 
     fun detachView() {
         usageTimerView?.detachView()
+    }
+
+    /**
+     * 닫기 버튼으로 타이머 제거
+     * 같은 앱에 머무는 동안 재표시하지 않도록 닫은 앱 패키지 기록(다른 앱 전환 확정 시 해제)
+     */
+    fun closeByUser() {
+        dismissedPackageName = currentPackageName
+        detachView()
     }
 
     /**
