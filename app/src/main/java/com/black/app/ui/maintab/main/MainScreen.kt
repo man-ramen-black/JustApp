@@ -1,5 +1,6 @@
 package com.black.app.ui.maintab.main
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +32,13 @@ import com.black.app.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+/** 메인 리스트 항목 */
+data class MainItem(
+    val name: String,
+    @DrawableRes val iconResId: Int,
+    val onClick: () -> Unit,
+)
 
 // 화면 전용 색상 (E안 CSS .mE)
 private val ScreenBackground = Color(0xFF000000)
