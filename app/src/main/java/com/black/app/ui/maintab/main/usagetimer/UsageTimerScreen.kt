@@ -69,7 +69,7 @@ fun UsageTimerScreen(
     // 일회성 이벤트 처리(STARTED 이상에서만 수신해 비가시 구간 side effect 차단)
     LaunchedEffect(Unit) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
+            viewModel.usageTimerEvents.collect { event ->
                 when (event) {
                     is UsageTimerEvent.ShowTimerView -> {
                         UsageTimerView(context).attachView()

@@ -114,7 +114,7 @@ class UsageTimerViewModelTest : BaseTest() {
 
         /** When **/
         viewModel.onClickPause()
-        viewModel.events.collectEvents(receivedEvents, count = 2)
+        viewModel.usageTimerEvents.collectEvents(receivedEvents, count = 2)
 
         /** Then **/
         coVerify { repository.savePauseDuration(5) }
@@ -138,7 +138,7 @@ class UsageTimerViewModelTest : BaseTest() {
 
         /** When **/
         viewModel.onClickSelectApp()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        viewModel.usageTimerEvents.collectEvents(receivedEvents, count = 1)
 
         /** Then **/
         assertEquals(

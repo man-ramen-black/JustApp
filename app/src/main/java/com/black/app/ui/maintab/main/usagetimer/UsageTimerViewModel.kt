@@ -25,7 +25,7 @@ class UsageTimerViewModel @Inject constructor(
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
 
     private val eventChannel = Channel<UsageTimerEvent>(Channel.BUFFERED)
-    val events: Flow<UsageTimerEvent> = eventChannel.receiveAsFlow()
+    val usageTimerEvents: Flow<UsageTimerEvent> = eventChannel.receiveAsFlow()
 
     init {
         launch {
