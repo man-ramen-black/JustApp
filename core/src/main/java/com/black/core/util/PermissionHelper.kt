@@ -126,6 +126,24 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                 .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
             context.startActivity(intent)
         }
+
+        /** 특정 접근성 서비스 상세 설정 화면 표시(미지원 시 접근성 설정 목록으로 폴백) */
+        fun openAccessibilityServiceDetailSetting(context: Context, service: Class<out AccessibilityService>) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_DETAILS_SETTINGS)
+                    .apply {
+                        putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(context, service).flattenToString())
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                try {
+                    context.startActivity(intent)
+                    return
+                } catch (e: ActivityNotFoundException) {
+                    e.printStackTrace()
+                }
+            }
+            openAccessibilitySetting(context)
+        }
     }
 
     private lateinit var launcher : ActivityResultLauncher<Array<String>>
