@@ -14,5 +14,6 @@
 - 이벤트 전송·구독은 `EventViewModel`의 `sendEvent(event)`·`events`를 사용합니다.
 - 모든 로컬 데이터 저장은 `BaseDataStore`를 상속한 DataStore로 구현합니다.
 - 데이터 저장·조회 클래스는 `Model`이 아닌 `Repository`로 명명합니다.
+- 작업은 release에서 분기한 `{타입}/{주제-kebab-case}` 브랜치에서 진행하고 release로 머지합니다. 타입은 `feature`, `fix`, `refactor`, `design`, `test`를 사용합니다. (예: `feature/usage-timer-compose`)
 - 작업을 마치면 변경한 파일을 `git add`로 스테이징합니다.
 - md 파일을 생성하면 답변 가장 마지막에 해당 파일 경로를 출력합니다.
