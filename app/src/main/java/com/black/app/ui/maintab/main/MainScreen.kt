@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -114,7 +113,6 @@ private fun MainItemRow(
     item: MainItem,
     modifier: Modifier = Modifier,
 ) {
-    val iconContainerShape = RoundedCornerShape(12.dp)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -125,8 +123,8 @@ private fun MainItemRow(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(BoldListTokens.ContainerBackground, iconContainerShape)
-                .border(1.dp, BoldListTokens.ContainerBorder, iconContainerShape),
+                .background(BoldListTokens.ContainerBackground, BoldListTokens.ContainerShape)
+                .border(1.dp, BoldListTokens.ContainerBorder, BoldListTokens.ContainerShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

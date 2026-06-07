@@ -1,7 +1,6 @@
 package com.black.app.ui.maintab.main.texteditor
 
 import android.widget.Toast
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -83,11 +81,9 @@ fun TextEditorScreen(
         viewModel.onPause()
     }
 
-    val backPressedDispatcherOwner = LocalOnBackPressedDispatcherOwner.current
     TextEditorContent(
         uiState = uiState,
         modifier = modifier,
-        onClickBack = { backPressedDispatcherOwner?.onBackPressedDispatcher?.onBackPressed() },
         onClickSave = viewModel::onClickSave,
         onClickLoad = viewModel::onClickLoad,
         onClickNew = viewModel::onClickNew,
@@ -107,7 +103,6 @@ fun TextEditorScreen(
 private fun TextEditorContent(
     uiState: TextEditorUiState,
     modifier: Modifier = Modifier,
-    onClickBack: () -> Unit,
     onClickSave: () -> Unit,
     onClickLoad: () -> Unit,
     onClickNew: () -> Unit,
@@ -127,11 +122,6 @@ private fun TextEditorContent(
                 .padding(top = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ToolbarIconButton(
-                iconResId = R.drawable.ic_back,
-                onClick = onClickBack,
-                testTag = "back_button",
-            )
             Spacer(Modifier.weight(1f))
             ToolbarIconButton(
                 iconResId = R.drawable.ic_save,
@@ -139,13 +129,13 @@ private fun TextEditorContent(
                 testTag = "save_button",
             )
             ToolbarIconButton(
-                iconResId = R.drawable.ic_load,
+                iconResId = R.drawable.ic_folder_open,
                 onClick = onClickLoad,
                 testTag = "load_button",
                 modifier = Modifier.padding(start = 8.dp),
             )
             ToolbarIconButton(
-                iconResId = R.drawable.ic_add,
+                iconResId = R.drawable.ic_note_add,
                 onClick = onClickNew,
                 testTag = "new_button",
                 modifier = Modifier.padding(start = 8.dp),
@@ -163,7 +153,7 @@ private fun TextEditorContent(
                 letterSpacing = 2.5.sp,
             )
             Text(
-                text = "Text Editor",
+                text = "Memo",
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .testTag("text_editor_title"),
@@ -212,7 +202,7 @@ private fun TextEditorContent(
     }
 }
 
-/** 툴바 아이콘 버튼(40dp, RoundedCornerShape 12dp, ContainerBackground 배경) */
+/** 툴바 아이콘 버튼(40dp, ContainerShape, ContainerBackground 배경) */
 @Composable
 private fun ToolbarIconButton(
     iconResId: Int,
@@ -220,7 +210,7 @@ private fun ToolbarIconButton(
     testTag: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = BoldListTokens.ContainerShape
     Box(
         modifier = modifier
             .size(40.dp)
@@ -249,6 +239,7 @@ private fun ResetConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag("reset_confirm_dialog"),
+        shape = BoldListTokens.ContainerShape,
         containerColor = BoldListTokens.ContainerBackground,
         text = {
             Text(

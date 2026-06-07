@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -148,7 +148,7 @@ private fun UsageTimerContent(
         )
         // 헤더 타이틀
         Text(
-            text = "Usage Timer",
+            text = "App Usage Timer",
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag("usage_timer_title"),
@@ -196,7 +196,7 @@ private fun UsageTimerContent(
             letterSpacing = 2.5.sp,
         )
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             OutlinedTextField(
@@ -226,7 +226,9 @@ private fun UsageTimerContent(
             BoldActionButton(
                 text = "SAVE",
                 onClick = onClickSave,
-                modifier = Modifier.testTag("save_button"),
+                modifier = Modifier
+                    .height(56.dp)
+                    .testTag("save_button"),
             )
         }
 
@@ -237,7 +239,10 @@ private fun UsageTimerContent(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             BoldActionButton(
                 text = "PAUSE",
                 onClick = onClickPause,
@@ -330,7 +335,7 @@ private fun BoldActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = BoldListTokens.ContainerShape
     Box(
         modifier = modifier
             .clip(shape)
