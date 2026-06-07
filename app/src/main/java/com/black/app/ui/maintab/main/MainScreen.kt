@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.black.app.R
+import com.black.app.ui.theme.BoldListTokens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,17 +40,6 @@ data class MainItem(
     val onClick: () -> Unit,
 )
 
-// 화면 전용 색상 (E안 CSS .mE)
-private val ScreenBackground = Color(0xFF000000)
-private val TitleColor = Color(0xFFFFFFFF)
-private val CaptionColor = Color(0xFF595D64)
-private val ItemNameColor = Color(0xFFF5F5F5)
-private val IconColor = Color(0xFFD6D6D8)
-private val IconContainerBackground = Color(0xFF131316)
-private val IconContainerBorder = Color(0xFF222226)
-private val ArrowColor = Color(0xFF43464D)
-private val DividerColor = Color(0xFF1A1B1E)
-
 /** 메인 화면(헤더 + 기능 리스트 + 푸터) — Bold Icon List [MainFragment] */
 @Composable
 fun MainScreen(
@@ -60,7 +49,7 @@ fun MainScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(ScreenBackground)
+            .background(BoldListTokens.ScreenBackground)
             .padding(horizontal = 24.dp),
     ) {
         MainHeader()
@@ -82,7 +71,7 @@ private fun MainHeader(modifier: Modifier = Modifier) {
         Text(
             text = date,
             modifier = Modifier.testTag("main_date"),
-            color = CaptionColor,
+            color = BoldListTokens.CaptionColor,
             fontSize = 11.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Medium,
@@ -91,7 +80,7 @@ private fun MainHeader(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(R.string.app_name),
             modifier = Modifier.padding(top = 10.dp),
-            color = TitleColor,
+            color = BoldListTokens.TitleColor,
             fontSize = 48.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Black,
@@ -111,10 +100,10 @@ private fun MainItemList(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
     ) {
-        HorizontalDivider(thickness = 1.dp, color = DividerColor)
+        HorizontalDivider(thickness = 1.dp, color = BoldListTokens.DividerColor)
         itemList.forEach { item ->
             MainItemRow(item = item)
-            HorizontalDivider(thickness = 1.dp, color = DividerColor)
+            HorizontalDivider(thickness = 1.dp, color = BoldListTokens.DividerColor)
         }
     }
 }
@@ -136,15 +125,15 @@ private fun MainItemRow(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(IconContainerBackground, iconContainerShape)
-                .border(1.dp, IconContainerBorder, iconContainerShape),
+                .background(BoldListTokens.ContainerBackground, iconContainerShape)
+                .border(1.dp, BoldListTokens.ContainerBorder, iconContainerShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(item.iconResId),
                 contentDescription = null,
                 modifier = Modifier.size(19.dp),
-                tint = IconColor,
+                tint = BoldListTokens.IconColor,
             )
         }
         Text(
@@ -152,7 +141,7 @@ private fun MainItemRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 18.dp),
-            color = ItemNameColor,
+            color = BoldListTokens.ItemNameColor,
             fontSize = 23.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.ExtraBold,
@@ -162,7 +151,7 @@ private fun MainItemRow(
             painter = painterResource(R.drawable.ic_arrow_up_right),
             contentDescription = null,
             modifier = Modifier.size(17.dp),
-            tint = ArrowColor,
+            tint = BoldListTokens.ArrowColor,
         )
     }
 }
@@ -176,7 +165,7 @@ private fun MainFooter(
     Text(
         text = stringResource(R.string.main_footer_hint, itemCount),
         modifier = modifier.padding(top = 18.dp, bottom = 14.dp, start = 2.dp),
-        color = ArrowColor,
+        color = BoldListTokens.ArrowColor,
         fontSize = 11.sp,
         fontFamily = FontFamily.Monospace,
         letterSpacing = 1.5.sp,
