@@ -79,6 +79,9 @@ object UiUtil {
                 controller?.show(WindowInsets.Type.statusBars())
                 controller?.show(WindowInsets.Type.navigationBars())
 
+                // 진입 시 변경한 setDecorFitsSystemWindows(false) 복원
+                // 복원하지 않으면 이후 화면 콘텐츠가 status bar 영역과 겹침
+                window.setDecorFitsSystemWindows(true)
             }
         }
         // R 미만
