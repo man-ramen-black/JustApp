@@ -37,10 +37,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
+import com.black.core.viewmodel.CollectEvents
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
@@ -66,31 +65,27 @@ fun UsageTimerScreen(
         ) { viewModel.onAppsSelected(it) }
     }
 
-    // 일회성 이벤트 처리(STARTED 이상에서만 수신해 비가시 구간 side effect 차단)
-    LaunchedEffect(Unit) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is UsageTimerViewModel.EventShowTimerView -> {
-                        UsageTimerView(context).attachView()
-                    }
-                    is UsageTimerViewModel.EventShowToast -> {
-                        Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
-                    }
-                    is UsageTimerViewModel.EventDetachTimerView -> {
-                        UsageTimerGlobal.detachView()
-                    }
-                    is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
-                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    }
-                    is UsageTimerViewModel.EventOpenSelectApp -> {
-                        val activity = context as? AppCompatActivity ?: return@collect
-                        SelectAppDialogFragment.newInstance(event.checkedPackageNames)
-                            .show(activity.supportFragmentManager, SelectAppDialogFragment.TAG)
-                    }
-                    else -> Unit
-                }
+    // 일회성 이벤트 처리
+    viewModel.CollectEvents { event ->
+        when (event) {
+            is UsageTimerViewModel.EventShowTimerView -> {
+                UsageTimerView(context).attachView()
             }
+            is UsageTimerViewModel.EventShowToast -> {
+                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+            is UsageTimerViewModel.EventDetachTimerView -> {
+                UsageTimerGlobal.detachView()
+            }
+            is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
+                context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            is UsageTimerViewModel.EventOpenSelectApp -> {
+                val activity = context as? AppCompatActivity ?: return@CollectEvents
+                SelectAppDialogFragment.newInstance(event.checkedPackageNames)
+                    .show(activity.supportFragmentManager, SelectAppDialogFragment.TAG)
+            }
+            else -> Unit
         }
     }
 

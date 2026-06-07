@@ -6,12 +6,13 @@ plugins {
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrains.kotlin.parcelize)
+    alias(libs.plugins.jetbrains.kotlin.compose)
     alias(libs.plugins.dagger.hilt)
 }
 
 android {
     namespace = "com.black.core"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -31,6 +32,7 @@ android {
     buildFeatures {
         buildConfig = true
         dataBinding = true
+        compose = true
     }
 
     compileOptions {
@@ -46,6 +48,10 @@ android {
 }
 
 dependencies {
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.ui)
+    api(libs.androidx.lifecycle.runtime.compose)
+
     api(libs.androidx.core.ktx)
     api(libs.androidx.appcompat)
     api(libs.material)
