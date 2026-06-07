@@ -174,10 +174,12 @@ class TextEditorViewModelTest : BaseTest() {
         val currentUriFlow = MutableStateFlow<Uri?>(uri)
         coEvery { repository.currentFileUriFlow } returns currentUriFlow
         // init 블록에서 uri non-null 시 loadTextFile 호출 — stub 필요
-        coEvery { repository.loadTextFile(uri) } returns Result.success("")
+        coEvery { repository.loadTextFile(uri) } returns Result.success("initial text")
         coEvery { repository.saveTextFile(uri, any()) } returns Result.failure(Exception("save error"))
         val viewModel = createViewModel()
-        viewModel.onTextChanged("some text")
+        // init IO 코루틴 완료(originText·uiState.text = "initial text") 후 텍스트 변경
+        viewModel.uiState.filter { it.text == "initial text" }.first()
+        viewModel.onTextChanged("changed text")
         val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
@@ -187,6 +189,29 @@ class TextEditorViewModelTest : BaseTest() {
         /** Then **/
         val event = receivedEvents[0] as TextEditorViewModel.EventShowToast
         assertEquals(R.string.text_editor_save_failed, event.messageResId)
+    }
+
+    /**
+     * 텍스트 변경이 없을 때 onClickSave 시 저장 완료 토스트 이벤트가 발송되는지 검증
+     *
+     * Given: 텍스트 미변경(초기 상태) — saveCurrentFile이 실제 저장을 건너뜀
+     * When: onClickSave 호출
+     * Then: 파일 쓰기 없이 EventShowToast(R.string.text_editor_save_completed) 수신
+     */
+    @Test
+    fun test_07_onClickSaveWithoutChangesSendsSaveCompletedToastEvent() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.onClickSave()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        val event = receivedEvents[0] as TextEditorViewModel.EventShowToast
+        assertEquals(R.string.text_editor_save_completed, event.messageResId)
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
     }
 }
 

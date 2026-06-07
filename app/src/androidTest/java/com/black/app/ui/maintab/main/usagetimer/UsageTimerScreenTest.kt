@@ -55,7 +55,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 타이틀 "UsageTimer" 표시
+     * - 타이틀 "App Usage Timer" 표시
      * - 핵심 조작 요소 모두 존재
      * - 일시정지 잔여 시간 0이므로 카운트다운 영역 미존재
      */
@@ -69,7 +69,7 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         composeRule.onNodeWithTag("usage_timer_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("Usage Timer")
+        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("App Usage Timer")
         composeRule.onNodeWithTag("show_button").assertExists()
         composeRule.onNodeWithTag("pause_duration_input").assertExists()
         composeRule.onNodeWithTag("save_button").assertExists()

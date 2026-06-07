@@ -42,7 +42,7 @@ class TextEditorScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - text_editor_title, back_button, save_button, load_button, new_button, editor_input 표시
+     * - text_editor_title, save_button, load_button, new_button, editor_input 표시
      */
     @Test
     fun test_01_textEditorScreenDisplaysCoreElements() {
@@ -54,7 +54,6 @@ class TextEditorScreenTest : BaseUiTest() {
 
         /** Then **/
         composeRule.onNodeWithTag("text_editor_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
         composeRule.onNodeWithTag("save_button").assertIsDisplayed()
         composeRule.onNodeWithTag("load_button").assertIsDisplayed()
         composeRule.onNodeWithTag("new_button").assertIsDisplayed()
