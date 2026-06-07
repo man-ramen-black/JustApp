@@ -1,8 +1,6 @@
 package com.black.app.ui.maintab.main.usagetimer
 
-import android.content.Intent
 import android.os.SystemClock
-import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
@@ -54,6 +52,7 @@ import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.app.ui.theme.BoldListTokens
 import com.black.core.util.DataUtil
+import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 import kotlinx.coroutines.delay
 
@@ -89,7 +88,7 @@ fun UsageTimerScreen(
                 UsageTimerGlobal.detachView()
             }
             is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
-                context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                PermissionHelper.openAccessibilityServiceDetailSetting(context, UsageTimerAccessibility::class.java)
             }
             is UsageTimerViewModel.EventOpenSelectApp -> {
                 val activity = context as? AppCompatActivity ?: return@CollectEvents
