@@ -72,7 +72,7 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
 
     override fun bindVariable(binding: ViewUsageTimerBinding) {
         super.bindVariable(binding)
-        binding.onClickClose = OnClick { detachView() }
+        binding.onClickClose = OnClick { UsageTimerGlobal.closeByUser() }
     }
 
     override fun onAttachedToWindow() {
