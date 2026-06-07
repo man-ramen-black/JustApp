@@ -10,7 +10,6 @@ import androidx.core.graphics.drawable.IconCompat
 import com.black.app.R
 import com.black.app.deeplink.Deeplink
 import com.black.app.ui.MainActivity
-import com.black.app.ui.maintab.main.texteditor.TextEditorFragment
 
 /**
  * https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=kdr0923&logNo=50087667730

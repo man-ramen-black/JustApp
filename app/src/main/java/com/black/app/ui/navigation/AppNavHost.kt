@@ -20,7 +20,7 @@ import com.black.app.ui.maintab.main.recyclerview.RecyclerViewFragment
 import com.black.app.ui.maintab.main.retrofit.RetrofitFragment
 import com.black.app.ui.maintab.main.service.ServiceFragment
 import com.black.app.ui.maintab.main.studypopup.StudyPopupFragment
-import com.black.app.ui.maintab.main.texteditor.TextEditorFragment
+import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingFragment
 import com.black.feature.pokerogue.ui.PokeRogueFragment
@@ -45,7 +45,7 @@ fun AppNavHost(
     ) {
         composable<AppRoute.MainTab> { AndroidFragment<MainTabFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Black> { AndroidFragment<BlackFragment>(Modifier.fillMaxSize()) }
-        composable<AppRoute.TextEditor> { AndroidFragment<TextEditorFragment>(Modifier.fillMaxSize()) }
+        composable<AppRoute.TextEditor> { TextEditorScreen(Modifier.fillMaxSize()) }
         composable<AppRoute.RecyclerView> { AndroidFragment<RecyclerViewFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Retrofit> { AndroidFragment<RetrofitFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Service> { AndroidFragment<ServiceFragment>(Modifier.fillMaxSize()) }
