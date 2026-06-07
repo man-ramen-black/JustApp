@@ -69,7 +69,7 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         composeRule.onNodeWithTag("usage_timer_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("UsageTimer")
+        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("Usage Timer")
         composeRule.onNodeWithTag("show_button").assertExists()
         composeRule.onNodeWithTag("pause_duration_input").assertExists()
         composeRule.onNodeWithTag("save_button").assertExists()
@@ -88,7 +88,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - Show/Save/Pause/Cancel/Accessibility/Select app 라벨 텍스트 존재
+     * - SHOW/SAVE/PAUSE/CANCEL/ACCESSIBILITY/SELECT APP 라벨 텍스트 존재
      */
     @Test
     fun test_02_buttonsDisplayExpectedLabels() {
@@ -99,12 +99,12 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 버튼 라벨은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithText("Show").assertExists()
-        composeRule.onNodeWithText("Save").assertExists()
-        composeRule.onNodeWithText("Pause").assertExists()
-        composeRule.onNodeWithText("Cancel").assertExists()
-        composeRule.onNodeWithText("Accessibility").assertExists()
-        composeRule.onNodeWithText("Select app").assertExists()
+        composeRule.onNodeWithTag("show_button").assertTextEquals("SHOW")
+        composeRule.onNodeWithTag("save_button").assertTextEquals("SAVE")
+        composeRule.onNodeWithTag("pause_button").assertTextEquals("PAUSE")
+        composeRule.onNodeWithTag("cancel_button").assertTextEquals("CANCEL")
+        composeRule.onNodeWithTag("accessibility_button").assertTextEquals("ACCESSIBILITY")
+        composeRule.onNodeWithTag("select_app_button").assertTextEquals("SELECT APP")
     }
 
     /**

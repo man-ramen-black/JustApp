@@ -6,21 +6,27 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,20 +36,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.black.core.viewmodel.CollectEvents
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
+import com.black.app.ui.theme.BoldListTokens
 import com.black.core.util.DataUtil
+import com.black.core.viewmodel.CollectEvents
 import kotlinx.coroutines.delay
 
 /** UsageTimer 화면 */
@@ -120,43 +131,103 @@ private fun UsageTimerContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(BoldListTokens.ScreenBackground)
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = 24.dp),
     ) {
+        // 헤더 캡션
         Text(
-            text = "UsageTimer",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.testTag("usage_timer_title"),
+            text = "TOOL",
+            modifier = Modifier.padding(top = 26.dp),
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 2.5.sp,
+        )
+        // 헤더 타이틀
+        Text(
+            text = "Usage Timer",
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .testTag("usage_timer_title"),
+            color = BoldListTokens.TitleColor,
+            fontSize = 34.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Black,
+            letterSpacing = (-1).sp,
         )
 
-        Button(
+        // OVERLAY 섹션
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 24.dp),
+            thickness = 1.dp,
+            color = BoldListTokens.DividerColor,
+        )
+        Text(
+            text = "OVERLAY",
+            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.5.sp,
+        )
+        BoldActionButton(
+            text = "SHOW",
             onClick = onClickShow,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("show_button"),
-        ) {
-            Text("Show")
-        }
+        )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // PAUSE 섹션
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 24.dp),
+            thickness = 1.dp,
+            color = BoldListTokens.DividerColor,
+        )
+        Text(
+            text = "PAUSE",
+            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.5.sp,
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             OutlinedTextField(
                 value = uiState.pauseDurationInput,
                 onValueChange = onPauseDurationInputChanged,
-                label = { Text("Pause duration(min)") },
+                label = {
+                    Text(
+                        text = "PAUSE DURATION (MIN)",
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = BoldListTokens.ContainerBorder,
+                    focusedBorderColor = BoldListTokens.ArrowColor,
+                    focusedTextColor = BoldListTokens.ItemNameColor,
+                    unfocusedTextColor = BoldListTokens.ItemNameColor,
+                    cursorColor = BoldListTokens.TitleColor,
+                    focusedLabelColor = BoldListTokens.CaptionColor,
+                    unfocusedLabelColor = BoldListTokens.CaptionColor,
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .testTag("pause_duration_input"),
             )
-            Button(
+            BoldActionButton(
+                text = "SAVE",
                 onClick = onClickSave,
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .testTag("save_button"),
-            ) {
-                Text("Save")
-            }
+                modifier = Modifier.testTag("save_button"),
+            )
         }
 
         if (uiState.pauseRemainTimeMillis > 0L) {
@@ -167,54 +238,81 @@ private fun UsageTimerContent(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
+            BoldActionButton(
+                text = "PAUSE",
                 onClick = onClickPause,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("pause_button"),
-            ) {
-                Text("Pause")
-            }
-            Button(
+            )
+            BoldActionButton(
+                text = "CANCEL",
                 onClick = onClickCancelPause,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("cancel_button"),
-            ) {
-                Text("Cancel")
-            }
+            )
         }
 
-        Button(
+        // SETTINGS 섹션
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 24.dp),
+            thickness = 1.dp,
+            color = BoldListTokens.DividerColor,
+        )
+        Text(
+            text = "SETTINGS",
+            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.5.sp,
+        )
+        BoldActionButton(
+            text = "ACCESSIBILITY",
             onClick = onClickAccessibility,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("accessibility_button"),
-        ) {
-            Text("Accessibility")
-        }
-
-        Button(
+        )
+        BoldActionButton(
+            text = "SELECT APP",
             onClick = onClickSelectApp,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 8.dp)
                 .testTag("select_app_button"),
-        ) {
-            Text("Select app")
-        }
+        )
+
+        // SELECTED APPS 섹션
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 24.dp),
+            thickness = 1.dp,
+            color = BoldListTokens.DividerColor,
+        )
+        Text(
+            text = "SELECTED APPS",
+            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.5.sp,
+        )
 
         if (uiState.selectedApps.isEmpty()) {
             Text(
                 text = "No apps selected",
                 modifier = Modifier
-                    .padding(top = 15.dp)
+                    .padding(bottom = 24.dp)
                     .testTag("selected_apps_empty"),
+                color = BoldListTokens.CaptionColor,
+                fontFamily = FontFamily.Monospace,
             )
         } else {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
-                    .padding(top = 15.dp)
+                    .padding(bottom = 24.dp)
                     .testTag("selected_apps_list"),
             ) {
                 items(uiState.selectedApps, key = { it.packageName }) { item ->
@@ -222,6 +320,34 @@ private fun UsageTimerContent(
                 }
             }
         }
+    }
+}
+
+/** Bold 디자인 언어 액션 버튼(컨테이너 톤 박스 + ExtraBold 라벨) */
+@Composable
+private fun BoldActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(BoldListTokens.ContainerBackground)
+            .border(1.dp, BoldListTokens.ContainerBorder, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            color = BoldListTokens.ItemNameColor,
+            fontSize = 13.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.5.sp,
+        )
     }
 }
 
@@ -248,13 +374,23 @@ private fun PauseRemainCountDown(
         }
     }
 
-    Row(
+    Column(
         modifier = Modifier
-            .padding(vertical = 15.dp)
+            .padding(vertical = 12.dp)
             .testTag("pause_info"),
     ) {
-        Text("Pause remain : ")
-        Text(DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis))
+        Text(
+            text = "PAUSE REMAIN",
+            color = BoldListTokens.CaptionColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 2.5.sp,
+        )
+        Text(
+            text = DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis),
+            color = BoldListTokens.TitleColor,
+            fontFamily = FontFamily.Monospace,
+        )
     }
 }
 
@@ -270,7 +406,7 @@ private fun SelectedAppItemContent(item: SelectedAppUiItem) {
         )
         Text(
             text = item.label,
-            style = MaterialTheme.typography.bodySmall,
+            color = BoldListTokens.IconColor,
         )
     }
 }
