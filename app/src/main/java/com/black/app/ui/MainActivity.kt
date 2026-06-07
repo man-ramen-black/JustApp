@@ -6,7 +6,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.View
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +16,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.core.animation.doOnEnd
+import androidx.core.app.ActivityCompat
 import androidx.core.os.postDelayed
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.black.app.R
 import com.black.app.deeplink.Deeplink
 import com.black.app.deeplink.DeeplinkManager
 import com.black.app.service.ForegroundService
@@ -143,10 +147,23 @@ class MainActivity : AppCompatActivity() {
             }
         ).toTypedArray()
 
-        if (permissionHelper.checkPermissions(permissions).isGranted) {
+        val checkResult = permissionHelper.checkPermissions(permissions)
+        if (checkResult.isGranted) {
             return
         }
 
-        permissionHelper.requestPermissions(permissions) {}
+        permissionHelper.requestPermissions(permissions) { result ->
+            // 영구 거부 상태면 시스템 팝업 없이 즉시 거부되므로 앱 알림 설정 화면으로 안내
+            val permanentlyDenied = result.deniedPermissions.any { permission ->
+                !ActivityCompat.shouldShowRequestPermissionRationale(this, permission)
+            }
+            if (checkResult.deniedPermissions.isNotEmpty() && permanentlyDenied) {
+                Toast.makeText(this, R.string.notification_permission_guide, Toast.LENGTH_LONG).show()
+                startActivity(
+                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                )
+            }
+        }
     }
 }
