@@ -1,7 +1,6 @@
 package com.black.app.ui.maintab.main.usagetimer
 
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.core.viewmodel.ViewModelEvent
 
 /** UsageTimer 화면 상태 */
 data class UsageTimerUiState(
@@ -12,17 +11,3 @@ data class UsageTimerUiState(
     /** 선택된 앱 표시 목록 */
     val selectedApps: List<SelectedAppUiItem> = emptyList(),
 )
-
-/** UsageTimer 화면 일회성 이벤트 */
-sealed class UsageTimerEvent : ViewModelEvent {
-    /** 사용 시간 타이머 오버레이 표시 */
-    data object EventShowTimerView : UsageTimerEvent()
-    /** 토스트 메시지 표시 */
-    data class EventShowToast(val message: String) : UsageTimerEvent()
-    /** 서비스에 떠 있는 타이머 오버레이 제거 */
-    data object EventDetachTimerView : UsageTimerEvent()
-    /** 접근성 설정 화면 이동 */
-    data object EventOpenAccessibilitySettings : UsageTimerEvent()
-    /** 앱 선택 다이얼로그 표시(현재 선택 목록 전달) */
-    data class EventOpenSelectApp(val checkedPackageNames: List<String>) : UsageTimerEvent()
-}

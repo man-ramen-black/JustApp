@@ -71,19 +71,19 @@ fun UsageTimerScreen(
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is UsageTimerEvent.EventShowTimerView -> {
+                    is UsageTimerViewModel.EventShowTimerView -> {
                         UsageTimerView(context).attachView()
                     }
-                    is UsageTimerEvent.EventShowToast -> {
+                    is UsageTimerViewModel.EventShowToast -> {
                         Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
                     }
-                    is UsageTimerEvent.EventDetachTimerView -> {
+                    is UsageTimerViewModel.EventDetachTimerView -> {
                         UsageTimerGlobal.detachView()
                     }
-                    is UsageTimerEvent.EventOpenAccessibilitySettings -> {
+                    is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                     }
-                    is UsageTimerEvent.EventOpenSelectApp -> {
+                    is UsageTimerViewModel.EventOpenSelectApp -> {
                         val activity = context as? AppCompatActivity ?: return@collect
                         SelectAppDialogFragment.newInstance(event.checkedPackageNames)
                             .show(activity.supportFragmentManager, SelectAppDialogFragment.TAG)

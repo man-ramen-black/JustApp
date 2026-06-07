@@ -10,7 +10,7 @@
 - ViewModel KDoc에 해당 ViewModel을 참조하는 화면을 작성하고, 그 화면의 import도 추가합니다. (예: `UsageTimerViewModel`: `[UsageTimerScreen]`)
 - 모든 ViewModel은 `EventViewModel`을 상속합니다.
 - ViewModel 코루틴은 `viewModelScope.launch` 대신 `EventViewModel`의 `launch`를 사용합니다.
-- ViewModel 일회성 이벤트는 `ViewModelEvent`를 구현한 sealed class로 정의하고, 하위 이벤트는 `Event{이벤트명}` data class·data object로 명명합니다. (예: `EventShowToast`)
+- ViewModel 일회성 이벤트는 해당 ViewModel 내부에 `ViewModelEvent`를 구현한 sealed class로 정의하고, 하위 이벤트는 sealed class와 같은 레벨(ViewModel 직속)에 `Event{이벤트명}` data class·data object로 명명합니다. (예: `UsageTimerViewModel.EventShowTimerView`)
 - 이벤트 전송·구독은 `EventViewModel`의 `sendEvent(event)`·`events`를 사용합니다.
 - 모든 로컬 데이터 저장은 `BaseDataStore`를 상속한 DataStore로 구현합니다.
 - 데이터 저장·조회 클래스는 `Model`이 아닌 `Repository`로 명명합니다.

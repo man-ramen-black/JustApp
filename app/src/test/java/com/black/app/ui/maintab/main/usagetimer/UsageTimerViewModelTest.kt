@@ -120,8 +120,8 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Then **/
         coVerify { repository.savePauseDuration(5) }
         coVerify { repository.pause(5) }
-        assertEquals(UsageTimerEvent.EventDetachTimerView, receivedEvents[0])
-        assertEquals(UsageTimerEvent.EventShowToast("Pause : 5m"), receivedEvents[1])
+        assertEquals(UsageTimerViewModel.EventDetachTimerView, receivedEvents[0])
+        assertEquals(UsageTimerViewModel.EventShowToast("Pause : 5m"), receivedEvents[1])
     }
 
     /**
@@ -143,7 +143,7 @@ class UsageTimerViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(
-            UsageTimerEvent.EventOpenSelectApp(listOf("com.a", "com.b")),
+            UsageTimerViewModel.EventOpenSelectApp(listOf("com.a", "com.b")),
             receivedEvents[0],
         )
     }

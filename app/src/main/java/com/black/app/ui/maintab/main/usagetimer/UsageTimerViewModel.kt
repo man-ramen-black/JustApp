@@ -4,6 +4,7 @@ import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
 import com.black.core.viewmodel.EventViewModel
+import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,20 @@ class UsageTimerViewModel @Inject constructor(
     private val repository: UsageTimerRepository,
     private val installedAppResolver: InstalledAppResolver,
 ) : EventViewModel() {
+
+    /** UsageTimer 화면 일회성 이벤트 */
+    sealed class UsageTimerEvent : ViewModelEvent
+
+    /** 사용 시간 타이머 오버레이 표시 */
+    data object EventShowTimerView : UsageTimerEvent()
+    /** 토스트 메시지 표시 */
+    data class EventShowToast(val message: String) : UsageTimerEvent()
+    /** 서비스에 떠 있는 타이머 오버레이 제거 */
+    data object EventDetachTimerView : UsageTimerEvent()
+    /** 접근성 설정 화면 이동 */
+    data object EventOpenAccessibilitySettings : UsageTimerEvent()
+    /** 앱 선택 다이얼로그 표시(현재 선택 목록 전달) */
+    data class EventOpenSelectApp(val checkedPackageNames: List<String>) : UsageTimerEvent()
 
     private val mutableUiState = MutableStateFlow(UsageTimerUiState())
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
@@ -41,13 +56,13 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickShow() {
-        sendEvent(UsageTimerEvent.EventShowTimerView)
+        sendEvent(EventShowTimerView)
     }
 
     fun onClickSave() {
         launch {
             repository.savePauseDuration(pauseDurationMinutes())
-            sendEvent(UsageTimerEvent.EventShowToast("Saved"))
+            sendEvent(EventShowToast("Saved"))
         }
     }
 
@@ -57,8 +72,8 @@ class UsageTimerViewModel @Inject constructor(
             repository.savePauseDuration(pauseDuration)
             repository.pause(pauseDuration)
             updatePauseRemainTime()
-            sendEvent(UsageTimerEvent.EventDetachTimerView)
-            sendEvent(UsageTimerEvent.EventShowToast("Pause : ${pauseDuration}m"))
+            sendEvent(EventDetachTimerView)
+            sendEvent(EventShowToast("Pause : ${pauseDuration}m"))
         }
     }
 
@@ -66,7 +81,7 @@ class UsageTimerViewModel @Inject constructor(
         launch {
             repository.cancelPause()
             updatePauseRemainTime()
-            sendEvent(UsageTimerEvent.EventShowToast("Pause canceled"))
+            sendEvent(EventShowToast("Pause canceled"))
         }
     }
 
@@ -75,12 +90,12 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickAccessibility() {
-        sendEvent(UsageTimerEvent.EventOpenAccessibilitySettings)
+        sendEvent(EventOpenAccessibilitySettings)
     }
 
     fun onClickSelectApp() {
         sendEvent(
-            UsageTimerEvent.EventOpenSelectApp(uiState.value.selectedApps.map { it.packageName })
+            EventOpenSelectApp(uiState.value.selectedApps.map { it.packageName })
         )
     }
 
