@@ -32,7 +32,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             }
         }
 
-        private fun getDrawOverlaysSettingIntent(context: Context) : Intent? {
+        fun getDrawOverlaysSettingIntent(context: Context) : Intent? {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 Log.w("Build.VERSION.SDK_INT < Build.VERSION_CODES.M")
                 return null

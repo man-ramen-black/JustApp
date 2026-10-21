@@ -18,6 +18,7 @@
     <string name="fragment_name_study_popup">StudyPopup</string>
     <string name="fragment_name_text_editor">메모장</string>
     <string name="fragment_name_usage_timer">앱 사용 타이머</string>
+    <string name="keep_screen_on_tile_label">화면 켜짐 유지</string>
     <string name="fragment_name_notification">Notification</string>
     <string name="fragment_name_recycler_view">RecyclerView</string>
     <string name="fragment_name_retrofit">Retrofit</string>
