@@ -1,4 +1,49 @@
 {
+  "language": "Korean",
+  "outputStyle": "fluent-korean:fluent-korean",
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew *)",
+      "Bash(adb devices *)",
+      "Bash(adb logcat *)",
+      "Bash(adb shell *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git worktree *)",
+      "Bash(git add *)",
+      "Bash(grep *)",
+      "Bash(date:*)",
+      "Bash(orca terminal:*)",
+      "Bash(orca skills:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "fluent-korean@fluent-korean": true,
+    "korean-skills@korean-skills": true,
+    "claude-code-mascot-statusline@claude-code-mascot-statusline": true,
+    "claude-hud@claude-hud": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
+    },
+    "fluent-korean": {
+      "source": { "source": "github", "repo": "snflkd/fluent-korean" }
+    },
+    "korean-skills": {
+      "source": { "source": "github", "repo": "DaleSeo/korean-skills" }
+    },
+    "claude-code-mascot-statusline": {
+      "source": { "source": "github", "repo": "TeXmeijin/claude-code-mascot-statusline" }
+    },
+    "claude-hud": {
+      "source": { "source": "github", "repo": "jarrodwatts/claude-hud" }
+    }
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +52,40 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/brainstorming-context.mjs"]
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-context.mjs"]
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/auto-git-add.mjs"]
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-korean-reply.py"]
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-korean-reply.py"]
           }
         ]
       }
