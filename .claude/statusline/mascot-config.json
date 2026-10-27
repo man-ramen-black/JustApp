@@ -1,0 +1,5 @@
+{
+  "pack": "clawd",
+  "renderProfile": "claude-code-safe",
+  "safeBackground": "#14191e"
+}
