@@ -6,10 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import com.black.app.R
 import com.black.app.broadcast.NotificationActionReceiver
 import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
@@ -105,16 +102,14 @@ class ForegroundService : Service() {
             null
         ) {
             it.setOngoing(true)
-            // 색을 지정한 FGS 알림은 Android 16 강제 자동 묶음 대상에서 빠져 다른 알림과 따로 표시
-            it.setColorized(true)
-                .setColor(ContextCompat.getColor(this, R.color.color_primary))
+            // One UI 8.5 "그 외 알림"(백그라운드 활동) 분류 조건은 액션 버튼·커스텀 뷰 없는 FGS 알림, 분류된 알림은 Samsung 강제 자동 묶음에서도 제외
+            // setColorized FGS 알림은 SystemUI가 상단 FGS 구역으로 먼저 분류하므로 액션·색 미지정
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
                 PendingIntent.FLAG_CANCEL_CURRENT
             }
             it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
-            it.addAction(NotificationCompat.Action(0, "PauseTimer", NotificationActionReceiver.getNotificationActionPendingIntent(this, NotificationActionReceiver.ACTION_PAUSE_USAGE_TIMER)))
         }
         startForeground(NOTIFICATION_ID, notification)
 
