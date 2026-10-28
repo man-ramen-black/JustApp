@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 테스트에서 Hilt Fragment를 호스팅하기 위한 전용 Activity 등록 (debug 전용) -->
     <application>
@@ -7,5 +8,13 @@
             android:name="com.black.app.testutil.HiltTestActivity"
             android:exported="false"
             android:theme="@style/Theme.Black" />
+
+        <!-- 보안 잠금을 풀지 않고 잠금 화면 위에서 창 상태를 검증하기 위한 전용 Activity 등록 (debug 전용) -->
+        <activity
+            android:name="com.black.app.testutil.ShowWhenLockedTestActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:theme="@style/Theme.Black"
+            tools:targetApi="o_mr1" />
     </application>
 </manifest>
