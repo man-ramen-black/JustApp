@@ -89,9 +89,7 @@ private fun TextEditorContent(
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TextEditorScreenTest : BaseUiTest() {
 
-    /**
-     * TextEditorScreen을 HiltTestActivity에 setContent로 호스팅
-     */
+    /** TextEditorScreen을 HiltTestActivity에 setContent로 호스팅 */
     private fun hostTextEditorScreen() {
         onHostActivity { activity ->
             activity.setContent {
