@@ -9,10 +9,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowNotificationManager
+import org.robolectric.shadows.ShadowShortcutManager
 
 /** 알림 대상 앱 설치 상태·알림 권한을 Robolectric 섀도에 구성하는 테스트 헬퍼 */
 object PackageInstallTestFixture {
@@ -76,4 +79,12 @@ object PackageInstallTestFixture {
     /** NotificationManager 섀도 조회 */
     fun shadowNotificationManager(context: Context): ShadowNotificationManager =
         shadowOf(context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+
+    /** JustApp이 게시한 동적 바로가기 목록 조회 */
+    fun dynamicShortcuts(context: Context): List<ShortcutInfo> =
+        context.getSystemService(ShortcutManager::class.java).dynamicShortcuts
+
+    /** ShortcutManager 섀도 조회 */
+    fun shadowShortcutManager(context: Context): ShadowShortcutManager =
+        shadowOf(context.getSystemService(ShortcutManager::class.java))
 }
