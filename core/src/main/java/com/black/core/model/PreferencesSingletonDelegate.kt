@@ -12,9 +12,7 @@ fun preferences(name: String? = null): ReadOnlyProperty<Context, SharedPreferenc
     return PreferencesSingletonDelegate(name)
 }
 
-/**
- * 참고 : [preferencesDataStore]
- */
+/** 참고 : [preferencesDataStore] */
 class PreferencesSingletonDelegate(private val name: String? = null): ReadOnlyProperty<Context, SharedPreferences> {
     private val lock = Any()
 

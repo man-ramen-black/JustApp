@@ -76,9 +76,7 @@ object OverlayViewUtil {
         windowManager.removeView(view)
     }
 
-    /**
-     * 화면의 x, y 좌표로 뷰를 이동
-     */
+    /** 화면의 x, y 좌표로 뷰를 이동 */
     @SuppressLint("RtlHardcoded")
     fun moveView(view: View, x: Float, y: Float) {
         updateView(view) {

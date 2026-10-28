@@ -22,9 +22,7 @@ object UiUtil {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.resources.displayMetrics).toInt()
     }
 
-    /**
-     * https://myksb1223.github.io/develop_diary/2019/03/28/Screen-size-in-Android.html
-     */
+    /** https://myksb1223.github.io/develop_diary/2019/03/28/Screen-size-in-Android.html */
     fun getScreenSize(context: Context) : Point {
         val metrics = context.resources.displayMetrics
         return Point(metrics.widthPixels, metrics.heightPixels)
@@ -51,9 +49,7 @@ object UiUtil {
         }
     }
 
-    /**
-     * 몰입 모드(전체 화면, 상단바, 하단바 숨김) 설정
-     */
+    /** 몰입 모드(전체 화면, 상단바, 하단바 숨김) 설정 */
     fun setImmersiveMode(window: Window?, isActivated: Boolean) {
         window ?: run {
             Log.w("window is null")
@@ -120,9 +116,7 @@ object UiUtil {
         }
     }
 
-    /**
-     * TabLayout과 ViewPager2 연결
-     */
+    /** TabLayout과 ViewPager2 연결 */
     fun TabLayout.setupWithViewPager2(viewPager: ViewPager2, autoRefresh: Boolean = true, smoothScroll: Boolean = true, tabText: ((TabLayout.Tab, Int) -> String)? = null) {
         TabLayoutMediator(this, viewPager, autoRefresh, smoothScroll) { tab, position ->
             tab.text = tabText?.invoke(tab, position) ?: ""

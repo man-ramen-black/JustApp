@@ -4,6 +4,7 @@ import android.graphics.drawable.ColorDrawable
 import android.text.Editable
 import android.text.SpannableStringBuilder
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -11,9 +12,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/**
- * [SelectAppViewModel]의 초기 선택 상태 반영 검증
- */
+/** [SelectAppViewModel]의 초기 선택 상태 반영 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SelectAppViewModelTest : BaseTest() {
 
@@ -23,9 +22,7 @@ class SelectAppViewModelTest : BaseTest() {
 
     private fun editable(text: String): Editable = SpannableStringBuilder(text)
 
-    /**
-     * EVENT_APP_SELECTED 이벤트로 전달되는 선택 결과 수집
-     */
+    /** EVENT_APP_SELECTED 이벤트로 전달되는 선택 결과 수집 */
     private fun observeSelectedPackages(): () -> List<String>? {
         var selected: List<String>? = null
         viewModel.observeEventForever { action, data ->
@@ -45,7 +42,7 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: com.a·com.c는 체크, com.b는 미체크
      */
     @Test
-    fun test_01_initMarksCheckedPackages() {
+    fun test_01_initMarksCheckedPackages() = runTest {
         /** Given **/
         val items = listOf(item("com.a"), item("com.b"), item("com.c"))
 
@@ -67,7 +64,7 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: 모두 미체크
      */
     @Test
-    fun test_02_initWithNoCheckedLeavesAllUnchecked() {
+    fun test_02_initWithNoCheckedLeavesAllUnchecked() = runTest {
         /** Given **/
         val items = listOf(item("com.a"), item("com.b"))
 
@@ -88,7 +85,7 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: com.a·com.b는 체크, com.c는 미체크 (다중 선택 유지)
      */
     @Test
-    fun test_03_onItemClickTogglesMultipleIndependently() {
+    fun test_03_onItemClickTogglesMultipleIndependently() = runTest {
         /** Given **/
         val appA = item("com.a")
         val appB = item("com.b")
@@ -112,7 +109,7 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: 완료 결과에 com.alpha가 유지됨
      */
     @Test
-    fun test_04_completeKeepsSelectionHiddenByFilter() {
+    fun test_04_completeKeepsSelectionHiddenByFilter() = runTest {
         /** Given **/
         val items = listOf(item("com.alpha"), item("com.beta"))
         viewModel.init(items)
@@ -136,7 +133,7 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: 완료 결과에 com.alpha·com.beta가 모두 포함됨
      */
     @Test
-    fun test_05_completeAccumulatesSelectionAcrossFilters() {
+    fun test_05_completeAccumulatesSelectionAcrossFilters() = runTest {
         /** Given **/
         val items = listOf(item("com.alpha"), item("com.beta"), item("com.gamma"))
         viewModel.init(items)

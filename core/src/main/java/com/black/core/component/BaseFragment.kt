@@ -75,9 +75,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         return binding.root
     }
 
-    /**
-     * View 셋팅은 onViewCreated에서 하는 것을 권장
-     */
+    /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -184,9 +184,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         }
     }
 
-    /**
-     * 예약된 지연 숨김 취소(표시 요청 시 깜빡임 방지)
-     */
+    /** 예약된 지연 숨김 취소(표시 요청 시 깜빡임 방지) */
     private fun cancelHide() {
         hideJob?.cancel()
         hideJob = null
@@ -205,9 +203,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         detachView()
     }
 
-    /**
-     * 표시 중인 타이머의 경과 시간 초기화
-     */
+    /** 표시 중인 타이머의 경과 시간 초기화 */
     fun resetTimer() {
         if (sessionStartElapsedMillis != null) {
             sessionStartElapsedMillis = SystemClock.elapsedRealtime()
@@ -215,9 +211,7 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         usageTimerView?.restart()
     }
 
-    /**
-     * 세션 상태 폐기. 다음 표시 요청은 새 세션으로 시작
-     */
+    /** 세션 상태 폐기. 다음 표시 요청은 새 세션으로 시작 */
     private fun clearSession() {
         sessionPackageName = null
         sessionStartElapsedMillis = null

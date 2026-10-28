@@ -51,9 +51,7 @@ class WebViewFileChooser(activityResultCaller: ActivityResultCaller) {
         }
     }
 
-    /**
-     * ActivityResult 처리 등록
-     */
+    /** ActivityResult 처리 등록 */
     private fun <I, O> registerForActivityResult(resultCaller: ActivityResultCaller, contracts: ActivityResultContract<I, O>, callback: (O) -> Unit) : ActivityResultLauncher<I> {
         return try {
             resultCaller.registerForActivityResult(contracts, callback)

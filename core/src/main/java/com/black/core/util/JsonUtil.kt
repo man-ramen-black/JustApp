@@ -40,18 +40,14 @@ object JsonUtil {
         }
     }
 
-    /**
-     * Gson 객체
-     */
+    /** Gson 객체 */
     val gson : Gson by lazy {
         GsonBuilder()
             .setPrettyPrinting()
             .create()
     }
 
-    /**
-     * get data from Json
-     */
+    /** get data from Json */
     fun <T> from(json: String, cls: Class<T>, isKotlinSerialize: Boolean = false): T? {
         return if (isKotlinSerialize) {
             tryForKS {
@@ -96,9 +92,7 @@ object JsonUtil {
         }
     }
 
-    /**
-     * get data from Json
-     */
+    /** get data from Json */
     inline fun <reified T> from(json: String, isKotlinSerialize: Boolean = false): T? {
         return if (isKotlinSerialize) {
             tryForKS<T> {
@@ -111,9 +105,7 @@ object JsonUtil {
         }
     }
 
-    /**
-     * parse data to JsonString
-     */
+    /** parse data to JsonString */
     fun <T> to(data: T, type: Type, isKotlinSerialize: Boolean = false): String? {
         return if (isKotlinSerialize) {
             @Suppress("UNCHECKED_CAST")
@@ -129,9 +121,7 @@ object JsonUtil {
         }
     }
 
-    /**
-     * parse data to JsonString
-     */
+    /** parse data to JsonString */
     inline fun <reified T> to(data: T, isKotlinSerialize: Boolean = false): String? {
         return if (isKotlinSerialize) {
             tryForKS {

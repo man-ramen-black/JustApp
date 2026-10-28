@@ -212,17 +212,13 @@ open class BKWebView : WebView {
             ?: run { Log.v("${BKWebChromeClient::class.java.simpleName} is null") }
     }
 
-    /**
-     * NMWebChromeClient 파일 업로드가 동작을 위한 FileChooser 설정
-     */
+    /** NMWebChromeClient 파일 업로드가 동작을 위한 FileChooser 설정 */
     fun setFileChooser(fileChooser: WebViewFileChooser?) {
         bkWebChromeClient?.setFileChooser(fileChooser)
             ?: run { Log.w("nmWebChromeClient is null") }
     }
 
-    /**
-     * 중복 스크롤 예외 처리 구현(ex. 스크롤 뷰 내에 웹뷰)
-     */
+    /** 중복 스크롤 예외 처리 구현(ex. 스크롤 뷰 내에 웹뷰) */
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         // NestedScrollView 내에 웹뷰가 있는 경우 스크롤이 될 수 있도록
         // 상하 스크롤이 가능한 경우 터치 이벤트를 상위 뷰로 전달하지 않고, 웹뷰에서만 처리

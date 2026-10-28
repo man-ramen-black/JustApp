@@ -72,9 +72,7 @@ object BottomNavigationViewBindingAdapter {
     }
 }
 
-/**
- * View
- */
+/** View */
 object ViewBindingAdapter {
     private const val DURATION = 300L
 
@@ -190,9 +188,7 @@ object ViewBindingAdapter {
     }
 }
 
-/**
- * ImageView
- */
+/** ImageView */
 object ImageViewBindingAdapter {
 
     @BindingAdapter("glideUrl")
@@ -263,9 +259,7 @@ object ImageViewBindingAdapter {
     }
 }
 
-/**
- * ViewPager
- */
+/** ViewPager */
 object ViewPagerBindingAdapter {
     interface OnPagerScrollStateChangedListener {
         fun onPagerScrollStateChanged(state: Int)
@@ -366,9 +360,7 @@ object ViewPagerBindingAdapter {
     }
 }
 
-/**
- * TabLayout
- */
+/** TabLayout */
 object TabLayoutBindingAdapter {
     @BindingAdapter("tabMaxWidth")
     @JvmStatic
@@ -403,9 +395,7 @@ object TabLayoutBindingAdapter {
     }
 }
 
-/**
- * EditText
- */
+/** EditText */
 object EditTextBindingAdapter {
     @BindingAdapter("onFocusChange")
     @JvmStatic
@@ -420,9 +410,7 @@ object EditTextBindingAdapter {
     }
 }
 
-/**
- * TextView
- */
+/** TextView */
 object TextViewBindingAdapter {
     @BindingAdapter("textRes")
     @JvmStatic
@@ -480,9 +468,7 @@ object TextViewBindingAdapter {
     }
 }
 
-/**
- * MaterialButton
- */
+/** MaterialButton */
 object MaterialButtonBindingAdapter {
     @BindingAdapter(value = ["progress", "progressWithDisabled"], requireAll = false)
     @JvmStatic
@@ -520,9 +506,7 @@ object RecyclerViewBindingAdapter {
         adapter.submitList(list ?: return)
     }
 
-    /**
-     * [DividerItemDecoration] 기반으로 재구성
-     */
+    /** [DividerItemDecoration] 기반으로 재구성 */
     @BindingAdapter(value = ["dividerHeight", "dividerPaddingHorizontal", "dividerPaddingVertical", "dividerColor"], requireAll = false)
     @JvmStatic
     fun setDivider(view: RecyclerView, dividerHeight: Float?, dividerPaddingHorizontal: Float?, dividerPaddingVertical: Float?, @ColorInt dividerColor: Int?) {
@@ -566,9 +550,7 @@ object RecyclerViewBindingAdapter {
                 canvas.restore()
             }
 
-            /**
-             * 아이템의 여백 설정
-             */
+            /** 아이템의 여백 설정 */
             override fun getItemOffsets(
                 outRect: Rect,
                 view: View,

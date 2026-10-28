@@ -15,9 +15,7 @@ abstract class BaseActivity<T : ViewDataBinding> : AppCompatActivity() {
 
     abstract fun bindVariable(binding: T)
 
-    /**
-     * Activity View Binding : https://developer.android.com/topic/libraries/view-binding?hl=ko#activities
-     */
+    /** Activity View Binding : https://developer.android.com/topic/libraries/view-binding?hl=ko#activities */
     @CallSuper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

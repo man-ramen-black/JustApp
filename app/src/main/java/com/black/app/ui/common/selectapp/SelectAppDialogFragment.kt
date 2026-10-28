@@ -34,9 +34,7 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
             }
         }
 
-        /**
-         * 앱 선택 완료 결과(List<packageName: String>) 관찰
-         */
+        /** 앱 선택 완료 결과(List<packageName: String>) 관찰 */
         fun observeSelectedApp(
             fragmentManager: FragmentManager,
             lifecycleOwner: LifecycleOwner,

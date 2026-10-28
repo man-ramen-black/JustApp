@@ -67,9 +67,7 @@ open class EventViewModel : ViewModel()  {
         event.send(action, data)
     }
 
-    /**
-     * 백그라운드 스레드에서 전송 시 사용
-     */
+    /** 백그라운드 스레드에서 전송 시 사용 */
     fun postEvent(action: String = "", data: Any? = null)
         = event.post(action, data)
 

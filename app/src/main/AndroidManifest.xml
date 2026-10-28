@@ -132,6 +132,22 @@
                 android:resource="@xml/usage_timer_accessibility_config" />
         </service>
 
+        <!-- 빠른 설정창 화면 켜짐 유지 타일 -->
+        <service android:name=".ui.maintab.main.keepscreenon.KeepScreenOnTileService"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:icon="@drawable/ic_keep_screen_on"
+            android:label="@string/keep_screen_on_tile_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+
+            <!-- 켜짐/꺼짐 스위치형 타일 표시 -->
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
         <!-- 동작하지 않음 -->
         <!-- 스토어를 통해서 업데이트하면 동작하지 않을까 추측 -->
         <receiver android:name=".broadcast.AppUpdateReceiver" android:exported="true">

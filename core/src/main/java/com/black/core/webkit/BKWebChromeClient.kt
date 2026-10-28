@@ -105,9 +105,7 @@ class BKWebChromeClient : WebChromeClient() {
         return true
     }
 
-    /**
-     * 파일 업로드 구현
-     */
+    /** 파일 업로드 구현 */
     override fun onShowFileChooser(webView: WebView, filePathCallback: ValueCallback<Array<Uri>>, fileChooserParams: FileChooserParams): Boolean {
         Log.v("onShowFileChooser")
         onShowFileChooserCallback = filePathCallback
@@ -115,9 +113,7 @@ class BKWebChromeClient : WebChromeClient() {
         return true
     }
 
-    /**
-     * 웹뷰에서 전체화면 시에 호출되는 메소드
-     */
+    /** 웹뷰에서 전체화면 시에 호출되는 메소드 */
     override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
         Log.v("view : $view, callback : $callback")
         customView = view ?: run {
@@ -144,9 +140,7 @@ class BKWebChromeClient : WebChromeClient() {
         activity.windowManager.addView(view, WindowManager.LayoutParams())
     }
 
-    /**
-     * 웹뷰에서 전체화면 해제시에 호출되는 메소드
-     */
+    /** 웹뷰에서 전체화면 해제시에 호출되는 메소드 */
     override fun onHideCustomView() {
         val activity = activity
             ?: run {
@@ -166,9 +160,7 @@ class BKWebChromeClient : WebChromeClient() {
         this.activity = null
     }
 
-    /**
-     * 현재 전체화면인지 여부
-     */
+    /** 현재 전체화면인지 여부 */
     fun isShownCustomView() : Boolean = customView != null
 
     /**
@@ -226,9 +218,7 @@ class BKWebChromeClient : WebChromeClient() {
         }
     }
 
-    /**
-     * 파일 선택 액티비티 실행
-     */
+    /** 파일 선택 액티비티 실행 */
     private fun showFileChooser(fileChooserParams: FileChooserParams?) {
         webViewFileChooser?.showFileChooser(fileChooserParams, this::onOpenDocuments)
             ?: run {
@@ -236,9 +226,7 @@ class BKWebChromeClient : WebChromeClient() {
             }
     }
 
-    /**
-     * 파일 열고 난 후 처리
-     */
+    /** 파일 열고 난 후 처리 */
     private fun onOpenDocuments(uriList: List<Uri>) {
         onShowFileChooserCallback?.let {
             it.onReceiveValue(uriList.toTypedArray())

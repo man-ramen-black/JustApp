@@ -33,16 +33,12 @@ class UsageTimerScreenTest : BaseUiTest() {
 
     private val repository = UsageTimerRepository(context)
 
-    /**
-     * 각 테스트 전 선택 앱 저장소 초기화
-     */
+    /** 각 테스트 전 선택 앱 저장소 초기화 */
     override fun setup() {
         runBlocking { repository.saveSelectedApps(emptyList()) }
     }
 
-    /**
-     * 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리)
-     */
+    /** 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리) */
     override fun teardown() {
         runBlocking { repository.saveSelectedApps(emptyList()) }
     }
@@ -177,9 +173,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         composeRule.onNodeWithTag("selected_apps_list").assertDoesNotExist()
     }
 
-    /**
-     * UsageTimerScreen을 HiltTestActivity에 setContent로 호스팅
-     */
+    /** UsageTimerScreen을 HiltTestActivity에 setContent로 호스팅 */
     private fun hostUsageTimerScreen() {
         onHostActivity { activity ->
             activity.setContent {

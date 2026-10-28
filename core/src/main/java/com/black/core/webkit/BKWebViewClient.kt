@@ -191,9 +191,7 @@ open class BKWebViewClient : WebViewClient() {
         onPageFinished(view ?: return, url ?: "", isError)
     }
 
-    /**
-     * 페이지 로드 완료
-     */
+    /** 페이지 로드 완료 */
     protected open fun onPageFinished(view: WebView, url: String, isError: Boolean) {
         callbackList.forEach { it.onPageFinished(view, url, isError) }
     }

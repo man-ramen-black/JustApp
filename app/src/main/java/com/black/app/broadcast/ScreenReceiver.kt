@@ -11,9 +11,7 @@ import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.Log
 
 class ScreenReceiver : BroadcastReceiver() {
-    /**
-     * ForegroundService에서 실행될 동작 정의
-     */
+    /** ForegroundService에서 실행될 동작 정의 */
     object ServiceInterface : ForegroundService.Interface {
         private var receiver : ScreenReceiver? = null
 

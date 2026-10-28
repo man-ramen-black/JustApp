@@ -88,9 +88,7 @@ open class BaseTest {
     }
 }
 
-/**
- * https://lovestudycom.tistory.com/entry/Testing-Kotlin-coroutines-on-Android
- */
+/** https://lovestudycom.tistory.com/entry/Testing-Kotlin-coroutines-on-Android */
 class TestDispatcherRule(val testDispatcher: TestDispatcher = StandardTestDispatcher()): TestWatcher() {
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun starting(description: Description) {
