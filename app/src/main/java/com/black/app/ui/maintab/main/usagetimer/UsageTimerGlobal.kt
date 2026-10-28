@@ -197,10 +197,13 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /**
      * 닫기 버튼으로 타이머 제거
      * 같은 앱에 머무는 동안 재표시하지 않도록 닫은 앱 패키지 기록(다른 앱 전환 확정 시 해제)
+     * 앱 화면 SHOW로 띄운 타이머처럼 추적하지 않는 뷰는 닫기 기록 없이 그 뷰만 제거
      */
-    fun closeByUser() {
-        dismissedPackageName = currentPackageName
-        detachView()
+    fun closeByUser(view: UsageTimerView) {
+        if (view === usageTimerView) {
+            dismissedPackageName = currentPackageName
+        }
+        view.detachView()
     }
 
     /** 표시 중인 타이머의 경과 시간 초기화 */
@@ -232,8 +235,10 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /**
      * 오버레이 뷰가 제거될 때 추적 상태 정리(close 버튼·외부 detach 공통 경로)
      * 유예 내 같은 앱 복귀 시 세션을 이어가도록 숨김 시각 기록
+     * 추적하지 않는 뷰(앱 화면 SHOW 타이머)의 제거는 표시 중인 선택 앱 타이머 추적을 끊지 않도록 무시
      */
-    fun onViewDetached() {
+    fun onViewDetached(view: UsageTimerView) {
+        if (view !== usageTimerView) return
         usageTimerView = null
         currentPackageName = null
         sessionHiddenElapsedMillis = SystemClock.elapsedRealtime()
