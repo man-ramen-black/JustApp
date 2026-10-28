@@ -1,16 +1,39 @@
 package com.black.app.ui.maintab.main.usagetimer
 
+import android.content.Context
+import android.os.Looper
+import android.view.ContextThemeWrapper
+import android.view.View
+import android.view.WindowManager
+import androidx.test.core.app.ApplicationProvider
+import com.black.app.R
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal.TimerAction
+import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadow.api.Shadow
+import org.robolectric.shadows.ShadowWindowManagerImpl
 
-/** [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정 검증 */
+/** [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정과 타이머 오버레이 닫기 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerGlobalTest : BaseTest() {
+
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+    /** 각 테스트 후 남은 타이머 오버레이 제거(싱글턴 상태 격리) */
+    @After
+    fun detachTimerViews() {
+        UsageTimerGlobal.detachView()
+        attachedTimerViews().forEach { it.detachView() }
+    }
 
     /**
      * 활성 앱이 선택 앱이고 일시정지가 아니면 표시
@@ -247,4 +270,64 @@ class UsageTimerGlobalTest : BaseTest() {
             UsageTimerGlobal.resolveDismissedPackage("com.a", null),
         )
     }
+
+    /**
+     * 앱 화면 SHOW로 띄운 타이머의 닫기 버튼이 그 타이머를 제거하는지 검증
+     *
+     * Given: UsageTimerGlobal이 추적하지 않는 타이머 오버레이 표시
+     * When: 닫기 버튼 클릭
+     * Then: 타이머 오버레이 제거
+     */
+    @Test
+    fun test_17_closeButtonDetachesUntrackedTimer() = runTest {
+        /** Given **/
+        val previewView = attachPreviewView()
+
+        /** When **/
+        clickClose(previewView)
+
+        /** Then **/
+        assertTrue(attachedTimerViews().isEmpty())
+    }
+
+    /**
+     * SHOW 타이머를 닫아도 선택 앱 타이머 추적이 유지되는지 검증
+     *
+     * Given: 선택 앱 타이머(showForApp)와 SHOW 타이머 표시
+     * When: SHOW 타이머 닫기 버튼 클릭 후 UsageTimerGlobal.detachView 호출
+     * Then: 닫기 직후 선택 앱 타이머만 남고, detachView로 선택 앱 타이머도 제거
+     */
+    @Test
+    fun test_18_closingUntrackedTimerKeepsTrackedTimer() = runTest {
+        /** Given **/
+        UsageTimerGlobal.showForApp(context, "com.example.app")
+        val trackedView = attachedTimerViews().single()
+        val previewView = attachPreviewView()
+
+        /** When **/
+        clickClose(previewView)
+        val remainingViews = attachedTimerViews()
+        UsageTimerGlobal.detachView()
+
+        /** Then **/
+        assertEquals(listOf(trackedView), remainingViews)
+        assertTrue(attachedTimerViews().isEmpty())
+    }
+
+    /** 앱 화면 SHOW 경로처럼 UsageTimerGlobal을 거치지 않고 타이머 오버레이 표시 */
+    private fun attachPreviewView(): UsageTimerView =
+        UsageTimerView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
+            it.attachView()
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+
+    /** 타이머 오버레이의 닫기 버튼 클릭 */
+    private fun clickClose(view: UsageTimerView) {
+        view.findViewById<View>(R.id.close).performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** WindowManager에 추가된 타이머 오버레이 목록 조회 */
+    private fun attachedTimerViews(): List<UsageTimerView> =
+        Shadow.extract<ShadowWindowManagerImpl>(windowManager).views.filterIsInstance<UsageTimerView>()
 }
