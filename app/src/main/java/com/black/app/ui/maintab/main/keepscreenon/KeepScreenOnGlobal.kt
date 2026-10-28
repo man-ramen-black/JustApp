@@ -31,9 +31,7 @@ object KeepScreenOnGlobal {
     private var overlayView: View? = null
     private var screenOffReceiver: BroadcastReceiver? = null
 
-    /**
-     * 활성 상태 반전 후 반전된 활성 여부 반환
-     */
+    /** 활성 상태 반전 후 반전된 활성 여부 반환 */
     @MainThread
     fun toggle(context: Context): Boolean {
         if (isActive.value) {
@@ -44,27 +42,29 @@ object KeepScreenOnGlobal {
         return isActive.value
     }
 
-    /**
-     * 오버레이 창 추가·화면 꺼짐 Receiver 등록 후 활성 여부 반환
-     */
+    /** 오버레이 창 추가·화면 꺼짐 Receiver 등록 후 활성 여부 반환 */
     @MainThread
     fun activate(context: Context): Boolean {
+        // 이미 활성이면 창 중복 추가 방지
         if (isActive.value) {
             Log.w("already active")
             return true
         }
 
+        // 다른 앱 위에 표시 권한 없으면 오버레이 창 추가 불가
         val applicationContext = context.applicationContext
         if (!PermissionHelper.canDrawOverlays(applicationContext)) {
             Log.w("cannot draw overlays")
             return false
         }
 
+        // 화면 꺼짐 방지 전용 1x1 투명 오버레이 창 추가
         val view = View(applicationContext)
         try {
             OverlayViewUtil.attachView(view) { windowParams ->
                 windowParams.width = 1
                 windowParams.height = 1
+                // attachView 기본 플래그(바깥 터치 감시 등)를 덮어써 터치·포커스를 아래 앱으로 통과
                 windowParams.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                         WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -72,6 +72,7 @@ object KeepScreenOnGlobal {
                 windowParams.title = WINDOW_TITLE
             }
         } catch (e: WindowManager.BadTokenException) {
+            // 권한 확인 직후 회수 등으로 시스템이 창 추가 거부
             Log.e("attach overlay failed : $e")
             return false
         } catch (e: SecurityException) {
@@ -79,23 +80,25 @@ object KeepScreenOnGlobal {
             return false
         }
 
+        // 해제 시 제거할 창·Receiver 보관 후 활성 상태 반영
         overlayView = view
         screenOffReceiver = registerScreenOffReceiver(applicationContext)
         mutableIsActive.value = true
         return true
     }
 
-    /**
-     * 오버레이 창 제거·화면 꺼짐 Receiver 해제
-     */
+    /** 오버레이 창 제거·화면 꺼짐 Receiver 해제 */
     @MainThread
     fun deactivate(context: Context) {
+        // 이미 비활성이면 정리할 창·Receiver 없음
         if (!isActive.value) {
             return
         }
 
+        // 창 제거로 화면 꺼짐 방지 해제
         overlayView?.let { OverlayViewUtil.detachView(it) }
         overlayView = null
+        // 화면 꺼짐 수신 중단
         screenOffReceiver?.let { context.applicationContext.unregisterReceiver(it) }
         screenOffReceiver = null
         mutableIsActive.value = false
@@ -111,6 +114,7 @@ object KeepScreenOnGlobal {
                 }
             }
         }
+        // ACTION_SCREEN_OFF는 시스템 보호 브로드캐스트라 NOT_EXPORTED여도 수신, 다른 앱의 위조 전송만 차단
         ContextCompat.registerReceiver(
             context,
             receiver,
