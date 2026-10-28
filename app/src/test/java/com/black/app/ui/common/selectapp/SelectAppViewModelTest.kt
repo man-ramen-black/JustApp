@@ -12,7 +12,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [SelectAppViewModel]의 초기 선택 상태 반영 검증 */
+/** [SelectAppViewModel]의 초기 선택 상태·목록 순서·선택 결과 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SelectAppViewModelTest : BaseTest() {
 
@@ -149,5 +149,46 @@ class SelectAppViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(setOf("com.alpha", "com.beta"), selected()?.toSet())
+    }
+
+    /**
+     * 팝업을 열 때 이미 선택된 앱이 앞에 오고, 선택·미선택 각 묶음은 앱 이름순인지 검증
+     *
+     * Given: 앱 4개(com.d, com.b, com.c, com.a 순), 초기 선택 [com.c, com.a]
+     * When: init 호출
+     * Then: 표시 목록이 [com.a, com.c, com.b, com.d] 순서
+     */
+    @Test
+    fun test_06_initPutsCheckedAppsFirstInLabelOrder() = runTest {
+        /** Given **/
+        val items = listOf(item("com.d"), item("com.b"), item("com.c"), item("com.a"))
+
+        /** When **/
+        viewModel.init(items, listOf("com.c", "com.a"))
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(listOf("com.a", "com.c", "com.b", "com.d"), viewModel.itemList.value?.map { it.packageName })
+    }
+
+    /**
+     * 팝업 안에서 체크를 바꿔도 항목이 자리를 옮기지 않는지 검증
+     *
+     * Given: 앱 3개 init, 초기 선택 [com.c]
+     * When: com.b 클릭
+     * Then: 표시 목록이 init 직후 순서 [com.c, com.a, com.b] 그대로
+     */
+    @Test
+    fun test_07_itemClickKeepsOrder() = runTest {
+        /** Given **/
+        val items = listOf(item("com.a"), item("com.b"), item("com.c"))
+        viewModel.init(items, listOf("com.c"))
+        waitCoroutine()
+
+        /** When **/
+        viewModel.onItemClick(items.first { it.packageName == "com.b" })
+
+        /** Then **/
+        assertEquals(listOf("com.c", "com.a", "com.b"), viewModel.itemList.value?.map { it.packageName })
     }
 }

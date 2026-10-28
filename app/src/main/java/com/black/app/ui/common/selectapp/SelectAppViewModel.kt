@@ -26,7 +26,11 @@ class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventV
             isProgress.value = false
             val checkedSet = checkedPackageNames.toSet()
             list.forEach { it.isChecked.value = checkedSet.contains(it.packageName) }
-            itemListOrigin = list.sortedBy { it.appLabel.toString() }
+            // 이미 선택된 앱을 앞에 두고 각 묶음은 앱 이름순. 팝업을 연 시점 기준이라 체크를 바꿔도 재정렬하지 않음
+            itemListOrigin = list.sortedWith(
+                compareByDescending<SelectAppItem> { checkedSet.contains(it.packageName) }
+                    .thenBy { it.appLabel.toString() }
+            )
             itemList.value = itemListOrigin
         }
     }
