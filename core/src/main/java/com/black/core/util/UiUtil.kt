@@ -28,7 +28,11 @@ object UiUtil {
         return Point(metrics.widthPixels, metrics.heightPixels)
     }
 
-    /** 현재 시스템바를 제외한 콘텐츠 영역 반환 */
+    /**
+     * 현재 시스템바를 제외한 콘텐츠 영역 반환
+     * 오버레이 창 x, y의 기준 영역(부모 프레임)과 같은 크기라 [OverlayViewUtil]의 이동 제한·좌표 변환 기준으로 사용
+     * 오버레이 창은 컷아웃 영역까지 배치([OverlayViewUtil.attachView])되므로 컷아웃은 빼지 않음
+     */
     fun getCurrentViewportSize(context: Context): Point {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 

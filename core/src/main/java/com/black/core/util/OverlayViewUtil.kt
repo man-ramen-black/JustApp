@@ -44,6 +44,11 @@ object OverlayViewUtil {
             PixelFormat.TRANSLUCENT
         )
         layoutParams.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+        // 컷아웃 영역까지 배치·이동 허용
+        // 기본 모드는 가로 화면에서 컷아웃 쪽 가장자리를 x, y 기준 영역에서 빼므로, 시스템 바만 빼는 이동 제한과 어긋나 반대쪽 화면 밖까지 이동됨
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            layoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        }
         onSetWindowParams?.invoke(layoutParams)
 
         Log.d("isCenter : ${layoutParams.gravity and Gravity.CENTER == Gravity.CENTER}")
@@ -91,52 +96,63 @@ object OverlayViewUtil {
     /**
      * Gravity가 right인 경우 x값은 오른쪽에서부터의 x이고, bottom도 아래부터의 y이기 때문에,
      * 화면 사이즈, view size를 계산하여 Top, Left 기준의 x, y 위치를 반환
+     * 화면 사이즈는 [moveView]와 같은 기준 영역(시스템 바 제외)이어야 이동 시작 시 뷰가 튀지 않음
      */
-    @SuppressLint("RtlHardcoded")
     fun getAbsoluteWindowPosition(view: View) : Point {
         val context = view.context
-        val screenSize = UiUtil.getScreenSize(context)
+        val screenSize = UiUtil.getCurrentViewportSize(context)
 
         val windowParams = view.layoutParams as? WindowManager.LayoutParams
             ?: throw ClassCastException("LayoutParams is not WindowManager.LayoutParams")
 
-        val gravity = windowParams.gravity
+        return calculateTopLeftPosition(windowParams.gravity, windowParams.x, windowParams.y, screenSize, view.width, view.height)
+    }
 
+    /** Gravity 기준 창 x, y를 containerSize 영역의 Top, Left 기준 위치로 변환 */
+    @SuppressLint("RtlHardcoded")
+    fun calculateTopLeftPosition(
+        gravity: Int,
+        windowX: Int,
+        windowY: Int,
+        containerSize: Point,
+        viewWidth: Int,
+        viewHeight: Int
+    ) : Point {
         val x = when {
             gravity and Gravity.LEFT == Gravity.LEFT -> {
                 Log.d("gravity is left")
-                windowParams.x
+                windowX
             }
             gravity and Gravity.RIGHT == Gravity.RIGHT -> {
                 Log.d("gravity is right")
-                screenSize.x - view.width - windowParams.x
+                containerSize.x - viewWidth - windowX
             }
             gravity and Gravity.CENTER_HORIZONTAL == Gravity.CENTER_HORIZONTAL -> {
                 Log.d("gravity is center horizontal")
-                screenSize.x / 2 - view.width / 2 + windowParams.x
+                containerSize.x / 2 - viewWidth / 2 + windowX
             }
             else -> {
                 Log.d("gravity is unknown")
-                windowParams.x
+                windowX
             }
         }
 
         val y = when {
             gravity and Gravity.TOP == Gravity.TOP -> {
                 Log.d("gravity is top")
-                windowParams.y
+                windowY
             }
             gravity and Gravity.BOTTOM == Gravity.BOTTOM -> {
                 Log.d("gravity is bottom")
-                screenSize.y - view.height - windowParams.y
+                containerSize.y - viewHeight - windowY
             }
             gravity and Gravity.CENTER_VERTICAL == Gravity.CENTER_VERTICAL -> {
                 Log.d("gravity is center vertical")
-                screenSize.y / 2 - view.height / 2 + windowParams.y
+                containerSize.y / 2 - viewHeight / 2 + windowY
             }
             else -> {
                 Log.d("gravity is unknown")
-                windowParams.y
+                windowY
             }
         }
         return Point(x, y)
