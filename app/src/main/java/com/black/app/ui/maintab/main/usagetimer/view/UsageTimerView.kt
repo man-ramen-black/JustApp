@@ -1,5 +1,6 @@
 package com.black.app.ui.maintab.main.usagetimer.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.TypedArray
 import android.view.Gravity
@@ -8,7 +9,6 @@ import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.OnClick
-import com.black.core.util.UiUtil
 
 /**
  * CustomView 가이드
@@ -30,10 +30,11 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
         isMovable = true
     }
 
+    /** 첫 표시 위치: 화면 세로 중앙 왼쪽 */
+    @SuppressLint("RtlHardcoded")
     override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
         windowParams.apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = UiUtil.dpToPx(context, 20f)
+            gravity = Gravity.LEFT or Gravity.CENTER_VERTICAL
             windowAnimations = android.R.style.Animation_Toast
         }
     }

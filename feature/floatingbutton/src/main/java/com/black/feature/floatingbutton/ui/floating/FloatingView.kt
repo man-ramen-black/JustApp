@@ -1,12 +1,14 @@
 package com.black.feature.floatingbutton.ui.floating
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.TypedArray
 import android.media.AudioManager
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -51,7 +53,10 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
         isMovable = true
     }
 
+    /** 첫 표시 위치: 화면 왼쪽 아래 */
+    @SuppressLint("RtlHardcoded")
     override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+        windowParams.gravity = Gravity.LEFT or Gravity.BOTTOM
         windowParams.y = 70
     }
 

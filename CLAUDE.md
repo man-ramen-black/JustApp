@@ -48,4 +48,5 @@
 - 작업은 release에서 분기한 `{타입}/{주제-kebab-case}` 브랜치에서 진행하고 release로 머지합니다. 타입은 `feature`, `fix`, `refactor`, `design`, `test`를 사용합니다. (예: `feature/usage-timer-compose`)
 - `git push`는 명시적으로 지시받았을 때만 합니다. 머지 커밋 메시지는 git 기본 형식(`Merge branch '<브랜치>' into release`)을 그대로 사용합니다.
 - 테스트 코드를 작성·수정하면 관련 테스트를 실제로 실행해 통과를 확인해야 완료입니다(컴파일 성공만으로는 미완료). 실패하면 변경 전 형상에서 같은 테스트를 돌려 이번 변경 탓인지 가리고, 변경과 무관한 전체 테스트는 요청받았을 때만 실행합니다. 실행할 수 없으면 사유와 미검증 범위를 알립니다.
+- 기기에 설치하는 Gradle 작업(`installDebug`·`installDebugAndroidTest`·`connectedDebugAndroidTest` 등)은 연결된 기기 전부에 설치되므로 `ANDROID_SERIAL=<시리얼> ./gradlew …`로 대상 기기 하나만 지정해 실행합니다. 작업 도중 기기가 새로 연결될 수 있어 연결된 기기가 한 대뿐이어도 생략하지 않습니다.
 - 작업을 마치면 변경한 파일을 `git add`로 스테이징합니다. (Write·Edit한 파일은 `.claude/hooks/auto-git-add.mjs`가 자동 스테이징하며 `docs/`는 제외)
