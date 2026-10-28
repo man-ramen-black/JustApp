@@ -68,11 +68,10 @@ object PackageInstallNotifier {
 
         // 패키지별 ID로 같은 앱은 앞선 알림 대체, 다른 앱끼리는 따로 표시
         val notificationId = packageName.hashCode()
-        // 상단바 small icon은 설치·업데이트를 구분하는 전용 아이콘
-        val (messageResId, smallIconResId) = if (isUpdate) {
-            R.string.package_install_notification_updated to R.drawable.ic_app_update
+        val messageResId = if (isUpdate) {
+            R.string.package_install_notification_updated
         } else {
-            R.string.package_install_notification_installed to R.drawable.ic_app_install
+            R.string.package_install_notification_installed
         }
         val label = packageManager.getApplicationLabel(applicationInfo).toString()
         val message = context.getString(messageResId)
@@ -89,7 +88,8 @@ object PackageInstallNotifier {
                 label,
                 message,
                 notificationId,
-                smallIconResId,
+                // 상단바 small icon은 설치·업데이트 공통, 순환 화살표 같은 세부 모양은 상단바 크기에서 알아보기 어려움
+                R.drawable.ic_app_install,
             ) { builder ->
                 if (isConversation) {
                     // MessagingStyle 생성자 인자는 기기 사용자 자리이고 같은 Person의 메시지는 내가 보낸 메시지로 취급돼, 사용자는 JustApp·보낸 사람은 설치된 앱으로 분리

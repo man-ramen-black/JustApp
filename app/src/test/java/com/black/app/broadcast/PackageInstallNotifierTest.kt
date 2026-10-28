@@ -103,7 +103,7 @@ class PackageInstallNotifierTest : BaseTest() {
      *
      * Given: 알림 권한 허용, 런처 앱 설치
      * When: isUpdate=true로 show 호출
-     * Then: 메시지=업데이트되었습니다., small icon ic_app_update, 대화 메시지 본문=업데이트되었습니다.
+     * Then: 메시지=업데이트되었습니다., small icon ic_app_install(설치와 공통), 대화 메시지 본문=업데이트되었습니다.
      */
     @Test
     fun test_03_updatedAppShowsUpdatedMessage() = runTest {
@@ -117,7 +117,7 @@ class PackageInstallNotifierTest : BaseTest() {
         /** Then **/
         val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
         assertEquals("업데이트되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
-        assertEquals(R.drawable.ic_app_update, notification.smallIcon.resId)
+        assertEquals(R.drawable.ic_app_install, notification.smallIcon.resId)
         val messagingStyle = requireNotNull(NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification))
         assertEquals("업데이트되었습니다.", messagingStyle.messages.single().text.toString())
     }
