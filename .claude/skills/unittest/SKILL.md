@@ -60,7 +60,9 @@ class UsageTimerViewModelTest : BaseTest() {
 - 함수명 `test_{2자리순번}_{camelCase 동작}` (예: `test_02_onAppsSelectedSavesAndUpdates`)
 - KDoc: 한 줄 요약 + `Given:`/`When:`/`Then:` 한 줄씩
 - 본문: `/** Given **/`, `/** When **/`, `/** Then **/`로 구획한다. 두 단계가 한 줄로 겹치면 `/** Given / When **/`로 합친다.
-- suspend 함수를 호출하거나 이벤트를 수집하는 테스트는 `= runTest { }`로 감싼다.
+- 모든 테스트 함수는 suspend 호출 여부와 상관없이 `= runTest { }`로 감싼다. `runTest`는 `Dispatchers.Main`의 테스트 스케줄러를 같이 쓰므로 동기 코드·`waitCoroutine()`·Robolectric 루퍼 `idle()` 결과는 그대로이고, 본문이 끝난 뒤 남은 코루틴을 진행시키는 점만 다르다.
+    - 금지: `fun test_01_activeResolvesActiveTile() { ... }`, `fun test_01_activeResolvesActiveTile() = runBlocking { ... }`
+    - 허용: `fun test_01_activeResolvesActiveTile() = runTest { ... }`
 - 주석·KDoc은 CLAUDE.md 규칙대로 명사형으로 끝맺는다.
 
 ```kotlin
