@@ -14,7 +14,7 @@ argument-hint: [대상 화면 또는 Fragment]
 |---|---|
 | `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless) + 그 화면 전용 private 하위 Composable |
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
-| `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 `[XxxScreen]` 참조 |
+| `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 CLAUDE.md 형식으로 `[XxxScreen]` 링크 |
 
 ```kotlin
 /** TextEditor 화면 */

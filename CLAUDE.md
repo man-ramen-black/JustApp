@@ -24,7 +24,8 @@
 - 변수명은 언더바(`_`)로 시작하지 않습니다.
 - 변수명·함수명에 `btn`, `tv`, `img` 같은 줄임말을 사용하지 않고 전체 단어로 작성합니다.
 - 코드에서 타입은 FQCN 대신 `import` 후 단순 이름으로 작성합니다.
-- 모든 주석은 명사형으로 끝맺고 `~한다`·`~된다` 같은 서술형 종결을 쓰지 않으며, 내용이 한 줄인 KDoc은 여러 줄로 펼치지 않고 한 줄로 씁니다. (예: `/** select_app_button 클릭 */`)
+- 모든 주석은 명사형으로 끝맺고 `~한다`·`~된다` 같은 서술형 종결을 쓰지 않습니다.
+- KDoc은 Kotlin 표준 형식을 따릅니다. 요약만 있으면 한 줄(`/** select_app_button 클릭 */`)로 쓰고, 세부 사항은 요약 줄에 괄호로 나열하지 않고 빈 줄 뒤 문단으로 씁니다. 링크(`[Name]`)는 관계가 드러나게 문장 안에 쓰거나(`[PackageInstallReceiver]에서 호출`) `@see`로 달며, 요약 끝에 설명 없이 붙이지 않습니다. (금지: `/** 알림 표시(제목 앱 이름, 터치 시 그 앱 실행) [PackageInstallReceiver] */`)
 - 코드 수정 시 기존 주석을 임의로 제거하지 않습니다. 주석·KDoc에는 코드에서 읽히지 않는 이유·제약·함정만 쓰고, 작업 이력(`기존엔 X였음`, `실기기 확인 완료`)은 남기지 않습니다.
 - 탐색에 오래 걸린 코드에는 이후 탐색을 돕는 요약 주석을 추가합니다.
 - 함수 시그니처·내부 동작·외부 구조는 추측하지 않고 실제 소스를 확인한 뒤 코드를 작성합니다. `head`·`tail`로 자른 검색 결과만으로 "없다"고 단정하지 않습니다.
@@ -35,7 +36,7 @@
 
 ## ViewModel·데이터
 
-- ViewModel KDoc에 해당 ViewModel을 참조하는 화면을 작성하고, 그 화면의 import도 추가합니다. (예: `UsageTimerViewModel`: `[UsageTimerScreen]`)
+- ViewModel KDoc에 해당 ViewModel을 참조하는 화면을 링크로 작성하고, 그 화면의 import도 추가합니다. (예: `/** [UsageTimerScreen]의 상태·이벤트 관리 ViewModel */`)
 - 모든 ViewModel은 `EventViewModel`을 상속합니다.
 - ViewModel 코루틴은 `viewModelScope.launch` 대신 `EventViewModel`의 `launch`를 사용합니다.
 - ViewModel 일회성 이벤트는 해당 ViewModel 내부에 `ViewModelEvent`를 구현한 sealed class로 정의하고, 하위 이벤트는 sealed class와 같은 레벨(ViewModel 직속)에 `Event{이벤트명}` data class·data object로 명명합니다. (예: `UsageTimerViewModel.EventShowTimerView`)
