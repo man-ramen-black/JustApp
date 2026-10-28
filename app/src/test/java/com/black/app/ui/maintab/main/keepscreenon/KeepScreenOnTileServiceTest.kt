@@ -2,6 +2,7 @@ package com.black.app.ui.maintab.main.keepscreenon
 
 import android.service.quicksettings.Tile
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -21,7 +22,7 @@ class KeepScreenOnTileServiceTest : BaseTest() {
      * Then: STATE_ACTIVE
      */
     @Test
-    fun test_01_activeResolvesActiveTile() {
+    fun test_01_activeResolvesActiveTile() = runTest {
         /** Given / When / Then **/
         assertEquals(Tile.STATE_ACTIVE, KeepScreenOnTileService.resolveTileState(true))
     }
@@ -34,7 +35,7 @@ class KeepScreenOnTileServiceTest : BaseTest() {
      * Then: STATE_INACTIVE
      */
     @Test
-    fun test_02_inactiveResolvesInactiveTile() {
+    fun test_02_inactiveResolvesInactiveTile() = runTest {
         /** Given / When / Then **/
         assertEquals(Tile.STATE_INACTIVE, KeepScreenOnTileService.resolveTileState(false))
     }

@@ -56,7 +56,7 @@ class UsageTimerViewModelTest : BaseTest() {
      * Then: uiState.pauseDurationInput "3", selectedApps 패키지명 [com.a, com.b]
      */
     @Test
-    fun test_01_initLoadsSavedState() {
+    fun test_01_initLoadsSavedState() = runTest {
         /** When **/
         val viewModel = createViewModel()
 
@@ -76,7 +76,7 @@ class UsageTimerViewModelTest : BaseTest() {
      * Then: repository.saveSelectedApps 호출 + selectedApps가 [com.x]로 갱신
      */
     @Test
-    fun test_02_onAppsSelectedSavesAndUpdates() {
+    fun test_02_onAppsSelectedSavesAndUpdates() = runTest {
         /** Given **/
         coEvery { repository.saveSelectedApps(any()) } just Runs
         val viewModel = createViewModel()
@@ -152,7 +152,7 @@ class UsageTimerViewModelTest : BaseTest() {
      * Then: repository.savePauseDuration(0) 호출
      */
     @Test
-    fun test_05_invalidDurationInputSavesZero() {
+    fun test_05_invalidDurationInputSavesZero() = runTest {
         /** Given **/
         coEvery { repository.savePauseDuration(any()) } just Runs
         val viewModel = createViewModel()
@@ -174,7 +174,7 @@ class UsageTimerViewModelTest : BaseTest() {
      * Then: uiState.pauseRemainTimeMillis가 0 초과
      */
     @Test
-    fun test_06_onClickPauseUpdatesRemainTime() {
+    fun test_06_onClickPauseUpdatesRemainTime() = runTest {
         /** Given **/
         coEvery { repository.savePauseDuration(any()) } just Runs
         coEvery { repository.pause(any()) } just Runs

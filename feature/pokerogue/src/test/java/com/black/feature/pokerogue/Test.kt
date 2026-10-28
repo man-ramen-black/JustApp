@@ -8,7 +8,7 @@ import com.black.test.BaseTest
 import com.black.test.TestUtil
 import io.mockk.coEvery
 import io.mockk.spyk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /**
@@ -37,7 +37,7 @@ class Test: BaseTest() {
             "  {\"name\":\"Fairy\",\"immunes\":[],\"weaknesses\":[\"Fire\",\"Poison\",\"Steel\"],\"strengths\":[\"Fighting\",\"Dragon\",\"Dark\"]}]"
 
     @Test
-    fun getDefenceMatchUp() = runBlocking {
+    fun getDefenceMatchUp() = runTest {
         val repo = spyk(PokeRepository(TestUtil.getTestContext()))
         coEvery { repo["getPokeTypeCharts"]() } returns JsonUtil.from<List<PokeTypeChart>>(pokeTypeChartsJson, true)!!
 

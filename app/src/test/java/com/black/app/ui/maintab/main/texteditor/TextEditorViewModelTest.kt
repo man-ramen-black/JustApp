@@ -97,7 +97,7 @@ class TextEditorViewModelTest : BaseTest() {
      * Then: uiState.text == "abc"
      */
     @Test
-    fun test_03_onTextChangedUpdatesUiState() {
+    fun test_03_onTextChangedUpdatesUiState() = runTest {
         /** Given **/
         val viewModel = createViewModel()
 
@@ -116,7 +116,7 @@ class TextEditorViewModelTest : BaseTest() {
      * Then: repository.reset 호출 + uiState.text 빈 문자열 + showResetConfirm false
      */
     @Test
-    fun test_04_onConfirmResetClearsTextAndResetsRepository() {
+    fun test_04_onConfirmResetClearsTextAndResetsRepository() = runTest {
         /** Given **/
         coEvery { repository.reset() } just Runs
         val viewModel = createViewModel()

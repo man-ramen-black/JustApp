@@ -2,6 +2,7 @@ package com.black.app.ui.maintab.main.usagetimer
 
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal.TimerAction
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -19,7 +20,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: SHOW
      */
     @Test
-    fun test_01_showWhenActiveSelectedAndNotPaused() {
+    fun test_01_showWhenActiveSelectedAndNotPaused() = runTest {
         /** Given / When / Then **/
         assertEquals(
             TimerAction.SHOW,
@@ -35,7 +36,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: HIDE
      */
     @Test
-    fun test_02_hideWhenSelectedButPaused() {
+    fun test_02_hideWhenSelectedButPaused() = runTest {
         /** Given / When / Then **/
         assertEquals(
             TimerAction.HIDE,
@@ -52,7 +53,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: HIDE
      */
     @Test
-    fun test_03_hideWhenActiveNotSelected() {
+    fun test_03_hideWhenActiveNotSelected() = runTest {
         /** Given / When / Then **/
         assertEquals(
             TimerAction.HIDE,
@@ -68,7 +69,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: IGNORE (타이머가 즉시 사라지지 않음)
      */
     @Test
-    fun test_04_ignoreWhenActiveNull() {
+    fun test_04_ignoreWhenActiveNull() = runTest {
         /** Given / When / Then **/
         assertEquals(
             TimerAction.IGNORE,
@@ -84,7 +85,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: HIDE
      */
     @Test
-    fun test_05_hideWhenSelectedAppsEmpty() {
+    fun test_05_hideWhenSelectedAppsEmpty() = runTest {
         /** Given / When / Then **/
         assertEquals(
             TimerAction.HIDE,
@@ -100,7 +101,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 현재 시각 반환
      */
     @Test
-    fun test_08_newSessionWhenNoSession() {
+    fun test_08_newSessionWhenNoSession() = runTest {
         /** Given / When / Then **/
         assertEquals(
             5_000L,
@@ -116,7 +117,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 기존 시작 시각 반환
      */
     @Test
-    fun test_09_keepSessionWhenSameAppStillShown() {
+    fun test_09_keepSessionWhenSameAppStillShown() = runTest {
         /** Given / When / Then **/
         assertEquals(
             1_000L,
@@ -133,7 +134,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 기존 시작 시각 반환
      */
     @Test
-    fun test_10_keepSessionWhenSameAppReturnsWithinGrace() {
+    fun test_10_keepSessionWhenSameAppReturnsWithinGrace() = runTest {
         /** Given **/
         val hiddenAt = 5_000L
         val now = hiddenAt + UsageTimerGlobal.SESSION_GRACE_MILLIS
@@ -153,7 +154,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 현재 시각 반환
      */
     @Test
-    fun test_11_newSessionWhenSameAppReturnsAfterGrace() {
+    fun test_11_newSessionWhenSameAppReturnsAfterGrace() = runTest {
         /** Given **/
         val hiddenAt = 5_000L
         val now = hiddenAt + UsageTimerGlobal.SESSION_GRACE_MILLIS + 1
@@ -173,7 +174,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 현재 시각 반환
      */
     @Test
-    fun test_12_newSessionWhenDifferentApp() {
+    fun test_12_newSessionWhenDifferentApp() = runTest {
         /** Given / When / Then **/
         assertEquals(
             5_000L,
@@ -190,7 +191,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 닫은 앱 유지
      */
     @Test
-    fun test_13_keepDismissedWhenSameAppActive() {
+    fun test_13_keepDismissedWhenSameAppActive() = runTest {
         /** Given / When / Then **/
         assertEquals(
             "com.a",
@@ -207,7 +208,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: null (닫기 해제)
      */
     @Test
-    fun test_14_clearDismissedWhenOtherAppActive() {
+    fun test_14_clearDismissedWhenOtherAppActive() = runTest {
         /** Given / When / Then **/
         assertEquals(
             null,
@@ -223,7 +224,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: 닫은 앱 유지
      */
     @Test
-    fun test_15_keepDismissedWhenActiveUnknown() {
+    fun test_15_keepDismissedWhenActiveUnknown() = runTest {
         /** Given / When / Then **/
         assertEquals(
             "com.a",
@@ -239,7 +240,7 @@ class UsageTimerGlobalTest : BaseTest() {
      * Then: null
      */
     @Test
-    fun test_16_nullWhenNoDismissed() {
+    fun test_16_nullWhenNoDismissed() = runTest {
         /** Given / When / Then **/
         assertEquals(
             null,

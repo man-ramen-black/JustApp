@@ -1,5 +1,6 @@
 package com.black.feature.imagesearcher
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -11,7 +12,7 @@ import org.junit.Assert.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
+    fun addition_isCorrect() = runTest {
         assertEquals(4, 2 + 2)
     }
 }

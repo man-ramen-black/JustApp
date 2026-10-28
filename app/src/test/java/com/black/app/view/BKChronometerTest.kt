@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -25,7 +26,7 @@ class BKChronometerTest : BaseTest() {
      * Then: 경과 시간 0
      */
     @Test
-    fun test_01_restartResetsElapsedToZero() {
+    fun test_01_restartResetsElapsedToZero() = runTest {
         /** Given **/
         val chronometer = BKChronometer(context)
         chronometer.start()

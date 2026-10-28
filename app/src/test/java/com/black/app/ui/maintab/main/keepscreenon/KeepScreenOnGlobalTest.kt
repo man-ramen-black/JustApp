@@ -7,6 +7,7 @@ import android.view.View
 import android.view.WindowManager
 import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -42,7 +43,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
      * Then: true 반환, 활성 상태, FLAG_KEEP_SCREEN_ON 포함 창 1개 추가
      */
     @Test
-    fun test_01_activateAddsKeepScreenOnWindow() {
+    fun test_01_activateAddsKeepScreenOnWindow() = runTest {
         /** Given **/
         ShadowSettings.setCanDrawOverlays(true)
 
@@ -65,7 +66,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
      * Then: 비활성 상태, 창 제거
      */
     @Test
-    fun test_02_screenOffDeactivates() {
+    fun test_02_screenOffDeactivates() = runTest {
         /** Given **/
         ShadowSettings.setCanDrawOverlays(true)
         KeepScreenOnGlobal.activate(context)
@@ -87,7 +88,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
      * Then: false 반환, 비활성 상태, 창 없음
      */
     @Test
-    fun test_03_activateWithoutPermissionKeepsInactive() {
+    fun test_03_activateWithoutPermissionKeepsInactive() = runTest {
         /** Given **/
         ShadowSettings.setCanDrawOverlays(false)
 
@@ -108,7 +109,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
      * Then: 첫 호출 true, 두 번째 호출 false, 창 없음
      */
     @Test
-    fun test_04_toggleTwiceDeactivates() {
+    fun test_04_toggleTwiceDeactivates() = runTest {
         /** Given **/
         ShadowSettings.setCanDrawOverlays(true)
 
@@ -131,7 +132,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
      * Then: 두 번째 호출 true 반환, 창 1개만 추가
      */
     @Test
-    fun test_05_activateTwiceAddsSingleWindow() {
+    fun test_05_activateTwiceAddsSingleWindow() = runTest {
         /** Given **/
         ShadowSettings.setCanDrawOverlays(true)
 
