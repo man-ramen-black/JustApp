@@ -11,9 +11,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/**
- * [SelectAppViewModel]의 초기 선택 상태 반영 검증
- */
+/** [SelectAppViewModel]의 초기 선택 상태 반영 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SelectAppViewModelTest : BaseTest() {
 
@@ -23,9 +21,7 @@ class SelectAppViewModelTest : BaseTest() {
 
     private fun editable(text: String): Editable = SpannableStringBuilder(text)
 
-    /**
-     * EVENT_APP_SELECTED 이벤트로 전달되는 선택 결과 수집
-     */
+    /** EVENT_APP_SELECTED 이벤트로 전달되는 선택 결과 수집 */
     private fun observeSelectedPackages(): () -> List<String>? {
         var selected: List<String>? = null
         viewModel.observeEventForever { action, data ->

@@ -106,9 +106,7 @@ class DialogManager @Inject constructor() {
         dialog.show()
     }
 
-    /**
-     * DialogManager.show가 동작하지 않도록 설정
-     */
+    /** DialogManager.show가 동작하지 않도록 설정 */
     fun setNoShow(isNoShow: Boolean) {
         Log.v(isNoShow)
         this.isNoShow = isNoShow
@@ -130,9 +128,7 @@ class DialogManager @Inject constructor() {
             }
     }
 
-    /**
-     * @param tag null인 경우 모든 Dialog
-     */
+    /** @param tag null인 경우 모든 Dialog */
     fun show(tag: String? = null) {
         if (tag == null) {
             showingDialogs.flatMap { it.value }
@@ -141,9 +137,7 @@ class DialogManager @Inject constructor() {
         }?.forEach { it.show() }
     }
 
-    /**
-     * @param tag null인 경우 모든 Dialog
-     */
+    /** @param tag null인 경우 모든 Dialog */
     fun hide(tag: String? = null) {
         if (tag == null) {
             showingDialogs.flatMap { it.value }

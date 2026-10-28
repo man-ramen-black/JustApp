@@ -8,9 +8,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 import org.robolectric.annotation.Config
 
-/**
- * [KeepScreenOnTileService] 활성 여부에 따른 타일 상태 판정 검증
- */
+/** [KeepScreenOnTileService] 활성 여부에 따른 타일 상태 판정 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @Config(sdk = [34])
 class KeepScreenOnTileServiceTest : BaseTest() {

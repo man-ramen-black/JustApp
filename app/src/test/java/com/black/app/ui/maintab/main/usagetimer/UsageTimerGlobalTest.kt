@@ -7,9 +7,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/**
- * [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정 검증
- */
+/** [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerGlobalTest : BaseTest() {
 

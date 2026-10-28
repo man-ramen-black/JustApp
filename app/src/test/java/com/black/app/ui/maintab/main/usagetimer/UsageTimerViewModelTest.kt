@@ -23,9 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * [UsageTimerViewModel]의 상태 로드·저장·이벤트 발송 동작 검증
- */
+/** [UsageTimerViewModel]의 상태 로드·저장·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
 class UsageTimerViewModelTest : BaseTest() {
 
@@ -46,9 +44,7 @@ class UsageTimerViewModelTest : BaseTest() {
         every { installedAppResolver.resolve(any()) } answers { uiItem(firstArg()) }
     }
 
-    /**
-     * ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기
-     */
+    /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
     private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver)
         .also { waitCoroutine() }
 

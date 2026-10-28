@@ -3,9 +3,7 @@ package com.black.feature.imagesearcher.ui
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 
-/**
- * [MainFragment]
- */
+/** [MainFragment] */
 class MainTab(val title: String, val createFragment: () -> Fragment)
 
 class MainTabAdapter(fragment: Fragment, private val tabs: List<MainTab>): FragmentStateAdapter(fragment) {

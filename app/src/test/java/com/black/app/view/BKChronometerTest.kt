@@ -11,9 +11,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 
-/**
- * [BKChronometer.restart] 경과 시간 초기화 검증
- */
+/** [BKChronometer.restart] 경과 시간 초기화 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BKChronometerTest : BaseTest() {
 

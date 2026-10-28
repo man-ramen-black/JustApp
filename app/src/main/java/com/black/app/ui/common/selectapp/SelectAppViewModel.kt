@@ -9,9 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * [SelectAppDialogFragment]
- */
+/** [SelectAppDialogFragment] */
 @HiltViewModel
 class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventViewModel() {
     companion object {

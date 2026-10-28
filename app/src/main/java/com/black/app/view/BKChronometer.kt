@@ -52,17 +52,13 @@ class BKChronometer : Chronometer{
         pauseTime = 0
     }
 
-    /**
-     * 경과 시간을 0으로 초기화 후 재시작
-     */
+    /** 경과 시간을 0으로 초기화 후 재시작 */
     fun restart() {
         pauseTime = 0
         start()
     }
 
-    /**
-     * 지정한 기준 시각(elapsedRealtime)부터 이어서 시작
-     */
+    /** 지정한 기준 시각(elapsedRealtime)부터 이어서 시작 */
     fun startFrom(baseElapsedRealtime: Long) {
         isRunning = true
         pauseTime = 0

@@ -27,9 +27,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * [TextEditorViewModel]의 상태 관리·이벤트 발송 동작 검증
- */
+/** [TextEditorViewModel]의 상태 관리·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TextEditorViewModelTest : BaseTest() {
 
@@ -42,9 +40,7 @@ class TextEditorViewModelTest : BaseTest() {
         coEvery { repository.currentFileUriFlow } returns flowOf(null)
     }
 
-    /**
-     * ViewModel 생성 및 init 코루틴 완료 대기
-     */
+    /** ViewModel 생성 및 init 코루틴 완료 대기 */
     private fun createViewModel(): TextEditorViewModel {
         val mainScope = TestScope(testDispatcherRule.testDispatcher)
         return TextEditorViewModel(repository, mainScope).also { waitCoroutine() }

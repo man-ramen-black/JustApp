@@ -122,9 +122,7 @@ class MainScreenTest : BaseUiTest() {
         composeRule.onNodeWithText("3 TOOLS · DARK ALWAYS").assertIsDisplayed()
     }
 
-    /**
-     * 실제 노출 구성과 동일한 5개 항목 리스트 생성. [onClick]으로 클릭된 항목 이름 수집
-     */
+    /** 실제 노출 구성과 동일한 5개 항목 리스트 생성. [onClick]으로 클릭된 항목 이름 수집 */
     private fun defaultItemList(onClick: (String) -> Unit = {}): List<MainItem> {
         return listOf(
             "앱 사용 타이머" to R.drawable.ic_timer,
@@ -137,9 +135,7 @@ class MainScreenTest : BaseUiTest() {
         }
     }
 
-    /**
-     * MainScreen을 HiltTestActivity에 setContent로 호스팅
-     */
+    /** MainScreen을 HiltTestActivity에 setContent로 호스팅 */
     private fun hostMainScreen(itemList: List<MainItem>) {
         onHostActivity { activity ->
             activity.setContent {

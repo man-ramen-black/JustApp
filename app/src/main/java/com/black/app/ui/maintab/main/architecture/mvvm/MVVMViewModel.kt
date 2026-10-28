@@ -14,17 +14,13 @@ class MVVMViewModel : ViewModel() {
 
     private var model : CounterModel? = null
 
-    /**
-     * 버튼 터치 시 동작
-     */
+    /** 버튼 터치 시 동작 */
     fun onClickAddCount() {
         val model = model ?: return
         count.value = model.addCount()
     }
 
-    /**
-     * Model을 설정
-     */
+    /** Model을 설정 */
     fun setModel(counterModel: CounterModel) {
         this.model = counterModel
     }

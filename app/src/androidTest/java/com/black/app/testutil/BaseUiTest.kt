@@ -61,9 +61,7 @@ abstract class BaseUiTest {
         scenario = null
     }
 
-    /**
-     * [HiltTestActivity]를 실행하고 scenario를 보관한다. teardown에서 자동으로 close 된다.
-     */
+    /** [HiltTestActivity]를 실행하고 scenario를 보관한다. teardown에서 자동으로 close 된다. */
     protected fun launchHost(): ActivityScenario<HiltTestActivity> {
         return launchActivity(HiltTestActivity::class.java)
     }

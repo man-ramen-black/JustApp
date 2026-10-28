@@ -21,9 +21,7 @@ import kotlinx.coroutines.launch
 
 object Util {
 
-    /**
-     * 특정 lifecycle 시점에 로직 실행
-     */
+    /** 특정 lifecycle 시점에 로직 실행 */
     fun launchWhenState(owner : LifecycleOwner, state: Lifecycle.State, runnable: () -> Unit): Job {
         return owner.lifecycleScope.launch {
             owner.lifecycle.withStateAtLeast(state, runnable)
@@ -61,9 +59,7 @@ object Util {
         }
     }
 
-    /**
-     * 클립보드 텍스트 반환
-     */
+    /** 클립보드 텍스트 반환 */
     fun getClipData(context: Context): String? {
         val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         if (!clipboardManager.hasPrimaryClip()) {
@@ -81,9 +77,7 @@ object Util {
         return clipData.getItemAt(0).text?.toString()
     }
 
-    /**
-     * 텍스트 공유
-     */
+    /** 텍스트 공유 */
     fun share(context: Context, text: String){
         val intent = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_TEXT, text)

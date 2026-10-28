@@ -49,9 +49,7 @@ class SAFHelper(
             }
         }
 
-        /**
-         * @param mode "w" : 덮어쓰기, "a" : 내용 추가, "t" : 텍스트 모드, "b" : 바이너리 모드
-         */
+        /** @param mode "w" : 덮어쓰기, "a" : 내용 추가, "t" : 텍스트 모드, "b" : 바이너리 모드 */
         @SuppressLint("Recycle")
         fun Uri.openOutputStream(context: Context, mode: String = "w", keepPermission: Boolean = true): OutputStream? {
             return try {

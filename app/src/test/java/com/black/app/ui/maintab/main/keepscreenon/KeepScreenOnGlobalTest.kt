@@ -20,9 +20,7 @@ import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowWindowManagerImpl
 
-/**
- * [KeepScreenOnGlobal] 오버레이 창 추가·제거와 화면 꺼짐 자동 해제 검증
- */
+/** [KeepScreenOnGlobal] 오버레이 창 추가·제거와 화면 꺼짐 자동 해제 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class KeepScreenOnGlobalTest : BaseTest() {
@@ -30,9 +28,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    /**
-     * 각 테스트 후 활성 상태 해제(싱글턴 상태 격리)
-     */
+    /** 각 테스트 후 활성 상태 해제(싱글턴 상태 격리) */
     @After
     fun deactivateKeepScreenOn() {
         KeepScreenOnGlobal.deactivate(context)
@@ -148,9 +144,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
         assertEquals(1, attachedViews().size)
     }
 
-    /**
-     * WindowManager에 추가된 뷰 목록 조회
-     */
+    /** WindowManager에 추가된 뷰 목록 조회 */
     private fun attachedViews(): List<View> =
         Shadow.extract<ShadowWindowManagerImpl>(windowManager).views
 }

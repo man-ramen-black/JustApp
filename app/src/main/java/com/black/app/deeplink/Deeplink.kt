@@ -20,9 +20,7 @@ sealed interface Deeplink {
         const val MEMO = "memo"
     }
 
-    /**
-     * @param clearBackStack true면 MainTab까지 백스택 정리 후 이동
-     */
+    /** @param clearBackStack true면 MainTab까지 백스택 정리 후 이동 */
     data class Navigate(val route: AppRoute, val clearBackStack: Boolean = false) : Deeplink
 
     companion object {

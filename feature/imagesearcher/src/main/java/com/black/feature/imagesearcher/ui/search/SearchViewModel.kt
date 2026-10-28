@@ -7,9 +7,7 @@ import com.black.feature.imagesearcher.data.model.Content
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-/**
- * [SearchFragment]
- */
+/** [SearchFragment] */
 @HiltViewModel
 class SearchViewModel @Inject constructor(
 //    private val model: SearchRepository

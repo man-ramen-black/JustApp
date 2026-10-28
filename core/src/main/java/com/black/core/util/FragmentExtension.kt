@@ -44,9 +44,7 @@ object FragmentExtension {
         return navHostFragment.navController
     }
 
-    /**
-     * 현재 위치가 더 이상 pop되면 안되는 최상단 상태인지 반환
-     */
+    /** 현재 위치가 더 이상 pop되면 안되는 최상단 상태인지 반환 */
     fun NavController.isRootDestination() : Boolean {
         return previousBackStackEntry == null
     }
@@ -57,9 +55,7 @@ object FragmentExtension {
         }
     }
 
-    /**
-     * popBackStack 후 이전 프래그먼트가 전달받을 데이터를 set
-     */
+    /** popBackStack 후 이전 프래그먼트가 전달받을 데이터를 set */
     fun <T> NavController.setPopBackStackArgs(key: String, value: T?) {
         previousBackStackEntry?.savedStateHandle?.set(key, value)
     }
@@ -79,9 +75,7 @@ object FragmentExtension {
             }
     }
 
-    /**
-     * 현재 destination에서 navigate할 수 없는 directions이면 navigate하지 않음
-     */
+    /** 현재 destination에서 navigate할 수 없는 directions이면 navigate하지 않음 */
     fun NavController.navigateSafety(directions: NavDirections) {
         if (currentDestination?.getAction(directions.actionId) == null) {
             Log.v(currentDestination?.navigatorName + " cannot navigate to " + directions.actionId)
@@ -97,9 +91,7 @@ object FragmentExtension {
         }
     }
 
-    /**
-     * 부모 프래그먼트의 ViewModel 획득
-     */
+    /** 부모 프래그먼트의 ViewModel 획득 */
     @MainThread
     inline fun <reified VM : ViewModel> Fragment.parentViewModels(parentCls: Class<out Fragment>? = null)
             : Lazy<VM>

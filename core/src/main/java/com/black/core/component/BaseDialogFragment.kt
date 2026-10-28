@@ -66,9 +66,7 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         }
     }
 
-    /**
-     * Fragment View Binding = https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments
-     */
+    /** Fragment View Binding = https://developer.android.com/topic/libraries/view-binding?hl=ko#fragments */
     @CallSuper
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,9 +83,7 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         return _binding!!.root
     }
 
-    /**
-     * View 셋팅은 onViewCreated에서 하는 것을 권장
-     */
+    /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

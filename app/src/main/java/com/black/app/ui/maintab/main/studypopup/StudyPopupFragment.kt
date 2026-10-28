@@ -111,9 +111,7 @@ class StudyPopupFragment : TitleFragment<FragmentStudyPopupBinding>(),
         }
     }
 
-    /**
-     * @callback [onOpenedDocument]
-     */
+    /** @callback [onOpenedDocument] */
     private fun load() {
         requestPermission {
             openDocumentLauncher.launch(arrayOf("text/xml", "application/xml"))
@@ -135,9 +133,7 @@ class StudyPopupFragment : TitleFragment<FragmentStudyPopupBinding>(),
         viewModel.loadFile(uri, path, inputStream)
     }
 
-    /**
-     * @callback [onCreatedDocument]
-     */
+    /** @callback [onCreatedDocument] */
     private fun saveNewFile() {
         requestPermission {
             createDocumentLauncher.launch(".xml")

@@ -110,9 +110,7 @@ object Log {
         return list
     }
 
-    /**
-     * Log를 호출한 클래스, 메소드 정보를 획득
-     */
+    /** Log를 호출한 클래스, 메소드 정보를 획득 */
     private fun getMethodInfo() : MethodInfo {
         val stackTraceArr = Thread.currentThread().stackTrace
 

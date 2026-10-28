@@ -45,9 +45,7 @@ class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<
         binding.timer.start()
     }
 
-    /**
-     * 지정한 기준 시각부터 이어서 표시(세션 유지 시 뷰 재생성 없이 기준점만 반영)
-     */
+    /** 지정한 기준 시각부터 이어서 표시(세션 유지 시 뷰 재생성 없이 기준점만 반영) */
     fun startFrom(baseElapsedRealtime: Long) {
         this.baseElapsedRealtime = baseElapsedRealtime
         binding.timer.startFrom(baseElapsedRealtime)

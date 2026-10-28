@@ -10,9 +10,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * [EventViewModel]의 타입 이벤트 전송·구독 동작 검증
- */
+/** [EventViewModel]의 타입 이벤트 전송·구독 동작 검증 */
 class EventViewModelTest : BaseTest() {
 
     /** 테스트용 이벤트 */

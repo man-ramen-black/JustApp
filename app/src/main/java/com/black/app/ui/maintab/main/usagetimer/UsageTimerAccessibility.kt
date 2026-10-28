@@ -23,16 +23,12 @@ class UsageTimerAccessibility : AccessibilityService() {
     /** 이벤트 발생 순서 보장을 위한 직전 처리 작업 */
     private var handleJob: Job? = null
 
-    /**
-     * 서비스 시작
-     */
+    /** 서비스 시작 */
     override fun onServiceConnected() {
         super.onServiceConnected()
     }
 
-    /**
-     * 포그라운드 앱 전환 이벤트 처리
-     */
+    /** 포그라운드 앱 전환 이벤트 처리 */
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
@@ -48,9 +44,7 @@ class UsageTimerAccessibility : AccessibilityService() {
         }
     }
 
-    /**
-     * 활성 앱 기준 타이머 표시·숨김 처리
-     */
+    /** 활성 앱 기준 타이머 표시·숨김 처리 */
     private suspend fun handleActivePackage(activePackage: String?) {
         val selectedApps = repository.getSelectedApps()
         val isPaused = UsageTimerGlobal.isUsageTimerPaused(this)
@@ -63,22 +57,16 @@ class UsageTimerAccessibility : AccessibilityService() {
         }
     }
 
-    /**
-     * 서비스 중단됨
-     */
+    /** 서비스 중단됨 */
     override fun onInterrupt() {
     }
 
-    /**
-     * 서비스 연결 해제
-     */
+    /** 서비스 연결 해제 */
     override fun onUnbind(intent: Intent?): Boolean {
         return super.onUnbind(intent)
     }
 
-    /**
-     * 서비스 종료 시 처리 중 작업 정리
-     */
+    /** 서비스 종료 시 처리 중 작업 정리 */
     override fun onDestroy() {
         super.onDestroy()
         mainScope.cancel()

@@ -80,9 +80,7 @@ object NetworkHelper {
         }, callback)
     }
 
-    /**
-     * call 공통 로직
-     */
+    /** call 공통 로직 */
     private fun <T> Call<T?>.callInternal(parse:(body: String?) -> T?, callback: (result: NetworkResult<T>) -> Unit) : Call<T?> {
         enqueue(object : Callback<T?> {
             override fun onResponse(call: Call<T?>, response: Response<T?>) {

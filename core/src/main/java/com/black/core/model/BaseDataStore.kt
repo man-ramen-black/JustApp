@@ -12,15 +12,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-/**
- * https://developer.android.com/topic/libraries/architecture/datastore?hl=ko
- */
+/** https://developer.android.com/topic/libraries/architecture/datastore?hl=ko */
 abstract class BaseDataStore(private val context: Context) {
     protected abstract fun getDataStore(context: Context): DataStore<Preferences>
 
-    /**
-     * https://github.com/android/codelab-android-datastore/blob/preferences_datastore/app/src/main/java/com/codelab/android/datastore/data/UserPreferencesRepository.kt#L138
-     */
+    /** https://github.com/android/codelab-android-datastore/blob/preferences_datastore/app/src/main/java/com/codelab/android/datastore/data/UserPreferencesRepository.kt#L138 */
     protected suspend fun <T> get(key: Preferences.Key<T>, def: T): T {
         val data = getDataStore(context).data
             .catch {

@@ -8,17 +8,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-/**
- * [UsageTimerRepository]의 선택 앱 저장/조회 동작 검증
- */
+/** [UsageTimerRepository]의 선택 앱 저장/조회 동작 검증 */
 class UsageTimerRepositoryTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val repository = UsageTimerRepository(context)
 
-    /**
-     * 각 테스트 전 선택 앱 저장소 초기화(테스트 간 격리)
-     */
+    /** 각 테스트 전 선택 앱 저장소 초기화(테스트 간 격리) */
     @Before
     fun clearSelectedApps() {
         runTest { repository.saveSelectedApps(emptyList()) }

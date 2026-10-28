@@ -27,9 +27,7 @@ import java.net.URLEncoder
  */
 object CookieUtil {
 
-    /**
-     * 쿠키 셋팅
-     */
+    /** 쿠키 셋팅 */
     fun setCookie(domain: String, values: Map<String, String?>) {
         setCookie(domain, "", values)
     }

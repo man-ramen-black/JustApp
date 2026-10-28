@@ -22,9 +22,7 @@ class EtcFragment : TitleFragment<FragmentEtcBinding>() {
         startActivity(Intent(requireActivity(), EtcActivity::class.java))
     }
 
-    /**
-     * SplashActivity onNewIntent Lifecycle 테스트용
-     */
+    /** SplashActivity onNewIntent Lifecycle 테스트용 */
     fun onClickRestartApp() {
         ActivityCompat.finishAffinity(requireActivity())
 
