@@ -133,7 +133,7 @@ class TextEditorScreenTest : BaseUiTest() {
 ```
 ./gradlew :app:compileDebugKotlin
 ./gradlew :app:testDebugUnitTest --tests "<ViewModel 테스트 FQCN>"
-./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
+ANDROID_SERIAL=<시리얼> ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
 ```
 
 계측 테스트는 기기가 연결돼 있을 때 실행해 통과를 확인한다. 기기가 없으면 `./gradlew :app:assembleDebugAndroidTest`로 컴파일까지 확인하고, 실행하지 못한 사실과 미검증 범위를 보고한다.
