@@ -3,12 +3,11 @@ package com.black.app.ui.maintab.main.keepscreenon
 import android.app.KeyguardManager
 import android.content.ComponentName
 import com.black.app.testutil.BaseUiTest
-import com.black.app.testutil.ShowWhenLockedTestActivity
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -20,10 +19,9 @@ import org.junit.runners.MethodSorters
  * 충전 중 화면 켜짐 유지(stay_on_while_plugged_in) 개발자 옵션은 테스트 중 비활성화 후 원복
  * 삼성 "화면을 보는 동안 켜진 상태 유지"(intelligent_sleep_mode)도 전면 카메라로 얼굴을 감지하면 화면을 켜 두므로 같은 방식으로 비활성화 후 원복
  *
- * 잠금 화면이 보이면 그 아래 오버레이 창은 화면에 없는 창으로 취급되어 FLAG_KEEP_SCREEN_ON이 무시되고
- * 잠금 화면 자체의 짧은 시간 제한이 적용됨. 보안 잠금(PIN 등)은 wm dismiss-keyguard로 풀리지 않으므로
- * 매 테스트 시작 시 [ShowWhenLockedTestActivity]로 잠금 화면을 가려(잠금은 유지) 앱 사용 중과 같은 창 상태에서 검증
- * 재생 중인 동영상(PiP 포함)처럼 다른 창이 화면을 붙잡고 있으면 켜짐 유지·해제 판정 불가
+ * 잠금 해제 상태에서 쓰는 기능이라 잠겨 있으면 각 테스트를 건너뜀
+ * (잠금 중에는 시스템이 오버레이 창을 숨겨 FLAG_KEEP_SCREEN_ON 미적용, 보안 잠금은 테스트에서 해제 불가)
+ * 화면을 끄는 테스트는 보안 잠금 기기를 잠가 이후 테스트를 건너뛰게 하므로 마지막 순번에 배치
  *
  * 실제 시간 대기가 필요하므로 가상 시간으로 delay를 건너뛰는 runTest 대신 runBlocking 사용
  */
@@ -54,8 +52,6 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         wakeUpAndUnlock()
         // 동영상 재생 앱 등 전면 앱의 FLAG_KEEP_SCREEN_ON 창이 화면을 붙잡지 않도록 홈 화면으로 이동
         device.pressHome()
-        // 잠금을 풀지 않고 잠금 화면을 가려 앱 사용 중과 같은 창 상태로 시작
-        launchActivity(ShowWhenLockedTestActivity::class.java)
         // 같은 프로세스 싱글톤 비활성 상태로 시작
         instrumentation.runOnMainSync { KeepScreenOnGlobal.deactivate(context) }
     }
@@ -82,15 +78,14 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
     /**
      * 타일 클릭 후 화면 시간 제한이 지나도 화면이 켜진 채 유지되는지 검증
      *
-     * Given: 잠금 화면 가림, 타일 추가, 화면 시간 제한 10초, 비활성 상태
+     * Given: 잠금 해제 상태, 다른 화면 유지 창 없음, 타일 추가, 화면 시간 제한 10초, 비활성 상태
      * When: 타일 클릭 후 화면 시간 제한보다 오래 대기
      * Then: 활성 상태, 화면 켜짐 유지, dumpsys window 화면 유지 창이 KeepScreenOn 창
      */
     @Test
     fun test_01_clickTileKeepsScreenOnAfterTimeout() = runBlocking {
         /** Given **/
-        // setup에서 타일 추가·화면 시간 제한 적용·잠금 화면 가림 완료
-        assertKeyguardNotCovering()
+        assumeUnlocked()
         assertNoOtherScreenHolder()
 
         /** When **/
@@ -110,15 +105,46 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
     }
 
     /**
+     * 타일 2회 클릭으로 해제 시 화면을 붙잡던 창이 없어지는지 검증
+     * 화면 꺼짐까지 기다리면 보안 잠금이 걸려 다음 테스트가 건너뛰어지므로 화면 유지 창 해제로 판정
+     *
+     * Given: 잠금 해제 상태, 다른 화면 유지 창 없음, 타일 클릭으로 활성화, 화면 유지 창이 KeepScreenOn 창
+     * When: 타일 재클릭
+     * Then: 비활성 상태, dumpsys window 화면 유지 창 없음
+     */
+    @Test
+    fun test_02_clickTileAgainReleasesScreenHold() = runBlocking {
+        /** Given **/
+        assumeUnlocked()
+        assertNoOtherScreenHolder()
+        clickTile()
+        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil(STATE_TIMEOUT) { KeepScreenOnGlobal.isActive.value })
+        // 해제 판정이 의미 있도록 해제 전에는 이 기능의 창이 화면을 붙잡고 있는지 확인
+        val isHeldByKeepScreenOn = waitUntil(STATE_TIMEOUT) {
+            holdScreenLine().contains(KeepScreenOnGlobal.WINDOW_TITLE)
+        }
+        assertTrue("화면 유지 창이 KeepScreenOn 창이 아닙니다: ${holdScreenLine()}", isHeldByKeepScreenOn)
+
+        /** When **/
+        clickTile()
+
+        /** Then **/
+        assertTrue("타일 재클릭 후 해제되지 않았습니다", waitUntil(STATE_TIMEOUT) { !KeepScreenOnGlobal.isActive.value })
+        val isReleased = waitUntil(STATE_TIMEOUT) { hasNoScreenHolder() }
+        assertTrue("해제 후에도 화면 유지 창이 남아 있습니다: ${holdScreenLine()}", isReleased)
+    }
+
+    /**
      * 활성 중 화면을 끄면 자동 해제되는지 검증
      *
-     * Given: 타일 클릭으로 활성화
+     * Given: 잠금 해제 상태, 타일 클릭으로 활성화
      * When: 화면 끄기(전원 버튼과 동일한 sleep)
      * Then: 비활성 상태
      */
     @Test
-    fun test_02_screenOffReleasesKeepScreenOn() = runBlocking {
+    fun test_03_screenOffReleasesKeepScreenOn() = runBlocking {
         /** Given **/
+        assumeUnlocked()
         clickTile()
         assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil(STATE_TIMEOUT) { KeepScreenOnGlobal.isActive.value })
 
@@ -127,33 +153,6 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
 
         /** Then **/
         assertTrue("화면 꺼짐 후 해제되지 않았습니다", waitUntil(STATE_TIMEOUT) { !KeepScreenOnGlobal.isActive.value })
-    }
-
-    /**
-     * 타일 2회 클릭으로 해제 후 화면 시간 제한이 지나면 화면이 꺼지는지 검증
-     *
-     * Given: 잠금 화면 가림, 타일 클릭으로 활성화
-     * When: 타일 재클릭 후 화면 시간 제한보다 오래 대기
-     * Then: 비활성 상태, 화면 꺼짐
-     */
-    @Test
-    fun test_03_clickTileAgainReleasesScreenTimeout() = runBlocking {
-        /** Given **/
-        assertKeyguardNotCovering()
-        assertNoOtherScreenHolder()
-        clickTile()
-        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil(STATE_TIMEOUT) { KeepScreenOnGlobal.isActive.value })
-
-        /** When **/
-        clickTile()
-
-        /** Then **/
-        assertTrue("타일 재클릭 후 해제되지 않았습니다", waitUntil(STATE_TIMEOUT) { !KeepScreenOnGlobal.isActive.value })
-        assertTrue(
-            "해제 후 화면 시간 제한이 지나도 화면이 꺼지지 않았습니다",
-            waitUntil(SCREEN_OFF_TIMEOUT + TIMEOUT_MARGIN) { !device.isScreenOn },
-        )
-        assertFalse(KeepScreenOnGlobal.isActive.value)
     }
 
     /**
@@ -169,30 +168,31 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         device.executeShellCommand("cmd statusbar collapse")
     }
 
-    /** 화면 켜기 후 키가드 해제 요청(보안 잠금이 없을 때만 실제 해제) */
+    /** 화면 켜기 후 비보안 키가드 해제 */
     private fun wakeUpAndUnlock() {
         device.wakeUp()
-        device.executeShellCommand("wm dismiss-keyguard")
+        // 보안 잠금(PIN 등)은 해제되지 않고 PIN 입력 화면만 뜨므로 요청 생략
+        if (!keyguardManager.isDeviceSecure) {
+            device.executeShellCommand("wm dismiss-keyguard")
+        }
     }
 
-    /** 잠금 화면이 오버레이 창을 가리지 않는 상태(잠금 해제 또는 Activity가 잠금 화면을 가림) 확인 */
-    private suspend fun assertKeyguardNotCovering() {
-        assertTrue(
-            "잠금 화면이 오버레이 창을 가리고 있습니다",
-            waitUntil(STATE_TIMEOUT) {
-                !keyguardManager.isKeyguardLocked ||
-                        device.executeShellCommand("dumpsys window").contains(KEYGUARD_OCCLUDED_FIELD)
-            },
-        )
+    /** 잠겨 있으면 검증 대상 상태가 아니므로 테스트 건너뜀, 비보안 키가드의 비동기 해제는 기다린 뒤 판정 */
+    private suspend fun assumeUnlocked() {
+        val unlocked = waitUntil(STATE_TIMEOUT) { !keyguardManager.isKeyguardLocked }
+        assumeTrue("기기가 잠겨 있어 건너뜀(잠금 해제 상태에서 실행 필요)", unlocked)
     }
 
     /** 다른 창(재생 중인 동영상·PiP 등)이 화면을 붙잡고 있으면 켜짐 유지·해제 판정이 무의미하므로 사전 확인 */
     private suspend fun assertNoOtherScreenHolder() {
         assertTrue(
             "다른 창이 화면을 켜 두고 있습니다. 동영상 재생 등을 멈춘 뒤 실행해야 합니다: ${holdScreenLine()}",
-            waitUntil(STATE_TIMEOUT) { holdScreenLine().endsWith("$HOLD_SCREEN_FIELD=null") },
+            waitUntil(STATE_TIMEOUT) { hasNoScreenHolder() },
         )
     }
+
+    /** 화면을 붙잡고 있는 창이 없는지 여부 */
+    private fun hasNoScreenHolder(): Boolean = holdScreenLine().endsWith("$HOLD_SCREEN_FIELD=null")
 
     /** dumpsys window의 화면 유지 창 줄 조회 */
     private fun holdScreenLine(): String =
@@ -226,8 +226,6 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         private const val PANEL_ANIMATION_DELAY = 1_500L
         /** 삼성 "화면을 보는 동안 켜진 상태 유지" 설정 키(삼성 외 기기에는 없어 원복 시 삭제) */
         private const val SMART_STAY_SETTING = "intelligent_sleep_mode"
-        /** dumpsys window 잠금 화면 가림 상태 표시 */
-        private const val KEYGUARD_OCCLUDED_FIELD = "mKeyguardOccluded=true"
         /** dumpsys window 화면 유지 창 필드명 */
         private const val HOLD_SCREEN_FIELD = "mHoldScreenWindow"
     }
