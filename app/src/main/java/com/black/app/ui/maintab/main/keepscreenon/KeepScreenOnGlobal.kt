@@ -114,7 +114,7 @@ object KeepScreenOnGlobal {
                 }
             }
         }
-        // ACTION_SCREEN_OFF는 시스템 보호 브로드캐스트라 NOT_EXPORTED여도 수신, 다른 앱의 위조 전송만 차단
+        // 시스템이 보내는 브로드캐스트라 NOT_EXPORTED여도 수신, 보호 브로드캐스트라 다른 앱은 송신 불가
         ContextCompat.registerReceiver(
             context,
             receiver,

@@ -8,7 +8,10 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import com.black.app.R
 import com.black.app.broadcast.NotificationActionReceiver
+import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
 import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.ui.MainActivity
@@ -62,7 +65,8 @@ class ForegroundService : Service() {
 
     private val interfaces : List<Interface> = listOf(
         ScreenReceiver.ServiceInterface,
-        NotificationActionReceiver.ForegroundServiceInterface
+        NotificationActionReceiver.ForegroundServiceInterface,
+        PackageInstallReceiver.ServiceInterface
     )
 
     private var isStopped = false
@@ -101,6 +105,9 @@ class ForegroundService : Service() {
             null
         ) {
             it.setOngoing(true)
+            // 색을 지정한 FGS 알림은 Android 16 강제 자동 묶음 대상에서 빠져 다른 알림과 따로 표시
+            it.setColorized(true)
+                .setColor(ContextCompat.getColor(this, R.color.color_primary))
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
