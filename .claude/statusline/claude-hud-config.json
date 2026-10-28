@@ -1,0 +1,19 @@
+{
+  "display": {
+    "showTools": false,
+    "showDuration": true,
+    "showConfigCounts": false,
+    "showSessionName": true,
+    "showSessionTokens": false,
+    "showUsage": true,
+    "showAgents": false,
+    "showTodos": false,
+    "showProject": true
+  },
+  "gitStatus": {
+    "enabled": true,
+    "showDirty": true,
+    "showAheadBehind": false,
+    "showFileStats": false
+  }
+}
