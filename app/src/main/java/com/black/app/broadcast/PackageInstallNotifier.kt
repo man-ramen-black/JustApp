@@ -5,8 +5,11 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.Person
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.black.app.R
 import com.black.core.util.Log
@@ -15,7 +18,9 @@ import com.black.core.util.NotificationUtil
 /**
  * [PackageInstallReceiver]가 받은 다른 앱의 설치·업데이트를 알림으로 표시
  *
- * 제목은 앱 이름, large icon은 앱 아이콘이며, 알림을 터치하면 그 앱 실행
+ * 제목은 앱 이름이며, 알림을 터치하면 그 앱 실행.
+ * Android 11 이상은 [PackageInstallShortcut]이 게시한 바로가기를 연결한 대화 알림이라 알림창 왼쪽에 앱 아이콘이 표시되고,
+ * 그 미만이거나 바로가기 게시에 실패하면 앱 아이콘을 large icon으로 표시
  */
 object PackageInstallNotifier {
     private const val NOTIFICATION_CHANNEL_ID = "PackageInstall"
@@ -46,9 +51,9 @@ object PackageInstallNotifier {
                 return
             }
 
-        // 원본 크기 아이콘은 알림 전달 데이터가 커지므로 large icon 규격으로 축소
+        // 원본 크기 아이콘은 알림·바로가기 전달 데이터가 커지므로 large icon 규격으로 축소
         val resources = context.resources
-        val largeIcon = packageManager.getApplicationIcon(applicationInfo).toBitmap(
+        val appIcon = packageManager.getApplicationIcon(applicationInfo).toBitmap(
             resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
             resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height),
         )
@@ -63,24 +68,46 @@ object PackageInstallNotifier {
 
         // 패키지별 ID로 같은 앱은 앞선 알림 대체, 다른 앱끼리는 따로 표시
         val notificationId = packageName.hashCode()
-        // 상단바 small icon은 설치·업데이트를 구분하는 전용 아이콘
-        val (messageResId, smallIconResId) = if (isUpdate) {
-            R.string.package_install_notification_updated to R.drawable.ic_app_update
+        val messageResId = if (isUpdate) {
+            R.string.package_install_notification_updated
         } else {
-            R.string.package_install_notification_installed to R.drawable.ic_app_install
+            R.string.package_install_notification_installed
         }
-        NotificationUtil.showNotification(
-            context,
-            NOTIFICATION_CHANNEL_ID,
-            packageManager.getApplicationLabel(applicationInfo).toString(),
-            context.getString(messageResId),
-            notificationId,
-            smallIconResId,
-        ) { builder ->
-            // small icon은 단색 실루엣으로만 그려져 컬러 앱 아이콘은 large icon으로 표시
-            builder.setLargeIcon(largeIcon)
+        val label = packageManager.getApplicationLabel(applicationInfo).toString()
+        val message = context.getString(messageResId)
+
+        // 대화 알림은 Android 11 이상만 적용, 바로가기 게시 실패 시 large icon 알림으로 대체
+        val sender = Person.Builder().setName(label).setKey(packageName).build()
+        val isConversation = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            PackageInstallShortcut.publish(context, packageName, label, appIcon, launchIntent, sender)
+
+        try {
+            NotificationUtil.showNotification(
+                context,
+                NOTIFICATION_CHANNEL_ID,
+                label,
+                message,
+                notificationId,
+                // 상단바 small icon은 설치·업데이트 공통, 순환 화살표 같은 세부 모양은 상단바 크기에서 알아보기 어려움
+                R.drawable.ic_app_install,
+            ) { builder ->
+                if (isConversation) {
+                    // MessagingStyle 생성자 인자는 기기 사용자 자리이고 같은 Person의 메시지는 내가 보낸 메시지로 취급돼, 사용자는 JustApp·보낸 사람은 설치된 앱으로 분리
+                    val deviceUser = Person.Builder().setName(context.getString(R.string.app_name)).build()
+                    // 대화로 인식되지 않으면 1:1 대화 레이아웃이 보낸 사람 아이콘을 표시하므로 앱 아이콘 지정, 없으면 글자 아바타 표시
+                    val senderWithIcon = sender.toBuilder().setIcon(IconCompat.createWithBitmap(appIcon)).build()
+                    builder.setStyle(
+                        NotificationCompat.MessagingStyle(deviceUser)
+                            .addMessage(message, System.currentTimeMillis(), senderWithIcon)
+                    )
+                        // 바로가기 아이콘이 알림창 왼쪽에 표시돼 large icon 미지정
+                        .setShortcutId(PackageInstallShortcut.shortcutId(packageName))
+                } else {
+                    // small icon은 단색 실루엣으로만 그려져 컬러 앱 아이콘은 large icon으로 표시
+                    builder.setLargeIcon(appIcon)
+                }
                 // 액티비티 직접 실행이라 Android 12 알림 트램폴린 제한 대상 아님
-                .setContentIntent(
+                builder.setContentIntent(
                     PendingIntent.getActivity(
                         context,
                         notificationId,
@@ -88,7 +115,14 @@ object PackageInstallNotifier {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     )
                 )
-                .setAutoCancel(true)
+                    .setAutoCancel(true)
+            }
+        } finally {
+            // notify 호출 안에서 시스템이 바로가기를 확인·캐시하므로 정리는 반드시 알림 게시 뒤
+            // 알림 게시가 예외로 끝나도 런처 길게 누르기 메뉴에 바로가기가 남지 않게 정리
+            if (isConversation) {
+                PackageInstallShortcut.removeAfterNotify(context, packageName)
+            }
         }
     }
 }
