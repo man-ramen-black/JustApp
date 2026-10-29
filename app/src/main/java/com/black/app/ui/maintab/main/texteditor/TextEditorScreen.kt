@@ -288,9 +288,9 @@ private fun PermissionRequestDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                modifier = Modifier.testTag("permission_allow_button"),
+                modifier = Modifier.testTag("select_document_button"),
             ) {
-                Text(stringResource(R.string.text_editor_permission_allow), color = BoldListTokens.TitleColor)
+                Text(stringResource(R.string.text_editor_select_document), color = BoldListTokens.TitleColor)
             }
         },
         dismissButton = {

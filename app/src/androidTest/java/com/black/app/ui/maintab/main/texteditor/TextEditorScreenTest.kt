@@ -146,7 +146,7 @@ class TextEditorScreenTest : BaseUiTest() {
      * - 앱에 권한이 없는 Download 텍스트 문서를 최근 문서로 저장(재설치로 영구 권한이 사라진 상황)
      * - TextEditorScreen 호스팅
      * When:
-     * - 권한 요청 다이얼로그의 권한 허용 클릭 후 문서 선택창에서 같은 문서 선택
+     * - 권한 요청 다이얼로그의 문서 선택 클릭 후 문서 선택창에서 같은 문서 선택
      * Then:
      * - 진입 시 크래시 없이 permission_request_dialog 표시
      * - 선택 후 문서 내용과 파일명 표시
@@ -167,7 +167,7 @@ class TextEditorScreenTest : BaseUiTest() {
             composeRule.onNodeWithTag("permission_request_dialog").assertIsDisplayed()
 
             /** When **/
-            composeRule.onNodeWithTag("permission_allow_button").performClick()
+            composeRule.onNodeWithTag("select_document_button").performClick()
             // 문서 선택창(시스템 앱)에서 같은 문서 선택
             val fileItem = device.wait(Until.findObject(By.text(TEST_FILE_NAME)), TIMEOUT_MS)
             assertNotNull("문서 선택창에 $TEST_FILE_NAME 항목이 표시되지 않았습니다", fileItem)
