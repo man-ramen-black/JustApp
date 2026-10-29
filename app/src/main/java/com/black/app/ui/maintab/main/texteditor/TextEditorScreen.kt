@@ -1,6 +1,12 @@
 package com.black.app.ui.maintab.main.texteditor
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,6 +64,10 @@ fun TextEditorScreen(
     val createDocumentLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
     ) { viewModel.onDocumentCreated(it) }
+    // 권한 재요청은 선택 결과를 일반 열기와 같은 경로로 로드(로드 시 영구 권한 획득)
+    val reopenDocumentLauncher = rememberLauncherForActivityResult(
+        OpenTextDocumentAt()
+    ) { viewModel.onDocumentOpened(it) }
 
     // 일회성 이벤트 처리
     viewModel.CollectEvents { event ->
@@ -67,6 +77,9 @@ fun TextEditorScreen(
             }
             is TextEditorViewModel.EventCreateDocument -> {
                 createDocumentLauncher.launch(".txt")
+            }
+            is TextEditorViewModel.EventReopenDocument -> {
+                reopenDocumentLauncher.launch(event.uri)
             }
             is TextEditorViewModel.EventShowToast -> {
                 Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
@@ -94,6 +107,34 @@ fun TextEditorScreen(
             onConfirm = viewModel::onConfirmReset,
             onDismiss = viewModel::onDismissReset,
         )
+    }
+
+    if (uiState.permissionRequiredUri != null) {
+        PermissionRequestDialog(
+            onConfirm = viewModel::onConfirmPermissionRequest,
+            onDismiss = viewModel::onDismissPermissionRequest,
+        )
+    }
+}
+
+/**
+ * text/plain 문서 열기 선택창을 입력 uri 문서가 있는 위치에서 여는 계약
+ *
+ * EXTRA_INITIAL_URI는 Android 8.0부터 지원하며, 이전 버전은 기본 위치에서 열림
+ */
+private class OpenTextDocumentAt : ActivityResultContract<Uri, Uri?>() {
+    private val openDocument = ActivityResultContracts.OpenDocument()
+
+    override fun createIntent(context: Context, input: Uri): Intent {
+        return openDocument.createIntent(context, arrayOf("text/plain")).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                putExtra(DocumentsContract.EXTRA_INITIAL_URI, input)
+            }
+        }
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return openDocument.parseResult(resultCode, intent)
     }
 }
 
@@ -225,6 +266,39 @@ private fun ToolbarIconButton(
             tint = BoldListTokens.IconColor,
         )
     }
+}
+
+/** 최근 문서 접근 권한 재요청 다이얼로그(확인 시 문서 다시 선택) */
+@Composable
+private fun PermissionRequestDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("permission_request_dialog"),
+        shape = BoldListTokens.ContainerShape,
+        containerColor = BoldListTokens.ContainerBackground,
+        text = {
+            Text(
+                text = stringResource(R.string.text_editor_permission_required),
+                color = BoldListTokens.ItemNameColor,
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.testTag("permission_allow_button"),
+            ) {
+                Text(stringResource(R.string.text_editor_permission_allow), color = BoldListTokens.TitleColor)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel), color = BoldListTokens.CaptionColor)
+            }
+        },
+    )
 }
 
 /** 새 문서 초기화 확인 다이얼로그 */
