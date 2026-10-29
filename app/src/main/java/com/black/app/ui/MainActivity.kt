@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -159,10 +158,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (checkResult.deniedPermissions.isNotEmpty() && permanentlyDenied) {
                 Toast.makeText(this, R.string.notification_permission_guide, Toast.LENGTH_LONG).show()
-                startActivity(
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                )
+                PermissionHelper.showAppNotificationSettings(this)
             }
         }
     }
