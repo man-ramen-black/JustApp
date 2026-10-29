@@ -69,9 +69,15 @@ class SAFHelper(
             return permission == android.content.pm.PackageManager.PERMISSION_GRANTED
         }
 
+        /**
+         * 표시용 파일 이름 조회
+         *
+         * 접근 권한이 없는 content uri는 null 반환. 재설치 등으로 영구 권한이 사라진 uri를 query하면
+         * 문서 제공자가 SecurityException을 던짐
+         */
         fun Uri.getFileName(context: Context): String? {
             return when (scheme) {
-                "content" -> {
+                "content" -> try {
                     context.contentResolver.query(this, null, null, null, null)
                         ?.use {
                             if (it.moveToFirst()) {
@@ -81,6 +87,9 @@ class SAFHelper(
                                 null
                             }
                         }
+                } catch (e: SecurityException) {
+                    e.printStackTrace()
+                    null
                 }
 
                 "file" -> lastPathSegment
