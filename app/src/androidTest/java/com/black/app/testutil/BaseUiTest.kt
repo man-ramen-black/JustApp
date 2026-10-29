@@ -2,9 +2,12 @@ package com.black.app.testutil
 
 import android.app.Activity
 import android.content.Context
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -34,7 +37,7 @@ import org.junit.runner.RunWith
  * 제공 기능:
  * - [hiltRule]: Hilt 주입 규칙. [setup] 호출 전에 inject()가 먼저 수행된다.
  * - [composeRule]: Compose UI 검증 규칙. 호스팅 없는 빈 규칙이라 Compose 미사용 테스트에도 무해하다.
- * - [assertTagDisplayed]·[clickTag]·[waitUntilTagExists] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
+ * - [assertTagDisplayed]·[clickTag]·[waitUntilTagExists]·[waitUntilTagMatches] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
  * - [launchHost]/[launchActivity]: 실행한 [ActivityScenario]를 보관해 [teardown]에서 자동으로 close 한다.
  * - [setup]/[teardown]: 하위 클래스가 override 하여 확장하는 훅. super 호출이 필요 없도록 프레임워크 훅과 분리했다.
  */
@@ -93,9 +96,18 @@ abstract class BaseUiTest {
         launchHost().onActivity(block)
     }
 
-    /** testTag가 [tag]인 노드가 화면에 표시되는지 검증 */
-    protected fun assertTagDisplayed(tag: String): SemanticsNodeInteraction =
-        composeRule.onNodeWithTag(tag).assertIsDisplayed()
+    /**
+     * testTag가 [tag]인 노드가 화면에 표시되는지 검증
+     *
+     * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun assertTagDisplayed(tag: String, scrollTo: Boolean = false): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithTag(tag)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        return node.assertIsDisplayed()
+    }
 
     /**
      * testTag가 [tag]인 노드가 컴포지션에 있는지 검증
@@ -114,9 +126,38 @@ abstract class BaseUiTest {
     protected fun assertTagText(tag: String, text: String): SemanticsNodeInteraction =
         composeRule.onNodeWithTag(tag).assertTextEquals(text)
 
-    /** [text]를 가진 노드가 화면에 표시되는지 검증 */
-    protected fun assertTextDisplayed(text: String): SemanticsNodeInteraction =
-        composeRule.onNodeWithText(text).assertIsDisplayed()
+    /**
+     * testTag가 [tag]인 노드의 텍스트에 [texts]가 모두 있는지 검증
+     *
+     * 자손 의미를 병합한 노드(라벨 + 값 행 등)는 자손 텍스트까지 검사. [substring]이 true면 부분 일치,
+     * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun assertTagTextContains(
+        tag: String,
+        vararg texts: String,
+        substring: Boolean = false,
+        scrollTo: Boolean = false,
+    ): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithTag(tag)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        texts.forEach { node.assertTextContains(it, substring = substring) }
+        return node
+    }
+
+    /**
+     * [text]를 가진 노드가 화면에 표시되는지 검증
+     *
+     * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun assertTextDisplayed(text: String, scrollTo: Boolean = false): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithText(text)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        return node.assertIsDisplayed()
+    }
 
     /**
      * testTag가 [tag]인 노드 클릭
@@ -146,6 +187,22 @@ abstract class BaseUiTest {
         }
     }
 
+    /**
+     * testTag가 [tag]이고 [matcher]를 만족하는 노드가 생길 때까지 최대 [timeoutMillis] 대기
+     *
+     * [matcher]는 확인할 때마다 다시 만들어, 서비스 실행 상태처럼 대기 중에 바뀌는 기대값도 반영.
+     * DataStore 읽기처럼 Compose 유휴 대기가 기다리지 않는 비동기 상태 반영에 사용
+     */
+    protected fun waitUntilTagMatches(
+        tag: String,
+        timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+        matcher: () -> SemanticsMatcher,
+    ) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodes(hasTestTag(tag) and matcher()).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     /** [text]를 가진 노드가 생길 때까지 최대 [timeoutMillis] 대기 */
     protected fun waitUntilTextExists(text: String, timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS) {
         composeRule.waitUntil(timeoutMillis) {
@@ -160,7 +217,7 @@ abstract class BaseUiTest {
     protected open fun teardown() {}
 
     companion object {
-        /** [waitUntilTagExists]·[waitUntilTextExists] 기본 대기 시간 */
+        /** [waitUntilTagExists]·[waitUntilTagMatches]·[waitUntilTextExists] 기본 대기 시간 */
         const val DEFAULT_TIMEOUT_MILLIS = 10_000L
     }
 }

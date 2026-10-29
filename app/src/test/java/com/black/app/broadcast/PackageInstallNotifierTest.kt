@@ -1,6 +1,7 @@
 package com.black.app.broadcast
 
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
@@ -17,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -27,7 +29,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-/** [PackageInstallNotifier]의 대화·대체 경로 알림 내용, 바로가기 정리 순서, 실행 인텐트와 알림 제외 조건 검증 */
+/** [PackageInstallNotifier]의 대화·대체 경로 알림 내용, 바로가기 정리 순서, 실행 인텐트와 알림 제외 조건, 표시 가능 여부 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PackageInstallNotifierTest : BaseTest() {
@@ -394,6 +396,66 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertTrue(PackageInstallTestFixture.dynamicShortcuts(context).isEmpty())
+    }
+
+    /**
+     * 설치 알림 채널이 아직 없으면 앱 알림 허용만으로 표시 가능으로 판단하는지 검증
+     *
+     * Given: SDK 34, 앱 알림 허용, PackageInstall 채널 없음
+     * When: canShow 호출
+     * Then: true
+     */
+    @Test
+    fun test_15_canShowWhenChannelNotCreated() = runTest {
+        /** Given **/
+        PackageInstallTestFixture.shadowNotificationManager(context).setNotificationsEnabled(true)
+
+        /** When **/
+        val canShow = PackageInstallNotifier.canShow(context)
+
+        /** Then **/
+        assertTrue(canShow)
+    }
+
+    /**
+     * 앱 알림은 허용인데 설치 알림 채널만 끈 경우 표시 불가로 판단하는지 검증
+     *
+     * Given: SDK 34, 앱 알림 허용, PackageInstall 채널 중요도 NONE
+     * When: canShow 호출
+     * Then: false
+     */
+    @Test
+    fun test_16_cannotShowWhenChannelBlocked() = runTest {
+        /** Given **/
+        PackageInstallTestFixture.shadowNotificationManager(context).setNotificationsEnabled(true)
+        notificationManager().createNotificationChannel(
+            NotificationChannel("PackageInstall", "앱 설치·업데이트", NotificationManager.IMPORTANCE_NONE)
+        )
+
+        /** When **/
+        val canShow = PackageInstallNotifier.canShow(context)
+
+        /** Then **/
+        assertFalse(canShow)
+    }
+
+    /**
+     * 앱 알림이 꺼져 있으면 채널이 없어도 표시 불가로 판단하는지 검증
+     *
+     * Given: SDK 34, 앱 알림 끔, PackageInstall 채널 없음
+     * When: canShow 호출
+     * Then: false
+     */
+    @Test
+    fun test_17_cannotShowWhenAppNotificationsDisabled() = runTest {
+        /** Given **/
+        PackageInstallTestFixture.shadowNotificationManager(context).setNotificationsEnabled(false)
+
+        /** When **/
+        val canShow = PackageInstallNotifier.canShow(context)
+
+        /** Then **/
+        assertFalse(canShow)
     }
 
     /** NotificationManager 조회 */
