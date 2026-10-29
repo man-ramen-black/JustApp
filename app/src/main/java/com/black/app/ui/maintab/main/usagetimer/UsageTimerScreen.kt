@@ -76,7 +76,12 @@ fun UsageTimerScreen(
     viewModel.CollectEvents { event ->
         when (event) {
             is UsageTimerViewModel.EventShowTimerView -> {
-                UsageTimerView(context).attachView()
+                // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 크래시하므로 권한 설정으로 안내
+                if (PermissionHelper.canDrawOverlays(context)) {
+                    UsageTimerView(context).attachView()
+                } else {
+                    PermissionHelper.showDrawOverlaysSetting(context)
+                }
             }
             is UsageTimerViewModel.EventShowToast -> {
                 Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()

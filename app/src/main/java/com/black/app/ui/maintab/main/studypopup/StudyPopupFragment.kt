@@ -101,7 +101,12 @@ class StudyPopupFragment : TitleFragment<FragmentStudyPopupBinding>(),
             }
 
             StudyPopupFragmentViewModel.EVENT_ATTACH_VIEW -> {
-                StudyPopupView(requireContext()).attachView()
+                // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 크래시하므로 권한 설정으로 안내
+                if (PermissionHelper.canDrawOverlays(requireContext())) {
+                    StudyPopupView(requireContext()).attachView()
+                } else {
+                    PermissionHelper.showDrawOverlaysSetting(requireContext())
+                }
             }
 
             StudyPopupFragmentViewModel.EVENT_CONFIRM_DELETE -> {
