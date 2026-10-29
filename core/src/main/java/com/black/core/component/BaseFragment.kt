@@ -16,6 +16,12 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     // onCreateView ~ onDestroyView까지 유효
     protected val binding get() = _binding!!
 
+    /**
+     * 저장된 상태로 재생성 중이거나 상태 저장 이후인지 여부
+     *
+     * AndroidFragment(Compose) 호스팅은 화면 이탈로 제거하기 직전에도 saveFragmentInstanceState를 호출해 true가 됨.
+     * 이탈과 재생성을 구분하려면 [isRemoving] 사용
+     */
     protected var isRestoring = false
     val onBackPressedDispatcher get() = requireActivity().onBackPressedDispatcher
     private var onBackPressed: (() -> Unit)? = null

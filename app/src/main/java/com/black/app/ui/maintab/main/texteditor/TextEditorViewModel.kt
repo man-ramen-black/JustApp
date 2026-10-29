@@ -33,6 +33,8 @@ class TextEditorViewModel @Inject constructor(
 
     /** 문서 열기 선택창 실행 */
     data object EventOpenDocument : TextEditorEvent()
+    /** 접근 권한을 다시 받도록 [uri] 문서가 있는 위치에서 문서 열기 선택창 실행 */
+    data class EventReopenDocument(val uri: Uri) : TextEditorEvent()
     /** 새 문서 생성 선택창 실행 */
     data object EventCreateDocument : TextEditorEvent()
     /** 토스트 메시지 표시 */
@@ -54,9 +56,14 @@ class TextEditorViewModel @Inject constructor(
             val uri = textEditorRepository.currentFileUriFlow.firstOrNull() ?: return@launch
             loadFile(uri).exceptionOrNull()?.let {
                 it.printStackTrace()
-                // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화
+                // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화(권한 없는 uri로 자동 저장되지 않도록)
                 textEditorRepository.reset()
-                sendEvent(EventShowToast(R.string.text_editor_load_failed_latest_file))
+                if (it is SecurityException) {
+                    // 재설치 등으로 영구 권한이 사라진 문서는 다시 선택해 권한을 받도록 요청
+                    mutableUiState.update { state -> state.copy(permissionRequiredUri = uri) }
+                } else {
+                    sendEvent(EventShowToast(R.string.text_editor_load_failed_latest_file))
+                }
             }
         }
     }
@@ -80,6 +87,17 @@ class TextEditorViewModel @Inject constructor(
 
     fun onDismissReset() {
         mutableUiState.update { it.copy(showResetConfirm = false) }
+    }
+
+    /** 권한 요청 다이얼로그 확인 시 같은 문서를 다시 선택하도록 선택창 실행 */
+    fun onConfirmPermissionRequest() {
+        val uri = uiState.value.permissionRequiredUri ?: return
+        mutableUiState.update { it.copy(permissionRequiredUri = null) }
+        sendEvent(EventReopenDocument(uri))
+    }
+
+    fun onDismissPermissionRequest() {
+        mutableUiState.update { it.copy(permissionRequiredUri = null) }
     }
 
     fun onClickLoad() {

@@ -1,10 +1,14 @@
 package com.black.app.ui.maintab.main
 
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import com.black.app.R
 import com.black.app.testutil.BaseUiTest
 import com.black.app.ui.theme.BlackTheme
@@ -122,6 +126,31 @@ class MainScreenTest : BaseUiTest() {
         composeRule.onNodeWithText("3 TOOLS · DARK ALWAYS").assertIsDisplayed()
     }
 
+    /**
+     * 화면 높이가 리스트보다 작을 때 스크롤로 마지막 항목까지 내려가 클릭할 수 있는지 검증
+     *
+     * Given:
+     * - 팝업 창처럼 높이 240dp로 줄인 영역에 클릭 여부를 기록하는 항목으로 MainScreen 호스팅
+     * When:
+     * - 마지막 항목 "Blackout"까지 스크롤 후 클릭
+     * Then:
+     * - "Blackout" 항목 onClick만 1회 호출
+     */
+    @Test
+    fun test_05_scrollToLastItemInShortScreen() {
+        /** Given **/
+        val clickedNames = mutableListOf<String>()
+        hostMainScreen(defaultItemList { clickedNames.add(it) }, Modifier.height(240.dp))
+
+        /** When **/
+        composeRule.onNodeWithText("Blackout")
+            .performScrollTo()
+            .performClick()
+
+        /** Then **/
+        assertEquals(listOf("Blackout"), clickedNames)
+    }
+
     /** 실제 노출 구성과 동일한 5개 항목 리스트 생성. [onClick]으로 클릭된 항목 이름 수집 */
     private fun defaultItemList(onClick: (String) -> Unit = {}): List<MainItem> {
         return listOf(
@@ -135,12 +164,12 @@ class MainScreenTest : BaseUiTest() {
         }
     }
 
-    /** MainScreen을 HiltTestActivity에 setContent로 호스팅 */
-    private fun hostMainScreen(itemList: List<MainItem>) {
+    /** MainScreen을 HiltTestActivity에 setContent로 호스팅. [modifier]로 화면 크기 조정 */
+    private fun hostMainScreen(itemList: List<MainItem>, modifier: Modifier = Modifier) {
         onHostActivity { activity ->
             activity.setContent {
                 BlackTheme {
-                    MainScreen(itemList)
+                    MainScreen(itemList, modifier)
                 }
             }
         }
