@@ -6,9 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.CallSuper
+import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.black.core.util.Log
 
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
@@ -53,11 +55,6 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         Log.d(javaClass.simpleName)
 
         isRestoring = savedInstanceState != null
-
-        // >> https://developer.android.com/guide/navigation/navigation-custom-back?hl=ko
-        // https://stackoverflow.com/questions/63376684/onbackpressedcallback-not-trigger-after-screen-rotation
-        // LifecycleOwner 설정 시 LifeCycle에 따라 자동으로 enabled가 on/off되며 remove 처리 생략 가능
-        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
     }
 
     /*
@@ -86,6 +83,26 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(javaClass.simpleName)
+
+        // 복원된 Fragment는 컨테이너가 준비된 뒤에 뷰가 붙으므로 부착 시점에 상위 화면을 찾아 등록
+        view.doOnAttach { addOnBackPressedCallback(it) }
+    }
+
+    /**
+     * 뒤로가기 콜백을 Fragment를 감싼 상위 화면의 수명주기로 등록
+     *
+     * OnBackPressedDispatcher는 마지막에 등록된 콜백을 먼저 실행하고, 등록 수명주기의 ON_START마다 콜백을 다시 등록함.
+     * Compose NavHost(AndroidFragment) 호스팅에서 Fragment 수명주기로 등록하면 Activity 재생성(복원된 Fragment가 NavHost 컴포지션보다 먼저 시작)이나
+     * 백그라운드 복귀(Fragment ON_START가 Activity ON_START보다 먼저 전달)마다 NavHost 뒤로가기 콜백이 나중에 등록되어 Fragment 콜백보다 우선함.
+     * NavHost 안의 상위 화면 수명주기(NavBackStackEntry)는 NavHost 콜백 등록 뒤에 시작하므로 Fragment 콜백이 먼저 실행됨
+     */
+    private fun addOnBackPressedCallback(view: View) {
+        // >> https://developer.android.com/guide/navigation/navigation-custom-back?hl=ko
+        // https://stackoverflow.com/questions/63376684/onbackpressedcallback-not-trigger-after-screen-rotation
+        // LifecycleOwner 설정 시 LifeCycle에 따라 자동으로 enabled가 on/off되며, remove 처리는 onDestroyView에서 수행
+        // Fragment 뷰 자신에는 viewLifecycleOwner가 지정되어 있으므로 부모부터 탐색
+        val hostLifecycleOwner = (view.parent as? View)?.findViewTreeLifecycleOwner() ?: viewLifecycleOwner
+        onBackPressedDispatcher.addCallback(hostLifecycleOwner, onBackPressedCallback)
     }
 
     @CallSuper
@@ -123,6 +140,8 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(javaClass.simpleName)
+        // 상위 화면 수명주기로 등록한 뒤로가기 콜백은 뷰와 함께 해제(상위 화면이 Fragment보다 오래 유지될 수 있음)
+        onBackPressedCallback.remove()
         _binding = null
     }
 
