@@ -36,8 +36,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,7 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.black.app.R
-import com.black.app.ui.theme.BoldListTokens
+import com.black.app.ui.theme.BoldColors
+import com.black.app.ui.theme.BoldShapes
+import com.black.app.ui.theme.BoldTypography
 import com.black.core.viewmodel.CollectEvents
 
 /**
@@ -171,7 +171,7 @@ private fun TextEditorContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldListTokens.ScreenBackground)
+            .background(BoldColors.ScreenBackground)
             .statusBarsPadding()
             .padding(horizontal = 24.dp),
     ) {
@@ -185,22 +185,14 @@ private fun TextEditorContent(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "TOOL",
-                    color = BoldListTokens.CaptionColor,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 2.5.sp,
+                    style = BoldTypography.MonoHeaderCaption,
                 )
                 Text(
                     text = "Memo",
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .testTag(TextEditorTestTags.TITLE),
-                    color = BoldListTokens.TitleColor,
-                    fontSize = 34.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-1).sp,
+                    style = BoldTypography.ScreenTitle,
                 )
                 if (uiState.fileName.isNotEmpty()) {
                     Text(
@@ -208,10 +200,7 @@ private fun TextEditorContent(
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .testTag(TextEditorTestTags.FILE_NAME),
-                        color = BoldListTokens.CaptionColor,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 1.5.sp,
+                        style = BoldTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
                     )
                 }
             }
@@ -238,7 +227,7 @@ private fun TextEditorContent(
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 14.dp),
             thickness = 1.dp,
-            color = BoldListTokens.DividerColor,
+            color = BoldColors.Divider,
         )
 
         // 본문 에디터
@@ -251,11 +240,11 @@ private fun TextEditorContent(
                 .padding(bottom = 16.dp)
                 .testTag(TextEditorTestTags.EDITOR_INPUT),
             textStyle = TextStyle(
-                color = BoldListTokens.ItemNameColor,
+                color = BoldColors.ItemName,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
             ),
-            cursorBrush = SolidColor(BoldListTokens.TitleColor),
+            cursorBrush = SolidColor(BoldColors.Title),
         )
     }
 }
@@ -268,13 +257,13 @@ private fun ToolbarIconButton(
     testTag: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = BoldListTokens.ContainerShape
+    val shape = BoldShapes.Container
     Box(
         modifier = modifier
             .size(40.dp)
             .clip(shape)
-            .background(BoldListTokens.ContainerBackground, shape)
-            .border(1.dp, BoldListTokens.ContainerBorder, shape)
+            .background(BoldColors.ContainerBackground, shape)
+            .border(1.dp, BoldColors.ContainerBorder, shape)
             .clickable(onClick = onClick)
             .testTag(testTag),
         contentAlignment = Alignment.Center,
@@ -283,7 +272,7 @@ private fun ToolbarIconButton(
             painter = painterResource(iconResId),
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = BoldListTokens.IconColor,
+            tint = BoldColors.Icon,
         )
     }
 }
@@ -297,12 +286,12 @@ private fun PermissionRequestDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.PERMISSION_REQUEST_DIALOG),
-        shape = BoldListTokens.ContainerShape,
-        containerColor = BoldListTokens.ContainerBackground,
+        shape = BoldShapes.Container,
+        containerColor = BoldColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.text_editor_permission_required),
-                color = BoldListTokens.ItemNameColor,
+                color = BoldColors.ItemName,
             )
         },
         confirmButton = {
@@ -310,12 +299,12 @@ private fun PermissionRequestDialog(
                 onClick = onConfirm,
                 modifier = Modifier.testTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON),
             ) {
-                Text(stringResource(R.string.text_editor_select_document), color = BoldListTokens.TitleColor)
+                Text(stringResource(R.string.text_editor_select_document), color = BoldColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldListTokens.CaptionColor)
+                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
             }
         },
     )
@@ -330,22 +319,22 @@ private fun ResetConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.RESET_CONFIRM_DIALOG),
-        shape = BoldListTokens.ContainerShape,
-        containerColor = BoldListTokens.ContainerBackground,
+        shape = BoldShapes.Container,
+        containerColor = BoldColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.text_editor_new_file),
-                color = BoldListTokens.ItemNameColor,
+                color = BoldColors.ItemName,
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.ok), color = BoldListTokens.TitleColor)
+                Text(stringResource(R.string.ok), color = BoldColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldListTokens.CaptionColor)
+                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
             }
         },
     )

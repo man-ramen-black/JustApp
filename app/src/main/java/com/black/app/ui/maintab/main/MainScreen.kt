@@ -31,7 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.black.app.R
-import com.black.app.ui.theme.BoldListTokens
+import com.black.app.ui.theme.BoldColors
+import com.black.app.ui.theme.BoldShapes
+import com.black.app.ui.theme.BoldTypography
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,7 +54,7 @@ fun MainScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldListTokens.ScreenBackground),
+            .background(BoldColors.ScreenBackground),
     ) {
         // 팝업 창 등으로 높이가 부족하면 스크롤로 하단 항목까지 접근
         Column(
@@ -83,21 +85,12 @@ private fun MainHeader(modifier: Modifier = Modifier) {
         Text(
             text = date,
             modifier = Modifier.testTag("main_date"),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoHeaderCaption,
         )
         Text(
             text = stringResource(R.string.app_name),
             modifier = Modifier.padding(top = 10.dp),
-            color = BoldListTokens.TitleColor,
-            fontSize = 48.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-2).sp,
-            lineHeight = 50.sp,
+            style = BoldTypography.ScreenTitle.copy(fontSize = 48.sp, letterSpacing = (-2).sp, lineHeight = 50.sp),
         )
     }
 }
@@ -109,10 +102,10 @@ private fun MainItemList(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        HorizontalDivider(thickness = 1.dp, color = BoldListTokens.DividerColor)
+        HorizontalDivider(thickness = 1.dp, color = BoldColors.Divider)
         itemList.forEach { item ->
             MainItemRow(item = item)
-            HorizontalDivider(thickness = 1.dp, color = BoldListTokens.DividerColor)
+            HorizontalDivider(thickness = 1.dp, color = BoldColors.Divider)
         }
     }
 }
@@ -133,15 +126,15 @@ private fun MainItemRow(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(BoldListTokens.ContainerBackground, BoldListTokens.ContainerShape)
-                .border(1.dp, BoldListTokens.ContainerBorder, BoldListTokens.ContainerShape),
+                .background(BoldColors.ContainerBackground, BoldShapes.Container)
+                .border(1.dp, BoldColors.ContainerBorder, BoldShapes.Container),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(item.iconResId),
                 contentDescription = null,
                 modifier = Modifier.size(19.dp),
-                tint = BoldListTokens.IconColor,
+                tint = BoldColors.Icon,
             )
         }
         Text(
@@ -149,7 +142,7 @@ private fun MainItemRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 18.dp),
-            color = BoldListTokens.ItemNameColor,
+            color = BoldColors.ItemName,
             fontSize = 23.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.ExtraBold,
@@ -159,7 +152,7 @@ private fun MainItemRow(
             painter = painterResource(R.drawable.ic_arrow_up_right),
             contentDescription = null,
             modifier = Modifier.size(17.dp),
-            tint = BoldListTokens.ArrowColor,
+            tint = BoldColors.Arrow,
         )
     }
 }
@@ -173,9 +166,6 @@ private fun MainFooter(
     Text(
         text = stringResource(R.string.main_footer_hint, itemCount),
         modifier = modifier.padding(top = 18.dp, bottom = 14.dp, start = 2.dp),
-        color = BoldListTokens.ArrowColor,
-        fontSize = 11.sp,
-        fontFamily = FontFamily.Monospace,
-        letterSpacing = 1.5.sp,
+        style = BoldTypography.MonoCaption.copy(color = BoldColors.Arrow, letterSpacing = 1.5.sp),
     )
 }
