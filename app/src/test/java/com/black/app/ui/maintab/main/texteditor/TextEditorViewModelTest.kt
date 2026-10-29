@@ -209,6 +209,113 @@ class TextEditorViewModelTest : BaseTest() {
         assertEquals(R.string.text_editor_save_completed, event.messageResId)
         coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
     }
+
+    /**
+     * 마지막 문서의 영구 권한이 없어 init 로드가 실패하면 크래시나 빈 화면 대신 권한 요청 상태가 되는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 SecurityException 실패 반환(재설치로 권한 소실)
+     * When: ViewModel 생성(init 로드)
+     * Then: uiState.permissionRequiredUri == 마지막 문서 uri + 권한 없는 uri로 자동 저장되지 않도록 repository.reset 호출
+     */
+    @Test
+    fun test_08_initPermissionDeniedRequestsPermission() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } returns
+            Result.failure(SecurityException("No persistable permission grants found"))
+        coEvery { repository.reset() } just Runs
+
+        /** When **/
+        val viewModel = createViewModel()
+        // IO 스레드 로드 실패 후 상태 갱신 대기
+        val requestState = viewModel.uiState.filter { it.permissionRequiredUri != null }.first()
+
+        /** Then **/
+        assertEquals(uri, requestState.permissionRequiredUri)
+        coVerify { repository.reset() }
+    }
+
+    /**
+     * 권한 외 사유(파일 삭제 등)로 init 로드가 실패하면 권한 요청 없이 최근 문서 로드 실패 토스트가 발송되는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 IllegalStateException 실패 반환
+     * When: ViewModel 생성(init 로드)
+     * Then: EventShowToast(text_editor_load_failed_latest_file) 수신 + permissionRequiredUri null
+     */
+    @Test
+    fun test_09_initLoadFailureWithoutPermissionIssueSendsToastEvent() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } returns Result.failure(IllegalStateException("openInputStream failed"))
+        coEvery { repository.reset() } just Runs
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        val viewModel = createViewModel()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertEquals(
+            TextEditorViewModel.EventShowToast(R.string.text_editor_load_failed_latest_file),
+            receivedEvents[0],
+        )
+        assertEquals(null, viewModel.uiState.value.permissionRequiredUri)
+    }
+
+    /**
+     * 권한 요청 다이얼로그 확인 시 같은 문서 위치로 선택창 실행 이벤트가 발송되고 다이얼로그가 닫히는지 검증
+     *
+     * Given: init 로드가 SecurityException으로 실패해 권한 요청 상태
+     * When: onConfirmPermissionRequest 호출
+     * Then: EventReopenDocument(마지막 문서 uri) 수신 + permissionRequiredUri null
+     */
+    @Test
+    fun test_10_onConfirmPermissionRequestSendsReopenDocumentEvent() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModel = createPermissionRequestedViewModel(uri)
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.onConfirmPermissionRequest()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertEquals(TextEditorViewModel.EventReopenDocument(uri), receivedEvents[0])
+        assertEquals(null, viewModel.uiState.value.permissionRequiredUri)
+    }
+
+    /**
+     * 권한 요청 다이얼로그 취소 시 다이얼로그만 닫히는지 검증
+     *
+     * Given: init 로드가 SecurityException으로 실패해 권한 요청 상태
+     * When: onDismissPermissionRequest 호출
+     * Then: permissionRequiredUri null
+     */
+    @Test
+    fun test_11_onDismissPermissionRequestClosesDialog() = runTest {
+        /** Given **/
+        val viewModel = createPermissionRequestedViewModel(mockk())
+
+        /** When **/
+        viewModel.onDismissPermissionRequest()
+
+        /** Then **/
+        assertEquals(null, viewModel.uiState.value.permissionRequiredUri)
+    }
+
+    /** init 로드가 SecurityException으로 실패해 [uri] 권한 요청 상태가 된 ViewModel 생성 */
+    private suspend fun createPermissionRequestedViewModel(uri: Uri): TextEditorViewModel {
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } returns
+            Result.failure(SecurityException("No persistable permission grants found"))
+        coEvery { repository.reset() } just Runs
+        return createViewModel().also { viewModel ->
+            viewModel.uiState.filter { it.permissionRequiredUri != null }.first()
+        }
+    }
 }
 
 /** Flow에서 [count]개 이벤트를 수집하는 테스트 헬퍼 */

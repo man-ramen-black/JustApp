@@ -1,13 +1,28 @@
 package com.black.app.ui.maintab.main.texteditor
 
+import android.content.ContentUris
+import android.content.ContentValues
+import android.content.Intent
+import android.net.Uri
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Until
+import com.black.app.model.datastore.TextEditorDataStore
 import com.black.app.testutil.BaseUiTest
 import com.black.app.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertNotNull
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -122,5 +137,80 @@ class TextEditorScreenTest : BaseUiTest() {
 
         /** Then **/
         composeRule.onNodeWithTag("file_name").assertDoesNotExist()
+    }
+
+    /**
+     * 영구 권한이 없는 문서가 최근 문서로 남아 있을 때 크래시 없이 권한을 요청하고, 다시 선택하면 그 문서를 불러오는지 검증
+     *
+     * Given:
+     * - 앱에 권한이 없는 Download 텍스트 문서를 최근 문서로 저장(재설치로 영구 권한이 사라진 상황)
+     * - TextEditorScreen 호스팅
+     * When:
+     * - 권한 요청 다이얼로그의 권한 허용 클릭 후 문서 선택창에서 같은 문서 선택
+     * Then:
+     * - 진입 시 크래시 없이 permission_request_dialog 표시
+     * - 선택 후 문서 내용과 파일명 표시
+     */
+    @Test
+    fun test_05_permissionDeniedLatestFileRequestsPermissionAndReloads() {
+        /** Given **/
+        val dataStore = TextEditorDataStore(context)
+        val originalLatestFileUri = runBlocking { dataStore.getLatestFileUriFlow().first() }
+        val mediaUri = createDownloadTextFile()
+        val documentUri = DocumentsContract.buildDocumentUri(MEDIA_DOCUMENTS_AUTHORITY, "document:${ContentUris.parseId(mediaUri)}")
+        try {
+            runBlocking { dataStore.updateLatestFileUri(documentUri) }
+            hostTextEditorScreen()
+            composeRule.waitUntil(TIMEOUT_MS) {
+                composeRule.onAllNodesWithTag("permission_request_dialog").fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNodeWithTag("permission_request_dialog").assertIsDisplayed()
+
+            /** When **/
+            composeRule.onNodeWithTag("permission_allow_button").performClick()
+            // 문서 선택창(시스템 앱)에서 같은 문서 선택
+            val fileItem = device.wait(Until.findObject(By.text(TEST_FILE_NAME)), TIMEOUT_MS)
+            assertNotNull("문서 선택창에 $TEST_FILE_NAME 항목이 표시되지 않았습니다", fileItem)
+            fileItem.click()
+
+            /** Then **/
+            composeRule.waitUntil(TIMEOUT_MS) {
+                composeRule.onAllNodesWithText(TEST_FILE_CONTENT).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.onNodeWithTag("file_name").assertTextEquals(TEST_FILE_NAME)
+        } finally {
+            // 사용자 최근 문서 복구, 임시 문서와 그 영구 권한 정리
+            runBlocking {
+                originalLatestFileUri?.let { dataStore.updateLatestFileUri(it) } ?: dataStore.removeLatestFileUri()
+            }
+            context.contentResolver.persistedUriPermissions
+                .filter { it.uri == documentUri }
+                .forEach {
+                    context.contentResolver.releasePersistableUriPermission(
+                        it.uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                    )
+                }
+            context.contentResolver.delete(mediaUri, null, null)
+        }
+    }
+
+    /** MediaStore Download에 [TEST_FILE_NAME] 텍스트 문서 생성 후 media uri 반환 */
+    private fun createDownloadTextFile(): Uri {
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, TEST_FILE_NAME)
+            put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+        }
+        val mediaUri = requireNotNull(context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
+        context.contentResolver.openOutputStream(mediaUri)!!.use { it.write(TEST_FILE_CONTENT.toByteArray()) }
+        return mediaUri
+    }
+
+    companion object {
+        /** 문서 선택창이 media 문서에 발급하는 uri 권한자 */
+        private const val MEDIA_DOCUMENTS_AUTHORITY = "com.android.providers.media.documents"
+        private const val TEST_FILE_NAME = "justapp-permission-test.txt"
+        private const val TEST_FILE_CONTENT = "permission test"
+        private const val TIMEOUT_MS = 10_000L
     }
 }
