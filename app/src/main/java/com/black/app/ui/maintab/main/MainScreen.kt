@@ -4,14 +4,18 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -45,20 +49,29 @@ fun MainScreen(
     itemList: List<MainItem>,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldListTokens.ScreenBackground)
-            .padding(horizontal = 24.dp),
+            .background(BoldListTokens.ScreenBackground),
     ) {
-        MainHeader()
-        MainItemList(
-            itemList = itemList,
+        // 팝업 창 등으로 높이가 부족하면 스크롤로 하단 항목까지 접근
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        )
-        MainFooter(itemCount = itemList.size)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                // 높이가 충분하면 위아래 weight 여백으로 리스트를 가운데 배치하도록 최소 높이를 화면 높이로 지정
+                .heightIn(min = maxHeight)
+                .padding(horizontal = 24.dp),
+        ) {
+            MainHeader()
+            Spacer(modifier = Modifier.weight(1f))
+            MainItemList(
+                itemList = itemList,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MainFooter(itemCount = itemList.size)
+        }
     }
 }
 
@@ -89,16 +102,13 @@ private fun MainHeader(modifier: Modifier = Modifier) {
     }
 }
 
-/** 기능 리스트(세로 중앙 정렬, 리스트 최상단 디바이더 + 각 row 하단 디바이더) */
+/** 기능 리스트(리스트 최상단 디바이더 + 각 row 하단 디바이더) */
 @Composable
 private fun MainItemList(
     itemList: List<MainItem>,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-    ) {
+    Column(modifier = modifier) {
         HorizontalDivider(thickness = 1.dp, color = BoldListTokens.DividerColor)
         itemList.forEach { item ->
             MainItemRow(item = item)
