@@ -137,7 +137,9 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                     viewModel.webView.get()?.onPause()
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    if (isRestoring) {
+                    // 화면 이탈로 Fragment가 제거될 때만 복구(회전 등 Activity 재생성 시 유지)
+                    // AndroidFragment는 제거 직전에 상태를 저장해 isRestoring이 true가 되므로 isRemoving으로 구분
+                    if (!isRemoving) {
                         return@LifecycleEventObserver
                     }
 
