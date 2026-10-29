@@ -2,6 +2,8 @@
 
 Claude Code 상태 표시줄 왼쪽에 Clawd 마스코트를 quadrant(2×2 사분면) 블록 문자로 그리고, 오른쪽에 [claude-hud](https://github.com/jarrodwatts/claude-hud) 정보를 붙여 보여 준다. 마스코트는 작업 상태(생각·도구 실행·서브에이전트·완료·권한 대기)에 따라 움직이고, 컨텍스트 사용률이 높을수록 몸이 빨개진다. HUD 출력에는 effort 배지, 둥근 진행 막대, 로그인 계정 배지를 덧붙인다.
 
+마스코트 몸과 트릭은 Claude Code 시작 화면 왼쪽 위 Clawd(클릭하면 애니메이션 재생)의 글리프 표·시퀀스를 그대로 옮긴 것이다(2.1.312 기준). 상태 표시줄은 클릭을 받을 수 없어, 대기(idle) 중 30초마다 클릭 애니메이션 11종(jump·look·spin·peekaboo·drop·wink·boop·tap·sneeze·turn·coin-hop) 중 하나를 무작위로 재생한다. 상태 표시줄 갱신 간격이 최소 1초(`refreshInterval`)라 원본 60ms 프레임 중 같은 자세가 이어지는 구간을 한 자세로 합쳐 1초에 한 자세씩 넘긴다.
+
 상태 표시줄은 사용자 레벨(`~/.claude`) 설정이라 모든 프로젝트에 적용된다. 이 폴더는 그 설정을 다른 PC에 똑같이 옮기기 위한 원본과 설치기다.
 
 ## 구성
@@ -37,6 +39,7 @@ Claude Code 상태 표시줄 왼쪽에 Clawd 마스코트를 quadrant(2×2 사�
 - 원본은 각 PC의 `~/.claude/statusline/clawd-quadrant.mjs`다. 상태 표시줄은 매 렌더마다 새 `node` 프로세스로 실행되므로 저장 즉시 반영된다.
 - 고친 뒤에는 이 폴더로 복사해 커밋한다. 이 파일은 홈 사본과 그대로 비교·복사할 수 있도록 원문을 유지한다(주석 형식 규칙 적용 대상에서 제외).
 - 상태·애니메이션 동작은 플러그인 `dist`가 아니라 `clawd-quadrant.mjs`가 결정한다. 플러그인 코드를 고쳐도 상태 표시줄에는 반영되지 않는다.
+- Claude Code가 시작 화면 Clawd를 바꾸면 번들에서 글리프 표(`arms`·`eyes`·`feet`·`facing`)와 트릭 시퀀스를 다시 찾아 `clawd-quadrant.mjs`의 1·2절을 맞춘다. 네이티브 설치본은 `~/.local/bin/claude.exe`에 JS가 문자열로 들어 있어 `grep -a 'clawdEntrance'` 근처에서 찾을 수 있다.
 - HUD 표시 항목은 `claude-hud-config.json`을 고치고 설치기를 다시 실행한다.
 
 ## 미리 보기와 디버그
@@ -51,6 +54,7 @@ echo '{}' | CLAWD_NO_HUD=1 CLAWD_FORCE_STATE=done node ~/.claude/statusline/claw
 | `CLAWD_FORCE_PCT=70` | 컨텍스트 사용률 강제(높을수록 몸이 빨개짐) |
 | `CLAWD_NO_HUD=1` | HUD 생략, 마스코트만 출력 |
 | `CLAWD_NOW=<ms>` | 애니메이션 프레임 선택용 현재 시각 주입 |
+| `CLAWD_FORCE_TRICK=jump` | 트릭을 상태와 무관하게 반복 재생(`CLAWD_NOW`의 초 단위가 프레임 번호) |
 
 - 계정 배지는 `~/.claude.json`의 `oauthAccount.emailAddress`를 읽는다. Vertex로 실행 중이면(`CLAUDE_CODE_USE_VERTEX`) 계정 대신 Vertex 배지를 그린다.
 - 블록 문자 그림이 행 사이 틈으로 쪼개져 보이면 터미널 렌더러 문제다(Orca는 GPU acceleration을 `auto`로, `.claude/references/orca-environment.md` 참고).

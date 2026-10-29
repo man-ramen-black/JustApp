@@ -9,6 +9,7 @@
 //   CLAWD_NOW=<ms>              애니 프레임 선택용 현재시각(ms) 주입
 //   CLAWD_FORCE_PCT=70          heat 보간용 context 사용률(%) 강제
 //   CLAWD_NO_HUD=1             HUD 병합 생략(마스코트만 출력)
+//   CLAWD_FORCE_TRICK=jump     트릭(시작 화면 클릭 애니)을 상태와 무관하게 반복 재생(CLAWD_NOW로 프레임 지정)
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync, openSync, readSync, closeSync, fstatSync } from "node:fs";
 import { homedir } from "node:os";
@@ -24,17 +25,14 @@ const HUD = path.join(HOME, ".claude/plugins/marketplaces/claude-hud/dist/index.
 const CLAUDE_CONFIG = path.join(HOME, ".claude.json");
 
 // ── 팔레트 (pack.yaml clawd 기준) ──
-// 인덱스 2(몸 오렌지)는 heat target — context% 높을 때 빨강으로 보간된다.
-const PALETTE = [
-  SAFE_BG,   // 0 투명(배경으로 채워짐)
-  "#1a1a1a", // 1 검정 눈
-  "#d77757", // 2 몸 오렌지 (HEAT TARGET)
-  "#f3c969", // 3 골드 (반짝/물음)
-  "#7db8ff", // 4 파랑 (땀/서브에이전트)
-  "#ff5555", // 5 빨강 (permission 경고)
-  SAFE_BG,   // 6 배경 채움
-  "#f4fbff", // 7 흰 (생각 점)
-];
+// body(몸 오렌지)는 heat target — context% 높을 때 빨강으로 보간된다.
+const PALETTE = {
+  body: "#d77757", // 몸 오렌지 (HEAT TARGET)
+  gold: "#f3c969", // 골드 (반짝/물음)
+  blue: "#7db8ff", // 파랑 (땀/서브에이전트)
+  red: "#ff5555", // 빨강 (permission 경고)
+  dust: "#999999", // 트릭 먼지·그림자 (Claude Code 테마 inactive)
+};
 
 // ── 타이밍 (pack.yaml clawd timing) ──
 const FRAME_PERIOD = {
@@ -72,10 +70,6 @@ const DONE_VISIBLE_MS = 10000;
 const HEAT_THRESHOLD = 60; // 이하면 보간 안 함
 const HEAT_MAX = 85; // 이상은 최대값으로 saturate
 const HEAT_TARGET = [0xff, 0x44, 0x44]; // #ff4444
-const HEAT_PALETTE_INDEX = 2; // 몸 오렌지
-
-// quadrant 매핑: 인덱스 = TL*8 + TR*4 + BL*2 + BR (채워짐=1)
-const QUAD = [" ", "▗", "▖", "▄", "▝", "▐", "▞", "▟", "▘", "▚", "▌", "▙", "▀", "▜", "▛", "█"];
 
 // ── ANSI 색 ──
 const hexToRgb = (hex) => [
@@ -94,186 +88,276 @@ const bg = (hex) => {
 const RESET = "\x1b[0m";
 
 // ──────────────────────────────────────────────────────────────────────────
-// 1. quadrant 렌더
-// 2×2 픽셀 1셀 = 문자 1개. 한 셀은 fg+bg 2색만 가지므로 셀 단위로 2색 양자화한다.
-//   - SAFE_BG가 셀에 있으면 그걸 bg로, 나머지 최빈 색을 fg로 둔다(몸이 배경 위).
-//   - SAFE_BG가 없으면(눈처럼 몸 위 악센트) 최빈 색을 bg, 최소빈 색을 fg로 둔다.
-//   - bg가 아닌 픽셀은 모두 채움(1) 비트로 본다(3색 이상이면 근사 — 아트로 회피).
+// 1. 스프라이트 — Claude Code 시작 화면(로고) Clawd의 글리프 표를 그대로 이식(2.1.312 번들의 포즈 렌더러 기준).
+//   몸 9×3 셀 = 팔(ARMS)·눈(EYES)·발(FEET) 글리프 조합. 상태바는 왼쪽 여백 1칸과 오른쪽 점 마커 1칸을 더해 11×3 셀로 그린다.
+//   셀은 { ch, fg, bg }이고 배경은 SAFE_BG로 칠한다. 감은 눈(▂)만 bg에 몸 색을 쓰는 '눈꺼풀' 셀이다.
+//   시작 화면과 같은 몸을 쓰므로 상태 애니와 트릭(클릭 애니) 사이를 오가도 모양이 튀지 않는다.
 // ──────────────────────────────────────────────────────────────────────────
-function renderCell(colors) {
-  const distinct = [...new Set(colors)];
-  if (distinct.length === 1) {
-    const c = distinct[0];
-    if (c === SAFE_BG) return `${bg(SAFE_BG)} ${RESET}`;
-    return `${fg(c)}${bg(SAFE_BG)}█${RESET}`;
-  }
-  const freq = {};
-  for (const c of colors) freq[c] = (freq[c] ?? 0) + 1;
-  let bgColor;
-  let fgColor;
-  if (distinct.includes(SAFE_BG)) {
-    bgColor = SAFE_BG;
-    const nonBg = colors.filter((c) => c !== SAFE_BG);
-    fgColor = nonBg.sort((a, b) => freq[b] - freq[a])[0];
-  } else {
-    const sorted = [...distinct].sort((a, b) => freq[b] - freq[a]);
-    bgColor = sorted[0]; // 최빈(몸)
-    fgColor = sorted[sorted.length - 1]; // 최소빈(악센트=눈)
-  }
-  let bits = 0;
-  for (const c of colors) bits = (bits << 1) | (c === bgColor ? 0 : 1); // TL,TR,BL,BR 순
-  return `${fg(fgColor)}${bg(bgColor)}${QUAD[bits]}${RESET}`;
-}
+const SPRITE_WIDTH = 9;
+const SPRITE_HEIGHT = 3;
+const BOX_WIDTH = SPRITE_WIDTH + 2;
+const MARKER_COLUMN = BOX_WIDTH - 1;
 
-function renderQuadrant(grid, palette) {
-  const height = grid.length;
-  const lines = [];
-  for (let y = 0; y < height; y += 2) {
-    const width = grid[y].length;
-    let line = "";
-    for (let x = 0; x < width; x += 2) {
-      const colors = [
-        palette[grid[y]?.[x] ?? 0] ?? SAFE_BG,
-        palette[grid[y]?.[x + 1] ?? 0] ?? SAFE_BG,
-        palette[grid[y + 1]?.[x] ?? 0] ?? SAFE_BG,
-        palette[grid[y + 1]?.[x + 1] ?? 0] ?? SAFE_BG,
-      ];
-      line += renderCell(colors);
-    }
-    lines.push(line);
-  }
-  return lines;
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// 2. 스프라이트 — 공식 Clawd quadrant 아트를 픽셀로 역산. 18×6 픽셀(quadrant 9×3 문자).
-//   목표 아트(idle):  ▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝
-//   각 quadrant 문자(TL*8+TR*4+BL*2+BR)를 비트로 디코딩해 아래 그리드를 복원했다.
-//   다리(4행)와 머리 옆 효과 마커는 상태별로 합성한다.
-// ──────────────────────────────────────────────────────────────────────────
-const O = 2; // 몸 오렌지
-const _ = 0; // 투명
-// 몸통(rows 0~3) — 목표 아트의 ▐▛███▜▌ / ▝▜█████▛▘ 부분을 픽셀로 복원. 다리는 setLegs로 추가.
-// 눈 = ▛(우하단 BR=px(1,5))·▜(좌하단 BL=px(1,12))의 비어있는 노치. 투명이라 어두운 음각으로 렌더된다.
-const BASE_BODY = [
-  [_, _, _, O, O, O, O, O, O, O, O, O, O, O, O, _, _, _], // 0  ' ▐▛███▜▌'
-  [_, _, _, O, O, _, O, O, O, O, O, O, _, O, O, _, _, _], // 1  (col5·col12 = 눈)
-  [_, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, _], // 2  '▝▜█████▛▘'
-  [_, _, _, O, O, O, O, O, O, O, O, O, O, O, O, _, _, _], // 3
-  [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _], // 4 (다리)
-  [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _], // 5
-];
-
-const clone = (grid) => grid.map((row) => [...row]);
-const setPixel = (grid, y, x, value) => {
-  if (grid[y] && x >= 0 && x < grid[y].length) grid[y][x] = value;
+// 팔: 0행 왼쪽(0~1열)·오른쪽(8열), 1행 왼쪽(0~1열)·오른쪽(7~8열) 글리프.
+// down(손이 옆)·up(만세)은 원본 그대로, low(손을 아래로 내림)는 걷기·시무룩 자세용으로 같은 픽셀 규칙에 맞춰 추가했다.
+const ARMS = {
+  down: { row0Left: " ▐", row0Right: "", row1Left: "▝▜", row1Right: "█▀" },
+  up: { row0Left: "▗▟", row0Right: "▄", row1Left: " ▜", row1Right: "█▘" },
+  low: { row0Left: " ▐", row0Right: "", row1Left: "▗▟", row1Right: "█▄" },
 };
-// 오른쪽 마커 공간 확보용: 모든 행을 width까지 투명으로 채운다.
-const padTo = (grid, width) =>
-  grid.map((row) => (row.length >= width ? row : [...row, ...new Array(width - row.length).fill(0)]));
+// 눈: 0행 2~7열. 두리번은 눈 노치가 위쪽 대각선으로 옮겨 간다. lid 구간은 몸 색 위 어두운 ▂(감은 눈).
+const EYES = {
+  open: [{ glyphs: "▛███▛█" }],
+  left: [{ glyphs: "▟███▟█" }],
+  right: [{ glyphs: "█▟███▟" }],
+  closed: [{ glyphs: "▂", lid: true }, { glyphs: "███" }, { glyphs: "▂", lid: true }, { glyphs: "█" }],
+  wink: [{ glyphs: "▛███" }, { glyphs: "▂", lid: true }, { glyphs: "█" }],
+};
+// 발: 2행. left/right는 한쪽 발만 디딘 자세(발 구르기·걷기).
+const FEET = {
+  both: " ▝▝   ▝▝ ",
+  left: " ▝▝      ",
+  right: "      ▝▝ ",
+};
+const NAMED_POSES = {
+  default: { eyes: "open", arms: "down", feet: "both" },
+  "arms-up": { eyes: "open", arms: "up", feet: "both" },
+  "look-left": { eyes: "left", arms: "down", feet: "both" },
+  "look-right": { eyes: "right", arms: "down", feet: "both" },
+};
+// 몸 돌리기(turn·coin-hop) 각도별 3행 글리프. 오른쪽으로 돌아 등을 보인 뒤 왼쪽으로 돌아온다.
+const FACINGS = {
+  "right-12": [" ▐█▜██▛█ ", "▝▜██████▀", " ▝▝   ▝▝ "],
+  "right-30": ["  █▛██▛▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "],
+  "right-55": ["  ▐█▛█▜  ", "  ▐████  ", "  ▝▝ ▝▝  "],
+  "right-75": ["   ██▛▌  ", "   ███▌  ", "   ▘  ▘  "],
+  edge: ["   ▐██   ", "   ▐██   ", "   ▝ ▝   "],
+  "back-105": ["   ███▌  ", "   ███▌  ", "   ▘  ▘  "],
+  "back-125": ["  ▐████  ", "  ▐████  ", "  ▝▝ ▝▝  "],
+  "back-150": ["  █████▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "],
+  back: [" ▐██████ ", "▝▜██████▀", " ▝▝   ▝▝ "],
+  "left-75": ["   ▛██▌  ", "   ███▌  ", "   ▘  ▘  "],
+  "left-55": ["  ▐▜▛██  ", "  ▐████  ", "  ▝▝ ▝▝  "],
+  "left-30": ["  ▛██▛█▌ ", " ▝█████▛ ", "  ▘▘  ▘▘ "],
+  "left-12": [" ▐▛███▜█ ", "▝▜██████▀", " ▝▝   ▝▝ "],
+};
+// 트릭 바닥 효과: 웅크릴 때 양끝 먼지, 몸 돌리며 뛸 때 발 사이 그림자(원본 inactive 색).
+const POOF = { dot: "·", wave: "~" };
+const SHADOW = { wide: { glyphs: "▁▁▁", column: 3 }, narrow: { glyphs: "▁", column: 4 } };
 
-// 다리: 4행에 발 4개. phase "a"=목표(▘▘ ▝▝), "b"=좌우 반전(걷기 애니용).
-function setLegs(grid, phase) {
-  const cols = phase === "b" ? [5, 7, 10, 12] : [4, 6, 11, 13];
-  for (const c of cols) setPixel(grid, 4, c, O);
+// 원본 Mo(eyes, arms, feet)와 같은 자세 객체.
+const posture = (eyes, arms = "down", feet = "both") => ({ eyes, arms, feet });
+
+const createGrid = (width) => Array.from({ length: SPRITE_HEIGHT }, () => new Array(width).fill(null));
+
+// 공백은 빈 셀(배경)로 두고 나머지 글리프만 칠한다. 그리드 밖은 잘라낸다.
+function paintGlyphs(grid, row, column, glyphs, color, lid = false) {
+  [...glyphs].forEach((ch, index) => {
+    const x = column + index;
+    if (ch === " " || !grid[row] || x < 0 || x >= grid[row].length) return;
+    grid[row][x] = lid ? { ch, fg: SAFE_BG, bg: color } : { ch, fg: color, bg: SAFE_BG };
+  });
 }
 
-// 두리번: 양쪽 눈이 함께 시선 방향으로 1px씩 이동(눈=row1의 어두운 노치 1개씩).
-//  중앙=▐▛███▜▌(목표) / 오른쪽=▐█▜██▛▌ / 왼쪽=▐▜██▛█▌.
-//  왼눈 노치 col4(좌)·5(중)·6(우), 오른눈 col11(좌)·12(중)·13(우).
-function setEyes(grid, dir) {
-  for (const c of [4, 5, 6, 11, 12, 13]) setPixel(grid, 1, c, O); // 눈 영역 채우고
-  const gaps = { left: [4, 11], center: [5, 12], right: [6, 13] };
-  const [leftEye, rightEye] = gaps[dir] ?? gaps.center;
-  setPixel(grid, 1, leftEye, _);
-  setPixel(grid, 1, rightEye, _);
-}
-
-// 팔 3단계(모든 상태 공통):
-//  "center"=기본 ▝▜█████▛▘ (손이 옆) / "up"=올림 ▗▐▛███▜▌▖·▜█████▛ (손 윗줄, 아래 비움) / "down"=내림 ▗▜█████▛▖ (손 아랫줄).
-function setArms(grid, pose) {
-  if (pose === "up") {
-    setPixel(grid, 1, 1, O);   // 윗줄 ▗ (왼팔 올림)
-    setPixel(grid, 1, 16, O);  // 윗줄 ▖ (오른팔 올림)
-    setPixel(grid, 2, 1, _);   // 옆 손 ▝ 치움
-    setPixel(grid, 2, 16, _);  // 옆 손 ▘ 치움
-  } else if (pose === "down") {
-    setPixel(grid, 2, 1, _);   // 옆 손 ▝ 치움
-    setPixel(grid, 2, 16, _);  // 옆 손 ▘ 치움
-    setPixel(grid, 3, 1, O);   // 아랫줄 ▗ (왼팔 내림)
-    setPixel(grid, 3, 16, O);  // 아랫줄 ▖ (오른팔 내림)
+// 자세 하나를 9×3 몸 그리드로 그린다. pose = 이름 | { eyes, arms, feet } | { facing }.
+function drawPose(pose, bodyColor) {
+  const grid = createGrid(SPRITE_WIDTH);
+  if (pose.facing) {
+    FACINGS[pose.facing].forEach((glyphs, row) => paintGlyphs(grid, row, 0, glyphs, bodyColor));
+    return grid;
   }
-  // center = BASE_BODY (손 ▝…▘)
-}
-
-// 상단 모서리 골드 반짝(성공/완료). 18px 내 ▝ … ▘ 로 렌더.
-function setTopSparkle(grid, colorIndex) {
-  setPixel(grid, 0, 1, colorIndex);
-  setPixel(grid, 0, 16, colorIndex);
-}
-
-// 단일 프레임 합성기. 본체(px0~17)를 그린 뒤 좌우 여백을 1칸씩 덧대고 우측 점 마커를 그린다.
-function makeFrame({ legs = "a", eyes = "center", arms = "center", sparkle = null, sideMark = null } = {}) {
-  let grid = clone(BASE_BODY);
-  setLegs(grid, legs);
-  setEyes(grid, eyes);
-  setArms(grid, arms);
-  if (sparkle !== null) setTopSparkle(grid, sparkle);
-  grid = grid.map((row) => [_, _, ...row, _, _]); // 좌우 여백 각 1칸
-  if (sideMark) for (const r of sideMark.rows) setPixel(grid, r, 20, sideMark.color); // 우측 여백(px20)에 점
+  const { eyes, arms, feet } = typeof pose === "string" ? NAMED_POSES[pose] : pose;
+  const arm = ARMS[arms];
+  paintGlyphs(grid, 0, 0, arm.row0Left, bodyColor);
+  let column = 2;
+  for (const span of EYES[eyes]) {
+    paintGlyphs(grid, 0, column, span.glyphs, bodyColor, span.lid);
+    column += [...span.glyphs].length;
+  }
+  paintGlyphs(grid, 0, 8, arm.row0Right, bodyColor);
+  paintGlyphs(grid, 1, 0, arm.row1Left, bodyColor);
+  paintGlyphs(grid, 1, 2, "█████", bodyColor);
+  paintGlyphs(grid, 1, 7, arm.row1Right, bodyColor);
+  paintGlyphs(grid, 2, 0, FEET[feet], bodyColor);
   return grid;
+}
+
+// 프레임 = { pose, offset, poof, shadow, sparkle, sideMark } → 11×3 셀.
+//   offset: 몸을 아래(+)·위(-)로 옮기고 3행 밖은 잘라낸다(웅크림·숨기·떨어지기, 원본 marginTop+overflow hidden).
+//   poof는 offset>0일 때만 바닥 양끝에, shadow는 발 사이에 덧그린다(원본 absolute 오버레이).
+//   sparkle(상단 양쪽 골드 반짝)·sideMark(오른쪽 점 마커)는 상태바 상태 표시.
+function composeFrame(frame, palette) {
+  const sprite = drawPose(frame.pose ?? "default", palette.body);
+  const box = createGrid(BOX_WIDTH);
+  const offset = frame.offset ?? 0;
+  for (let row = 0; row < SPRITE_HEIGHT; row += 1) {
+    const targetRow = row + offset;
+    if (targetRow < 0 || targetRow >= SPRITE_HEIGHT) continue;
+    for (let column = 0; column < SPRITE_WIDTH; column += 1) box[targetRow][column + 1] = sprite[row][column];
+  }
+  if (frame.poof && offset > 0) {
+    paintGlyphs(box, SPRITE_HEIGHT - 1, 1, POOF[frame.poof], palette.dust);
+    paintGlyphs(box, SPRITE_HEIGHT - 1, SPRITE_WIDTH, POOF[frame.poof], palette.dust);
+  }
+  if (frame.shadow) {
+    const { glyphs, column } = SHADOW[frame.shadow];
+    paintGlyphs(box, SPRITE_HEIGHT - 1, column + 1, glyphs, palette.dust);
+  }
+  if (frame.sparkle) {
+    // 손 바로 위 대칭 위치(몸 중심 기준 양쪽 끝 픽셀).
+    paintGlyphs(box, 0, 1, "▝", palette.gold);
+    paintGlyphs(box, 0, SPRITE_WIDTH, "▝", palette.gold);
+  }
+  if (frame.sideMark) {
+    for (const row of frame.sideMark.rows) paintGlyphs(box, row, MARKER_COLUMN, "▖", palette[frame.sideMark.color]);
+  }
+  return box;
+}
+
+function renderCells(grid) {
+  return grid.map((row) =>
+    row.map((cell) => (cell ? `${fg(cell.fg)}${bg(cell.bg)}${cell.ch}${RESET}` : `${bg(SAFE_BG)} ${RESET}`)).join(""),
+  );
 }
 
 // 상태별 프레임 배열.
 function buildFrames(state) {
   switch (state) {
     case "idle":
-      // 대기: 눈만 두리번(좌→정→우→정). 몸·팔·다리는 목표 정지 자세 유지.
-      return [
-        makeFrame({ eyes: "left" }),
-        makeFrame({ eyes: "center" }),
-        makeFrame({ eyes: "right" }),
-        makeFrame({ eyes: "center" }),
-      ];
+      // 대기: 눈만 두리번(좌→정→우→정). 사이사이 트릭은 idleTrickFrame이 끼운다.
+      return [{ pose: "look-left" }, { pose: "default" }, { pose: "look-right" }, { pose: "default" }];
     case "tool_running":
-      // 걷기: 발 좌우 + 팔 올림↔내림 스윙
-      return [makeFrame({ legs: "a", arms: "up" }), makeFrame({ legs: "b", arms: "down" })];
-    case "subagent_running":
+      // 걷기: 발 번갈아 디디기 + 팔 올림↔내림 스윙
+      return [{ pose: posture("open", "up", "left") }, { pose: posture("open", "low", "right") }];
+    case "subagent_running": {
       // 걷기 + 팔 스윙 + 우측 파랑 점(서브에이전트 구분)
+      const sideMark = { rows: [0, 1], color: "blue" };
       return [
-        makeFrame({ legs: "a", arms: "up", sideMark: { rows: [1, 3], color: 4 } }),
-        makeFrame({ legs: "b", arms: "down", sideMark: { rows: [1, 3], color: 4 } }),
+        { pose: posture("open", "up", "left"), sideMark },
+        { pose: posture("open", "low", "right"), sideMark },
       ];
+    }
     case "thinking":
-      // 생각 중: 팔 까딱(중앙↔올림)
-      return [makeFrame({ arms: "center" }), makeFrame({ arms: "up" })];
+      // 생각 중: 팔 까딱(옆↔만세)
+      return [{ pose: "default" }, { pose: "arms-up" }];
     case "tool_success":
     case "auth_success":
       // 성공: 골드 반짝
-      return [makeFrame({ sparkle: 3 })];
+      return [{ pose: "default", sparkle: true }];
     case "done":
-      // 완료 축하: 다리 좌우로 움직이며 골드 반짝 점멸 (오래 유지)
-      return [makeFrame({ sparkle: 3, legs: "a" }), makeFrame({ legs: "b" })];
+      // 완료 축하: 발 번갈아 구르며 골드 반짝 점멸 (오래 유지)
+      return [
+        { pose: posture("open", "down", "left"), sparkle: true },
+        { pose: posture("open", "down", "right") },
+      ];
     case "tool_failure":
       // 실패: 우측 파랑 땀방울 + 팔 내림(시무룩)
-      return [makeFrame({ sideMark: { rows: [1, 3], color: 4 }, arms: "down" })];
-    case "question":
-      // 질문: 팔 흔들기(올림→중앙→내림→중앙) + 우측 골드 점 (이전 ? 심볼 대체)
-      return [
-        makeFrame({ arms: "up", sideMark: { rows: [1, 3], color: 3 } }),
-        makeFrame({ arms: "center", sideMark: { rows: [1, 3], color: 3 } }),
-        makeFrame({ arms: "down", sideMark: { rows: [1, 3], color: 3 } }),
-        makeFrame({ arms: "center", sideMark: { rows: [1, 3], color: 3 } }),
-      ];
+      return [{ pose: posture("open", "low"), sideMark: { rows: [0, 1], color: "blue" } }];
+    case "question": {
+      // 질문: 팔 흔들기(만세→옆→내림→옆) + 우측 골드 점
+      const sideMark = { rows: [0, 1], color: "gold" };
+      return ["up", "down", "low", "down"].map((arms) => ({ pose: posture("open", arms), sideMark }));
+    }
     case "permission":
-      // 권한 요청: 팔 올린 채 우측 빨강 점 점멸(주목) (이전 ! 심볼 대체)
-      return [
-        makeFrame({ arms: "up", sideMark: { rows: [1, 3, 5], color: 5 } }),
-        makeFrame({ arms: "up" }),
-      ];
+      // 권한 요청: 팔 올린 채 우측 빨강 점 점멸(주목)
+      return [{ pose: "arms-up", sideMark: { rows: [0, 1, 2], color: "red" } }, { pose: "arms-up" }];
     default:
-      return [makeFrame()];
+      return [{ pose: "default" }];
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// 2. 트릭 — 시작 화면 Clawd를 클릭하면 재생되는 애니메이션(2.1.312 번들의 시퀀스 표 이식, 원본 이름 유지).
+//   원본은 60ms 프레임이지만 상태바는 refreshInterval 최소 1초(실측: 세션마다 1000ms 간격, 위상 고정)라
+//   같은 자세가 이어지는 프레임을 하나로 합쳐 TRICK_FRAME_MS마다 한 자세씩 넘긴다.
+//   상태바는 클릭을 받을 수 없어 idle 중 IDLE_TRICK_INTERVAL_MS마다 하나를 무작위로 재생한다.
+//   후보는 원본 클릭 후보와 같은 11개(화면 밖에서 걸어 들어오는 skip·waddle·peek은 첫 등장 연출 전용이라 제외).
+// ──────────────────────────────────────────────────────────────────────────
+const TRICK_FRAME_MS = 1000;
+const IDLE_TRICK_INTERVAL_MS = 30000;
+
+const repeat = (pose, count, options = {}) => Array.from({ length: count }, () => ({ pose, ...options }));
+// 웅크리며 먼지(·→~) — 원본 jr
+const hop = () => [
+  { pose: "default", offset: 1, poof: "dot" },
+  { pose: "default", offset: 1, poof: "wave" },
+];
+const turnFrames = (facings, shadow) => facings.map((facing) => ({ pose: { facing }, shadow }));
+const rest = { pose: "default" };
+// 눈 깜빡 후 기본 자세 — 원본 Ys
+const blink = [...repeat(posture("closed"), 1), rest];
+
+const TRICK_SEQUENCES = {
+  jump: [...hop(), ...repeat("arms-up", 3), ...repeat("default", 1), ...hop(), ...repeat("arms-up", 3), ...repeat("default", 1)],
+  look: [...repeat("look-right", 5), ...repeat("look-left", 5), ...repeat("default", 1)],
+  spin: [
+    ...repeat("look-left", 2), ...repeat("look-right", 2), ...repeat("look-left", 2),
+    ...repeat("arms-up", 3), ...repeat("default", 1),
+  ],
+  peekaboo: [
+    ...repeat("default", 1, { offset: SPRITE_HEIGHT }), ...repeat("default", 3, { offset: 2 }),
+    ...repeat("look-right", 3, { offset: 2 }), ...repeat("look-left", 3, { offset: 2 }),
+    ...repeat("default", 2, { offset: 2 }), ...repeat("default", 1, { offset: 1 }),
+    ...repeat("arms-up", 4), ...repeat("default", 2), ...blink,
+  ],
+  drop: [
+    ...repeat("arms-up", 1, { offset: -SPRITE_HEIGHT }), ...repeat("arms-up", 2, { offset: -2 }),
+    ...repeat("arms-up", 2, { offset: -1 }), ...repeat("arms-up", 1), ...hop(), ...repeat("default", 3), ...blink,
+  ],
+  wink: [...repeat(posture("wink"), 5), rest],
+  boop: [
+    ...repeat(posture("closed"), 1, { offset: 1, poof: "dot" }), ...repeat(posture("closed"), 2, { offset: 1, poof: "wave" }),
+    ...repeat("look-left", 4), ...repeat("default", 2), ...blink,
+  ],
+  tap: [
+    ...repeat(posture("open", "down", "left"), 2), ...repeat(posture("open", "down", "right"), 2),
+    ...repeat(posture("open", "down", "left"), 2), ...repeat(posture("open", "down", "right"), 2),
+    ...repeat(posture("open", "down", "left"), 1), ...repeat(posture("open", "down", "right"), 1),
+    ...repeat("arms-up", 3), rest,
+  ],
+  sneeze: [
+    ...repeat(posture("closed", "up"), 4), ...repeat(posture("closed"), 2, { offset: 1, poof: "wave" }),
+    ...repeat(posture("closed"), 2), ...repeat("default", 2), ...blink,
+  ],
+  turn: [
+    ...turnFrames(["right-12", "right-30", "right-55", "right-75", "edge"]),
+    ...turnFrames(["back-105", "back-125", "back-150", "back", "back"]),
+    ...turnFrames(["back-150", "back-125", "back-105", "edge"]),
+    ...turnFrames(["left-75", "left-55", "left-30", "left-12"]),
+    rest,
+  ],
+  "coin-hop": [
+    ...repeat("default", 2, { offset: 1 }), ...repeat("arms-up", 1, { shadow: "wide" }),
+    ...turnFrames(["right-55", "edge", "back-125", "back"], "narrow"),
+    ...turnFrames(["back-125", "edge", "left-55"], "narrow"),
+    ...repeat("arms-up", 1, { shadow: "wide" }), ...hop(), rest,
+  ],
+};
+
+const frameKey = (frame) =>
+  JSON.stringify([frame.pose, frame.offset ?? 0, frame.poof ?? null, frame.shadow ?? null]);
+const collapseRepeats = (frames) =>
+  frames.filter((frame, index) => index === 0 || frameKey(frame) !== frameKey(frames[index - 1]));
+const TRICKS = Object.fromEntries(
+  Object.entries(TRICK_SEQUENCES).map(([name, frames]) => [name, collapseRepeats(frames)]),
+);
+const TRICK_NAMES = Object.keys(TRICKS);
+
+// 시각 슬롯 번호로 정하는 결정적 난수. 매 렌더가 새 프로세스라 Math.random으로 뽑으면 렌더마다 트릭이 바뀐다.
+function hashSlot(slot) {
+  let hash = slot | 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  return (hash ^ (hash >>> 16)) >>> 0;
+}
+
+// idle 슬롯(IDLE_TRICK_INTERVAL_MS) 앞부분에 그 슬롯의 트릭을 재생한다. 트릭 구간이 끝났으면 null(평소 두리번).
+// 슬롯은 절대 시각 기준이라 idle에 들어선 시점이 트릭 중간이면 중간 자세부터 보인다.
+function idleTrickFrame(nowMs) {
+  const slot = Math.floor(nowMs / IDLE_TRICK_INTERVAL_MS);
+  const frames = TRICKS[TRICK_NAMES[hashSlot(slot) % TRICK_NAMES.length]];
+  const index = Math.floor((nowMs - slot * IDLE_TRICK_INTERVAL_MS) / TRICK_FRAME_MS);
+  return frames[index] ?? null;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -564,13 +648,14 @@ function resolveEffectiveState(state, nowMs) {
 function applyHeat(palette, usedPercentage) {
   if (usedPercentage === undefined || usedPercentage <= HEAT_THRESHOLD) return palette;
   const t = Math.min(1, (usedPercentage - HEAT_THRESHOLD) / (HEAT_MAX - HEAT_THRESHOLD));
-  const [r, g, b] = hexToRgb(palette[HEAT_PALETTE_INDEX]);
+  const [r, g, b] = hexToRgb(palette.body);
   const nr = Math.round(r + (HEAT_TARGET[0] - r) * t);
   const ng = Math.round(g + (HEAT_TARGET[1] - g) * t);
   const nb = Math.round(b + (HEAT_TARGET[2] - b) * t);
-  const result = [...palette];
-  result[HEAT_PALETTE_INDEX] = `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
-  return result;
+  return {
+    ...palette,
+    body: `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`,
+  };
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -776,13 +861,22 @@ function main() {
     : data?.context_window?.used_percentage;
   const palette = applyHeat(PALETTE, usedPercentage);
 
-  // 프레임 선택
-  const frames = buildFrames(effectiveState);
-  const period = FRAME_PERIOD[effectiveState] ?? DEFAULT_FRAME_PERIOD;
-  const frameIndex = Math.floor(nowMs / period) % frames.length;
-  const grid = frames[frameIndex];
+  // 프레임 선택: 강제 트릭 > idle 트릭 구간 > 상태 애니
+  const forcedTrickName = process.env.CLAWD_FORCE_TRICK;
+  let frame;
+  if (forcedTrickName && Object.hasOwn(TRICKS, forcedTrickName)) {
+    const trick = TRICKS[forcedTrickName];
+    frame = trick[Math.floor(nowMs / TRICK_FRAME_MS) % trick.length];
+  } else {
+    frame = effectiveState === "idle" ? idleTrickFrame(nowMs) : null;
+  }
+  if (!frame) {
+    const frames = buildFrames(effectiveState);
+    const period = FRAME_PERIOD[effectiveState] ?? DEFAULT_FRAME_PERIOD;
+    frame = frames[Math.floor(nowMs / period) % frames.length];
+  }
 
-  const spriteLines = renderQuadrant(grid, palette);
+  const spriteLines = renderCells(composeFrame(frame, palette));
 
   if (process.env.CLAWD_NO_HUD) {
     process.stdout.write(spriteLines.map((l) => `${l}${RESET}`).join("\n"));
