@@ -3,12 +3,15 @@ package com.black.app.broadcast
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.black.app.service.ForegroundService
+import com.black.app.service.ForegroundServiceController
+import com.black.app.util.ComponentExtensions.launchAsync
 import com.black.core.util.Log
 
 /**
- * 동작하지 않음
- * 스토어를 통해서 업데이트하면 동작하지 않을까 추측
+ * 앱 업데이트(MY_PACKAGE_REPLACED) 후 ForegroundService 재시작
+ *
+ * 업데이트 설치가 앱 프로세스를 종료해 서비스도 함께 종료되고 START_STICKY 재생성도 일어나지 않으므로,
+ * 실행 설정이 켜져 있으면 여기서 다시 시작
  **/
 class AppUpdateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -23,6 +26,8 @@ class AppUpdateReceiver : BroadcastReceiver() {
             return
         }
 
-        ForegroundService.start(context)
+        // 백그라운드 수신이라 설정 화면 이동 없이 시작만 시도
+        val controller = ForegroundServiceController(context)
+        launchAsync { controller.startIfActivated() }
     }
 }

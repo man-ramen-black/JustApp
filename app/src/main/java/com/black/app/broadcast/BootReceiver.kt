@@ -4,7 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
-import com.black.app.service.ForegroundService
+import com.black.app.service.ForegroundServiceController
+import com.black.app.util.ComponentExtensions.launchAsync
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
 
@@ -30,6 +31,8 @@ class BootReceiver : BroadcastReceiver() {
             NOTIFICATION_ID
         )
 
-        ForegroundService.start(context)
+        // 부팅 직후 백그라운드라 설정 화면 이동 없이 시작만 시도
+        val controller = ForegroundServiceController(context)
+        launchAsync { controller.startIfActivated() }
     }
 }

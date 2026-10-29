@@ -10,11 +10,16 @@ import androidx.core.app.NotificationManagerCompat
 import com.black.app.broadcast.NotificationActionReceiver
 import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
-import com.black.app.model.preferences.ForegroundServicePreference
 import com.black.app.ui.MainActivity
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
-import com.black.core.util.PermissionHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class ForegroundService : Service() {
     companion object {
@@ -22,42 +27,13 @@ class ForegroundService : Service() {
         private const val NOTIFICATION_CHANNEL_ID = "ForegroundService"
         private const val NOTIFICATION_CHANNEL_NAME = "Foreground Service"
 
-        const val ACTION_STOP = "STOP"
+        private val mutableRunning = MutableStateFlow(false)
 
-        fun start(context: Context, onSetIntent: ((intent: Intent) -> Unit)? = null) : Boolean {
-            return start(context, true, onSetIntent)
-        }
+        /** 서비스 실행 여부(매니페스트에 android:process가 없어 앱 프로세스 안에서 유효) */
+        val running: StateFlow<Boolean> = mutableRunning.asStateFlow()
 
-        fun start(context: Context, requestPermission: Boolean, onSetIntent: ((intent: Intent) -> Unit)? = null) : Boolean {
-            val appContext = context.applicationContext
-
-            if (!ForegroundServicePreference(appContext).getForegroundServiceActivated()) {
-                Log.d("ForegroundService not activated")
-                return false
-            }
-
-            val isIgnored = PermissionHelper.isIgnoringBatteryOptimizations(appContext)
-            if (!isIgnored) {
-                Log.d("BatteryOptimizations not ignored")
-                if (requestPermission) {
-                    PermissionHelper.showIgnoreBatteryOptimizationSettings(appContext, true)
-                }
-                return false
-            }
-
-            val intent = Intent(appContext, ForegroundService::class.java)
-            onSetIntent?.invoke(intent)
-            appContext.startService(intent)
-            return true
-        }
-
-        fun stop(context: Context) {
-            val appContext = context.applicationContext
-            val intent = Intent(appContext, ForegroundService::class.java).apply {
-                action = ACTION_STOP
-            }
-            appContext.startService(intent)
-        }
+        /** onDestroy 뒤에도 재시작 확인을 이어 가도록 서비스 수명과 분리한 범위 */
+        private val restartScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 
     private val interfaces : List<Interface> = listOf(
@@ -66,18 +42,10 @@ class ForegroundService : Service() {
         PackageInstallReceiver.ServiceInterface
     )
 
-    private var isStopped = false
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
-        isStopped = false
         interfaces.forEach {
             it.onForegroundServiceStartCommand(this, intent ?: return@forEach, flags, startId)
-        }
-
-        if (intent?.action == ACTION_STOP) {
-            isStopped = true
-            stopSelf()
         }
 
         // onStartCommand default return : START_STICKY
@@ -112,6 +80,7 @@ class ForegroundService : Service() {
             it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
         }
         startForeground(NOTIFICATION_ID, notification)
+        mutableRunning.value = true
 
         interfaces.forEach { it.onForegroundServiceCreate(this) }
     }
@@ -119,6 +88,7 @@ class ForegroundService : Service() {
     override fun onDestroy() {
         Log.d()
         interfaces.forEach { it.onForegroundServiceDestroy(this) }
+        mutableRunning.value = false
 
         super.onDestroy()
 
@@ -126,9 +96,9 @@ class ForegroundService : Service() {
         // https://developer.android.com/about/versions/12/foreground-services?hl=ko#cases-fgs-background-starts-allowed
         // 무한 재실행
         // https://medium.com/@Lakshya_Punhani/background-services-running-forever-in-android-part-2-6e3a667d36fd
-        if (!isStopped) {
-            start(this)
-        }
+        // 사용자가 끈 경우는 실행 설정을 false로 저장한 뒤 중지하므로 재시작하지 않음
+        val controller = ForegroundServiceController(applicationContext)
+        restartScope.launch { controller.startIfActivated() }
     }
 
     interface Interface {

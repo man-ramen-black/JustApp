@@ -23,7 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.black.app.R
 import com.black.app.deeplink.Deeplink
 import com.black.app.deeplink.DeeplinkManager
-import com.black.app.service.ForegroundService
+import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var deeplinkManager: DeeplinkManager
     @Inject lateinit var appNavigator: AppNavigator
+    @Inject lateinit var foregroundServiceController: ForegroundServiceController
 
     private val permissionHelper = PermissionHelper(this)
 
@@ -55,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // 앱 디버깅 시에 서비스가 실행되도록 설정
-        ForegroundService.start(this, false)
+        lifecycleScope.launch { foregroundServiceController.startIfActivated() }
         permissionHelper.init()
 
         setContent {

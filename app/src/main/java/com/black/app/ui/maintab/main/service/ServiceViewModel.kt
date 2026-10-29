@@ -15,16 +15,20 @@ class ServiceViewModel : com.black.core.viewmodel.EventViewModel() {
     }
 
     fun init() {
-        foregroundServiceChecked.value = model?.getForegroundServiceActivated()
+        launch {
+            foregroundServiceChecked.value = model?.getForegroundServiceActivated()
+        }
     }
 
     fun onCheckedChangedForegroundService(checked: Boolean) {
         Log.d("checked : $checked")
-        if (checked) {
-            val result = model?.startForegroundService()
-            foregroundServiceChecked.postValue(result)
-        } else {
-            model?.stopForegroundService()
+        launch {
+            if (checked) {
+                val result = model?.startForegroundService()
+                foregroundServiceChecked.postValue(result)
+            } else {
+                model?.stopForegroundService()
+            }
         }
     }
 }

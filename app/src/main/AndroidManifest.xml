@@ -148,8 +148,7 @@
                 android:value="true" />
         </service>
 
-        <!-- 동작하지 않음 -->
-        <!-- 스토어를 통해서 업데이트하면 동작하지 않을까 추측 -->
+        <!-- 앱 업데이트 설치가 프로세스와 함께 ForegroundService를 종료하므로 실행 설정이 켜져 있으면 재시작 -->
         <receiver android:name=".broadcast.AppUpdateReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
