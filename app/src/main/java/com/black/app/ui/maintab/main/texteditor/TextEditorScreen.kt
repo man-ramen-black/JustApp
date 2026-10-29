@@ -88,9 +88,12 @@ fun TextEditorScreen(
         }
     }
 
-    // 화면 이탈 시 자동 저장
+    // 화면 이탈 시 자동 저장(저장이 끝날 때는 화면이 사라졌을 수 있어 결과 토스트는 애플리케이션 Context로 표시)
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
-        viewModel.onPause()
+        val applicationContext = context.applicationContext
+        viewModel.onPause { messageResId ->
+            Toast.makeText(applicationContext, messageResId, Toast.LENGTH_SHORT).show()
+        }
     }
 
     TextEditorContent(
