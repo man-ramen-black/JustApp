@@ -35,11 +35,13 @@ const PALETTE = {
 };
 
 // ── 타이밍 (pack.yaml clawd timing) ──
+// 상태바는 1초마다만 다시 그리므로 1초보다 짧은 주기는 쓰지 않는다. pack.yaml 원값(thinking 320·tool_running 240)은
+// 1초 간격으로 표본을 뽑으면 프레임 번호가 짝수씩 넘어가 같은 자세가 몇 초씩 멈춰 보인다(240ms면 약 6초).
 const FRAME_PERIOD = {
   idle: 1500, // 대기 두리번: 한 방향당 응시를 조금 더 길게(천천히)
-  thinking: 320,
-  tool_running: 240,
-  subagent_running: 240,
+  thinking: 1000,
+  tool_running: 1000,
+  subagent_running: 1000,
 };
 const DEFAULT_FRAME_PERIOD = 1000;
 
@@ -99,11 +101,14 @@ const BOX_WIDTH = SPRITE_WIDTH + 2;
 const MARKER_COLUMN = BOX_WIDTH - 1;
 
 // 팔: 0행 왼쪽(0~1열)·오른쪽(8열), 1행 왼쪽(0~1열)·오른쪽(7~8열) 글리프.
-// down(손이 옆)·up(만세)은 원본 그대로, low(손을 아래로 내림)는 걷기·시무룩 자세용으로 같은 픽셀 규칙에 맞춰 추가했다.
+// down(손이 옆)·up(만세) 모두 원본 그대로. 몸이 3행뿐이라 손을 몸 아래로 내린 자세는 팔이 밑단에 붙어
+// 몸이 퍼진 것처럼 보이므로 따로 두지 않는다.
+// tucked(팔 없음)는 웅크림 먼지 프레임 전용(composeFrame). 먼지가 덮는 양끝 칸 중 오른팔은 8열에 다 들어가지만
+// 왼팔은 0~1열 경계에 걸쳐 1열의 ▜ 위 왼쪽 픽셀이 남아 왼쪽만 튀어나와 보이므로, 양팔을 지워 좌우를 맞춘다.
 const ARMS = {
   down: { row0Left: " ▐", row0Right: "", row1Left: "▝▜", row1Right: "█▀" },
   up: { row0Left: "▗▟", row0Right: "▄", row1Left: " ▜", row1Right: "█▘" },
-  low: { row0Left: " ▐", row0Right: "", row1Left: "▗▟", row1Right: "█▄" },
+  tucked: { row0Left: " ▐", row0Right: "", row1Left: " ▐", row1Right: "█" },
 };
 // 눈: 0행 2~7열. 두리번은 눈 노치가 위쪽 대각선으로 옮겨 간다. lid 구간은 몸 색 위 어두운 ▂(감은 눈).
 const EYES = {
@@ -113,7 +118,7 @@ const EYES = {
   closed: [{ glyphs: "▂", lid: true }, { glyphs: "███" }, { glyphs: "▂", lid: true }, { glyphs: "█" }],
   wink: [{ glyphs: "▛███" }, { glyphs: "▂", lid: true }, { glyphs: "█" }],
 };
-// 발: 2행. left/right는 한쪽 발만 디딘 자세(발 구르기·걷기).
+// 발: 2행. left/right는 한쪽 발만 디딘 자세(발 구르기).
 const FEET = {
   both: " ▝▝   ▝▝ ",
   left: " ▝▝      ",
@@ -187,9 +192,14 @@ function drawPose(pose, bodyColor) {
 //   poof는 offset>0일 때만 바닥 양끝에, shadow는 발 사이에 덧그린다(원본 absolute 오버레이).
 //   sparkle(상단 양쪽 골드 반짝)·sideMark(오른쪽 점 마커)는 상태바 상태 표시.
 function composeFrame(frame, palette) {
-  const sprite = drawPose(frame.pose ?? "default", palette.body);
-  const box = createGrid(BOX_WIDTH);
   const offset = frame.offset ?? 0;
+  const pose = frame.pose ?? "default";
+  // 먼지가 뜨는 웅크림이면 팔을 지운다(ARMS.tucked 주석 참고). 몸 돌리기 자세(facing)는 팔 글리프가 따로 없어 그대로 둔다.
+  const posed = frame.poof && offset > 0 && !pose.facing
+    ? { ...(typeof pose === "string" ? NAMED_POSES[pose] : pose), arms: "tucked" }
+    : pose;
+  const sprite = drawPose(posed, palette.body);
+  const box = createGrid(BOX_WIDTH);
   for (let row = 0; row < SPRITE_HEIGHT; row += 1) {
     const targetRow = row + offset;
     if (targetRow < 0 || targetRow >= SPRITE_HEIGHT) continue;
@@ -227,15 +237,12 @@ function buildFrames(state) {
       // 대기: 눈만 두리번(좌→정→우→정). 사이사이 트릭은 idleTrickFrame이 끼운다.
       return [{ pose: "look-left" }, { pose: "default" }, { pose: "look-right" }, { pose: "default" }];
     case "tool_running":
-      // 걷기: 발 번갈아 디디기 + 팔 올림↔내림 스윙
-      return [{ pose: posture("open", "up", "left") }, { pose: posture("open", "low", "right") }];
+      // 도구 실행: 두 발 디딘 채 팔 만세↔옆 스윙
+      return [{ pose: "arms-up" }, { pose: "default" }];
     case "subagent_running": {
-      // 걷기 + 팔 스윙 + 우측 파랑 점(서브에이전트 구분)
+      // 팔 스윙 + 우측 파랑 점(서브에이전트 구분)
       const sideMark = { rows: [0, 1], color: "blue" };
-      return [
-        { pose: posture("open", "up", "left"), sideMark },
-        { pose: posture("open", "low", "right"), sideMark },
-      ];
+      return [{ pose: "arms-up", sideMark }, { pose: "default", sideMark }];
     }
     case "thinking":
       // 생각 중: 팔 까딱(옆↔만세)
@@ -245,18 +252,15 @@ function buildFrames(state) {
       // 성공: 골드 반짝
       return [{ pose: "default", sparkle: true }];
     case "done":
-      // 완료 축하: 발 번갈아 구르며 골드 반짝 점멸 (오래 유지)
-      return [
-        { pose: posture("open", "down", "left"), sparkle: true },
-        { pose: posture("open", "down", "right") },
-      ];
+      // 완료 축하: 골드 반짝 점멸 (오래 유지)
+      return [{ pose: "default", sparkle: true }, { pose: "default" }];
     case "tool_failure":
-      // 실패: 우측 파랑 땀방울 + 팔 내림(시무룩)
-      return [{ pose: posture("open", "low"), sideMark: { rows: [0, 1], color: "blue" } }];
+      // 실패: 우측 파랑 땀방울
+      return [{ pose: "default", sideMark: { rows: [0, 1], color: "blue" } }];
     case "question": {
-      // 질문: 팔 흔들기(만세→옆→내림→옆) + 우측 골드 점
+      // 질문: 팔 흔들기(만세↔옆) + 우측 골드 점
       const sideMark = { rows: [0, 1], color: "gold" };
-      return ["up", "down", "low", "down"].map((arms) => ({ pose: posture("open", arms), sideMark }));
+      return ["up", "down"].map((arms) => ({ pose: posture("open", arms), sideMark }));
     }
     case "permission":
       // 권한 요청: 팔 올린 채 우측 빨강 점 점멸(주목)
@@ -269,9 +273,10 @@ function buildFrames(state) {
 // ──────────────────────────────────────────────────────────────────────────
 // 2. 트릭 — 시작 화면 Clawd를 클릭하면 재생되는 애니메이션(2.1.312 번들의 시퀀스 표 이식, 원본 이름 유지).
 //   원본은 60ms 프레임이지만 상태바는 refreshInterval 최소 1초(실측: 세션마다 1000ms 간격, 위상 고정)라
-//   같은 자세가 이어지는 프레임을 하나로 합쳐 TRICK_FRAME_MS마다 한 자세씩 넘긴다.
+//   같은 자세가 이어지는 프레임을 하나로 합쳐 TRICK_FRAME_MS마다 한 자세씩 넘긴다. 그래도 긴 트릭은 COMPACT_SEQUENCES를 쓴다.
 //   상태바는 클릭을 받을 수 없어 idle 중 IDLE_TRICK_INTERVAL_MS마다 하나를 무작위로 재생한다.
-//   후보는 원본 클릭 후보와 같은 11개(화면 밖에서 걸어 들어오는 skip·waddle·peek은 첫 등장 연출 전용이라 제외).
+//   후보는 원본 클릭 후보 11개(화면 밖에서 걸어 들어오는 skip·waddle·peek은 첫 등장 연출 전용이라 제외)에서
+//   IDLE_EXCLUDED_TRICKS를 뺀 나머지다.
 // ──────────────────────────────────────────────────────────────────────────
 const TRICK_FRAME_MS = 1000;
 const IDLE_TRICK_INTERVAL_MS = 30000;
@@ -334,14 +339,35 @@ const TRICK_SEQUENCES = {
   ],
 };
 
+// 상태바용 압축 순서. 원본을 1초에 한 자세씩 넘기면 60ms짜리 먼지 2단계(·→~)와 끝 눈 깜빡임이 각각 1초로 늘어나
+// 6~10초가 되므로 핵심 자세만 남긴다(먼지는 ~ 한 프레임, 끝 깜빡임은 1초 동안 조는 것처럼 보여 제거).
+// peekaboo·drop의 첫 빈 칸(몸이 상자 밖)은 등장 연출이라 남긴다. 여기 없는 트릭은 원본 순서를 그대로 쓴다.
+const crouch = (pose = "default") => ({ pose, offset: 1, poof: "wave" });
+const COMPACT_SEQUENCES = {
+  jump: [crouch(), { pose: "arms-up" }, crouch(), { pose: "arms-up" }, rest],
+  peekaboo: [
+    { pose: "default", offset: SPRITE_HEIGHT }, { pose: "default", offset: 2 },
+    { pose: "look-right", offset: 2 }, { pose: "look-left", offset: 2 }, { pose: "arms-up" }, rest,
+  ],
+  drop: [
+    { pose: "arms-up", offset: -SPRITE_HEIGHT }, { pose: "arms-up", offset: -2 }, { pose: "arms-up", offset: -1 },
+    crouch(), rest,
+  ],
+  boop: [crouch(posture("closed")), { pose: "look-left" }, rest],
+  sneeze: [{ pose: posture("closed", "up") }, crouch(posture("closed")), { pose: posture("closed") }, rest],
+};
+
 const frameKey = (frame) =>
   JSON.stringify([frame.pose, frame.offset ?? 0, frame.poof ?? null, frame.shadow ?? null]);
 const collapseRepeats = (frames) =>
   frames.filter((frame, index) => index === 0 || frameKey(frame) !== frameKey(frames[index - 1]));
 const TRICKS = Object.fromEntries(
-  Object.entries(TRICK_SEQUENCES).map(([name, frames]) => [name, collapseRepeats(frames)]),
+  Object.entries(TRICK_SEQUENCES).map(([name, frames]) => [name, collapseRepeats(COMPACT_SEQUENCES[name] ?? frames)]),
 );
-const TRICK_NAMES = Object.keys(TRICKS);
+// 1초에 한 자세씩 넘기면 지나치게 느려져 어색한 트릭은 idle 후보에서 뺀다. tap은 빠른 발 구르기가 한 발 자세 6초가 되고,
+// turn·coin-hop은 1초 안팎의 몸 돌리기가 13~18초 슬로모션이 된다. 시퀀스 표는 원본과 맞춰 두려고 남기며 CLAWD_FORCE_TRICK으로는 볼 수 있다.
+const IDLE_EXCLUDED_TRICKS = new Set(["tap", "turn", "coin-hop"]);
+const TRICK_NAMES = Object.keys(TRICKS).filter((name) => !IDLE_EXCLUDED_TRICKS.has(name));
 
 // 시각 슬롯 번호로 정하는 결정적 난수. 매 렌더가 새 프로세스라 Math.random으로 뽑으면 렌더마다 트릭이 바뀐다.
 function hashSlot(slot) {

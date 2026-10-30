@@ -2,7 +2,7 @@
 
 Claude Code 상태 표시줄 왼쪽에 Clawd 마스코트를 quadrant(2×2 사분면) 블록 문자로 그리고, 오른쪽에 [claude-hud](https://github.com/jarrodwatts/claude-hud) 정보를 붙여 보여 준다. 마스코트는 작업 상태(생각·도구 실행·서브에이전트·완료·권한 대기)에 따라 움직이고, 컨텍스트 사용률이 높을수록 몸이 빨개진다. HUD 출력에는 effort 배지, 둥근 진행 막대, 로그인 계정 배지를 덧붙인다.
 
-마스코트 몸과 트릭은 Claude Code 시작 화면 왼쪽 위 Clawd(클릭하면 애니메이션 재생)의 글리프 표·시퀀스를 그대로 옮긴 것이다(2.1.312 기준). 상태 표시줄은 클릭을 받을 수 없어, 대기(idle) 중 30초마다 클릭 애니메이션 11종(jump·look·spin·peekaboo·drop·wink·boop·tap·sneeze·turn·coin-hop) 중 하나를 무작위로 재생한다. 상태 표시줄 갱신 간격이 최소 1초(`refreshInterval`)라 원본 60ms 프레임 중 같은 자세가 이어지는 구간을 한 자세로 합쳐 1초에 한 자세씩 넘긴다.
+마스코트 몸과 트릭은 Claude Code 시작 화면 왼쪽 위 Clawd(클릭하면 애니메이션 재생)의 글리프 표·시퀀스를 그대로 옮긴 것이다(2.1.312 기준). 상태 표시줄은 클릭을 받을 수 없어, 대기(idle) 중 30초마다 클릭 애니메이션 8종(jump·look·spin·peekaboo·drop·wink·boop·sneeze) 중 하나를 무작위로 재생한다. 상태 표시줄 갱신 간격이 최소 1초(`refreshInterval`)라 원본 60ms 프레임 중 같은 자세가 이어지는 구간을 한 자세로 합쳐 1초에 한 자세씩 넘긴다. 그래도 6\~10초로 길어지는 jump·peekaboo·drop·boop·sneeze는 핵심 자세만 남긴 압축 순서(`COMPACT_SEQUENCES`)를 쓴다. 이 속도에서 지나치게 느려지는 tap(발 구르기)·turn·coin-hop(몸 돌리기)은 시퀀스만 남기고 재생 후보에서 뺐다.
 
 상태 표시줄은 사용자 레벨(`~/.claude`) 설정이라 모든 프로젝트에 적용된다. 이 폴더는 그 설정을 다른 PC에 똑같이 옮기기 위한 원본과 설치기다.
 
