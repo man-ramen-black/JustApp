@@ -1,16 +1,39 @@
 package com.black.core.model
 
 import android.content.Context
+import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStore
 import com.black.core.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlin.properties.ReadOnlyProperty
+
+/**
+ * [BaseDataStore] 하위 클래스가 쓰는 Preferences DataStore delegate
+ *
+ * [preferencesDataStore]를 직접 쓰면 corruptionHandler가 빠져, 파일이 손상되면 읽기는 [BaseDataStore]의 IOException 처리로
+ * 기본값만 돌려주고 저장(edit)은 손상 파일을 먼저 읽다 CorruptionException으로 계속 실패.
+ * 손상 파일을 빈 값으로 바꾸는 [ReplaceFileCorruptionHandler]를 항상 지정
+ *
+ * 사용: `private val Context.fooDataStore by blackDataStore("foo")`
+ */
+fun blackDataStore(
+    name: String,
+    produceMigrations: (Context) -> List<DataMigration<Preferences>> = { listOf() },
+): ReadOnlyProperty<Context, DataStore<Preferences>> =
+    preferencesDataStore(
+        name = name,
+        corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+        produceMigrations = produceMigrations,
+    )
 
 /** https://developer.android.com/topic/libraries/architecture/datastore?hl=ko */
 abstract class BaseDataStore(private val context: Context) {

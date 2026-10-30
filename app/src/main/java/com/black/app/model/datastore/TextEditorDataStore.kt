@@ -5,8 +5,8 @@ import android.net.Uri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.black.core.model.BaseDataStore
+import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,7 +25,7 @@ class TextEditorDataStore(
     @Inject constructor(@ApplicationContext context: Context) : this(context, context.textEditorDataStore)
 
     companion object {
-        private val Context.textEditorDataStore: DataStore<Preferences> by preferencesDataStore(name = "textEditor")
+        private val Context.textEditorDataStore: DataStore<Preferences> by blackDataStore("textEditor")
 
         private val KEY_LATEST_FILE_URI = stringPreferencesKey("latestFileUri")
     }

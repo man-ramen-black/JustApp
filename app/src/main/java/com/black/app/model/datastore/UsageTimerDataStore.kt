@@ -7,8 +7,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.black.core.model.BaseDataStore
+import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -21,7 +21,7 @@ class UsageTimerDataStore @Inject constructor(
 
     companion object {
         /** 기존 SharedPreferences(Foreground)의 UsageTimer 키 이관 */
-        private val Context.usageTimerDataStore: DataStore<Preferences> by preferencesDataStore(
+        private val Context.usageTimerDataStore: DataStore<Preferences> by blackDataStore(
             name = "usageTimer",
             produceMigrations = { context ->
                 listOf(
