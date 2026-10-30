@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.floatPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.black.core.model.BaseDataStore
+import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -14,7 +14,7 @@ class FloatingDataStore @Inject constructor(
     @ApplicationContext context: Context
 ): BaseDataStore(context) {
     companion object {
-        val Context.floatingDataStore by preferencesDataStore(name = "floating")
+        val Context.floatingDataStore by blackDataStore("floating")
 
         private val KEY_FLOATING_MARGIN = floatPreferencesKey("floating_margin")
         private val KEY_FLOATING_OPACITY = floatPreferencesKey("floating_opacity")
