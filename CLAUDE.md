@@ -41,7 +41,7 @@
 - ViewModel 코루틴은 `viewModelScope.launch` 대신 `EventViewModel`의 `launch`를 사용합니다.
 - ViewModel 일회성 이벤트는 해당 ViewModel 내부에 `ViewModelEvent`를 구현한 sealed class로 정의하고, 하위 이벤트는 sealed class와 같은 레벨(ViewModel 직속)에 `Event{이벤트명}` data class·data object로 명명합니다. (예: `UsageTimerViewModel.EventShowTimerView`)
 - 이벤트 전송·구독은 `EventViewModel`의 `sendEvent(event)`·`events`를 사용하고, Compose에서 구독은 `EventViewModel`의 `CollectEvents` 헬퍼를 사용합니다.
-- 모든 로컬 데이터 저장은 `BaseDataStore`를 상속한 DataStore로 구현합니다.
+- 모든 로컬 데이터 저장은 `BaseDataStore`를 상속한 DataStore로 구현하고, delegate는 `preferencesDataStore` 대신 손상 파일 복구 핸들러를 넣는 `blackDataStore(name)`으로 만듭니다(핸들러가 없으면 파일이 손상된 뒤 저장이 계속 실패).
 - 데이터 저장·조회 클래스는 `Model`이 아닌 `Repository`로 명명합니다.
 
 ## git·테스트
