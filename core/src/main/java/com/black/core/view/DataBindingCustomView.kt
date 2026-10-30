@@ -84,8 +84,9 @@ abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout, Lifecyc
 
     @CallSuper
     override fun onAttachedToWindow() {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        // 변수 바인딩 후 수명주기 시작(ON_START에서 대기 중인 바인딩이 실행되므로, 먼저 시작하면 미설정 변수 null이 non-null BindingAdapter 인자로 전달)
         bindVariable(binding)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         super.onAttachedToWindow()
     }
 

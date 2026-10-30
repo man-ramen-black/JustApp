@@ -14,10 +14,15 @@ import javax.inject.Inject
 
 /**
  * Created by jinhyuk.lee on 2024/08/06
+ *
+ * [dataStore]를 받는 생성자는 사용자 최근 문서와 분리된 저장소가 필요한 계측 테스트용
  **/
-class TextEditorDataStore @Inject constructor(
-    @ApplicationContext context: Context
+class TextEditorDataStore(
+    context: Context,
+    private val dataStore: DataStore<Preferences>,
 ): BaseDataStore(context) {
+
+    @Inject constructor(@ApplicationContext context: Context) : this(context, context.textEditorDataStore)
 
     companion object {
         private val Context.textEditorDataStore: DataStore<Preferences> by preferencesDataStore(name = "textEditor")
@@ -26,7 +31,7 @@ class TextEditorDataStore @Inject constructor(
     }
 
     override fun getDataStore(context: Context): DataStore<Preferences>
-        = context.textEditorDataStore
+        = dataStore
 
     suspend fun updateLatestFileUri(uri: Uri) {
         update(KEY_LATEST_FILE_URI, uri.toString())

@@ -1,6 +1,10 @@
 package com.black.app.ui.maintab.main.texteditor
 
 import android.net.Uri
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.black.app.R
 import com.black.app.model.database.studypopup.TextEditorRepository
 import com.black.core.viewmodel.ViewModelEvent
@@ -10,6 +14,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +28,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -304,6 +310,92 @@ class TextEditorViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(null, viewModel.uiState.value.permissionRequiredUri)
+    }
+
+    /**
+     * 화면 이탈 자동 저장이 ViewModel 정리 뒤에 끝나도 저장 완료 메시지가 전달되는지 검증(뒤로가기 이탈)
+     *
+     * Given: 문서를 불러와 텍스트 변경, 저장 성공 반환
+     * When: onPause 호출 직후 ViewModelStore 정리(화면 이탈로 ViewModel 소멸) 후 저장 완료
+     * Then: 변경 텍스트 저장 + 저장 결과 콜백으로 text_editor_save_completed 전달
+     */
+    @Test
+    fun test_12_onPauseDeliversSaveCompletedAfterViewModelCleared() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModelStore = ViewModelStore()
+        val viewModel = createLoadedViewModel(uri, viewModelStore)
+        coEvery { repository.saveTextFile(uri, any()) } returns Result.success(Unit)
+        viewModel.onTextChanged("changed text")
+        val savedMessageResId = CompletableDeferred<Int>()
+
+        /** When **/
+        viewModel.onPause { savedMessageResId.complete(it) }
+        viewModelStore.clear()
+
+        /** Then **/
+        assertEquals(R.string.text_editor_save_completed, savedMessageResId.await())
+        coVerify { repository.saveTextFile(uri, "changed text") }
+    }
+
+    /**
+     * 화면 이탈 자동 저장이 실패하면 저장 실패 메시지가 전달되는지 검증
+     *
+     * Given: 문서를 불러와 텍스트 변경, 저장 실패 반환
+     * When: onPause 호출 후 ViewModelStore 정리
+     * Then: 저장 결과 콜백으로 text_editor_save_failed 전달
+     */
+    @Test
+    fun test_13_onPauseDeliversSaveFailedAfterViewModelCleared() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModelStore = ViewModelStore()
+        val viewModel = createLoadedViewModel(uri, viewModelStore)
+        coEvery { repository.saveTextFile(uri, any()) } returns Result.failure(Exception("save error"))
+        viewModel.onTextChanged("changed text")
+        val savedMessageResId = CompletableDeferred<Int>()
+
+        /** When **/
+        viewModel.onPause { savedMessageResId.complete(it) }
+        viewModelStore.clear()
+
+        /** Then **/
+        assertEquals(R.string.text_editor_save_failed, savedMessageResId.await())
+    }
+
+    /**
+     * 변경 사항 없이 화면을 이탈하면 저장하지 않고 메시지도 전달하지 않는지 검증
+     *
+     * Given: 문서를 불러온 뒤 텍스트 미변경
+     * When: onPause 호출
+     * Then: 파일 쓰기 없음 + 저장 결과 콜백 미호출
+     */
+    @Test
+    fun test_14_onPauseWithoutChangesSkipsSaveAndMessage() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModel = createLoadedViewModel(uri, ViewModelStore())
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
+    }
+
+    /** [viewModelStore]에 ViewModel을 만들고 init에서 [uri] 문서("initial text")를 불러올 때까지 대기 */
+    private suspend fun createLoadedViewModel(uri: Uri, viewModelStore: ViewModelStore): TextEditorViewModel {
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } returns Result.success("initial text")
+        val mainScope = TestScope(testDispatcherRule.testDispatcher)
+        val factory = viewModelFactory { initializer { TextEditorViewModel(repository, mainScope) } }
+        return ViewModelProvider.create(viewModelStore, factory)[TextEditorViewModel::class].also { viewModel ->
+            waitCoroutine()
+            viewModel.uiState.filter { it.text == "initial text" }.first()
+        }
     }
 
     /** init 로드가 SecurityException으로 실패해 [uri] 권한 요청 상태가 된 ViewModel 생성 */

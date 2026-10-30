@@ -49,6 +49,23 @@ import com.black.app.R
 import com.black.app.ui.theme.BoldListTokens
 import com.black.core.viewmodel.CollectEvents
 
+/**
+ * [TextEditorScreen] 요소의 testTag
+ *
+ * 화면과 계측 테스트가 같은 값을 쓰도록 상수로 공유
+ */
+internal object TextEditorTestTags {
+    const val TITLE = "text_editor_title"
+    const val FILE_NAME = "file_name"
+    const val SAVE_BUTTON = "save_button"
+    const val LOAD_BUTTON = "load_button"
+    const val NEW_BUTTON = "new_button"
+    const val EDITOR_INPUT = "editor_input"
+    const val PERMISSION_REQUEST_DIALOG = "permission_request_dialog"
+    const val SELECT_DOCUMENT_BUTTON = "select_document_button"
+    const val RESET_CONFIRM_DIALOG = "reset_confirm_dialog"
+}
+
 /** TextEditor 화면 */
 @Composable
 fun TextEditorScreen(
@@ -88,9 +105,12 @@ fun TextEditorScreen(
         }
     }
 
-    // 화면 이탈 시 자동 저장
+    // 화면 이탈 시 자동 저장(저장이 끝날 때는 화면이 사라졌을 수 있어 결과 토스트는 애플리케이션 Context로 표시)
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
-        viewModel.onPause()
+        val applicationContext = context.applicationContext
+        viewModel.onPause { messageResId ->
+            Toast.makeText(applicationContext, messageResId, Toast.LENGTH_SHORT).show()
+        }
     }
 
     TextEditorContent(
@@ -175,7 +195,7 @@ private fun TextEditorContent(
                     text = "Memo",
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .testTag("text_editor_title"),
+                        .testTag(TextEditorTestTags.TITLE),
                     color = BoldListTokens.TitleColor,
                     fontSize = 34.sp,
                     fontFamily = FontFamily.SansSerif,
@@ -187,7 +207,7 @@ private fun TextEditorContent(
                         text = uiState.fileName,
                         modifier = Modifier
                             .padding(top = 8.dp)
-                            .testTag("file_name"),
+                            .testTag(TextEditorTestTags.FILE_NAME),
                         color = BoldListTokens.CaptionColor,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
@@ -198,19 +218,19 @@ private fun TextEditorContent(
             ToolbarIconButton(
                 iconResId = R.drawable.ic_save,
                 onClick = onClickSave,
-                testTag = "save_button",
+                testTag = TextEditorTestTags.SAVE_BUTTON,
                 modifier = Modifier.padding(start = 8.dp),
             )
             ToolbarIconButton(
                 iconResId = R.drawable.ic_folder_open,
                 onClick = onClickLoad,
-                testTag = "load_button",
+                testTag = TextEditorTestTags.LOAD_BUTTON,
                 modifier = Modifier.padding(start = 8.dp),
             )
             ToolbarIconButton(
                 iconResId = R.drawable.ic_note_add,
                 onClick = onClickNew,
-                testTag = "new_button",
+                testTag = TextEditorTestTags.NEW_BUTTON,
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
@@ -229,7 +249,7 @@ private fun TextEditorContent(
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(bottom = 16.dp)
-                .testTag("editor_input"),
+                .testTag(TextEditorTestTags.EDITOR_INPUT),
             textStyle = TextStyle(
                 color = BoldListTokens.ItemNameColor,
                 fontSize = 16.sp,
@@ -276,7 +296,7 @@ private fun PermissionRequestDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.testTag("permission_request_dialog"),
+        modifier = Modifier.testTag(TextEditorTestTags.PERMISSION_REQUEST_DIALOG),
         shape = BoldListTokens.ContainerShape,
         containerColor = BoldListTokens.ContainerBackground,
         text = {
@@ -288,7 +308,7 @@ private fun PermissionRequestDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                modifier = Modifier.testTag("select_document_button"),
+                modifier = Modifier.testTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON),
             ) {
                 Text(stringResource(R.string.text_editor_select_document), color = BoldListTokens.TitleColor)
             }
@@ -309,7 +329,7 @@ private fun ResetConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.testTag("reset_confirm_dialog"),
+        modifier = Modifier.testTag(TextEditorTestTags.RESET_CONFIRM_DIALOG),
         shape = BoldListTokens.ContainerShape,
         containerColor = BoldListTokens.ContainerBackground,
         text = {

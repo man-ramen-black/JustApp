@@ -53,33 +53,32 @@ class UsageTimerViewModelTest : BaseTest() {
 
 ## 테스트 함수 스타일
 
-- 함수명 `test_{2자리순번}_{camelCase 동작}` (예: `test_02_onAppsSelectedSavesAndUpdates`)
+- 함수명 `test_{2자리순번}_{camelCase 동작}` (예: `test_02_selectAppsSavesAndUpdates`)
 - KDoc: 한 줄 요약 + `Given:`/`When:`/`Then:` 한 줄씩
 - 본문: `/** Given **/`, `/** When **/`, `/** Then **/`로 구획한다. 두 단계가 한 줄로 겹치면 `/** Given / When **/`로 합친다.
 - 모든 테스트 함수는 suspend 호출 여부와 상관없이 `= runTest { }`로 감싼다. `runTest`는 `Dispatchers.Main`의 테스트 스케줄러를 같이 쓰므로 동기 코드·`waitCoroutine()`·Robolectric 루퍼 `idle()` 결과는 그대로이고, 본문이 끝난 뒤 남은 코루틴을 진행시키는 점만 다르다.
     - 금지: `fun test_01_activeResolvesActiveTile() { ... }`, `fun test_01_activeResolvesActiveTile() = runBlocking { ... }`
     - 허용: `fun test_01_activeResolvesActiveTile() = runTest { ... }`
-- 주석·KDoc은 CLAUDE.md 규칙대로 명사형으로 끝맺는다.
 
 ```kotlin
 /**
- * Pause 클릭 시 저장·일시정지 후 DetachTimerView·ShowToast 이벤트가 발송되는지 검증
+ * pause 호출 시 저장·일시정지 후 DetachTimerView·ShowToast 이벤트가 발송되는지 검증
  *
  * Given: pauseDurationInput "5" 입력, repository 저장·일시정지 모킹
- * When: onClickPause 호출
+ * When: pause 호출
  * Then: repository.savePauseDuration(5)·pause(5) 호출 + DetachTimerView, ShowToast 이벤트 수신
  */
 @Test
-fun test_03_onClickPauseSavesAndSendsEvents() = runTest {
+fun test_03_pauseSavesAndSendsEvents() = runTest {
     /** Given **/
     coEvery { repository.savePauseDuration(any()) } just Runs
     coEvery { repository.pause(any()) } just Runs
     val viewModel = createViewModel()
-    viewModel.onPauseDurationInputChanged("5")
+    viewModel.updatePauseDurationInput("5")
     val receivedEvents = mutableListOf<ViewModelEvent>()
 
     /** When **/
-    viewModel.onClickPause()
+    viewModel.pause()
     viewModel.events.take(2).toList(receivedEvents)
 
     /** Then **/

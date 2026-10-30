@@ -2,7 +2,16 @@ package com.black.app.testutil
 
 import android.app.Activity
 import android.content.Context
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,6 +34,7 @@ import org.junit.runner.RunWith
  * 제공 기능:
  * - [hiltRule]: Hilt 주입 규칙. [setup] 호출 전에 inject()가 먼저 수행된다.
  * - [composeRule]: Compose UI 검증 규칙. 호스팅 없는 빈 규칙이라 Compose 미사용 테스트에도 무해하다.
+ * - [assertTagDisplayed]·[clickTag]·[waitUntilTagExists] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
  * - [launchHost]/[launchActivity]: 실행한 [ActivityScenario]를 보관해 [teardown]에서 자동으로 close 한다.
  * - [setup]/[teardown]: 하위 클래스가 override 하여 확장하는 훅. super 호출이 필요 없도록 프레임워크 훅과 분리했다.
  */
@@ -83,9 +93,74 @@ abstract class BaseUiTest {
         launchHost().onActivity(block)
     }
 
+    /** testTag가 [tag]인 노드가 화면에 표시되는지 검증 */
+    protected fun assertTagDisplayed(tag: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag).assertIsDisplayed()
+
+    /**
+     * testTag가 [tag]인 노드가 컴포지션에 있는지 검증
+     *
+     * 스크롤 밖이라 화면에 보이지 않아도 통과
+     */
+    protected fun assertTagExists(tag: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag).assertExists()
+
+    /** testTag가 [tag]인 노드가 컴포지션에 없는지 검증 */
+    protected fun assertTagNotExists(tag: String) {
+        composeRule.onNodeWithTag(tag).assertDoesNotExist()
+    }
+
+    /** testTag가 [tag]인 노드의 텍스트가 [text]와 일치하는지 검증 */
+    protected fun assertTagText(tag: String, text: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag).assertTextEquals(text)
+
+    /** [text]를 가진 노드가 화면에 표시되는지 검증 */
+    protected fun assertTextDisplayed(text: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithText(text).assertIsDisplayed()
+
+    /**
+     * testTag가 [tag]인 노드 클릭
+     *
+     * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun clickTag(tag: String, scrollTo: Boolean = false): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithTag(tag)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        return node.performClick()
+    }
+
+    /** [text]를 가진 노드 클릭 */
+    protected fun clickText(text: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithText(text).performClick()
+
+    /**
+     * testTag가 [tag]인 노드가 생길 때까지 최대 [timeoutMillis] 대기
+     *
+     * 비동기 로드가 끝난 뒤 표시되는 다이얼로그처럼 바로 검증할 수 없는 노드에 사용
+     */
+    protected fun waitUntilTagExists(tag: String, timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /** [text]를 가진 노드가 생길 때까지 최대 [timeoutMillis] 대기 */
+    protected fun waitUntilTextExists(text: String, timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS) {
+        composeRule.waitUntil(timeoutMillis) {
+            composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     /** 하위 클래스 확장용 셋업 훅. hiltRule.inject() 이후 호출된다. */
     protected open fun setup() {}
 
     /** 하위 클래스 확장용 정리 훅. scenario close 이전에 호출된다. */
     protected open fun teardown() {}
+
+    companion object {
+        /** [waitUntilTagExists]·[waitUntilTextExists] 기본 대기 시간 */
+        const val DEFAULT_TIMEOUT_MILLIS = 10_000L
+    }
 }

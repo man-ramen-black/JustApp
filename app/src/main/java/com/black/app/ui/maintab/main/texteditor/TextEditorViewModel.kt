@@ -107,11 +107,12 @@ class TextEditorViewModel @Inject constructor(
     fun onClickSave() {
         launch {
             val result = saveCurrentFile()
-            when {
-                result.exceptionOrNull() is IllegalAccessException -> sendEvent(EventCreateDocument)
-                // 변경 사항이 없어 저장을 건너뛴 경우에도 저장 완료 피드백 제공
-                result.getOrNull() == false -> sendEvent(EventShowToast(R.string.text_editor_save_completed))
+            if (result.exceptionOrNull() is IllegalAccessException) {
+                sendEvent(EventCreateDocument)
+                return@launch
             }
+            // 변경 사항이 없어 저장을 건너뛴 경우에도 저장 완료 피드백 제공
+            sendEvent(EventShowToast(saveResultMessage(result)))
         }
     }
 
@@ -126,14 +127,24 @@ class TextEditorViewModel @Inject constructor(
 
     fun onDocumentCreated(uri: Uri?) {
         launch {
-            saveFile(uri ?: return@launch)
+            val result = saveFile(uri ?: return@launch)
+            sendEvent(EventShowToast(saveResultMessage(result)))
         }
     }
 
-    /** 화면 이탈(ON_PAUSE) 시 자동 저장. ViewModel 소멸 후에도 저장이 완료되도록 [mainScope] 사용 */
-    fun onPause() {
+    /**
+     * 화면 이탈(ON_PAUSE) 시 자동 저장. ViewModel 소멸 후에도 저장이 완료되도록 [mainScope] 사용
+     *
+     * 뒤로가기 이탈은 저장이 끝나기 전에 화면 수집이 멈추고 ViewModel이 정리되어 [sendEvent] 토스트가 전달되지 않으므로,
+     * 저장 결과 메시지는 화면보다 오래 유지되는 [showSaveResult]로 전달. 변경 사항이 없거나 저장할 파일이 없으면 미전달
+     */
+    fun onPause(showSaveResult: (messageResId: Int) -> Unit) {
         mainScope.launch {
-            saveCurrentFile()
+            val result = saveCurrentFile()
+            if (result.getOrNull() == false || result.exceptionOrNull() is IllegalAccessException) {
+                return@launch
+            }
+            showSaveResult(saveResultMessage(result))
         }
     }
 
@@ -174,10 +185,13 @@ class TextEditorViewModel @Inject constructor(
                 if (it.isSuccess) {
                     // 저장 성공 시 변경 감지 기준 갱신(중복 자동 저장 방지)
                     originText.value = text
-                    sendEvent(EventShowToast(R.string.text_editor_save_completed))
-                } else {
-                    sendEvent(EventShowToast(R.string.text_editor_save_failed))
                 }
             }
+    }
+
+    /** 저장 결과 토스트 메시지 */
+    @StringRes
+    private fun saveResultMessage(result: Result<*>): Int {
+        return if (result.isSuccess) R.string.text_editor_save_completed else R.string.text_editor_save_failed
     }
 }
