@@ -1,6 +1,8 @@
 // Claude Code PreToolUse(Skill) hook (Mac/Windows 공통)
 // super-flow 단계 스킬(brainstorming·writing-plans·subagent-driven-development) 호출 시 그 단계의 진행 규칙을 컨텍스트로 주입
 // 긴 플로우에서 초기 규칙이 컨텍스트 압축으로 희석되는 것을 막기 위해 단계마다 다시 주입
+// git 마무리 스킬(finishing-a-development-branch·using-git-worktrees)은 메뉴 제시·확인 대기·origin 기본 브랜치 분기가
+// 저장소 규칙(CLAUDE.md git 절)과 반대라, 호출 시점에 저장소 규칙을 주입
 
 const contextBySkill = {
   "superpowers:brainstorming": [
@@ -17,6 +19,7 @@ const contextBySkill = {
     "writing-plans 진행 규칙(아래 규칙이 스킬 기본 지침보다 우선):",
     "- 대상 플랜 문서(docs/superpowers/plans/)가 이미 있으면 통째로 다시 쓰지 말고 읽어서 검토·보강",
     "- 스펙 문서의 시작 HEAD를 플랜 문서에 옮겨 적음",
+    '- 플랜 문서를 쓴 뒤 "계획 검토"·"실행 방식 선택"을 묻지 말고 같은 턴에 subagent-driven-development로 구현 시작(사용자 검토는 스펙 문서에서만 받음)',
     '- 각 태스크에 "적용 스킬"과 그 SKILL.md 경로를 명시. 스킬명은 외워 쓰지 말고 사용 가능한 스킬 목록에서 description으로 확인 (예: JVM 유닛 테스트 unittest, Fragment 계측 테스트 ui-test, Compose 화면 compose, 커밋 commit)',
     "- 플랜 문서는 git add·커밋 금지",
   ],
@@ -26,6 +29,18 @@ const contextBySkill = {
     "- 테스트는 작성에 그치지 않고 실제로 실행해 통과를 확인한 뒤 완료로 보고",
     "- 커밋은 commit 스킬을 따름",
     "- 스펙·플랜 문서(docs/superpowers/)는 git add·커밋 금지",
+  ],
+  "superpowers:finishing-a-development-branch": [
+    "브랜치 마무리 규칙(아래 규칙이 스킬 기본 지침보다 우선, 출처 CLAUDE.md git 절):",
+    '- 옵션 메뉴를 제시하지 말 것. 사용자가 "머지"·"마무리해줘"라고 하지 않았으면 release에 병합하지 말고 워크트리에 머문 채 브랜치·커밋·검증 결과만 보고',
+    '- "머지"·"마무리해줘"를 받았으면 묻지 말고 release 병합 후 같은 흐름에서 작업 워크트리와 브랜치까지 삭제',
+    "- 워크트리 삭제 전 커밋하지 않은 docs/superpowers/를 옮기고, git status에 그 밖의 미커밋 변경이 없을 때만 --force로 삭제(있으면 멈추고 보고)",
+    "- git push는 명시적 지시가 있을 때만",
+  ],
+  "superpowers:using-git-worktrees": [
+    "워크트리 규칙(아래 규칙이 스킬 기본 지침보다 우선, 출처 CLAUDE.md git 절):",
+    "- 워크트리는 release에서 분기해 .claude/worktrees/<주제>에 생성: git worktree add -b <브랜치> .claude/worktrees/<주제> release 후 EnterWorktree(path)",
+    "- EnterWorktree(name)은 origin 기본 브랜치(master)에서 분기하므로 쓰지 않음. orca worktree create(최상위 워크트리)도 쓰지 않음",
   ],
 };
 

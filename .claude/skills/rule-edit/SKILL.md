@@ -1,6 +1,6 @@
 ---
 name: rule-edit
-description: 에이전트 동작을 규정하는 문서(`CLAUDE.md`, `.claude/skills/*/SKILL.md`, `.claude/commands/*.md`, `.claude/hooks/*`)를 추가·수정·압축할 때 사용한다. "이 규칙 추가해줘", "CLAUDE.md에 넣어줘", "스킬 수정·정리", "규칙 압축", "스킬이 너무 길다", "이 규칙이 실제로 동작하나", "규칙 검증"처럼 절차 문서를 손대는 요청이면 명시적으로 스킬명을 부르지 않아도 사용한다. 스킬 신규 생성의 상세 절차는 `skill-creator`·`superpowers:writing-skills`가 소유하고, 이 스킬은 그것을 규칙·훅까지 넓혀 감싼다.
+description: 에이전트 동작을 규정하는 문서(`CLAUDE.md`, `.claude/rules/*.md`, `.claude/skills/*/SKILL.md`, `.claude/commands/*.md`, `.claude/hooks/*`)를 추가·수정·압축할 때 사용한다. "이 규칙 추가해줘", "CLAUDE.md에 넣어줘", "스킬 수정·정리", "규칙 압축", "스킬이 너무 길다", "이 규칙이 실제로 동작하나", "규칙 검증"처럼 절차 문서를 손대는 요청이면 명시적으로 스킬명을 부르지 않아도 사용한다. 스킬 신규 생성의 상세 절차는 `skill-creator`·`superpowers:writing-skills`가 소유하고, 이 스킬은 그것을 규칙·훅까지 넓혀 감싼다.
 ---
 
 # 규칙·스킬 편집
@@ -21,6 +21,7 @@ description: 에이전트 동작을 규정하는 문서(`CLAUDE.md`, `.claude/sk
 | 규칙의 성질 | 자리 |
 |:---|:---|
 | 모든 작업에 적용되는 프로젝트 컨벤션 | 저장소 `CLAUDE.md`. 모든 세션에 주입되므로 기존 형식대로 한 줄로 쓴다 |
+| 특정 파일(ViewModel·DataStore 등)을 다룰 때만 필요 | `.claude/rules/<주제>.md` + `paths` frontmatter. 그 파일을 Read·Write·Edit할 때 자동 로드되므로, 새 파일을 만드는 작업이 놓치지 않게 `CLAUDE.md`에 위치를 한 줄 남긴다 |
 | 특정 작업(커밋·테스트 작성·Compose 화면 등)을 할 때만 필요 | 그 작업의 `.claude/skills/<스킬>/SKILL.md`. description이 발동 조건이다 |
 | 사람이 `/이름`으로 부르는, 단계가 있는 절차 | `.claude/commands/` |
 | 기계적으로 판정할 수 있고 매번 지켜야 하는 것 | `.claude/hooks/` + `.claude/settings.json` |

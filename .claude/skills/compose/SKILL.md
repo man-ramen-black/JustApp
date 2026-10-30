@@ -14,7 +14,7 @@ argument-hint: [대상 화면 또는 Fragment]
 |---|---|
 | `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless) + 그 화면 전용 private 하위 Composable + testTag 상수 `internal object XxxTestTags` |
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
-| `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 CLAUDE.md 형식으로 `[XxxScreen]` 링크 |
+| `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 `.claude/rules/viewmodel.md` 형식으로 `[XxxScreen]` 링크 |
 
 ```kotlin
 /** TextEditor 화면 */
@@ -54,7 +54,7 @@ private fun TextEditorContent(
 
 - **Screen**은 `hiltViewModel()`·상태 수집·이벤트 처리·Context가 필요한 동작을 맡는다. **Content**는 `uiState`와 콜백만 받는다.
 - Context가 필요한 동작(토스트·`startActivity`·ActivityResult 실행·`supportFragmentManager`)은 ViewModel이 직접 하지 않는다. ViewModel은 이벤트(`EventXxx`)만 보내고 Screen이 `CollectEvents`로 받아 수행한다. ActivityResult는 Screen의 `rememberLauncherForActivityResult`로 만든다.
-- ViewModel 함수는 처리하는 동작(`save`), Content 콜백 매개변수는 `on`+동사(`onClickSave`)로 짓고 Screen에서 연결한다(CLAUDE.md). 참고 구현 ViewModel의 `onClickXxx`·`onPause` 함수는 이 규칙 이전 이름이라 따르지 않는다.
+- ViewModel 함수는 처리하는 동작(`save`), Content 콜백 매개변수는 `on`+동사(`onClickSave`)로 짓고 Screen에서 연결한다(`.claude/rules/viewmodel.md`). 참고 구현 ViewModel의 `onClickXxx`·`onPause` 함수는 이 규칙 이전 이름이라 따르지 않는다.
 - 화면 생명주기 처리는 `LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshStatus() }`처럼 Screen에서 한다.
 - 다이얼로그는 표시 여부를 `uiState`(예: `showResetConfirm`)에 두고 Screen에서 Material3 `AlertDialog`로 그린다. 아직 전환되지 않은 `DialogFragment`는 Screen에서 `supportFragmentManager`로 띄운다(`UsageTimerScreen`의 `SelectAppDialogFragment`).
 
@@ -75,7 +75,7 @@ private fun TextEditorContent(
 ## XML Fragment → Compose 전환
 
 1. **동작 목록 작성**: Fragment·레이아웃 XML·ViewModel을 읽어 클릭, 관찰(LiveData·`collectEvent` 문자열 액션), 생명주기 처리, 다른 화면 이동을 빠짐없이 나열한다. 전환 후 이 목록과 대조한다.
-2. **ViewModel 정리**: 화면 상태를 `XxxUiState` 하나로 모아 `StateFlow`로 노출하고, 문자열 액션 이벤트는 CLAUDE.md 규칙대로 타입 이벤트(`EventXxx`)로 바꾼다.
+2. **ViewModel 정리**: 화면 상태를 `XxxUiState` 하나로 모아 `StateFlow`로 노출하고, 문자열 액션 이벤트는 `.claude/rules/viewmodel.md` 규칙대로 타입 이벤트(`EventXxx`)로 바꾼다.
 3. **Screen 작성**: 위 파일 구성대로 만들고, 레이아웃 수치(여백·크기)는 원본 XML 값을 대조해 옮긴다. 추측해서 넣지 않는다.
 4. **교체**: `AppNavHost`의 `AndroidFragment<XxxFragment>`를 `XxxScreen(Modifier.fillMaxSize())`로 바꾼다.
 5. **정리**: Fragment와 레이아웃 XML을 지우기 전에 참조를 모두 찾는다(`grep -rn "XxxFragment\|fragment_xxx" app/src feature`). import·바로가기 Activity·`main_tab_navigation.xml`·`<include layout>`에 남은 참조를 함께 정리한다. 문자열·drawable은 다른 곳에서 쓰지 않는 것이 확인될 때만 지운다.

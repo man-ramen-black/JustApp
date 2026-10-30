@@ -55,6 +55,16 @@
             "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-context.mjs"]
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/require-android-serial.mjs"]
+          }
+        ]
       }
     ],
     "PostToolUse": [
