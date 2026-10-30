@@ -12,7 +12,7 @@ argument-hint: [대상 화면 또는 Fragment]
 
 | 파일 | 내용 |
 |---|---|
-| `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless) + 그 화면 전용 private 하위 Composable |
+| `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless) + 그 화면 전용 private 하위 Composable + testTag 상수 `internal object XxxTestTags` |
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
 | `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 CLAUDE.md 형식으로 `[XxxScreen]` 링크 |
 
@@ -39,7 +39,7 @@ fun TextEditorScreen(
     TextEditorContent(
         uiState = uiState,
         modifier = modifier,
-        onClickSave = viewModel::onClickSave,
+        onClickSave = viewModel::save,
     )
 }
 
@@ -54,7 +54,8 @@ private fun TextEditorContent(
 
 - **Screen**은 `hiltViewModel()`·상태 수집·이벤트 처리·Context가 필요한 동작을 맡는다. **Content**는 `uiState`와 콜백만 받는다.
 - Context가 필요한 동작(토스트·`startActivity`·ActivityResult 실행·`supportFragmentManager`)은 ViewModel이 직접 하지 않는다. ViewModel은 이벤트(`EventXxx`)만 보내고 Screen이 `CollectEvents`로 받아 수행한다. ActivityResult는 Screen의 `rememberLauncherForActivityResult`로 만든다.
-- 화면 생명주기 처리는 `LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.onPause() }`처럼 Screen에서 한다.
+- ViewModel 함수는 처리하는 동작(`save`), Content 콜백 매개변수는 `on`+동사(`onClickSave`)로 짓고 Screen에서 연결한다(CLAUDE.md). 참고 구현 ViewModel의 `onClickXxx`·`onPause` 함수는 이 규칙 이전 이름이라 따르지 않는다.
+- 화면 생명주기 처리는 `LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshStatus() }`처럼 Screen에서 한다.
 - 다이얼로그는 표시 여부를 `uiState`(예: `showResetConfirm`)에 두고 Screen에서 Material3 `AlertDialog`로 그린다. 아직 전환되지 않은 `DialogFragment`는 Screen에서 `supportFragmentManager`로 띄운다(`UsageTimerScreen`의 `SelectAppDialogFragment`).
 
 ## 네비게이션 등록
@@ -68,8 +69,7 @@ private fun TextEditorContent(
 ## 작성 규칙
 
 - 색·모서리는 `BoldListTokens`(`ui/theme/BoldListTokens.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`를 화면에 직접 쓰지 말고 토큰에 의미 이름으로 추가한 뒤 참조한다. Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
-- 검증 대상 요소에는 `Modifier.testTag("snake_case")`를 단다. XML에서 전환한 화면이면 기존 `@+id` 이름을 그대로 이어 쓴다(`save_button` 등). 그래야 테스트 전환 시 의미가 유지된다.
-- 줄임말 금지(`btn`·`tv`)와 FQCN 금지, 주석 명사형 종결은 CLAUDE.md를 따른다.
+- 검증 대상 요소에는 testTag를 달고, 태그 문자열은 Screen 파일의 `internal object XxxTestTags`에 `const val`로 둬 화면과 테스트가 같은 상수를 참조한다(`TextEditorTestTags`). `Modifier.testTag("save_button")`·`onNodeWithTag("save_button")`처럼 문자열을 직접 쓰지 않는다. 값은 snake_case이고, XML에서 전환한 화면이면 기존 `@+id` 이름을 이어 쓴다.
 
 ## XML Fragment → Compose 전환
 
@@ -116,15 +116,16 @@ class TextEditorScreenTest : BaseUiTest() {
         hostTextEditorScreen()
 
         /** When **/
-        composeRule.onNodeWithTag("new_button").performClick()
+        clickTag(TextEditorTestTags.NEW_BUTTON)
 
         /** Then **/
-        composeRule.onNodeWithTag("reset_confirm_dialog").assertIsDisplayed()
+        assertTagDisplayed(TextEditorTestTags.RESET_CONFIRM_DIALOG)
     }
 }
 ```
 
 - `BaseUiTest`가 `hiltRule`·`composeRule`·`onHostActivity`를 제공한다. `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으므로 클래스마다 단다.
+- 검증·조작은 `BaseUiTest` 헬퍼(`assertTagDisplayed`·`assertTagExists`·`assertTagNotExists`·`assertTagText`·`assertTextDisplayed`·`clickTag`·`clickText`·`waitUntilTagExists`·`waitUntilTextExists`)로 쓴다. 헬퍼가 없는 `composeRule` 호출이 반복되면 테스트 클래스에 늘어놓지 말고 `BaseUiTest`에 헬퍼를 추가한다. `MainScreenTest`·`UsageTimerScreenTest`의 문자열 태그와 `composeRule.onNodeWithTag(...)` 직접 호출은 본보기로 삼지 않는다.
 - `HiltTestActivity`에 `setContent`로 Screen을 띄우면 `hiltViewModel()` 주입까지 실제 경로로 검증된다. Content는 private이므로 Screen을 통해 검증한다.
 - 함수명 `test_{2자리순번}_{camelCase 동작}`, KDoc 요약 + `Given:`/`When:`/`Then:`, 본문 `/** Given **/` 구획은 `ui-test` 스킬과 같다.
 
