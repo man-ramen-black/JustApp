@@ -8,12 +8,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -83,11 +78,11 @@ class TextEditorScreenTest : BaseUiTest() {
         // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
 
         /** Then **/
-        composeRule.onNodeWithTag("text_editor_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("save_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("load_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("new_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("editor_input").assertIsDisplayed()
+        assertTagDisplayed(TextEditorTestTags.TITLE)
+        assertTagDisplayed(TextEditorTestTags.SAVE_BUTTON)
+        assertTagDisplayed(TextEditorTestTags.LOAD_BUTTON)
+        assertTagDisplayed(TextEditorTestTags.NEW_BUTTON)
+        assertTagDisplayed(TextEditorTestTags.EDITOR_INPUT)
     }
 
     /**
@@ -106,10 +101,10 @@ class TextEditorScreenTest : BaseUiTest() {
         hostTextEditorScreen()
 
         /** When **/
-        composeRule.onNodeWithTag("editor_input").performTextInput("hello")
+        composeRule.onNodeWithTag(TextEditorTestTags.EDITOR_INPUT).performTextInput("hello")
 
         /** Then **/
-        composeRule.onNodeWithTag("editor_input").assertIsDisplayed()
+        assertTagDisplayed(TextEditorTestTags.EDITOR_INPUT)
     }
 
     /**
@@ -128,10 +123,10 @@ class TextEditorScreenTest : BaseUiTest() {
         hostTextEditorScreen()
 
         /** When **/
-        composeRule.onNodeWithTag("new_button").performClick()
+        clickTag(TextEditorTestTags.NEW_BUTTON)
 
         /** Then **/
-        composeRule.onNodeWithTag("reset_confirm_dialog").assertIsDisplayed()
+        assertTagDisplayed(TextEditorTestTags.RESET_CONFIRM_DIALOG)
     }
 
     /**
@@ -153,7 +148,7 @@ class TextEditorScreenTest : BaseUiTest() {
         // 초기 상태이므로 별도 조작 없음
 
         /** Then **/
-        composeRule.onNodeWithTag("file_name").assertDoesNotExist()
+        assertTagNotExists(TextEditorTestTags.FILE_NAME)
     }
 
     /**
@@ -176,23 +171,19 @@ class TextEditorScreenTest : BaseUiTest() {
         try {
             runBlocking { textEditorDataStore.updateLatestFileUri(documentUri) }
             hostTextEditorScreen()
-            composeRule.waitUntil(TIMEOUT_MS) {
-                composeRule.onAllNodesWithTag("permission_request_dialog").fetchSemanticsNodes().isNotEmpty()
-            }
-            composeRule.onNodeWithTag("permission_request_dialog").assertIsDisplayed()
+            waitUntilTagExists(TextEditorTestTags.PERMISSION_REQUEST_DIALOG)
+            assertTagDisplayed(TextEditorTestTags.PERMISSION_REQUEST_DIALOG)
 
             /** When **/
-            composeRule.onNodeWithTag("select_document_button").performClick()
+            clickTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON)
             // 문서 선택창(시스템 앱)에서 같은 문서 선택
-            val fileItem = device.wait(Until.findObject(By.text(TEST_FILE_NAME)), TIMEOUT_MS)
+            val fileItem = device.wait(Until.findObject(By.text(TEST_FILE_NAME)), DEFAULT_TIMEOUT_MILLIS)
             assertNotNull("문서 선택창에 $TEST_FILE_NAME 항목이 표시되지 않았습니다", fileItem)
             fileItem.click()
 
             /** Then **/
-            composeRule.waitUntil(TIMEOUT_MS) {
-                composeRule.onAllNodesWithText(TEST_FILE_CONTENT).fetchSemanticsNodes().isNotEmpty()
-            }
-            composeRule.onNodeWithTag("file_name").assertTextEquals(TEST_FILE_NAME)
+            waitUntilTextExists(TEST_FILE_CONTENT)
+            assertTagText(TextEditorTestTags.FILE_NAME, TEST_FILE_NAME)
         } finally {
             // 임시 문서와 그 영구 권한 정리
             context.contentResolver.persistedUriPermissions
@@ -226,6 +217,5 @@ class TextEditorScreenTest : BaseUiTest() {
         private const val MEDIA_DOCUMENTS_AUTHORITY = "com.android.providers.media.documents"
         private const val TEST_FILE_NAME = "justapp-permission-test.txt"
         private const val TEST_FILE_CONTENT = "permission test"
-        private const val TIMEOUT_MS = 10_000L
     }
 }
