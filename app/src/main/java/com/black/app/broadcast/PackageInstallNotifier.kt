@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.black.app.R
+import com.black.app.ui.maintab.main.appinstallnotification.AppInstallNotificationStatus
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
 
@@ -20,10 +21,27 @@ import com.black.core.util.NotificationUtil
  *
  * 제목은 앱 이름이며, 알림을 터치하면 그 앱 실행.
  * Android 11 이상은 [PackageInstallShortcut]이 게시한 바로가기를 연결한 대화 알림이라 알림창 왼쪽에 앱 아이콘이 표시되고,
- * 그 미만이거나 바로가기 게시에 실패하면 앱 아이콘을 large icon으로 표시
+ * 그 미만이거나 바로가기 게시에 실패하면 앱 아이콘을 large icon으로 표시.
+ * 앱 설치 알림 화면의 테스트 알림도 [AppInstallNotificationStatus]가 JustApp 자신을 대상으로 이 함수를 호출해 표시.
  */
 object PackageInstallNotifier {
     private const val NOTIFICATION_CHANNEL_ID = "PackageInstall"
+
+    /**
+     * 설치 알림 표시 가능 여부
+     *
+     * 앱 알림 허용(Android 13 이상 알림 권한 포함)만으로는 이 채널만 끈 경우를 알 수 없어 채널 중요도까지 확인.
+     * 채널은 첫 알림 때 만들어지므로 아직 없으면 표시 가능으로 판단
+     */
+    fun canShow(context: Context): Boolean {
+        val notificationManager = NotificationManagerCompat.from(context)
+        if (!notificationManager.areNotificationsEnabled()) {
+            return false
+        }
+        val channel = notificationManager.getNotificationChannelCompat(NOTIFICATION_CHANNEL_ID)
+            ?: return true
+        return channel.importance != NotificationManagerCompat.IMPORTANCE_NONE
+    }
 
     /** 알림 권한·앱 정보·실행 인텐트 중 하나라도 없으면 알림 없이 종료 */
     fun show(context: Context, packageName: String, isUpdate: Boolean) {

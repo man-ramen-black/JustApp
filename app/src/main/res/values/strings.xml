@@ -18,6 +18,7 @@
     <string name="fragment_name_study_popup">StudyPopup</string>
     <string name="fragment_name_text_editor">메모장</string>
     <string name="fragment_name_usage_timer">앱 사용 타이머</string>
+    <string name="fragment_name_app_install_notification">앱 설치 알림</string>
     <string name="keep_screen_on_tile_label">화면 켜짐 유지</string>
     <string name="fragment_name_notification">Notification</string>
     <string name="fragment_name_recycler_view">RecyclerView</string>
@@ -49,4 +50,28 @@
     <string name="package_install_notification_channel_name">앱 설치·업데이트</string>
     <string name="package_install_notification_installed">설치되었습니다.</string>
     <string name="package_install_notification_updated">업데이트되었습니다.</string>
+    <string name="app_install_notification_caption">도구</string>
+    <string name="app_install_notification_section_alert">알림 설정</string>
+    <string name="app_install_notification_switch_label">설치·업데이트 알림 받기</string>
+    <string name="app_install_notification_switch_description">켜면 백그라운드 서비스를 실행합니다. 화면을 켤 때 뜨는 학습 팝업 등 화면 켜짐·꺼짐 연동 기능도 함께 동작합니다.</string>
+    <string name="app_install_notification_section_status">상태</string>
+    <string name="app_install_notification_status_service">서비스</string>
+    <string name="app_install_notification_status_running">실행 중</string>
+    <string name="app_install_notification_status_stopped">중지됨</string>
+    <string name="app_install_notification_status_battery">배터리 최적화 예외</string>
+    <string name="app_install_notification_status_notification">알림</string>
+    <string name="app_install_notification_status_allowed">허용됨</string>
+    <string name="app_install_notification_status_required">필요</string>
+    <string name="app_install_notification_status_blocked">꺼짐</string>
+    <string name="app_install_notification_section_preview">미리보기</string>
+    <string name="app_install_notification_preview_install">설치</string>
+    <string name="app_install_notification_preview_update">업데이트</string>
+    <string name="app_install_notification_preview_time">지금</string>
+    <string name="app_install_notification_send_test">테스트 알림 보내기</string>
+    <string name="app_install_notification_settings_guide">설치 알림을 표시할 수 없습니다. 알림 설정에서 알림과 \'앱 설치·업데이트\' 항목을 허용해주세요.</string>
+    <string name="app_install_notification_section_icon">상단바 아이콘</string>
+    <string name="app_install_notification_icon_dark">어두운 배경 24dp</string>
+    <string name="app_install_notification_icon_light">밝은 배경 24dp</string>
+    <string name="app_install_notification_icon_enlarged">확대 64dp</string>
+    <string name="app_install_notification_icon_shared">설치·업데이트 알림 공통 아이콘</string>
 </resources>

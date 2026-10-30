@@ -5,10 +5,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,8 +44,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
+import com.black.app.ui.component.BoldActionButton
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
-import com.black.app.ui.theme.BoldListTokens
+import com.black.app.ui.theme.BoldColors
+import com.black.app.ui.theme.BoldTypography
 import com.black.core.util.DataUtil
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
@@ -79,7 +76,12 @@ fun UsageTimerScreen(
     viewModel.CollectEvents { event ->
         when (event) {
             is UsageTimerViewModel.EventShowTimerView -> {
-                UsageTimerView(context).attachView()
+                // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 크래시하므로 권한 설정으로 안내
+                if (PermissionHelper.canDrawOverlays(context)) {
+                    UsageTimerView(context).attachView()
+                } else {
+                    PermissionHelper.showDrawOverlaysSetting(context)
+                }
             }
             is UsageTimerViewModel.EventShowToast -> {
                 Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
@@ -130,7 +132,7 @@ private fun UsageTimerContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldListTokens.ScreenBackground)
+            .background(BoldColors.ScreenBackground)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
@@ -139,11 +141,7 @@ private fun UsageTimerContent(
         Text(
             text = "TOOL",
             modifier = Modifier.padding(top = 26.dp),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoHeaderCaption,
         )
         // 헤더 타이틀
         Text(
@@ -151,26 +149,19 @@ private fun UsageTimerContent(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag("usage_timer_title"),
-            color = BoldListTokens.TitleColor,
-            fontSize = 34.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-1).sp,
+            style = BoldTypography.ScreenTitle,
         )
 
         // OVERLAY 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldListTokens.DividerColor,
+            color = BoldColors.Divider,
         )
         Text(
             text = "OVERLAY",
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoCaption,
         )
         BoldActionButton(
             text = "SHOW",
@@ -184,15 +175,12 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldListTokens.DividerColor,
+            color = BoldColors.Divider,
         )
         Text(
             text = "PAUSE",
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoCaption,
         )
         Row(
             verticalAlignment = Alignment.Bottom,
@@ -210,13 +198,13 @@ private fun UsageTimerContent(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BoldListTokens.ContainerBorder,
-                    focusedBorderColor = BoldListTokens.ArrowColor,
-                    focusedTextColor = BoldListTokens.ItemNameColor,
-                    unfocusedTextColor = BoldListTokens.ItemNameColor,
-                    cursorColor = BoldListTokens.TitleColor,
-                    focusedLabelColor = BoldListTokens.CaptionColor,
-                    unfocusedLabelColor = BoldListTokens.CaptionColor,
+                    unfocusedBorderColor = BoldColors.ContainerBorder,
+                    focusedBorderColor = BoldColors.Arrow,
+                    focusedTextColor = BoldColors.ItemName,
+                    unfocusedTextColor = BoldColors.ItemName,
+                    cursorColor = BoldColors.Title,
+                    focusedLabelColor = BoldColors.Caption,
+                    unfocusedLabelColor = BoldColors.Caption,
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -262,15 +250,12 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldListTokens.DividerColor,
+            color = BoldColors.Divider,
         )
         Text(
             text = "SETTINGS",
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoCaption,
         )
         BoldActionButton(
             text = "ACCESSIBILITY",
@@ -292,15 +277,12 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldListTokens.DividerColor,
+            color = BoldColors.Divider,
         )
         Text(
             text = "SELECTED APPS",
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoCaption,
         )
 
         if (uiState.selectedApps.isEmpty()) {
@@ -309,7 +291,7 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .padding(bottom = 24.dp)
                     .testTag("selected_apps_empty"),
-                color = BoldListTokens.CaptionColor,
+                color = BoldColors.Caption,
                 fontFamily = FontFamily.Monospace,
             )
         } else {
@@ -324,34 +306,6 @@ private fun UsageTimerContent(
                 }
             }
         }
-    }
-}
-
-/** Bold 디자인 언어 액션 버튼(컨테이너 톤 박스 + ExtraBold 라벨) */
-@Composable
-private fun BoldActionButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val shape = BoldListTokens.ContainerShape
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(BoldListTokens.ContainerBackground)
-            .border(1.dp, BoldListTokens.ContainerBorder, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            color = BoldListTokens.ItemNameColor,
-            fontSize = 13.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.5.sp,
-        )
     }
 }
 
@@ -385,14 +339,11 @@ private fun PauseRemainCountDown(
     ) {
         Text(
             text = "PAUSE REMAIN",
-            color = BoldListTokens.CaptionColor,
-            fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.5.sp,
+            style = BoldTypography.MonoCaption,
         )
         Text(
             text = DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis),
-            color = BoldListTokens.TitleColor,
+            color = BoldColors.Title,
             fontFamily = FontFamily.Monospace,
         )
     }
@@ -410,7 +361,7 @@ private fun SelectedAppItemContent(item: SelectedAppUiItem) {
         )
         Text(
             text = item.label,
-            color = BoldListTokens.IconColor,
+            color = BoldColors.Icon,
         )
     }
 }

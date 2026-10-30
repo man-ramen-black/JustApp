@@ -107,6 +107,27 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             return powerManager.isIgnoringBatteryOptimizations(context.packageName)
         }
 
+        /** 앱 알림 설정 화면 이동 */
+        fun showAppNotificationSettings(context: Context) {
+            // ACTION_APP_NOTIFICATION_SETTINGS는 API 26 추가, 그 미만은 해당 화면이 없어 앱 정보 화면으로 대체
+            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            } else {
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
+            }
+
+            if (context !is Activity) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            try {
+                context.startActivity(intent)
+            } catch (e: ActivityNotFoundException) {
+                Log.w("app notification settings not found : $e")
+            }
+        }
+
         /** 접근성 권한 있는지 체크 */
         fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
             val expectedComponentName = ComponentName(context, service)

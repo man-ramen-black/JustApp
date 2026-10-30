@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.black.app.ui.maintab.MainTabFragment
 import com.black.app.ui.maintab.main.alarm.AlarmFragment
+import com.black.app.ui.maintab.main.appinstallnotification.AppInstallNotificationScreen
 import com.black.app.ui.maintab.main.architecture.ArchitectureFragment
 import com.black.app.ui.maintab.main.etc.BlackFragment
 import com.black.app.ui.maintab.main.etc.EtcFragment
@@ -58,5 +59,6 @@ fun AppNavHost(
         composable<AppRoute.Notification> { AndroidFragment<NotificationFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.PokeRogue> { AndroidFragment<PokeRogueFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Floating> { AndroidFragment<FloatingSettingFragment>(Modifier.fillMaxSize()) }
+        composable<AppRoute.AppInstallNotification> { AppInstallNotificationScreen(Modifier.fillMaxSize()) }
     }
 }

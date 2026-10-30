@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -24,7 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import com.black.app.R
 import com.black.app.deeplink.Deeplink
 import com.black.app.deeplink.DeeplinkManager
-import com.black.app.service.ForegroundService
+import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
@@ -46,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var deeplinkManager: DeeplinkManager
     @Inject lateinit var appNavigator: AppNavigator
+    @Inject lateinit var foregroundServiceController: ForegroundServiceController
 
     private val permissionHelper = PermissionHelper(this)
 
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // 앱 디버깅 시에 서비스가 실행되도록 설정
-        ForegroundService.start(this, false)
+        lifecycleScope.launch { foregroundServiceController.startIfActivated() }
         permissionHelper.init()
 
         setContent {
@@ -159,10 +159,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (checkResult.deniedPermissions.isNotEmpty() && permanentlyDenied) {
                 Toast.makeText(this, R.string.notification_permission_guide, Toast.LENGTH_LONG).show()
-                startActivity(
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                )
+                PermissionHelper.showAppNotificationSettings(this)
             }
         }
     }

@@ -37,6 +37,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_floating,
             ) { navigateByActivity(AppRoute.Floating) },
             MainItem(
+                getString(R.string.fragment_name_app_install_notification),
+                R.drawable.ic_app_install,
+            ) { navigateByActivity(AppRoute.AppInstallNotification) },
+            MainItem(
                 getString(R.string.fragment_name_black),
                 R.drawable.ic_invisible,
             ) { navigateByActivity(AppRoute.Black) },
