@@ -8,6 +8,9 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.black.app.R
 import com.black.app.databinding.FragmentStudyPopupBinding
@@ -20,6 +23,7 @@ import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 /**
  * Created by jinhyuk.lee on 2022/05/22
@@ -67,6 +71,23 @@ class StudyPopupFragment : TitleFragment<FragmentStudyPopupBinding>(),
         binding?.recyclerView?.addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         binding?.recyclerView?.adapter = adapter
         viewModel.loadLatestFile()
+        collectEvents()
+    }
+
+    /** [StudyPopupFragmentViewModel.events] 타입 이벤트를 화면이 보이는 동안 처리 */
+    private fun collectEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is StudyPopupFragmentViewModel.EventShowNoContents -> {
+                            Toast.makeText(requireContext(), R.string.study_popup_no_contents, Toast.LENGTH_SHORT).show()
+                        }
+                        else -> Unit
+                    }
+                }
+            }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

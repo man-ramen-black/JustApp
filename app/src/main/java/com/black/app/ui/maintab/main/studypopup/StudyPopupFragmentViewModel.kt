@@ -8,6 +8,7 @@ import com.black.app.model.StudyPopupModel
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.util.FileUtil
 import com.black.core.util.Log
+import com.black.core.viewmodel.ViewModelEvent
 import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -30,6 +31,12 @@ open class StudyPopupFragmentViewModel : com.black.core.viewmodel.EventViewModel
         const val EVENT_UPDATE_RECYCLER_VIEW = "UpdateRecyclerView"
         const val EVENT_CONFIRM_DELETE = "ConfirmDelete"
     }
+
+    /** StudyPopup 화면 일회성 이벤트 */
+    sealed class StudyPopupFragmentEvent : ViewModelEvent
+
+    /** 저장된 내용 없음 안내 */
+    data object EventShowNoContents : StudyPopupFragmentEvent()
 
     val text = MutableLiveData("")
     val path = MutableLiveData("")
@@ -62,7 +69,14 @@ open class StudyPopupFragmentViewModel : com.black.core.viewmodel.EventViewModel
     }
 
     fun onClickAttachView() {
-        sendEvent(EVENT_ATTACH_VIEW)
+        launch {
+            // 팝업은 저장된 내용을 보여 주므로 저장된 내용이 없으면 빈 팝업 대신 안내
+            if (model?.hasContents() != true) {
+                sendEvent(EventShowNoContents)
+                return@launch
+            }
+            sendEvent(EVENT_ATTACH_VIEW)
+        }
     }
 
     fun onClickAdd() {

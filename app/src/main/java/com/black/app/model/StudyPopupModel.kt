@@ -15,7 +15,8 @@ class StudyPopupModel(context: Context) {
     private val preferences = StudyPopupPreferences(context)
     private val database = StudyPopupDatabase.getInstance(context)
 
-    suspend fun save(list: List<StudyPopupData.Contents>) {
+    // Room은 메인 스레드 접근 시 예외를 던지고, 호출부는 viewModelScope(Main)라 IO로 전환
+    suspend fun save(list: List<StudyPopupData.Contents>) = withContext(Dispatchers.IO) {
         val dao = database.dao()
         list.forEachIndexed { index, data ->
             data.id = index + 1
@@ -30,6 +31,15 @@ class StudyPopupModel(context: Context) {
 
     suspend fun load() : List<StudyPopupData.Contents> = withContext(Dispatchers.IO) {
         database.dao().getAll()
+    }
+
+    /**
+     * 팝업에 보여 줄 내용 존재 여부
+     *
+     * 공백뿐인 항목은 빈 페이지가 되므로 내용으로 치지 않음
+     */
+    suspend fun hasContents() : Boolean {
+        return load().any { it.contents.isNotBlank() }
     }
 
     fun loadLatestUri() : Uri? {
