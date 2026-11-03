@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,8 +31,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +45,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.ui.component.BoldActionButton
+import com.black.app.ui.component.BoldSectionHeader
+import com.black.app.ui.component.BoldStatusRow
+import com.black.app.ui.component.BoldSwitchRow
 import com.black.app.ui.theme.BoldColors
 import com.black.app.ui.theme.BoldShapes
 import com.black.app.ui.theme.BoldTypography
@@ -148,36 +144,13 @@ private fun AppInstallNotificationContent(
         )
 
         // 알림 설정 섹션
-        SectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
-        Row(
-            modifier = Modifier
-                // 라벨까지 행 전체를 눌러 토글, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여
-                .toggleable(value = uiState.enabled, role = Role.Switch, onValueChange = onEnabledChange)
-                .testTag(AppInstallNotificationTestTags.ENABLED_SWITCH),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.app_install_notification_switch_label),
-                modifier = Modifier.weight(1f),
-                color = BoldColors.ItemName,
-                fontSize = 16.sp,
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 0.sp,
-            )
-            Switch(
-                checked = uiState.enabled,
-                onCheckedChange = null,
-                // 테마 primary(#121212)가 검은 배경과 구분되지 않아 토큰 색 지정
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = BoldColors.ScreenBackground,
-                    checkedTrackColor = BoldColors.Title,
-                    uncheckedThumbColor = BoldColors.Arrow,
-                    uncheckedTrackColor = BoldColors.ContainerBackground,
-                    uncheckedBorderColor = BoldColors.ContainerBorder,
-                ),
-            )
-        }
+        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
+        BoldSwitchRow(
+            label = stringResource(R.string.app_install_notification_switch_label),
+            checked = uiState.enabled,
+            onCheckedChange = onEnabledChange,
+            modifier = Modifier.testTag(AppInstallNotificationTestTags.ENABLED_SWITCH),
+        )
         Text(
             text = stringResource(R.string.app_install_notification_switch_description),
             modifier = Modifier.padding(top = 8.dp),
@@ -185,8 +158,8 @@ private fun AppInstallNotificationContent(
         )
 
         // 상태 섹션
-        SectionHeader(title = stringResource(R.string.app_install_notification_section_status))
-        StatusRow(
+        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_status))
+        BoldStatusRow(
             label = stringResource(R.string.app_install_notification_status_service),
             value = if (uiState.serviceRunning) {
                 stringResource(R.string.app_install_notification_status_running)
@@ -196,7 +169,7 @@ private fun AppInstallNotificationContent(
             onClick = null,
             modifier = Modifier.testTag(AppInstallNotificationTestTags.SERVICE_STATUS),
         )
-        StatusRow(
+        BoldStatusRow(
             label = stringResource(R.string.app_install_notification_status_battery),
             value = if (uiState.batteryOptimizationIgnored) {
                 stringResource(R.string.app_install_notification_status_allowed)
@@ -206,7 +179,7 @@ private fun AppInstallNotificationContent(
             onClick = if (uiState.batteryOptimizationIgnored) null else onClickBatteryOptimization,
             modifier = Modifier.testTag(AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS),
         )
-        StatusRow(
+        BoldStatusRow(
             label = stringResource(R.string.app_install_notification_status_notification),
             value = if (uiState.notificationsEnabled) {
                 stringResource(R.string.app_install_notification_status_allowed)
@@ -218,7 +191,7 @@ private fun AppInstallNotificationContent(
         )
 
         // 미리보기 섹션
-        SectionHeader(title = stringResource(R.string.app_install_notification_section_preview))
+        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_preview))
         NotificationPreviewBlock(
             label = stringResource(R.string.app_install_notification_preview_install),
             previewApp = uiState.previewApp,
@@ -240,7 +213,7 @@ private fun AppInstallNotificationContent(
         )
 
         // 상단바 아이콘 섹션
-        SectionHeader(title = stringResource(R.string.app_install_notification_section_icon))
+        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_icon))
         StatusBarIconPreview(modifier = Modifier.testTag(AppInstallNotificationTestTags.STATUS_BAR_ICON_PREVIEW))
         Text(
             text = stringResource(R.string.app_install_notification_icon_shared),
@@ -248,73 +221,6 @@ private fun AppInstallNotificationContent(
             style = BoldTypography.Caption,
         )
     }
-}
-
-/** 섹션 위 디바이더 + 캡션 */
-@Composable
-private fun SectionHeader(title: String) {
-    HorizontalDivider(
-        modifier = Modifier.padding(top = 24.dp),
-        thickness = 1.dp,
-        color = BoldColors.Divider,
-    )
-    Text(
-        text = title,
-        modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-        style = BoldTypography.Caption,
-    )
-}
-
-/**
- * 상태 섹션 한 행(라벨 + 상태값)
- *
- * [onClick]이 있으면 조치가 필요한 상태라 상태값 뒤에 ›를 붙이고, 행을 누르면 설정 화면으로 이동
- */
-@Composable
-private fun StatusRow(
-    label: String,
-    value: String,
-    onClick: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickableIfPresent(onClick)
-            // 라벨·상태값을 한 노드로 검증하도록 병합
-            .semantics(mergeDescendants = true) {}
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = BoldTypography.Body,
-        )
-        // 조치가 필요한 상태값은 흰색으로 강조
-        val valueStyle = BoldTypography.Body.copy(
-            color = if (onClick != null) BoldColors.Title else BoldColors.Icon,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = value,
-            style = valueStyle,
-        )
-        if (onClick != null) {
-            // 스크린 리더가 ›를 읽지 않도록 의미 제거, 상태값과 같은 스타일로만 표시
-            Text(
-                text = " ›",
-                modifier = Modifier.clearAndSetSemantics {},
-                style = valueStyle,
-            )
-        }
-    }
-}
-
-/** [onClick]이 있을 때만 버튼 역할의 클릭 처리 추가 */
-private fun Modifier.clickableIfPresent(onClick: (() -> Unit)?): Modifier {
-    if (onClick == null) return this
-    return clickable(role = Role.Button, onClick = onClick)
 }
 
 /** 알림 종류 캡션 + 알림 모형 + 테스트 알림 버튼 */
