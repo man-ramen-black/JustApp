@@ -9,14 +9,50 @@
 
     <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>
     <string name="study_popup_pager_contents_empty">[내용 없음]</string>
-    <string name="study_popup_no_contents">저장된 내용이 없습니다. 내용을 추가한 뒤 저장해주세요.</string>
+    <string name="study_popup_no_contents">저장된 내용이 없습니다.\n내용을 추가한 뒤 저장해주세요.</string>
+    <string name="study_popup_caption">도구</string>
+    <string name="study_popup_section_setting">팝업 설정</string>
+    <string name="study_popup_enabled_label">화면을 켤 때 팝업 표시</string>
+    <string name="study_popup_enabled_description">켜면 화면을 켤 때마다 저장된 내용을 팝업으로 보여줍니다.\n저장된 내용이 없으면 표시하지 않습니다.</string>
+    <string name="study_popup_preview">팝업 미리보기</string>
+    <string name="study_popup_section_status">상태</string>
+    <string name="study_popup_status_overlay">다른 앱 위에 표시</string>
+    <string name="study_popup_status_service">백그라운드 서비스</string>
+    <string name="study_popup_status_saved_contents">팝업에 저장된 내용</string>
+    <string name="study_popup_status_allowed">허용됨</string>
+    <string name="study_popup_status_required">허용 필요</string>
+    <string name="study_popup_status_running">실행 중</string>
+    <string name="study_popup_status_stopped">중지됨</string>
+    <string name="study_popup_saved_contents_count">%1$d개</string>
+    <string name="study_popup_service_description">백그라운드 서비스는 앱 설치 알림 화면에서 켭니다.\n중지됨을 누르면 그 화면으로 이동합니다.</string>
+    <string name="study_popup_section_file">내용 파일</string>
+    <string name="study_popup_file_none">연 파일 없음</string>
+    <string name="study_popup_file_modified">저장하지 않은 변경이 있습니다.</string>
+    <string name="study_popup_file_description">저장하면 파일과 팝업에 함께 반영됩니다.</string>
+    <string name="study_popup_load">불러오기</string>
+    <string name="study_popup_reload">다시 불러오기</string>
+    <string name="study_popup_save">저장</string>
+    <string name="study_popup_section_contents">내용 %1$d개</string>
+    <string name="study_popup_contents_empty">내용이 없습니다.\n내용 추가를 눌러 추가해주세요.</string>
+    <string name="study_popup_add">내용 추가</string>
+    <string name="study_popup_edit_title">내용 입력</string>
+    <string name="study_popup_delete">삭제</string>
+    <string name="study_popup_delete_confirm">이 내용을 삭제할까요?</string>
+    <string name="study_popup_overlay_permission_guide">화면을 켤 때 팝업을 띄우려면 다른 앱 위에 표시 권한이 필요합니다.\n설정에서 JustApp을 허용해주세요.</string>
+    <string name="study_popup_open_overlay_settings">허용하러 가기</string>
+    <string name="study_popup_loaded">불러왔습니다.</string>
+    <string name="study_popup_load_failed">파일을 불러올 수 없습니다.</string>
+    <string name="study_popup_load_failed_latest_file">최근 파일을 불러올 수 없습니다.\n파일을 다시 불러와주세요.</string>
+    <string name="study_popup_saved">저장되었습니다.</string>
+    <string name="study_popup_save_failed">저장에 실패했습니다.</string>
+    <string name="study_popup_default_file_name" translatable="false">study_popup.xml</string>
 
     <string name="shortcut_memo_id">shortcut_memo</string>
     <string name="shortcut_memo_label">메모</string>
 
     <string name="fragment_name_service">Service</string>
     <string name="fragment_name_floating">플로팅 버튼</string>
-    <string name="fragment_name_study_popup">StudyPopup</string>
+    <string name="fragment_name_study_popup">스터디 팝업</string>
     <string name="fragment_name_text_editor">메모장</string>
     <string name="fragment_name_usage_timer">앱 사용 타이머</string>
     <string name="fragment_name_app_install_notification">앱 설치 알림</string>

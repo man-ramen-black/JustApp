@@ -20,7 +20,7 @@ import com.black.app.ui.maintab.main.notification.NotificationFragment
 import com.black.app.ui.maintab.main.recyclerview.RecyclerViewFragment
 import com.black.app.ui.maintab.main.retrofit.RetrofitFragment
 import com.black.app.ui.maintab.main.service.ServiceFragment
-import com.black.app.ui.maintab.main.studypopup.StudyPopupFragment
+import com.black.app.ui.maintab.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingFragment
@@ -53,7 +53,15 @@ fun AppNavHost(
         composable<AppRoute.Alarm> { AndroidFragment<AlarmFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Architecture> { AndroidFragment<ArchitectureFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Launcher> { AndroidFragment<LauncherFragment>(Modifier.fillMaxSize()) }
-        composable<AppRoute.StudyPopup> { AndroidFragment<StudyPopupFragment>(Modifier.fillMaxSize()) }
+        composable<AppRoute.StudyPopup> {
+            StudyPopupSettingScreen(
+                modifier = Modifier.fillMaxSize(),
+                // 화면 켜짐을 감지하는 서비스는 앱 설치 알림 화면이 켜고 끔
+                onOpenAppInstallNotification = {
+                    navController.navigate(AppRoute.AppInstallNotification) { launchSingleTop = true }
+                },
+            )
+        }
         composable<AppRoute.UsageTimer> { UsageTimerScreen(Modifier.fillMaxSize()) }
         composable<AppRoute.Etc> { AndroidFragment<EtcFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Notification> { AndroidFragment<NotificationFragment>(Modifier.fillMaxSize()) }

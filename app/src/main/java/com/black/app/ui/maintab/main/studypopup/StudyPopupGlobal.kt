@@ -6,7 +6,7 @@ import android.view.ContextThemeWrapper
 import androidx.annotation.VisibleForTesting
 import com.black.app.R
 import com.black.app.broadcast.ScreenReceiver
-import com.black.app.model.StudyPopupModel
+import com.black.app.model.StudyPopupRepository
 import com.black.app.ui.maintab.main.studypopup.popup.StudyPopupView
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
@@ -33,7 +33,7 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
         showJob?.cancel()
         showJob = mainScope.launch {
             // 표시 여부 확인에 DB 조회가 필요해 확인을 마친 뒤 부착
-            if (!canShow(StudyPopupModel(context))) {
+            if (!canShow(StudyPopupRepository(context))) {
                 return@launch
             }
             studyPopupView = StudyPopupView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
@@ -53,11 +53,15 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
     /**
      * 화면이 켜질 때 팝업 표시 여부
      *
-     * 등록된 내용이 없으면 빈 팝업이 되므로 표시하지 않음
+     * 표시 설정이 꺼져 있으면(기본값) 표시하지 않고, 등록된 내용이 없으면 빈 팝업이 되므로 표시하지 않음
      */
     @VisibleForTesting
-    internal suspend fun canShow(model: StudyPopupModel): Boolean {
-        if (!model.hasContents()) {
+    internal suspend fun canShow(repository: StudyPopupRepository): Boolean {
+        if (!repository.isEnabled()) {
+            Log.d("study popup disabled")
+            return false
+        }
+        if (!repository.hasContents()) {
             Log.d("study popup contents empty")
             return false
         }

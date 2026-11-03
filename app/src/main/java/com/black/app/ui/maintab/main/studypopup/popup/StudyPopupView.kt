@@ -8,7 +8,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import com.black.app.R
 import com.black.app.databinding.ViewStudyPopupBinding
-import com.black.app.model.StudyPopupModel
+import com.black.app.model.StudyPopupRepository
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.util.Log
 
@@ -44,7 +44,7 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
         super.bindVariable(binding)
         Log.d()
         binding.viewModel = viewModel.apply {
-            setModel(StudyPopupModel(context))
+            setModel(StudyPopupRepository(context))
             observeEventForever(this@StudyPopupView)
         }
         binding.adapter = adapter

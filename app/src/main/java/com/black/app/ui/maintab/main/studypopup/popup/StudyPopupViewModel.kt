@@ -3,7 +3,7 @@ package com.black.app.ui.maintab.main.studypopup.popup
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.black.app.databinding.ViewStudyPopupBinding
-import com.black.app.model.StudyPopupModel
+import com.black.app.model.StudyPopupRepository
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.util.Log
 import kotlinx.coroutines.launch
@@ -26,9 +26,9 @@ class StudyPopupViewModel : com.black.core.viewmodel.EventViewModel() {
     val currentItem =  ObservableField(0)
     val currentItemSmooth =  ObservableField(0)
     private val list = ArrayList<StudyPopupData.Contents>()
-    private var model: StudyPopupModel? = null
+    private var model: StudyPopupRepository? = null
 
-    fun setModel(model: StudyPopupModel) {
+    fun setModel(model: StudyPopupRepository) {
         this.model = model
     }
 
