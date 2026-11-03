@@ -1,6 +1,7 @@
 package com.black.app.ui.maintab.main.usagetimer
 
 import android.graphics.drawable.Drawable
+import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
@@ -98,7 +99,7 @@ class UsageTimerViewModelTest : BaseTest() {
      *
      * Given: pauseDurationInput "5" 입력, repository 저장·일시정지 모킹
      * When: onClickPause 호출
-     * Then: repository.savePauseDuration(5)·pause(5) 호출 + DetachTimerView, ShowToast 이벤트 수신
+     * Then: repository.savePauseDuration(5)·pause(5) 호출 + DetachTimerView, 5분 일시정지 문구 ShowToast 이벤트 수신
      */
     @Test
     fun test_03_onClickPauseSavesAndSendsEvents() = runTest {
@@ -117,7 +118,7 @@ class UsageTimerViewModelTest : BaseTest() {
         coVerify { repository.savePauseDuration(5) }
         coVerify { repository.pause(5) }
         assertEquals(UsageTimerViewModel.EventDetachTimerView, receivedEvents[0])
-        assertEquals(UsageTimerViewModel.EventShowToast("Pause : 5m"), receivedEvents[1])
+        assertEquals(UsageTimerViewModel.EventShowToast(R.string.usage_timer_paused, listOf(5)), receivedEvents[1])
     }
 
     /**

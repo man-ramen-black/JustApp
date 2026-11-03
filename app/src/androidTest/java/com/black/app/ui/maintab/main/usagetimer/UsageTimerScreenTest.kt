@@ -25,7 +25,8 @@ import org.junit.runners.MethodSorters
 /**
  * [UsageTimerScreen]이 계측 환경에서 정상 동작하는지 검증하는 Compose UI 테스트
  *
- * HiltTestActivity(@AndroidEntryPoint)에 setContent로 호스팅해 hiltViewModel() 주입 동작 확인
+ * HiltTestActivity(@AndroidEntryPoint)에 setContent로 호스팅해 hiltViewModel() 주입 동작 확인.
+ * 선택 앱은 실제 앱 저장소를 쓰므로 테스트 전 값을 보관했다가 테스트 후 되돌림
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -33,14 +34,20 @@ class UsageTimerScreenTest : BaseUiTest() {
 
     private val repository = UsageTimerRepository(context)
 
-    /** 각 테스트 전 선택 앱 저장소 초기화 */
+    /** 테스트 전 사용자가 선택해 둔 앱 */
+    private var originalSelectedApps = emptyList<String>()
+
+    /** 사용자 선택 앱 보관 후 선택 앱 저장소 초기화 */
     override fun setup() {
-        runBlocking { repository.saveSelectedApps(emptyList()) }
+        runBlocking {
+            originalSelectedApps = repository.getSelectedApps()
+            repository.saveSelectedApps(emptyList())
+        }
     }
 
-    /** 각 테스트 후 선택 앱 저장소 초기화(다른 테스트 격리) */
+    /** 사용자 선택 앱 복원(실사용 기기의 설정 유지) */
     override fun teardown() {
-        runBlocking { repository.saveSelectedApps(emptyList()) }
+        runBlocking { repository.saveSelectedApps(originalSelectedApps) }
     }
 
     /**
@@ -51,7 +58,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 타이틀 "App Usage Timer" 표시
+     * - 타이틀 "앱 사용 타이머" 표시
      * - 핵심 조작 요소 모두 존재
      * - 일시정지 잔여 시간 0이므로 카운트다운 영역 미존재
      */
@@ -65,7 +72,7 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         composeRule.onNodeWithTag("usage_timer_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("App Usage Timer")
+        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("앱 사용 타이머")
         composeRule.onNodeWithTag("show_button").assertExists()
         composeRule.onNodeWithTag("pause_duration_input").assertExists()
         composeRule.onNodeWithTag("save_button").assertExists()
@@ -84,7 +91,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - SHOW/SAVE/PAUSE/CANCEL/ACCESSIBILITY/SELECT APP 라벨 텍스트 존재
+     * - 타이머 띄우기/저장/일시정지/일시정지 해제/접근성 서비스 설정/앱 선택 한국어 라벨 텍스트 존재
      */
     @Test
     fun test_02_buttonsDisplayExpectedLabels() {
@@ -95,12 +102,12 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 버튼 라벨은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithTag("show_button").assertTextEquals("SHOW")
-        composeRule.onNodeWithTag("save_button").assertTextEquals("SAVE")
-        composeRule.onNodeWithTag("pause_button").assertTextEquals("PAUSE")
-        composeRule.onNodeWithTag("cancel_button").assertTextEquals("CANCEL")
-        composeRule.onNodeWithTag("accessibility_button").assertTextEquals("ACCESSIBILITY")
-        composeRule.onNodeWithTag("select_app_button").assertTextEquals("SELECT APP")
+        composeRule.onNodeWithTag("show_button").assertTextEquals("타이머 띄우기")
+        composeRule.onNodeWithTag("save_button").assertTextEquals("저장")
+        composeRule.onNodeWithTag("pause_button").assertTextEquals("일시정지")
+        composeRule.onNodeWithTag("cancel_button").assertTextEquals("일시정지 해제")
+        composeRule.onNodeWithTag("accessibility_button").assertTextEquals("접근성 서비스 설정")
+        composeRule.onNodeWithTag("select_app_button").assertTextEquals("앱 선택")
     }
 
     /**
@@ -158,7 +165,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - UsageTimerScreen 호스팅
      * Then:
-     * - 빈 목록 안내 영역 표시 + 선택 앱 목록 미존재
+     * - 빈 목록 안내 "선택한 앱이 없습니다." 표시 + 선택 앱 목록 미존재
      */
     @Test
     fun test_05_noAppsSelectedShowsPlaceholder() {
@@ -169,8 +176,38 @@ class UsageTimerScreenTest : BaseUiTest() {
         hostUsageTimerScreen()
 
         /** Then **/
-        composeRule.onNodeWithTag("selected_apps_empty").assertExists()
+        composeRule.onNodeWithTag("selected_apps_empty").assertTextEquals("선택한 앱이 없습니다.")
         composeRule.onNodeWithTag("selected_apps_list").assertDoesNotExist()
+    }
+
+    /**
+     * 헤더·섹션 캡션이 한국어로 노출되고 이전 영문 캡션은 남지 않았는지 검증
+     *
+     * Given:
+     * - UsageTimerScreen 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - 도구/타이머 표시/설정/선택한 앱 캡션 존재
+     * - TOOL/OVERLAY/SETTINGS/SELECTED APPS 캡션 미존재
+     */
+    @Test
+    fun test_06_captionsDisplayedInKorean() {
+        /** Given **/
+        hostUsageTimerScreen()
+
+        /** When **/
+        // 캡션은 정적이므로 별도 조작 없이 검증
+
+        /** Then **/
+        composeRule.onNodeWithText("도구").assertExists()
+        composeRule.onNodeWithText("타이머 표시").assertExists()
+        composeRule.onNodeWithText("설정").assertExists()
+        composeRule.onNodeWithText("선택한 앱").assertExists()
+        composeRule.onNodeWithText("TOOL").assertDoesNotExist()
+        composeRule.onNodeWithText("OVERLAY").assertDoesNotExist()
+        composeRule.onNodeWithText("SETTINGS").assertDoesNotExist()
+        composeRule.onNodeWithText("SELECTED APPS").assertDoesNotExist()
     }
 
     /** UsageTimerScreen을 HiltTestActivity에 setContent로 호스팅 */
