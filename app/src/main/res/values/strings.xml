@@ -67,7 +67,24 @@
     <string name="fragment_name_etc">ETC</string>
     <string name="main_footer_hint">%1$d TOOLS · DARK ALWAYS</string>
 
-    <string name="accessibility_usage_timer_description">특정 앱에서 UsageTimer를 실행하기 위해 접근성 서비스를 활성화합니다.</string>
+    <string name="accessibility_usage_timer_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우기 위해 접근성 서비스를 활성화합니다.</string>
+
+    <string name="usage_timer_caption">도구</string>
+    <string name="usage_timer_section_overlay">타이머 표시</string>
+    <string name="usage_timer_show">타이머 띄우기</string>
+    <string name="usage_timer_section_pause">일시정지</string>
+    <string name="usage_timer_pause_duration_label">일시정지 시간(분)</string>
+    <string name="usage_timer_save">저장</string>
+    <string name="usage_timer_pause">일시정지</string>
+    <string name="usage_timer_cancel_pause">일시정지 해제</string>
+    <string name="usage_timer_pause_remain">남은 일시정지 시간</string>
+    <string name="usage_timer_section_settings">설정</string>
+    <string name="usage_timer_accessibility">접근성 서비스 설정</string>
+    <string name="usage_timer_section_selected_apps">선택한 앱</string>
+    <string name="usage_timer_selected_apps_empty">선택한 앱이 없습니다.</string>
+    <string name="usage_timer_save_completed">저장되었습니다.</string>
+    <string name="usage_timer_paused">%1$d분 동안 일시정지합니다.</string>
+    <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
 
     <string name="notification_permission_guide">알림 권한이 꺼져 있습니다. 설정에서 허용해주세요.</string>
 

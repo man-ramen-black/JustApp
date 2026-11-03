@@ -1,5 +1,7 @@
 package com.black.app.ui.maintab.main.usagetimer
 
+import androidx.annotation.StringRes
+import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
@@ -24,8 +26,11 @@ class UsageTimerViewModel @Inject constructor(
 
     /** 사용 시간 타이머 오버레이 표시 */
     data object EventShowTimerView : UsageTimerEvent()
-    /** 토스트 메시지 표시 */
-    data class EventShowToast(val message: String) : UsageTimerEvent()
+    /** 문자열 리소스 토스트 표시, [formatArgs]는 리소스 서식 인자 */
+    data class EventShowToast(
+        @StringRes val messageResId: Int,
+        val formatArgs: List<Any> = emptyList(),
+    ) : UsageTimerEvent()
     /** 서비스에 떠 있는 타이머 오버레이 제거 */
     data object EventDetachTimerView : UsageTimerEvent()
     /** 접근성 설정 화면 이동 */
@@ -62,7 +67,7 @@ class UsageTimerViewModel @Inject constructor(
     fun onClickSave() {
         launch {
             repository.savePauseDuration(pauseDurationMinutes())
-            sendEvent(EventShowToast("Saved"))
+            sendEvent(EventShowToast(R.string.usage_timer_save_completed))
         }
     }
 
@@ -73,7 +78,7 @@ class UsageTimerViewModel @Inject constructor(
             repository.pause(pauseDuration)
             updatePauseRemainTime()
             sendEvent(EventDetachTimerView)
-            sendEvent(EventShowToast("Pause : ${pauseDuration}m"))
+            sendEvent(EventShowToast(R.string.usage_timer_paused, listOf(pauseDuration)))
         }
     }
 
@@ -81,7 +86,7 @@ class UsageTimerViewModel @Inject constructor(
         launch {
             repository.cancelPause()
             updatePauseRemainTime()
-            sendEvent(EventShowToast("Pause canceled"))
+            sendEvent(EventShowToast(R.string.usage_timer_pause_canceled))
         }
     }
 

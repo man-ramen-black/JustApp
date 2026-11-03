@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.ui.component.BoldActionButton
@@ -84,7 +86,8 @@ fun UsageTimerScreen(
                 }
             }
             is UsageTimerViewModel.EventShowToast -> {
-                Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                val message = context.getString(event.messageResId, *event.formatArgs.toTypedArray())
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
             is UsageTimerViewModel.EventDetachTimerView -> {
                 UsageTimerGlobal.detachView()
@@ -139,48 +142,49 @@ private fun UsageTimerContent(
     ) {
         // 헤더 캡션
         Text(
-            text = "TOOL",
+            text = stringResource(R.string.usage_timer_caption),
             modifier = Modifier.padding(top = 26.dp),
-            style = BoldTypography.MonoHeaderCaption,
+            style = BoldTypography.HeaderCaption,
         )
         // 헤더 타이틀
         Text(
-            text = "App Usage Timer",
+            text = stringResource(R.string.fragment_name_usage_timer),
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag("usage_timer_title"),
             style = BoldTypography.ScreenTitle,
         )
 
-        // OVERLAY 섹션
+        // 타이머 표시 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
             color = BoldColors.Divider,
         )
         Text(
-            text = "OVERLAY",
+            text = stringResource(R.string.usage_timer_section_overlay),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.MonoCaption,
+            style = BoldTypography.Caption,
         )
         BoldActionButton(
-            text = "SHOW",
+            text = stringResource(R.string.usage_timer_show),
             onClick = onClickShow,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("show_button"),
+            letterSpacing = 0.sp,
         )
 
-        // PAUSE 섹션
+        // 일시정지 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
             color = BoldColors.Divider,
         )
         Text(
-            text = "PAUSE",
+            text = stringResource(R.string.usage_timer_section_pause),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.MonoCaption,
+            style = BoldTypography.Caption,
         )
         Row(
             verticalAlignment = Alignment.Bottom,
@@ -191,9 +195,8 @@ private fun UsageTimerContent(
                 onValueChange = onPauseDurationInputChanged,
                 label = {
                     Text(
-                        text = "PAUSE DURATION (MIN)",
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
+                        text = stringResource(R.string.usage_timer_pause_duration_label),
+                        style = BoldTypography.Caption,
                     )
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -211,11 +214,12 @@ private fun UsageTimerContent(
                     .testTag("pause_duration_input"),
             )
             BoldActionButton(
-                text = "SAVE",
+                text = stringResource(R.string.usage_timer_save),
                 onClick = onClickSave,
                 modifier = Modifier
                     .height(56.dp)
                     .testTag("save_button"),
+                letterSpacing = 0.sp,
             )
         }
 
@@ -231,68 +235,71 @@ private fun UsageTimerContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             BoldActionButton(
-                text = "PAUSE",
+                text = stringResource(R.string.usage_timer_pause),
                 onClick = onClickPause,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("pause_button"),
+                letterSpacing = 0.sp,
             )
             BoldActionButton(
-                text = "CANCEL",
+                text = stringResource(R.string.usage_timer_cancel_pause),
                 onClick = onClickCancelPause,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("cancel_button"),
+                letterSpacing = 0.sp,
             )
         }
 
-        // SETTINGS 섹션
+        // 설정 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
             color = BoldColors.Divider,
         )
         Text(
-            text = "SETTINGS",
+            text = stringResource(R.string.usage_timer_section_settings),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.MonoCaption,
+            style = BoldTypography.Caption,
         )
         BoldActionButton(
-            text = "ACCESSIBILITY",
+            text = stringResource(R.string.usage_timer_accessibility),
             onClick = onClickAccessibility,
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("accessibility_button"),
+            letterSpacing = 0.sp,
         )
         BoldActionButton(
-            text = "SELECT APP",
+            text = stringResource(R.string.select_app),
             onClick = onClickSelectApp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
                 .testTag("select_app_button"),
+            letterSpacing = 0.sp,
         )
 
-        // SELECTED APPS 섹션
+        // 선택한 앱 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
             color = BoldColors.Divider,
         )
         Text(
-            text = "SELECTED APPS",
+            text = stringResource(R.string.usage_timer_section_selected_apps),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.MonoCaption,
+            style = BoldTypography.Caption,
         )
 
         if (uiState.selectedApps.isEmpty()) {
             Text(
-                text = "No apps selected",
+                text = stringResource(R.string.usage_timer_selected_apps_empty),
                 modifier = Modifier
                     .padding(bottom = 24.dp)
                     .testTag("selected_apps_empty"),
-                color = BoldColors.Caption,
-                fontFamily = FontFamily.Monospace,
+                style = BoldTypography.Body.copy(color = BoldColors.Caption),
             )
         } else {
             LazyRow(
@@ -338,8 +345,8 @@ private fun PauseRemainCountDown(
             .testTag("pause_info"),
     ) {
         Text(
-            text = "PAUSE REMAIN",
-            style = BoldTypography.MonoCaption,
+            text = stringResource(R.string.usage_timer_pause_remain),
+            style = BoldTypography.Caption,
         )
         Text(
             text = DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis),
