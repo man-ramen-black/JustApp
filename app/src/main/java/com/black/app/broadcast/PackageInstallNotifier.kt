@@ -22,6 +22,7 @@ import com.black.core.util.NotificationUtil
  * 제목은 앱 이름이며, 알림을 터치하면 그 앱 실행.
  * Android 11 이상은 [PackageInstallShortcut]이 게시한 바로가기를 연결한 대화 알림이라 알림창 왼쪽에 앱 아이콘이 표시되고,
  * 그 미만이거나 바로가기 게시에 실패하면 앱 아이콘을 large icon으로 표시.
+ * 설치·업데이트 알림은 즉시 확인할 필요가 없어 소리 없이 낮은 우선순위로 표시.
  * 앱 설치 알림 화면의 테스트 알림도 [AppInstallNotificationStatus]가 JustApp 자신을 대상으로 이 함수를 호출해 표시.
  */
 object PackageInstallNotifier {
@@ -76,12 +77,13 @@ object PackageInstallNotifier {
             resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height),
         )
 
-        // 채널이 이미 있으면 아무 동작 없어 매번 호출 가능
+        // 채널이 이미 있으면 이름 갱신·중요도 하향 외에는 아무 동작 없어 매번 호출 가능
+        // 소리·진동·헤드업 없는 LOW, 이전 버전의 DEFAULT 채널도 사용자가 채널 설정을 바꾼 적 없으면 시스템이 LOW로 하향
         NotificationUtil.createNotificationChannel(
             context,
             NOTIFICATION_CHANNEL_ID,
             context.getString(R.string.package_install_notification_channel_name),
-            NotificationManagerCompat.IMPORTANCE_DEFAULT,
+            NotificationManagerCompat.IMPORTANCE_LOW,
         )
 
         // 패키지별 ID로 같은 앱은 앞선 알림 대체, 다른 앱끼리는 따로 표시
@@ -134,6 +136,8 @@ object PackageInstallNotifier {
                     )
                 )
                     .setAutoCancel(true)
+                    // 채널 없는 Android 8 미만용 우선순위, NotificationUtil 기본값 PRIORITY_MAX 대체
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
             }
         } finally {
             // notify 호출 안에서 시스템이 바로가기를 확인·캐시하므로 정리는 반드시 알림 게시 뒤
