@@ -16,7 +16,7 @@
 - 코드 리뷰에서 이 문서·스킬이 정한 패턴은 지적하지 않고, 그 외 발견은 확신도·심각도를 붙여 스스로 거르지 않고 모두 보고합니다.
 - 새로 만드는 파일 이름은 한글 없이 영문 kebab-case로 쓰고, md 문서의 체크 항목은 표준 체크박스(`- [ ]`·`- [x]`)만 씁니다.
 - 사용자가 열어 볼 산출 파일(md 문서, 사람이 여는 json 등)을 만들거나 고쳤으면 응답 맨 끝에 그 경로를 모두 적고, 경로 뒤에 다른 문장을 두지 않습니다.
-- 새 PC의 상태 표시줄(Clawd 마스코트·HUD) 설정이나 수정 요청은 `.claude/statusline/README.md`를 따르며, 설치는 `node .claude/statusline/install.mjs`로 합니다.
+- 새 PC의 상태 표시줄(Clawd 마스코트·HUD)과 프롬프트 위 활동 상자 모드(`whats-agent-doing-ko`) 설정이나 수정 요청은 각각 `.claude/statusline/`·`.claude/local-mods/`의 `README.md`를 따르며, 설치는 그 폴더의 `install.mjs`를 `node`로 실행합니다.
 - Orca(ADE) 안에서 실행되는 경우가 많습니다. Orca 조작은 `orca-cli` 스킬을 쓰되, Claude Code 자체 기능(`ListAgents`·`SendMessage`)으로 되는 일에는 Orca를 쓰지 않습니다. 단축키·복사 등 Orca 환경 문제는 `.claude/references/orca-environment.md`를 먼저 봅니다.
 
 ## 코드 작성

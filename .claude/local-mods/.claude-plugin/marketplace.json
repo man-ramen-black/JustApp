@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "local-mods",
+  "description": "JustApp 저장소로 여러 PC에 옮겨 쓰는 로컬 모드",
+  "owner": {
+    "name": "jinhyuk.lee"
+  },
+  "plugins": [
+    {
+      "name": "whats-agent-doing-ko",
+      "source": "./whats-agent-doing-ko",
+      "description": "whats-agent-doing 0.4.3의 고정 문구를 한국어로 바꾼 로컬 사본",
+      "category": "productivity"
+    }
+  ]
+}
