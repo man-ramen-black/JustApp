@@ -1,4 +1,4 @@
-package com.black.app.model.database.studypopup
+package com.black.app.model
 
 import android.content.Context
 import android.net.Uri
@@ -11,6 +11,7 @@ import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -24,8 +25,10 @@ class TextEditorRepository @Inject constructor(
     private val dataStore: TextEditorDataStore
 ) {
     val currentFileUriFlow = dataStore.getLatestFileUriFlow()
+    /** 표시용 파일 이름(문서 제공자 조회가 클라우드 문서면 오래 걸릴 수 있어 IO에서 조회) */
     val fileNameFlow = currentFileUriFlow
         .map { it?.getFileName(context) ?: "" }
+        .flowOn(Dispatchers.IO)
 
     /** 선택창에서 고른 문서에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
     suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {

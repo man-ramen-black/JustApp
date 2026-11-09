@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.black.app.R
-import com.black.app.model.database.studypopup.TextEditorRepository
+import com.black.app.model.TextEditorRepository
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
 import io.mockk.Runs

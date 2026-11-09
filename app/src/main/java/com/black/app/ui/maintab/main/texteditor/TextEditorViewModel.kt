@@ -3,7 +3,7 @@ package com.black.app.ui.maintab.main.texteditor
 import android.net.Uri
 import androidx.annotation.StringRes
 import com.black.app.R
-import com.black.app.model.database.studypopup.TextEditorRepository
+import com.black.app.model.TextEditorRepository
 import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
 import com.black.core.di.HiltModule
 import com.black.core.viewmodel.EventViewModel
