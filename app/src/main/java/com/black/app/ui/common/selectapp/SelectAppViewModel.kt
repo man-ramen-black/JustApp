@@ -2,20 +2,22 @@ package com.black.app.ui.common.selectapp
 
 import android.text.Editable
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import com.black.core.viewmodel.EventViewModel
+import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** [SelectAppDialogFragment] */
+/** [SelectAppDialogFragment]의 상태·이벤트 관리 ViewModel */
 @HiltViewModel
-class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventViewModel() {
-    companion object {
-        const val EVENT_APP_SELECTED = "AppSelected" // Data : List<packageName : String>
-        const val EVENT_CLOSE = "Close"
-    }
+class SelectAppViewModel @Inject constructor() : EventViewModel() {
+
+    /** 앱 선택 다이얼로그 일회성 이벤트 */
+    sealed class SelectAppEvent : ViewModelEvent
+
+    /** 선택 완료(선택한 앱 packageName 목록 전달) */
+    data class EventAppSelected(val packageNames: List<String>) : SelectAppEvent()
+    /** 다이얼로그 닫기 */
+    data object EventClose : SelectAppEvent()
 
     var itemListOrigin : List<SelectAppItem> = listOf()
     val itemList = MutableLiveData<List<SelectAppItem>>(listOf())
@@ -27,7 +29,7 @@ class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventV
 
     /** 첫 호출에서만 목록과 초기 선택을 반영하고 이후 호출은 무시 */
     fun init(list: List<SelectAppItem>, checkedPackageNames: List<String> = emptyList()) {
-        viewModelScope.launch(Dispatchers.Main) {
+        launch {
             if (isInitialized) {
                 return@launch
             }
@@ -44,21 +46,21 @@ class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventV
         }
     }
 
-    fun onItemClick(item: SelectAppItem) {
+    fun toggleChecked(item: SelectAppItem) {
         item.isChecked.value = !item.isChecked.value!!
     }
 
-    fun onClickClose() {
-        sendEvent(EVENT_CLOSE)
+    fun close() {
+        sendEvent(EventClose)
     }
 
-    fun onClickComplete() {
+    fun completeSelection() {
         // 필터로 가려진 선택까지 포함하도록 현재 표시 목록이 아닌 전체 원본에서 선택 항목 수집
-        sendEvent(EVENT_APP_SELECTED, itemListOrigin.filter { it.isChecked.value!! }.map { it.packageName })
-        sendEvent(EVENT_CLOSE)
+        sendEvent(EventAppSelected(itemListOrigin.filter { it.isChecked.value!! }.map { it.packageName }))
+        sendEvent(EventClose)
     }
 
-    fun onTextChangedFilter(text: Editable) {
+    fun filterApps(text: Editable) {
         if (text.isEmpty()) {
             itemList.value = itemListOrigin
             return

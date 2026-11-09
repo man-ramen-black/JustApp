@@ -4,6 +4,7 @@ import android.graphics.drawable.ColorDrawable
 import android.text.Editable
 import android.text.SpannableStringBuilder
 import com.black.test.BaseTest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,16 +23,10 @@ class SelectAppViewModelTest : BaseTest() {
 
     private fun editable(text: String): Editable = SpannableStringBuilder(text)
 
-    /** EVENT_APP_SELECTED 이벤트로 전달되는 선택 결과 수집 */
-    private fun observeSelectedPackages(): () -> List<String>? {
-        var selected: List<String>? = null
-        viewModel.observeEventForever { action, data ->
-            if (action == SelectAppViewModel.EVENT_APP_SELECTED) {
-                @Suppress("UNCHECKED_CAST")
-                selected = data as List<String>
-            }
-        }
-        return { selected }
+    /** 선택 완료 이벤트([SelectAppViewModel.EventAppSelected])로 전달된 선택 결과 수집 */
+    private suspend fun collectSelectedPackages(): List<String> {
+        val event = viewModel.events.first { it is SelectAppViewModel.EventAppSelected }
+        return (event as SelectAppViewModel.EventAppSelected).packageNames
     }
 
     /**
@@ -85,15 +80,15 @@ class SelectAppViewModelTest : BaseTest() {
      * Then: com.a·com.b는 체크, com.c는 미체크 (다중 선택 유지)
      */
     @Test
-    fun test_03_onItemClickTogglesMultipleIndependently() = runTest {
+    fun test_03_toggleCheckedTogglesMultipleIndependently() = runTest {
         /** Given **/
         val appA = item("com.a")
         val appB = item("com.b")
         val appC = item("com.c")
 
         /** When **/
-        viewModel.onItemClick(appA)
-        viewModel.onItemClick(appB)
+        viewModel.toggleChecked(appA)
+        viewModel.toggleChecked(appB)
 
         /** Then **/
         assertTrue(appA.isChecked.value!!)
@@ -114,15 +109,14 @@ class SelectAppViewModelTest : BaseTest() {
         val items = listOf(item("com.alpha"), item("com.beta"))
         viewModel.init(items)
         waitCoroutine()
-        val selected = observeSelectedPackages()
-        viewModel.onItemClick(items.first { it.packageName == "com.alpha" })
+        viewModel.toggleChecked(items.first { it.packageName == "com.alpha" })
 
         /** When **/
-        viewModel.onTextChangedFilter(editable("beta"))
-        viewModel.onClickComplete()
+        viewModel.filterApps(editable("beta"))
+        viewModel.completeSelection()
 
         /** Then **/
-        assertEquals(listOf("com.alpha"), selected())
+        assertEquals(listOf("com.alpha"), collectSelectedPackages())
     }
 
     /**
@@ -138,17 +132,16 @@ class SelectAppViewModelTest : BaseTest() {
         val items = listOf(item("com.alpha"), item("com.beta"), item("com.gamma"))
         viewModel.init(items)
         waitCoroutine()
-        val selected = observeSelectedPackages()
 
         /** When **/
-        viewModel.onTextChangedFilter(editable("alpha"))
-        viewModel.onItemClick(items.first { it.packageName == "com.alpha" })
-        viewModel.onTextChangedFilter(editable("beta"))
-        viewModel.onItemClick(items.first { it.packageName == "com.beta" })
-        viewModel.onClickComplete()
+        viewModel.filterApps(editable("alpha"))
+        viewModel.toggleChecked(items.first { it.packageName == "com.alpha" })
+        viewModel.filterApps(editable("beta"))
+        viewModel.toggleChecked(items.first { it.packageName == "com.beta" })
+        viewModel.completeSelection()
 
         /** Then **/
-        assertEquals(setOf("com.alpha", "com.beta"), selected()?.toSet())
+        assertEquals(setOf("com.alpha", "com.beta"), collectSelectedPackages().toSet())
     }
 
     /**
@@ -186,7 +179,7 @@ class SelectAppViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** When **/
-        viewModel.onItemClick(items.first { it.packageName == "com.b" })
+        viewModel.toggleChecked(items.first { it.packageName == "com.b" })
 
         /** Then **/
         assertEquals(listOf("com.c", "com.a", "com.b"), viewModel.itemList.value?.map { it.packageName })
@@ -205,7 +198,7 @@ class SelectAppViewModelTest : BaseTest() {
         val items = listOf(item("com.a"), item("com.b"))
         viewModel.init(items, listOf("com.a"))
         waitCoroutine()
-        viewModel.onItemClick(items.first { it.packageName == "com.b" })
+        viewModel.toggleChecked(items.first { it.packageName == "com.b" })
 
         /** When **/
         viewModel.init(listOf(item("com.a"), item("com.b")), listOf("com.a"))

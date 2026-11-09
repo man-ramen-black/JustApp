@@ -43,7 +43,7 @@
                 app:layout_constraintBottom_toBottomOf="@id/title"
                 app:layout_constraintRight_toRightOf="parent"
                 android:src="@drawable/ic_close"
-                android:onClick="@{_->viewModel.onClickClose()}"
+                android:onClick="@{_->viewModel.close()}"
                 />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -81,7 +81,7 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
                 android:hint="@string/select_app_filter"
-                android:afterTextChanged="@{text -> viewModel.onTextChangedFilter(text)}"
+                android:afterTextChanged="@{text -> viewModel.filterApps(text)}"
                 />
 
             <Button
@@ -92,7 +92,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:text="@string/select_app_complete"
                 android:enabled="@{!viewModel.isProgress}"
-                android:onClick="@{_->viewModel.onClickComplete()}"
+                android:onClick="@{_->viewModel.completeSelection()}"
                 />
 
             <ProgressBar
