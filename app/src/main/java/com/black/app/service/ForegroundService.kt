@@ -2,7 +2,6 @@ package com.black.app.service
 
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
@@ -34,16 +33,8 @@ class ForegroundService : Service() {
         private val restartScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 
-    private val interfaces : List<Interface> = listOf(
-        ScreenReceiver.ServiceInterface,
-        PackageInstallReceiver.ServiceInterface
-    )
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("intent=$intent, flags=$flags, startId=$startId")
-        interfaces.forEach {
-            it.onForegroundServiceStartCommand(this, intent ?: return@forEach, flags, startId)
-        }
 
         // onStartCommand default return : START_STICKY
         // https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)
@@ -75,12 +66,14 @@ class ForegroundService : Service() {
         startForeground(NOTIFICATION_ID, notification)
         mutableRunning.value = true
 
-        interfaces.forEach { it.onForegroundServiceCreate(this) }
+        ScreenReceiver.register(this)
+        PackageInstallReceiver.register(this)
     }
 
     override fun onDestroy() {
         Log.d()
-        interfaces.forEach { it.onForegroundServiceDestroy(this) }
+        ScreenReceiver.unregister(this)
+        PackageInstallReceiver.unregister(this)
         mutableRunning.value = false
 
         super.onDestroy()
@@ -92,11 +85,5 @@ class ForegroundService : Service() {
         // 사용자가 끈 경우는 실행 설정을 false로 저장한 뒤 중지하므로 재시작하지 않음
         val controller = ForegroundServiceController(applicationContext)
         restartScope.launch { controller.startIfActivated() }
-    }
-
-    interface Interface {
-        fun onForegroundServiceStartCommand(context: Context, intent: Intent, flags: Int, startId: Int)
-        fun onForegroundServiceCreate(context: Context)
-        fun onForegroundServiceDestroy(context: Context)
     }
 }

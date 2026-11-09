@@ -8,11 +8,11 @@ import android.os.Bundle
 import com.black.core.util.Log
 
 /**
- * 바로가기·알림 인텐트로 [ForegroundService]를 시작하는 투명 Activity
+ * 바로가기·알림 인텐트로 [BaseForegroundService]를 시작하는 투명 Activity
  *
  * 바로가기 인텐트가 이 Activity를 직접 가리키고 API 24·25에서는 런처가 그 인텐트를 자기 권한으로 시작하므로 exported 유지.
- * 외부 앱도 부를 수 있어 시작 대상은 같은 패키지의 [ForegroundService] 하위 클래스로 한정하고,
- * 서비스에는 [ForegroundService.EXTRA_STOP]만 전달
+ * 외부 앱도 부를 수 있어 시작 대상은 같은 패키지의 [BaseForegroundService] 하위 클래스로 한정하고,
+ * 서비스에는 [BaseForegroundService.EXTRA_STOP]만 전달
  */
 class ServiceActivity: Activity() {
     companion object {
@@ -45,8 +45,8 @@ class ServiceActivity: Activity() {
             return Intent()
                 .apply {
                     component = ComponentName(context, className)
-                    if (source.getBooleanExtra(ForegroundService.EXTRA_STOP, false)) {
-                        putExtra(ForegroundService.EXTRA_STOP, true)
+                    if (source.getBooleanExtra(BaseForegroundService.EXTRA_STOP, false)) {
+                        putExtra(BaseForegroundService.EXTRA_STOP, true)
                     }
                 }
         }
@@ -58,7 +58,7 @@ class ServiceActivity: Activity() {
             } catch (e: ClassNotFoundException) {
                 return false
             }
-            return ForegroundService::class.java.isAssignableFrom(serviceClass)
+            return BaseForegroundService::class.java.isAssignableFrom(serviceClass)
         }
     }
 

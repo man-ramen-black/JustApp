@@ -16,7 +16,7 @@ import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
-typealias BKAlertDialog = MaterialAlertDialogBuilder
+typealias BKAlertDialogBuilder = MaterialAlertDialogBuilder
 
 /**
  * Activity 하나의 수명 동안 노출 중인 Dialog를 tag별로 관리

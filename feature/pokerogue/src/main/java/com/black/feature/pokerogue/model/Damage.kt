@@ -9,7 +9,8 @@ enum class Damage(val multiplier: Double, val label: String) {
     X0(0.0, "x0");
 
     companion object {
-        fun valueOf(multiplier: Double): Damage {
+        /** 배율에 맞는 Damage(정의에 없는 배율은 X1) */
+        fun fromMultiplier(multiplier: Double): Damage {
             return when (multiplier) {
                 4.0 -> X4
                 2.0 -> X2

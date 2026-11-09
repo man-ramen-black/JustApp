@@ -37,9 +37,9 @@ object FloatingBindingAdapter {
 
     }
 
-    @BindingAdapter("marginRightDp")
+    @BindingAdapter("marginEndDp")
     @JvmStatic
-    fun setMarginRightDp(view: View, dp: Float) {
+    fun setMarginEndDp(view: View, dp: Float) {
         view.updateLayoutParams<MarginLayoutParams> {
             marginEnd = UiUtil.dpToPx(view.context, dp)
         }

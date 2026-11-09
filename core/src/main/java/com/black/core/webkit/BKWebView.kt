@@ -190,10 +190,10 @@ open class BKWebView : WebView {
             ?: run { Log.v("${BKWebViewClient::class.java.simpleName} is null") }
     }
 
-    /** NMWebChromeClient 파일 업로드가 동작을 위한 FileChooser 설정 */
+    /** [BKWebChromeClient]의 파일 업로드가 동작하기 위한 FileChooser 설정 */
     fun setFileChooser(fileChooser: WebViewFileChooser?) {
         bkWebChromeClient?.setFileChooser(fileChooser)
-            ?: run { Log.w("nmWebChromeClient is null") }
+            ?: run { Log.w("bkWebChromeClient is null") }
     }
 
     /** 중복 스크롤 예외 처리 구현(ex. 스크롤 뷰 내에 웹뷰) */

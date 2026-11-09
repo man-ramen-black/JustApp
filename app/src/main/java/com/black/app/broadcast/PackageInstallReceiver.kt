@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
-import com.black.app.service.ForegroundService
 import com.black.core.util.Log
 
 /**
@@ -15,13 +14,11 @@ import com.black.core.util.Log
  */
 class PackageInstallReceiver : BroadcastReceiver() {
     /** ForegroundService 수명에 맞춘 리시버 등록·해제 */
-    object ServiceInterface : ForegroundService.Interface {
+    companion object {
         private var receiver: PackageInstallReceiver? = null
 
-        override fun onForegroundServiceStartCommand(context: Context, intent: Intent, flags: Int, startId: Int) {
-        }
-
-        override fun onForegroundServiceCreate(context: Context) {
+        /** 설치·업데이트 수신 등록 */
+        fun register(context: Context) {
             // 해제 없이 재호출 시 중복 등록으로 같은 설치에 알림 처리 중복
             if (receiver != null) {
                 Log.w("already registered")
@@ -41,7 +38,7 @@ class PackageInstallReceiver : BroadcastReceiver() {
             }
         }
 
-        override fun onForegroundServiceDestroy(context: Context) {
+        fun unregister(context: Context) {
             // 등록 없이 호출되면 해제할 리시버 없음
             receiver?.let { context.applicationContext.unregisterReceiver(it) }
             receiver = null

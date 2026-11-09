@@ -14,7 +14,7 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import com.black.core.R
-import com.black.core.dialog.BKAlertDialog
+import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.dialog.DialogManager.Companion.showByDialogManager
 import com.black.core.util.Extensions.activity
 import com.black.core.util.Log
@@ -67,7 +67,7 @@ class BKWebChromeClient : WebChromeClient() {
             return true
         }
 
-        BKAlertDialog(activity)
+        BKAlertDialogBuilder(activity)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { dialog, _ -> dialog.dismiss() }
             .showByDialogManager(activity, onDismiss = { result?.confirm() })
@@ -89,7 +89,7 @@ class BKWebChromeClient : WebChromeClient() {
             return true
         }
 
-        BKAlertDialog(activity)
+        BKAlertDialogBuilder(activity)
             .setMessage(message)
             .setPositiveButton(R.string.ok) { dialog, _ ->
                 result?.confirm()

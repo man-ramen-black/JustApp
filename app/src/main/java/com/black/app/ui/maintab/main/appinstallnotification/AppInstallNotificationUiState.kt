@@ -5,7 +5,7 @@ import com.black.app.ui.common.selectapp.SelectedAppUiItem
 /** 앱 설치 알림 화면 상태 */
 data class AppInstallNotificationUiState(
     /** 알림 설정(ForegroundService 실행 설정) 켜짐 여부 */
-    val enabled: Boolean = false,
+    val serviceActivated: Boolean = false,
     /** ForegroundService 실행 여부 */
     val serviceRunning: Boolean = false,
     /** 배터리 최적화 예외 여부 */

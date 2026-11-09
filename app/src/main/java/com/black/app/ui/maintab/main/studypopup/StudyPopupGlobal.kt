@@ -1,7 +1,6 @@
 package com.black.app.ui.maintab.main.studypopup
 
 import android.content.Context
-import android.content.Intent
 import android.view.ContextThemeWrapper
 import androidx.annotation.VisibleForTesting
 import com.black.app.R
@@ -16,7 +15,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-object StudyPopupGlobal : ScreenReceiver.Interface {
+/** 화면 켜짐([ScreenReceiver])과 설정 화면 미리보기에서 스터디 팝업 표시 */
+object StudyPopupGlobal {
     private var studyPopupView : StudyPopupView? = null
 
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -24,7 +24,7 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
     /** 화면이 켜질 때 표시 여부를 확인하고 팝업을 붙이는 작업. 확인 중에 화면이 꺼지면 취소 */
     private var showJob: Job? = null
 
-    override fun onScreenOn(context: Context, intent: Intent) {
+    fun onScreenOn(context: Context) {
         // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 화면이 켜질 때마다 서비스 프로세스가 크래시
         if (!PermissionHelper.canDrawOverlays(context)) {
             Log.w("cannot draw overlays")
@@ -63,7 +63,7 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
         }
     }
 
-    override fun onScreenOff(context: Context, intent: Intent) {
+    fun onScreenOff() {
         // 표시 여부 확인 중에 화면이 꺼지면 꺼진 화면에 팝업이 붙지 않도록 취소
         showJob?.cancel()
         showJob = null

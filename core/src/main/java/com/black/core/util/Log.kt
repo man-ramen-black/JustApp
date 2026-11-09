@@ -114,7 +114,7 @@ object Log {
     private fun getMethodInfo() : MethodInfo {
         val stackTraceArr = Thread.currentThread().stackTrace
 
-        // com.netmarble.nmapp.util.Log 다음에 오는 stackTrace를 검색 => Log를 호출한 StackTrace 검색
+        // com.black.core.util.Log 다음에 오는 stackTrace를 검색 => Log를 호출한 StackTrace 검색
         var isStart = false
         var calledMethod: StackTraceElement? = null
         for (stackTrace in stackTraceArr) {
@@ -135,14 +135,14 @@ object Log {
 
         val classSplit = calledMethod.className.split("$").filter { it.length != 1 && it != "Companion" }
 
-        // ex. com.netmarble.nmapp.util.Log
+        // ex. com.black.core.util.Log
         val className = classSplit[0]
 
-        // ex. NetworkHelper.callInternal or callInternal
+        // ex. PokeRogueViewModel.toggleType or toggleType
         val methodName = classSplit.getOrNull(1)?.plus("$" + calledMethod.methodName)
             ?: calledMethod.methodName
 
-        // ex.com.netmarble.nmapp
+        // ex. com.black.core
         val packageName = className.split(".")
             .takeIf { it.size >= 3 }
             ?.subList(0, 3)

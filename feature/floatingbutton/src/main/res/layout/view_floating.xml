@@ -42,7 +42,7 @@
                 android:onClick="@{_->floatingView.goHome()}"
                 android:background="@drawable/bt_ripple"
                 sizeDp="@{state.size}"
-                marginRightDp="@{state.margin}"
+                marginEndDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -54,7 +54,7 @@
                 android:onClick="@{_->floatingView.goBack()}"
                 android:background="@drawable/bt_ripple"
                 sizeDp="@{state.size}"
-                marginRightDp="@{state.margin}"
+                marginEndDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -66,7 +66,7 @@
                 android:onClick="@{_->floatingView.openStatusBar()}"
                 android:background="@drawable/bt_ripple"
                 sizeDp="@{state.size}"
-                marginRightDp="@{state.margin}"
+                marginEndDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -78,7 +78,7 @@
                 android:onClick="@{_->floatingView.lowerVolume()}"
                 android:background="@drawable/bt_ripple"
                 sizeDp="@{state.size}"
-                marginRightDp="@{state.margin}"
+                marginEndDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -90,7 +90,7 @@
                 android:onClick="@{_->floatingView.raiseVolume()}"
                 android:background="@drawable/bt_ripple"
                 sizeDp="@{state.size}"
-                marginRightDp="@{state.margin}"
+                marginEndDp="@{state.margin}"
                 />
         </LinearLayout>
 

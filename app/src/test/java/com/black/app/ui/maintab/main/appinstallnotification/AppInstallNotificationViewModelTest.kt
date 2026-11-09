@@ -108,7 +108,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
 
         /** Then **/
         val uiState = viewModel.uiState.value
-        assertTrue(uiState.enabled)
+        assertTrue(uiState.serviceActivated)
         assertFalse(uiState.batteryOptimizationIgnored)
         assertFalse(uiState.notificationsEnabled)
         assertTrue(uiState.serviceRunning)
@@ -152,7 +152,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: 실행 설정 꺼짐 상태로 ViewModel 생성
      * When: 실행 설정 Flow 값 true로 변경
-     * Then: enabled true
+     * Then: serviceActivated true
      */
     @Test
     fun test_03_activatedChangeUpdatesEnabled() = runTest {
@@ -164,7 +164,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.serviceActivated)
     }
 
     /**
@@ -172,7 +172,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: activate가 Started 반환, 알림 표시 가능
      * When: setEnabled(true) 호출
-     * Then: activate 호출, enabled true, 이벤트 없음
+     * Then: activate 호출, serviceActivated true, 이벤트 없음
      */
     @Test
     fun test_04_setEnabledTrueStartsWithoutEvent() = runTest {
@@ -186,7 +186,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
 
         /** Then **/
         coVerify { foregroundServiceController.activate() }
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.serviceActivated)
         assertEquals(emptyList<ViewModelEvent>(), receivedEvents)
     }
 
@@ -195,7 +195,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: activate가 실행 설정을 켜고 BatteryOptimizationRequired 반환
      * When: setEnabled(true) 호출
-     * Then: enabled true, 이벤트는 EventOpenBatteryOptimizationSettings 하나
+     * Then: serviceActivated true, 이벤트는 EventOpenBatteryOptimizationSettings 하나
      */
     @Test
     fun test_05_setEnabledTrueOpensBatterySettingsWhenRequired() = runTest {
@@ -212,7 +212,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.serviceActivated)
         assertEquals(listOf(AppInstallNotificationViewModel.EventOpenBatteryOptimizationSettings), receivedEvents)
     }
 
@@ -221,7 +221,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: activate가 Started 반환, 알림 표시 불가
      * When: setEnabled(true) 호출
-     * Then: enabled true, 이벤트는 EventOpenNotificationSettings 하나
+     * Then: serviceActivated true, 이벤트는 EventOpenNotificationSettings 하나
      */
     @Test
     fun test_06_setEnabledTrueOpensNotificationSettingsWhenCannotShow() = runTest {
@@ -235,7 +235,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.serviceActivated)
         assertEquals(listOf(AppInstallNotificationViewModel.EventOpenNotificationSettings), receivedEvents)
     }
 
@@ -244,7 +244,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: activate가 실행 설정을 바꾸지 못하고 NotActivated 반환
      * When: setEnabled(true) 호출
-     * Then: enabled false, 이벤트 없음
+     * Then: serviceActivated false, 이벤트 없음
      */
     @Test
     fun test_07_setEnabledTrueKeepsDisabledWhenNotActivated() = runTest {
@@ -258,7 +258,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertFalse(viewModel.uiState.value.enabled)
+        assertFalse(viewModel.uiState.value.serviceActivated)
         assertEquals(emptyList<ViewModelEvent>(), receivedEvents)
     }
 
@@ -267,7 +267,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
      *
      * Given: 실행 설정 켜짐 상태로 ViewModel 생성
      * When: setEnabled(false) 호출
-     * Then: deactivate 호출, activate 미호출, enabled false, 이벤트 없음
+     * Then: deactivate 호출, activate 미호출, serviceActivated false, 이벤트 없음
      */
     @Test
     fun test_08_setEnabledFalseDeactivates() = runTest {
@@ -283,7 +283,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         /** Then **/
         coVerify { foregroundServiceController.deactivate() }
         coVerify(exactly = 0) { foregroundServiceController.activate() }
-        assertFalse(viewModel.uiState.value.enabled)
+        assertFalse(viewModel.uiState.value.serviceActivated)
         assertEquals(emptyList<ViewModelEvent>(), receivedEvents)
     }
 

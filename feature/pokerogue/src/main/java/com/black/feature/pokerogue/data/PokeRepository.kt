@@ -36,7 +36,7 @@ class PokeRepository @Inject constructor(
             .flatMap { chart ->
                 listOf(
                     chart.immunes.map { it to Damage.X0 },
-                    chart.weaknesses.map { it to Damage.X05 },
+                    chart.resistedBy.map { it to Damage.X05 },
                     chart.strengths.map { it to Damage.X2 }
                 )
             }
@@ -45,7 +45,7 @@ class PokeRepository @Inject constructor(
                 { PokeType.valueOf(it.first) },
                 { it.second }
             )
-            .mapValues { it.value.reduce { a, b -> Damage.valueOf(a.multiplier * b.multiplier) } }
+            .mapValues { it.value.reduce { a, b -> Damage.fromMultiplier(a.multiplier * b.multiplier) } }
             .filterValues { it != Damage.X1 }
     }
 
@@ -56,7 +56,7 @@ class PokeRepository @Inject constructor(
                 listOf(
                     chart.immunes.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X0 },
-                    chart.weaknesses.filter { typeNames.contains(it) }
+                    chart.resistedBy.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X05 },
                     chart.strengths.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X2 }
@@ -67,7 +67,7 @@ class PokeRepository @Inject constructor(
                 { PokeType.valueOf(it.first) },
                 { it.second }
             )
-            .mapValues { it.value.reduce { a, b -> Damage.valueOf(a.multiplier * b.multiplier) } }
+            .mapValues { it.value.reduce { a, b -> Damage.fromMultiplier(a.multiplier * b.multiplier) } }
             .filterValues { it != Damage.X1 }
     }
 }

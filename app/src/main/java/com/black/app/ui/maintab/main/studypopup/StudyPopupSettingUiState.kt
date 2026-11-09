@@ -3,7 +3,7 @@ package com.black.app.ui.maintab.main.studypopup
 /** 스터디 팝업 설정 화면 상태 */
 data class StudyPopupSettingUiState(
     /** 화면을 켤 때 팝업 표시 설정 */
-    val enabled: Boolean = false,
+    val showOnScreenOn: Boolean = false,
     /** 다른 앱 위에 표시 권한 허용 여부 */
     val overlayPermissionGranted: Boolean = false,
     /** 화면 켜짐을 감지하는 ForegroundService 실행 여부 */

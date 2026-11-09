@@ -101,7 +101,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
 
         /** Then **/
         val uiState = viewModel.uiState.value
-        assertTrue(uiState.enabled)
+        assertTrue(uiState.showOnScreenOn)
         assertFalse(uiState.serviceRunning)
         assertFalse(uiState.overlayPermissionGranted)
         assertEquals(3, uiState.savedContentsCount)
@@ -112,7 +112,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
      *
      * Given: 다른 앱 위에 표시 권한 없음
      * When: setEnabled(true)
-     * Then: repository.setEnabled(true) 호출, enabled true, 권한 안내 다이얼로그 표시
+     * Then: repository.setEnabled(true) 호출, showOnScreenOn true, 권한 안내 다이얼로그 표시
      */
     @Test
     fun test_02_enableWithoutPermissionShowsPermissionDialog() = runTest {
@@ -126,7 +126,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
 
         /** Then **/
         coVerify { repository.setEnabled(true) }
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.showOnScreenOn)
         assertTrue(viewModel.uiState.value.showOverlayPermissionDialog)
     }
 
@@ -135,7 +135,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
      *
      * Given: 다른 앱 위에 표시 권한 있음
      * When: setEnabled(true)
-     * Then: enabled true, 권한 안내 다이얼로그 숨김
+     * Then: showOnScreenOn true, 권한 안내 다이얼로그 숨김
      */
     @Test
     fun test_03_enableWithPermissionSkipsDialog() = runTest {
@@ -147,7 +147,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertTrue(viewModel.uiState.value.enabled)
+        assertTrue(viewModel.uiState.value.showOnScreenOn)
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
     }
 

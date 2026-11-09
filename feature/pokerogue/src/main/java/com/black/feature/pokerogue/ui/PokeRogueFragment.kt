@@ -11,7 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.repeatOnLifecycle
 import com.black.core.component.BaseFragment
-import com.black.core.dialog.BKAlertDialog
+import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.util.BackPressHelper
 import com.black.core.util.Cutout
 import com.black.core.util.FragmentExtension.viewLifecycleScope
@@ -95,7 +95,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     private fun handleEvent(event: ViewModelEvent) {
         when (event) {
             is PokeRogueViewModel.EventShowReloadConfirm -> {
-                BKAlertDialog(requireActivity())
+                BKAlertDialogBuilder(requireActivity())
                     .setMessage(R.string.reload_confirm_message)
                     .setPositiveButton(R.string.ok) { dialog, _ ->
                         viewModel.webView.value?.reload()

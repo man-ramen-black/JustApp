@@ -199,7 +199,7 @@ private fun StudyPopupSettingContent(
         SectionHeader(title = stringResource(R.string.study_popup_section_setting))
         SwitchRow(
             label = stringResource(R.string.study_popup_enabled_label),
-            checked = uiState.enabled,
+            checked = uiState.showOnScreenOn,
             onCheckedChange = onEnabledChange,
             modifier = Modifier.testTag(StudyPopupSettingTestTags.ENABLED_SWITCH),
         )

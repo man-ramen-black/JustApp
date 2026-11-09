@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.CallSuper
 import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
@@ -14,9 +15,9 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.black.core.util.Log
 
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
-    private var _binding: T? = null
+    private var bindingOrNull: T? = null
     // onCreateView ~ onDestroyView까지 유효
-    protected val binding get() = _binding!!
+    protected val binding get() = bindingOrNull!!
 
     /**
      * 저장된 상태로 재생성 중이거나 상태 저장 이후인지 여부
@@ -27,15 +28,15 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     protected var isRestoring = false
     val onBackPressedDispatcher get() = requireActivity().onBackPressedDispatcher
     private var onBackPressed: (() -> Unit)? = null
-    private val onBackPressedCallback = OnBackPressedCallback(false) { onBackPressed?.invoke() }
+    private val onBackPressedCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            onBackPressed?.invoke()
+        }
+    }
 
     protected abstract val layoutResId : Int
 
     abstract fun onBindVariable(binding: T)
-
-    open fun onBindVariable(binding: T, savedInstanceState: Bundle?) {
-        onBindVariable(binding)
-    }
 
     fun setOnBackPressed(onBackPressed: (() -> Unit)?) {
         onBackPressedCallback.isEnabled = onBackPressed != null
@@ -68,7 +69,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        _binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        bindingOrNull = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
@@ -142,7 +143,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         Log.d(javaClass.simpleName)
         // 상위 화면 수명주기로 등록한 뒤로가기 콜백은 뷰와 함께 해제(상위 화면이 Fragment보다 오래 유지될 수 있음)
         onBackPressedCallback.remove()
-        _binding = null
+        bindingOrNull = null
     }
 
     @CallSuper

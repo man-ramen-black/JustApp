@@ -133,7 +133,7 @@ private fun AppInstallNotificationContent(
         SectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
         SwitchRow(
             label = stringResource(R.string.app_install_notification_switch_label),
-            checked = uiState.enabled,
+            checked = uiState.serviceActivated,
             onCheckedChange = onEnabledChange,
             modifier = Modifier.testTag(AppInstallNotificationTestTags.ENABLED_SWITCH),
         )

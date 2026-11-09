@@ -9,18 +9,24 @@ import android.os.Build
 import android.os.IBinder
 import androidx.annotation.CallSuper
 import com.black.core.util.Log
-import kotlin.random.Random
 
-abstract class ForegroundService: Service() {
+/**
+ * 사용자가 끄기 전까지 계속 실행하는 포그라운드 서비스의 기반
+ *
+ * stopService·시스템 종료로 멈추면 onDestroy에서 다시 시작하고, 끌 때는 [EXTRA_STOP]을 담은 중지 인텐트로만 멈춤.
+ * 그래서 [stop]은 꺼진 서비스도 일단 시작한 뒤 바로 멈추게 함(중지 인텐트를 받을 서비스가 있어야 재시작하지 않음)
+ */
+abstract class BaseForegroundService: Service() {
     companion object {
+        /** 이미 만든 바로가기 인텐트가 이 키를 담고 있어 값은 바꾸지 않음 */
         const val EXTRA_STOP = "ForegroundService.EXTRA_STOP"
 
-        fun stop(context: Context, cls: Class<out ForegroundService>) {
+        fun stop(context: Context, cls: Class<out BaseForegroundService>) {
             val appContext = context.applicationContext
             appContext.startService(createStopIntent(context, cls))
         }
 
-        fun createStopIntent(context: Context, cls: Class<out ForegroundService>): Intent {
+        fun createStopIntent(context: Context, cls: Class<out BaseForegroundService>): Intent {
             val appContext = context.applicationContext
             return Intent(appContext, cls)
                 .apply { putExtra(EXTRA_STOP, true) }
@@ -29,6 +35,9 @@ abstract class ForegroundService: Service() {
 
     /** ex. [ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE] */
     abstract val type: Int
+
+    /** 포그라운드 알림 ID(하위 서비스마다 고정값, 실행마다 바뀌면 알림 갱신·취소 대상을 찾을 수 없음) */
+    protected abstract val notificationId: Int
     protected var isStopping = false
         private set
 
@@ -59,16 +68,9 @@ abstract class ForegroundService: Service() {
         super.onCreate()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                Random(System.currentTimeMillis()).nextInt(1, Int.MAX_VALUE),
-                onCreateNotification(),
-                type
-            )
+            startForeground(notificationId, onCreateNotification(), type)
         } else {
-            startForeground(
-                Random(System.currentTimeMillis()).nextInt(1, Int.MAX_VALUE),
-                onCreateNotification()
-            )
+            startForeground(notificationId, onCreateNotification())
         }
     }
 

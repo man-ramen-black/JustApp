@@ -40,20 +40,20 @@ class PackageInstallReceiverTest : BaseTest() {
     /** 싱글턴 상태 격리를 위한 각 테스트 후 리시버 해제 */
     @After
     fun unregisterReceiver() {
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceDestroy(context)
+        PackageInstallReceiver.unregister(context)
     }
 
     /**
      * 등록 후 새 설치 브로드캐스트 수신 시 설치 알림 표시 검증
      *
-     * Given: ServiceInterface 등록
+     * Given: 리시버 등록
      * When: EXTRA_REPLACING=false인 ACTION_PACKAGE_ADDED 전송
      * Then: 해당 패키지 알림 메시지=설치되었습니다.
      */
     @Test
     fun test_01_packageAddedShowsInstalledNotification() = runTest {
         /** Given **/
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
+        PackageInstallReceiver.register(context)
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = false))
@@ -67,14 +67,14 @@ class PackageInstallReceiverTest : BaseTest() {
     /**
      * 업데이트 브로드캐스트 수신 시 업데이트 알림 표시 검증
      *
-     * Given: ServiceInterface 등록
+     * Given: 리시버 등록
      * When: EXTRA_REPLACING=true인 ACTION_PACKAGE_ADDED 전송
      * Then: 해당 패키지 알림 메시지=업데이트되었습니다.
      */
     @Test
     fun test_02_replacingPackageShowsUpdatedNotification() = runTest {
         /** Given **/
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
+        PackageInstallReceiver.register(context)
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = true))
@@ -88,7 +88,7 @@ class PackageInstallReceiverTest : BaseTest() {
     /**
      * 자기 앱 설치·업데이트는 무시 검증
      *
-     * Given: ServiceInterface 등록, 자기 패키지에 런처 액티비티·아이콘 구성(가드가 없으면 알림이 뜨는 조건)
+     * Given: 리시버 등록, 자기 패키지에 런처 액티비티·아이콘 구성(가드가 없으면 알림이 뜨는 조건)
      * When: 자기 패키지명으로 ACTION_PACKAGE_ADDED 전송
      * Then: 알림 없음
      */
@@ -98,7 +98,7 @@ class PackageInstallReceiverTest : BaseTest() {
         PackageInstallTestFixture.addLauncherActivity(context, context.packageName, MainActivity::class.java.name)
         shadowOf(context.packageManager).setApplicationIcon(context.packageName, ColorDrawable(Color.RED))
         assertNotNull(context.packageManager.getLaunchIntentForPackage(context.packageName))
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
+        PackageInstallReceiver.register(context)
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(context.packageName, isReplacing = true))
@@ -130,14 +130,14 @@ class PackageInstallReceiverTest : BaseTest() {
     /**
      * 해제 없이 재등록 시 리시버 1개 유지 검증
      *
-     * Given / When: onForegroundServiceCreate 2회 호출
+     * Given / When: register 2회 호출
      * Then: 등록된 PackageInstallReceiver 1개
      */
     @Test
     fun test_05_registerTwiceKeepsSingleReceiver() = runTest {
         /** Given / When **/
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
+        PackageInstallReceiver.register(context)
+        PackageInstallReceiver.register(context)
 
         /** Then **/
         assertEquals(1, registeredPackageInstallReceiverCount())
@@ -146,15 +146,15 @@ class PackageInstallReceiverTest : BaseTest() {
     /**
      * 해제 후 수신 중단 검증
      *
-     * Given: ServiceInterface 등록 후 해제
+     * Given: 리시버 등록 후 해제
      * When: ACTION_PACKAGE_ADDED 전송
      * Then: 알림 없음, 등록된 리시버 없음
      */
     @Test
     fun test_06_destroyStopsReceiving() = runTest {
         /** Given **/
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceCreate(context)
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceDestroy(context)
+        PackageInstallReceiver.register(context)
+        PackageInstallReceiver.unregister(context)
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = false))
@@ -169,13 +169,13 @@ class PackageInstallReceiverTest : BaseTest() {
      * 등록 없이 해제 호출 시 예외 없음 검증
      *
      * Given: 등록 없음
-     * When: onForegroundServiceDestroy 호출
+     * When: unregister 호출
      * Then: 예외 없음, 등록된 리시버 없음
      */
     @Test
     fun test_07_destroyWithoutCreateDoesNothing() = runTest {
         /** Given / When **/
-        PackageInstallReceiver.ServiceInterface.onForegroundServiceDestroy(context)
+        PackageInstallReceiver.unregister(context)
 
         /** Then **/
         assertEquals(0, registeredPackageInstallReceiverCount())

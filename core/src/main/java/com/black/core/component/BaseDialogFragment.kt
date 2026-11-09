@@ -18,9 +18,9 @@ import com.black.core.util.Log
  * Created by jinhyuk.lee on 2022/05/20
  **/
 abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
-    private var _binding: T? = null
+    private var bindingOrNull: T? = null
     // onCreateView ~ onDestroyView까지 유효
-    protected val binding get() = _binding!!
+    protected val binding get() = bindingOrNull!!
 
     private var onDismissListener: ((DialogInterface) -> Unit)? = null
 
@@ -74,13 +74,13 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        _binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        bindingOrNull = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = viewLifecycleOwner
         }
-        onBindVariable(_binding!!)
-        return _binding!!.root
+        onBindVariable(bindingOrNull!!)
+        return bindingOrNull!!.root
     }
 
     /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
@@ -123,7 +123,7 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(javaClass.simpleName)
-        _binding = null
+        bindingOrNull = null
     }
 
     @CallSuper

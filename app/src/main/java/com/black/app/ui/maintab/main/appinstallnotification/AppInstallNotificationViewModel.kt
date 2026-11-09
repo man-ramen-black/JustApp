@@ -46,7 +46,7 @@ class AppInstallNotificationViewModel @Inject constructor(
         // 스위치는 화면이 낙관적으로 바꾸지 않고 저장된 실행 설정을 따름(저장 실패 시 꺼진 채 표시)
         launch {
             foregroundServiceController.activated.collect { activated ->
-                mutableUiState.update { it.copy(enabled = activated) }
+                mutableUiState.update { it.copy(serviceActivated = activated) }
             }
         }
         // 화면이 떠 있는 동안의 시스템 종료·START_STICKY 재시작도 상태 행에 반영

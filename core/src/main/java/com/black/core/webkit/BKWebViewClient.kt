@@ -33,7 +33,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.CallSuper
 import com.black.core.R
-import com.black.core.dialog.BKAlertDialog
+import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.dialog.DialogManager.Companion.showByDialogManager
 import com.black.core.util.Extensions.activity
 import com.black.core.util.Log
@@ -245,7 +245,7 @@ open class BKWebViewClient : WebViewClient() {
         // 핸들러 추가 후 팝업 노출
         run { sslErrorHandlers.add(handler ?: return) }
 
-        BKAlertDialog(activity)
+        BKAlertDialogBuilder(activity)
             .setMessage(R.string.ssl_error_confirm_message)
             .setPositiveButton(R.string.ok) { _, _ ->
                 sslErrorHandlers.removeAll {

@@ -46,7 +46,7 @@ class StudyPopupSettingViewModel @Inject constructor(
     init {
         launch {
             repository.enabledFlow.collect { enabled ->
-                mutableUiState.update { it.copy(enabled = enabled) }
+                mutableUiState.update { it.copy(showOnScreenOn = enabled) }
             }
         }
         // 화면이 떠 있는 동안 서비스가 켜지거나 꺼져도 상태 행에 반영

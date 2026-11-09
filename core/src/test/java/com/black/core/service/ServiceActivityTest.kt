@@ -26,7 +26,7 @@ class ServiceActivityTest : BaseTest() {
     private val context: Context = RuntimeEnvironment.getApplication()
 
     /**
-     * ForegroundService 하위 클래스 중지 인텐트는 대상과 EXTRA_STOP만 담아 전달하는지 검증
+     * BaseForegroundService 하위 클래스 중지 인텐트는 대상과 EXTRA_STOP만 담아 전달하는지 검증
      *
      * Given: 다른 extras가 섞인 중지 인텐트를 ServiceActivity 인텐트로 변환
      * When: createServiceIntent 호출
@@ -35,7 +35,7 @@ class ServiceActivityTest : BaseTest() {
     @Test
     fun test_01_stopIntentForwardsOnlyStopExtra() = runTest {
         /** Given **/
-        val source = ForegroundService.createStopIntent(context, TestForegroundService::class.java)
+        val source = BaseForegroundService.createStopIntent(context, TestForegroundService::class.java)
             .putExtra("other", "value")
             .toStartServiceActivityIntent()
 
@@ -45,8 +45,8 @@ class ServiceActivityTest : BaseTest() {
         /** Then **/
         assertNotNull(serviceIntent)
         assertEquals(ComponentName(context, TestForegroundService::class.java), serviceIntent!!.component)
-        assertTrue(serviceIntent.getBooleanExtra(ForegroundService.EXTRA_STOP, false))
-        assertEquals(setOf(ForegroundService.EXTRA_STOP), serviceIntent.extras?.keySet())
+        assertTrue(serviceIntent.getBooleanExtra(BaseForegroundService.EXTRA_STOP, false))
+        assertEquals(setOf(BaseForegroundService.EXTRA_STOP), serviceIntent.extras?.keySet())
     }
 
     /**
@@ -67,11 +67,11 @@ class ServiceActivityTest : BaseTest() {
 
         /** Then **/
         assertEquals(ComponentName(context, TestForegroundService::class.java), serviceIntent?.component)
-        assertFalse(serviceIntent!!.hasExtra(ForegroundService.EXTRA_STOP))
+        assertFalse(serviceIntent!!.hasExtra(BaseForegroundService.EXTRA_STOP))
     }
 
     /**
-     * ForegroundService가 아닌 서비스는 시작하지 않는지 검증
+     * BaseForegroundService 하위 클래스가 아닌 서비스는 시작하지 않는지 검증
      *
      * Given: 일반 Service 하위 클래스를 가리키는 인텐트
      * When: createServiceIntent 호출
@@ -114,8 +114,9 @@ class ServiceActivityTest : BaseTest() {
         assertNull(unknownClassResult)
     }
 
-    class TestForegroundService : ForegroundService() {
+    class TestForegroundService : BaseForegroundService() {
         override val type: Int = 0
+        override val notificationId: Int = 1
         override fun onCreateNotification(): Notification = Notification()
     }
 

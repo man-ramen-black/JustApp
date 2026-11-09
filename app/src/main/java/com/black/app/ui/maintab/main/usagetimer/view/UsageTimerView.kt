@@ -9,6 +9,7 @@ import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.OnClick
+import com.black.core.view.MovableOverlayView
 
 /**
  * CustomView 가이드
@@ -21,7 +22,7 @@ import com.black.core.util.OnClick
  * BindingMethods
  * https://developer.android.com/topic/libraries/data-binding/binding-adapters?hl=ko#specify-method
  */
-class UsageTimerView(context: Context) : com.black.core.view.MovableOverlayView<ViewUsageTimerBinding>(context) {
+class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBinding>(context) {
 
     override val layoutId: Int get() = R.layout.view_usage_timer
     override val styleableId: IntArray? get() = null
