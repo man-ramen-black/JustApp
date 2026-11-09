@@ -3,23 +3,27 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <data>
         <variable
-            name="viewModel"
-            type="com.black.feature.floatingbutton.ui.floating.FloatingViewModel" />
+            name="state"
+            type="com.black.feature.floatingbutton.ui.floating.FloatingViewState" />
+
+        <variable
+            name="floatingView"
+            type="com.black.feature.floatingbutton.ui.floating.FloatingView" />
     </data>
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         backgroundColor="@{0xFF000000}"
-        backgroundOpacity="@{viewModel.opacity}"
-        backgroundRadius="@{viewModel.radius}"
-        paddingDp="@{viewModel.padding}"
+        backgroundOpacity="@{state.opacity}"
+        backgroundRadius="@{state.radius}"
+        paddingDp="@{state.padding}"
         android:gravity="center">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@{viewModel.clock}"
+            android:text="@{state.clock}"
             android:textSize="13dp"
             android:textColor="#FFFFFF"
             tools:ignore="SpUsage" />
@@ -35,10 +39,10 @@
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_home"
                 android:scaleType="fitCenter"
-                android:onClick="@{_->viewModel.onClickHome()}"
+                android:onClick="@{_->floatingView.goHome()}"
                 android:background="@drawable/bt_ripple"
-                sizeDp="@{viewModel.size}"
-                marginRightDp="@{viewModel.margin}"
+                sizeDp="@{state.size}"
+                marginRightDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -47,10 +51,10 @@
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_back"
                 android:scaleType="fitCenter"
-                android:onClick="@{_->viewModel.onClickBack()}"
+                android:onClick="@{_->floatingView.goBack()}"
                 android:background="@drawable/bt_ripple"
-                sizeDp="@{viewModel.size}"
-                marginRightDp="@{viewModel.margin}"
+                sizeDp="@{state.size}"
+                marginRightDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -59,10 +63,10 @@
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_open_status_bar"
                 android:scaleType="fitCenter"
-                android:onClick="@{_->viewModel.onClickStatusBar()}"
+                android:onClick="@{_->floatingView.openStatusBar()}"
                 android:background="@drawable/bt_ripple"
-                sizeDp="@{viewModel.size}"
-                marginRightDp="@{viewModel.margin}"
+                sizeDp="@{state.size}"
+                marginRightDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -71,10 +75,10 @@
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_volume_down"
                 android:scaleType="fitCenter"
-                android:onClick="@{_->viewModel.onClickVolumeDown()}"
+                android:onClick="@{_->floatingView.lowerVolume()}"
                 android:background="@drawable/bt_ripple"
-                sizeDp="@{viewModel.size}"
-                marginRightDp="@{viewModel.margin}"
+                sizeDp="@{state.size}"
+                marginRightDp="@{state.margin}"
                 />
 
             <ImageButton
@@ -83,10 +87,10 @@
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_volume_up"
                 android:scaleType="fitCenter"
-                android:onClick="@{_->viewModel.onClickVolumeUp()}"
+                android:onClick="@{_->floatingView.raiseVolume()}"
                 android:background="@drawable/bt_ripple"
-                sizeDp="@{viewModel.size}"
-                marginRightDp="@{viewModel.margin}"
+                sizeDp="@{state.size}"
+                marginRightDp="@{state.margin}"
                 />
         </LinearLayout>
 
