@@ -9,8 +9,11 @@ import com.black.app.util.ComponentExtensions.launchAsync
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
 
-// 앱 업데이트 시 Service 자동 시작하려면 ACTION_MY_PACKAGE_REPLACED
-// https://developer.android.com/reference/android/content/Intent#ACTION_MY_PACKAGE_REPLACED
+/**
+ * 부팅 완료 시 실행 설정이 켜진 ForegroundService 시작
+ *
+ * 앱 업데이트 뒤 재시작은 [AppUpdateReceiver] 담당
+ */
 class BootReceiver : BroadcastReceiver() {
     companion object {
         private const val NOTIFICATION_ID = 6
@@ -21,6 +24,11 @@ class BootReceiver : BroadcastReceiver() {
         Log.d("BootReceiver: context = $context, intent = $intent")
 
         context ?: return
+        // exported라 다른 앱의 명시적 브로드캐스트도 받으므로 action 확인
+        if (intent?.action != Intent.ACTION_BOOT_COMPLETED) {
+            Log.w("unexpected action : ${intent?.action}")
+            return
+        }
 
         NotificationUtil.createNotificationChannel(context, NOTIFICATION_CHANNEL_ID, "Device boot", NotificationManagerCompat.IMPORTANCE_LOW)
         NotificationUtil.showNotification(

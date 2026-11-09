@@ -21,8 +21,9 @@ class AppUpdateReceiver : BroadcastReceiver() {
             return
         }
 
-        intent ?: run {
-            Log.w("intent is null")
+        // exported라 다른 앱의 명시적 브로드캐스트도 받으므로 action 확인
+        if (intent?.action != Intent.ACTION_MY_PACKAGE_REPLACED) {
+            Log.w("unexpected action : ${intent?.action}")
             return
         }
 
