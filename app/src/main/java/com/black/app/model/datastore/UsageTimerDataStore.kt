@@ -20,7 +20,13 @@ class UsageTimerDataStore @Inject constructor(
 ): BaseDataStore(context) {
 
     companion object {
-        /** 기존 SharedPreferences(Foreground)의 UsageTimer 키 이관 */
+        /**
+         * 기존 SharedPreferences(Foreground)의 UsageTimer 키 이관(원본 키 삭제)
+         *
+         * 같은 파일의 실행 설정 키는 [ForegroundServiceDataStore]가 원본을 남기는 방식으로 따로 이관.
+         * 실행 설정은 원본이 지워지면 같은 기기의 다른 빌드가 꺼짐으로 읽어 서비스가 뜨지 않지만, 사용 타이머 값은 지워져도
+         * 기본값으로 동작하므로 방식이 다름. 이 이관은 자기 키만 지우고 다른 키가 남으면 파일도 남겨 서로 영향 없음
+         */
         private val Context.usageTimerDataStore: DataStore<Preferences> by blackDataStore(
             name = "usageTimer",
             produceMigrations = { context ->

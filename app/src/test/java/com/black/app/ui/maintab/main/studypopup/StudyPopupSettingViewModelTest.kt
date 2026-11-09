@@ -12,7 +12,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
-import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -57,8 +56,8 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         }
         coEvery { repository.countContents() } returns 0
         coEvery { repository.hasContents() } returns false
-        every { repository.loadLatestUri() } returns null
-        every { repository.removeLatestUri() } just Runs
+        coEvery { repository.loadLatestUri() } returns null
+        coEvery { repository.removeLatestUri() } just Runs
         coEvery { repository.getFileName(any()) } returns "study_popup.xml"
         coEvery { repository.keepPermission(any()) } returns true
         every { status.canDrawOverlays() } returns true
@@ -251,7 +250,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     @Test
     fun test_08_initLoadsLatestFile() = runTest {
         /** Given **/
-        every { repository.loadLatestUri() } returns fileUri
+        coEvery { repository.loadLatestUri() } returns fileUri
         coEvery { repository.readFile(fileUri) } returns Result.success(listOf("a", "b"))
 
         /** When **/
@@ -275,14 +274,14 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     @Test
     fun test_09_initLatestFileFailureRemovesRecord() = runTest {
         /** Given **/
-        every { repository.loadLatestUri() } returns fileUri
+        coEvery { repository.loadLatestUri() } returns fileUri
         coEvery { repository.readFile(fileUri) } returns Result.failure(SecurityException())
 
         /** When **/
         val viewModel = createViewModel()
 
         /** Then **/
-        verify { repository.removeLatestUri() }
+        coVerify { repository.removeLatestUri() }
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_load_failed_latest_file)),
             collectPendingEvents(viewModel),

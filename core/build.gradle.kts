@@ -70,7 +70,6 @@ dependencies {
     api(libs.flexbox)
     ksp(libs.androidx.room.compiler)
     api(libs.glide)
-    api(libs.androidx.preference.ktx)
     api(libs.androidx.navigation.fragment.ktx)
     api(libs.androidx.navigation.ui.ktx)
     api(libs.androidx.core.splashscreen)

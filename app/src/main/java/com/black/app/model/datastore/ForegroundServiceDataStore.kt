@@ -44,7 +44,8 @@ class ForegroundServiceDataStore @Inject constructor(
      *
      * SharedPreferencesMigration은 이관 후 원본 키를 지우고 빈 파일까지 삭제해, 같은 기기에 설치한
      * SharedPreferences를 읽는 다른 빌드가 실행 설정을 꺼짐으로 읽고 서비스를 띄우지 못하므로 원본 유지.
-     * DataStore에 값이 생긴 뒤에는 원본을 다시 읽지 않아 다른 빌드가 나중에 쓴 값이 덮어쓰지 않음
+     * DataStore에 값이 생긴 뒤에는 원본을 다시 읽지 않아 다른 빌드가 나중에 쓴 값이 덮어쓰지 않음.
+     * 같은 파일의 사용 타이머 키는 [UsageTimerDataStore]가 원본을 지우는 SharedPreferencesMigration으로 이관
      */
     private class ActivatedSharedPreferencesMigration(context: Context) : DataMigration<Preferences> {
         private val sharedPreferences by lazy {

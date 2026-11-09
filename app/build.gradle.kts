@@ -85,7 +85,6 @@ dependencies {
     testImplementation(project(":test"))
     ksp(libs.androidx.room.compiler)
     implementation(libs.glide)
-    implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.core.splashscreen)

@@ -5,7 +5,6 @@ import android.net.Uri
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.model.database.studypopup.StudyPopupDatabase
 import com.black.app.model.datastore.StudyPopupDataStore
-import com.black.app.model.preferences.StudyPopupPreferences
 import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
 import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.getFileName
@@ -28,7 +27,6 @@ import javax.inject.Inject
  **/
 class StudyPopupRepository @Inject constructor(@ApplicationContext context: Context) {
     private val appContext = context.applicationContext
-    private val preferences = StudyPopupPreferences(context)
     private val database = StudyPopupDatabase.getInstance(context)
     private val dataStore = StudyPopupDataStore(context)
 
@@ -80,12 +78,12 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
         return dataStore.updateEnabled(enabled)
     }
 
-    fun loadLatestUri() : Uri? {
-        return preferences.loadLatestUri()
+    suspend fun loadLatestUri() : Uri? {
+        return dataStore.getLatestUri()
     }
 
-    fun removeLatestUri() {
-        preferences.removeLatestUri()
+    suspend fun removeLatestUri() {
+        dataStore.removeLatestUri()
     }
 
     /**
@@ -99,7 +97,7 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
             val stream = uri.openInputStream(appContext)
                 ?: throw FileNotFoundException("openInputStream failed, uri : $uri")
             val contents = StudyPopupXml.parse(FileUtil.readText(stream))
-            preferences.saveLatestUri(uri)
+            dataStore.updateLatestUri(uri)
             Result.success(contents)
         } catch (e: Exception) {
             Result.failure(e)
@@ -117,7 +115,7 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
             val stream = uri.openOutputStream(appContext, "wt")
                 ?: throw FileNotFoundException("openOutputStream failed, uri : $uri")
             FileUtil.writeText(stream) { it.write(StudyPopupXml.serialize(contents)) }
-            preferences.saveLatestUri(uri)
+            dataStore.updateLatestUri(uri)
             save(contents.map { StudyPopupData.Contents(it) })
             Result.success(Unit)
         } catch (e: Exception) {

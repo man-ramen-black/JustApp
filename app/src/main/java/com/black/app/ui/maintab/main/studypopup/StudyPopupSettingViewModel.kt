@@ -217,8 +217,8 @@ class StudyPopupSettingViewModel @Inject constructor(
 
     /** 마지막으로 연 파일을 화면을 열 때 자동으로 불러오기 */
     private fun loadLatestFile() {
-        val uri = repository.loadLatestUri() ?: return
         launch {
+            val uri = repository.loadLatestUri() ?: return@launch
             repository.readFile(uri)
                 .onSuccess { contents -> applyLoadedFile(uri, contents) }
                 .onFailure {

@@ -1,18 +1,21 @@
 package com.black.app.model.datastore
 
 import android.content.Context
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [StudyPopupDataStore]의 화면 켜짐 팝업 표시 설정 저장·조회 검증 */
+/** [StudyPopupDataStore]의 화면 켜짐 팝업 표시 설정과 마지막 파일 기록 저장·조회 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class StudyPopupDataStoreTest : BaseTest() {
 
@@ -60,5 +63,27 @@ class StudyPopupDataStoreTest : BaseTest() {
         /** Then **/
         assertFalse(dataStore.getEnabled())
         assertFalse(dataStore.getEnabledFlow().first())
+    }
+
+    /**
+     * 마지막으로 연 파일을 기록·조회·삭제하는지 검증
+     *
+     * Given: 내용 파일 uri
+     * When: 기록 후 조회, 삭제 후 조회
+     * Then: 기록한 uri 조회, 삭제 뒤 null
+     */
+    @Test
+    fun test_03_latestUriRoundTrip() = runTest {
+        /** Given **/
+        val uri = Uri.parse("content://documents/study_popup.xml")
+
+        /** When **/
+        dataStore.updateLatestUri(uri)
+        val saved = dataStore.getLatestUri()
+        dataStore.removeLatestUri()
+
+        /** Then **/
+        assertEquals(uri, saved)
+        assertNull(dataStore.getLatestUri())
     }
 }
