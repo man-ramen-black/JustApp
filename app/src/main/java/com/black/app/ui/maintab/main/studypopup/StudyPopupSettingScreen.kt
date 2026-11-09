@@ -46,14 +46,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
-import com.black.app.ui.component.BoldActionButton
-import com.black.app.ui.component.BoldSectionHeader
-import com.black.app.ui.component.BoldStatusRow
-import com.black.app.ui.component.BoldSwitchRow
+import com.black.app.ui.component.ActionButton
+import com.black.app.ui.component.SectionHeader
+import com.black.app.ui.component.StatusRow
+import com.black.app.ui.component.SwitchRow
 import com.black.app.ui.maintab.main.studypopup.popup.StudyPopupView
-import com.black.app.ui.theme.BoldColors
-import com.black.app.ui.theme.BoldShapes
-import com.black.app.ui.theme.BoldTypography
+import com.black.app.ui.theme.AppColors
+import com.black.app.ui.theme.AppShapes
+import com.black.app.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 
@@ -196,7 +196,7 @@ private fun StudyPopupSettingContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldColors.ScreenBackground)
+            .background(AppColors.ScreenBackground)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
@@ -205,7 +205,7 @@ private fun StudyPopupSettingContent(
         Text(
             text = stringResource(R.string.study_popup_caption),
             modifier = Modifier.padding(top = 26.dp),
-            style = BoldTypography.HeaderCaption,
+            style = AppTypography.HeaderCaption,
         )
         // 헤더 타이틀
         Text(
@@ -213,12 +213,12 @@ private fun StudyPopupSettingContent(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag(StudyPopupSettingTestTags.TITLE),
-            style = BoldTypography.ScreenTitle,
+            style = AppTypography.ScreenTitle,
         )
 
         // 팝업 설정 섹션
-        BoldSectionHeader(title = stringResource(R.string.study_popup_section_setting))
-        BoldSwitchRow(
+        SectionHeader(title = stringResource(R.string.study_popup_section_setting))
+        SwitchRow(
             label = stringResource(R.string.study_popup_enabled_label),
             checked = uiState.enabled,
             onCheckedChange = onEnabledChange,
@@ -227,9 +227,9 @@ private fun StudyPopupSettingContent(
         Text(
             text = stringResource(R.string.study_popup_enabled_description),
             modifier = Modifier.padding(top = 8.dp),
-            style = BoldTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.Caption.copy(lineHeight = 18.sp),
         )
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.study_popup_preview),
             onClick = onClickPreview,
             modifier = Modifier
@@ -240,8 +240,8 @@ private fun StudyPopupSettingContent(
         )
 
         // 상태 섹션
-        BoldSectionHeader(title = stringResource(R.string.study_popup_section_status))
-        BoldStatusRow(
+        SectionHeader(title = stringResource(R.string.study_popup_section_status))
+        StatusRow(
             label = stringResource(R.string.study_popup_status_overlay),
             value = if (uiState.overlayPermissionGranted) {
                 stringResource(R.string.study_popup_status_allowed)
@@ -251,7 +251,7 @@ private fun StudyPopupSettingContent(
             onClick = if (uiState.overlayPermissionGranted) null else onClickOverlayPermission,
             modifier = Modifier.testTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS),
         )
-        BoldStatusRow(
+        StatusRow(
             label = stringResource(R.string.study_popup_status_service),
             value = if (uiState.serviceRunning) {
                 stringResource(R.string.study_popup_status_running)
@@ -261,7 +261,7 @@ private fun StudyPopupSettingContent(
             onClick = if (uiState.serviceRunning) null else onClickServiceStatus,
             modifier = Modifier.testTag(StudyPopupSettingTestTags.SERVICE_STATUS),
         )
-        BoldStatusRow(
+        StatusRow(
             label = stringResource(R.string.study_popup_status_saved_contents),
             value = stringResource(R.string.study_popup_saved_contents_count, uiState.savedContentsCount),
             onClick = null,
@@ -270,15 +270,15 @@ private fun StudyPopupSettingContent(
         Text(
             text = stringResource(R.string.study_popup_service_description),
             modifier = Modifier.padding(top = 4.dp),
-            style = BoldTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.Caption.copy(lineHeight = 18.sp),
         )
 
         // 내용 파일 섹션
-        BoldSectionHeader(title = stringResource(R.string.study_popup_section_file))
+        SectionHeader(title = stringResource(R.string.study_popup_section_file))
         Text(
             text = uiState.fileName.ifEmpty { stringResource(R.string.study_popup_file_none) },
             modifier = Modifier.testTag(StudyPopupSettingTestTags.FILE_NAME),
-            style = BoldTypography.Body.copy(color = BoldColors.ItemName),
+            style = AppTypography.Body.copy(color = AppColors.ItemName),
         )
         Text(
             text = if (uiState.modified) {
@@ -287,13 +287,13 @@ private fun StudyPopupSettingContent(
                 stringResource(R.string.study_popup_file_description)
             },
             modifier = Modifier.padding(top = 4.dp),
-            style = BoldTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.Caption.copy(lineHeight = 18.sp),
         )
         Row(
             modifier = Modifier.padding(top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            BoldActionButton(
+            ActionButton(
                 text = stringResource(R.string.study_popup_load),
                 onClick = onClickLoad,
                 modifier = Modifier
@@ -303,7 +303,7 @@ private fun StudyPopupSettingContent(
             )
             // 다시 불러올 파일이 있을 때만 표시
             if (uiState.fileName.isNotEmpty()) {
-                BoldActionButton(
+                ActionButton(
                     text = stringResource(R.string.study_popup_reload),
                     onClick = onClickReload,
                     modifier = Modifier
@@ -312,7 +312,7 @@ private fun StudyPopupSettingContent(
                     letterSpacing = 0.sp,
                 )
             }
-            BoldActionButton(
+            ActionButton(
                 text = stringResource(R.string.study_popup_save),
                 onClick = onClickSave,
                 modifier = Modifier
@@ -323,19 +323,19 @@ private fun StudyPopupSettingContent(
         }
 
         // 내용 섹션
-        BoldSectionHeader(
+        SectionHeader(
             title = stringResource(R.string.study_popup_section_contents, uiState.contents.size),
         )
         if (uiState.contents.isEmpty()) {
             Text(
                 text = stringResource(R.string.study_popup_contents_empty),
                 modifier = Modifier.testTag(StudyPopupSettingTestTags.CONTENTS_EMPTY),
-                style = BoldTypography.Body.copy(color = BoldColors.Caption),
+                style = AppTypography.Body.copy(color = AppColors.Caption),
             )
         } else {
             uiState.contents.forEachIndexed { index, contents ->
                 if (index > 0) {
-                    HorizontalDivider(thickness = 1.dp, color = BoldColors.Divider)
+                    HorizontalDivider(thickness = 1.dp, color = AppColors.Divider)
                 }
                 ContentsRow(
                     contents = contents,
@@ -346,7 +346,7 @@ private fun StudyPopupSettingContent(
                 )
             }
         }
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.study_popup_add),
             onClick = onClickAdd,
             modifier = Modifier
@@ -385,19 +385,19 @@ private fun ContentsRow(
                 AnnotatedString.fromHtml(contents.replace("\n", "<br>"))
             },
             modifier = Modifier.weight(1f),
-            style = BoldTypography.Body.copy(color = BoldColors.ItemName),
+            style = AppTypography.Body.copy(color = AppColors.ItemName),
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
         // 삭제 아이콘 버튼(36dp, 컨테이너 톤 박스)
-        val shape = BoldShapes.Container
+        val shape = AppShapes.Container
         Box(
             modifier = Modifier
                 .padding(start = 12.dp)
                 .size(36.dp)
                 .clip(shape)
-                .background(BoldColors.ContainerBackground, shape)
-                .border(1.dp, BoldColors.ContainerBorder, shape)
+                .background(AppColors.ContainerBackground, shape)
+                .border(1.dp, AppColors.ContainerBorder, shape)
                 .clickable(onClick = onClickDelete)
                 .testTag(deleteButtonTestTag),
             contentAlignment = Alignment.Center,
@@ -406,7 +406,7 @@ private fun ContentsRow(
                 painter = painterResource(R.drawable.ic_delete),
                 contentDescription = stringResource(R.string.study_popup_delete),
                 modifier = Modifier.size(16.dp),
-                tint = BoldColors.Icon,
+                tint = AppColors.Icon,
             )
         }
     }
@@ -423,12 +423,12 @@ private fun ContentsEditDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.EDIT_DIALOG),
-        shape = BoldShapes.Container,
-        containerColor = BoldColors.ContainerBackground,
+        shape = AppShapes.Container,
+        containerColor = AppColors.ContainerBackground,
         title = {
             Text(
                 text = stringResource(R.string.study_popup_edit_title),
-                color = BoldColors.Title,
+                color = AppColors.Title,
             )
         },
         text = {
@@ -440,11 +440,11 @@ private fun ContentsEditDialog(
                     .testTag(StudyPopupSettingTestTags.EDIT_INPUT),
                 minLines = 3,
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BoldColors.ContainerBorder,
-                    focusedBorderColor = BoldColors.Arrow,
-                    focusedTextColor = BoldColors.ItemName,
-                    unfocusedTextColor = BoldColors.ItemName,
-                    cursorColor = BoldColors.Title,
+                    unfocusedBorderColor = AppColors.ContainerBorder,
+                    focusedBorderColor = AppColors.Arrow,
+                    focusedTextColor = AppColors.ItemName,
+                    unfocusedTextColor = AppColors.ItemName,
+                    cursorColor = AppColors.Title,
                 ),
             )
         },
@@ -456,13 +456,13 @@ private fun ContentsEditDialog(
             ) {
                 Text(
                     text = stringResource(R.string.ok),
-                    color = if (text.isNotBlank()) BoldColors.Title else BoldColors.Arrow,
+                    color = if (text.isNotBlank()) AppColors.Title else AppColors.Arrow,
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
+                Text(stringResource(R.string.cancel), color = AppColors.Caption)
             }
         },
     )
@@ -477,12 +477,12 @@ private fun DeleteConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_DIALOG),
-        shape = BoldShapes.Container,
-        containerColor = BoldColors.ContainerBackground,
+        shape = AppShapes.Container,
+        containerColor = AppColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.study_popup_delete_confirm),
-                color = BoldColors.ItemName,
+                color = AppColors.ItemName,
             )
         },
         confirmButton = {
@@ -490,12 +490,12 @@ private fun DeleteConfirmDialog(
                 onClick = onConfirm,
                 modifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_CONFIRM_BUTTON),
             ) {
-                Text(stringResource(R.string.study_popup_delete), color = BoldColors.Title)
+                Text(stringResource(R.string.study_popup_delete), color = AppColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
+                Text(stringResource(R.string.cancel), color = AppColors.Caption)
             }
         },
     )
@@ -514,12 +514,12 @@ private fun OverlayPermissionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_DIALOG),
-        shape = BoldShapes.Container,
-        containerColor = BoldColors.ContainerBackground,
+        shape = AppShapes.Container,
+        containerColor = AppColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.study_popup_overlay_permission_guide),
-                color = BoldColors.ItemName,
+                color = AppColors.ItemName,
             )
         },
         confirmButton = {
@@ -527,12 +527,12 @@ private fun OverlayPermissionDialog(
                 onClick = onConfirm,
                 modifier = Modifier.testTag(StudyPopupSettingTestTags.OPEN_OVERLAY_SETTINGS_BUTTON),
             ) {
-                Text(stringResource(R.string.study_popup_open_overlay_settings), color = BoldColors.Title)
+                Text(stringResource(R.string.study_popup_open_overlay_settings), color = AppColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
+                Text(stringResource(R.string.cancel), color = AppColors.Caption)
             }
         },
     )

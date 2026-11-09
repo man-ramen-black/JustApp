@@ -44,13 +44,13 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.app.ui.component.BoldActionButton
-import com.black.app.ui.component.BoldSectionHeader
-import com.black.app.ui.component.BoldStatusRow
-import com.black.app.ui.component.BoldSwitchRow
-import com.black.app.ui.theme.BoldColors
-import com.black.app.ui.theme.BoldShapes
-import com.black.app.ui.theme.BoldTypography
+import com.black.app.ui.component.ActionButton
+import com.black.app.ui.component.SectionHeader
+import com.black.app.ui.component.StatusRow
+import com.black.app.ui.component.SwitchRow
+import com.black.app.ui.theme.AppColors
+import com.black.app.ui.theme.AppShapes
+import com.black.app.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 
@@ -123,7 +123,7 @@ private fun AppInstallNotificationContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldColors.ScreenBackground)
+            .background(AppColors.ScreenBackground)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
@@ -132,7 +132,7 @@ private fun AppInstallNotificationContent(
         Text(
             text = stringResource(R.string.app_install_notification_caption),
             modifier = Modifier.padding(top = 26.dp),
-            style = BoldTypography.HeaderCaption,
+            style = AppTypography.HeaderCaption,
         )
         // 헤더 타이틀
         Text(
@@ -140,12 +140,12 @@ private fun AppInstallNotificationContent(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag(AppInstallNotificationTestTags.TITLE),
-            style = BoldTypography.ScreenTitle,
+            style = AppTypography.ScreenTitle,
         )
 
         // 알림 설정 섹션
-        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
-        BoldSwitchRow(
+        SectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
+        SwitchRow(
             label = stringResource(R.string.app_install_notification_switch_label),
             checked = uiState.enabled,
             onCheckedChange = onEnabledChange,
@@ -154,12 +154,12 @@ private fun AppInstallNotificationContent(
         Text(
             text = stringResource(R.string.app_install_notification_switch_description),
             modifier = Modifier.padding(top = 8.dp),
-            style = BoldTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.Caption.copy(lineHeight = 18.sp),
         )
 
         // 상태 섹션
-        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_status))
-        BoldStatusRow(
+        SectionHeader(title = stringResource(R.string.app_install_notification_section_status))
+        StatusRow(
             label = stringResource(R.string.app_install_notification_status_service),
             value = if (uiState.serviceRunning) {
                 stringResource(R.string.app_install_notification_status_running)
@@ -169,7 +169,7 @@ private fun AppInstallNotificationContent(
             onClick = null,
             modifier = Modifier.testTag(AppInstallNotificationTestTags.SERVICE_STATUS),
         )
-        BoldStatusRow(
+        StatusRow(
             label = stringResource(R.string.app_install_notification_status_battery),
             value = if (uiState.batteryOptimizationIgnored) {
                 stringResource(R.string.app_install_notification_status_allowed)
@@ -179,7 +179,7 @@ private fun AppInstallNotificationContent(
             onClick = if (uiState.batteryOptimizationIgnored) null else onClickBatteryOptimization,
             modifier = Modifier.testTag(AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS),
         )
-        BoldStatusRow(
+        StatusRow(
             label = stringResource(R.string.app_install_notification_status_notification),
             value = if (uiState.notificationsEnabled) {
                 stringResource(R.string.app_install_notification_status_allowed)
@@ -191,7 +191,7 @@ private fun AppInstallNotificationContent(
         )
 
         // 미리보기 섹션
-        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_preview))
+        SectionHeader(title = stringResource(R.string.app_install_notification_section_preview))
         NotificationPreviewBlock(
             label = stringResource(R.string.app_install_notification_preview_install),
             previewApp = uiState.previewApp,
@@ -213,12 +213,12 @@ private fun AppInstallNotificationContent(
         )
 
         // 상단바 아이콘 섹션
-        BoldSectionHeader(title = stringResource(R.string.app_install_notification_section_icon))
+        SectionHeader(title = stringResource(R.string.app_install_notification_section_icon))
         StatusBarIconPreview(modifier = Modifier.testTag(AppInstallNotificationTestTags.STATUS_BAR_ICON_PREVIEW))
         Text(
             text = stringResource(R.string.app_install_notification_icon_shared),
             modifier = Modifier.padding(top = 12.dp, bottom = 24.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
     }
 }
@@ -239,7 +239,7 @@ private fun NotificationPreviewBlock(
         Text(
             text = label,
             modifier = Modifier.padding(bottom = 8.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
         NotificationPreviewCard(
             previewApp = previewApp,
@@ -247,7 +247,7 @@ private fun NotificationPreviewBlock(
             message = stringResource(messageResId),
             modifier = Modifier.testTag(cardTestTag),
         )
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.app_install_notification_send_test),
             onClick = onClickSendTest,
             modifier = Modifier
@@ -272,13 +272,13 @@ private fun NotificationPreviewCard(
     message: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = BoldShapes.NotificationPreview
+    val shape = AppShapes.NotificationPreview
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(BoldColors.ContainerBackground)
-            .border(1.dp, BoldColors.ContainerBorder, shape)
+            .background(AppColors.ContainerBackground)
+            .border(1.dp, AppColors.ContainerBorder, shape)
             // 앱 이름·메시지를 한 노드로 검증하도록 병합
             .semantics(mergeDescendants = true) {}
             .padding(16.dp),
@@ -293,20 +293,20 @@ private fun NotificationPreviewCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = previewApp?.label.orEmpty(),
-                    color = BoldColors.ItemName,
+                    color = AppColors.ItemName,
                     fontSize = 15.sp,
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = " · " + stringResource(R.string.app_install_notification_preview_time),
-                    style = BoldTypography.Caption,
+                    style = AppTypography.Caption,
                 )
             }
             Text(
                 text = message,
                 modifier = Modifier.padding(top = 2.dp),
-                style = BoldTypography.Body,
+                style = AppTypography.Body,
             )
         }
     }
@@ -343,7 +343,7 @@ private fun ConversationIcon(
                     .align(Alignment.BottomEnd)
                     .size(16.dp)
                     .clip(CircleShape)
-                    .border(1.dp, BoldColors.ContainerBackground, CircleShape),
+                    .border(1.dp, AppColors.ContainerBackground, CircleShape),
             )
         }
     }
@@ -359,22 +359,22 @@ private fun StatusBarIconPreview(modifier: Modifier = Modifier) {
     ) {
         StatusBarIconTile(
             caption = stringResource(R.string.app_install_notification_icon_dark),
-            background = BoldColors.ContainerBackground,
-            tint = BoldColors.Title,
+            background = AppColors.ContainerBackground,
+            tint = AppColors.Title,
             tileSize = 56.dp,
             iconSize = 24.dp,
         )
         StatusBarIconTile(
             caption = stringResource(R.string.app_install_notification_icon_light),
-            background = BoldColors.LightPreviewBackground,
-            tint = BoldColors.LightPreviewContent,
+            background = AppColors.LightPreviewBackground,
+            tint = AppColors.LightPreviewContent,
             tileSize = 56.dp,
             iconSize = 24.dp,
         )
         StatusBarIconTile(
             caption = stringResource(R.string.app_install_notification_icon_enlarged),
-            background = BoldColors.ContainerBackground,
-            tint = BoldColors.Title,
+            background = AppColors.ContainerBackground,
+            tint = AppColors.Title,
             tileSize = 96.dp,
             iconSize = 64.dp,
         )
@@ -394,8 +394,8 @@ private fun StatusBarIconTile(
         Box(
             modifier = Modifier
                 .size(tileSize)
-                .background(background, BoldShapes.Container)
-                .border(1.dp, BoldColors.ContainerBorder, BoldShapes.Container),
+                .background(background, AppShapes.Container)
+                .border(1.dp, AppColors.ContainerBorder, AppShapes.Container),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -408,7 +408,7 @@ private fun StatusBarIconTile(
         Text(
             text = caption,
             modifier = Modifier.padding(top = 6.dp),
-            style = BoldTypography.Caption.copy(fontSize = 11.sp),
+            style = AppTypography.Caption.copy(fontSize = 11.sp),
         )
     }
 }

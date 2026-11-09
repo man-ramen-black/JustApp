@@ -46,10 +46,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.app.ui.component.BoldActionButton
+import com.black.app.ui.component.ActionButton
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
-import com.black.app.ui.theme.BoldColors
-import com.black.app.ui.theme.BoldTypography
+import com.black.app.ui.theme.AppColors
+import com.black.app.ui.theme.AppTypography
 import com.black.core.util.DataUtil
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
@@ -135,7 +135,7 @@ private fun UsageTimerContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldColors.ScreenBackground)
+            .background(AppColors.ScreenBackground)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
@@ -144,7 +144,7 @@ private fun UsageTimerContent(
         Text(
             text = stringResource(R.string.usage_timer_caption),
             modifier = Modifier.padding(top = 26.dp),
-            style = BoldTypography.HeaderCaption,
+            style = AppTypography.HeaderCaption,
         )
         // 헤더 타이틀
         Text(
@@ -152,21 +152,21 @@ private fun UsageTimerContent(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .testTag("usage_timer_title"),
-            style = BoldTypography.ScreenTitle,
+            style = AppTypography.ScreenTitle,
         )
 
         // 타이머 표시 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldColors.Divider,
+            color = AppColors.Divider,
         )
         Text(
             text = stringResource(R.string.usage_timer_section_overlay),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.usage_timer_show),
             onClick = onClickShow,
             modifier = Modifier
@@ -179,12 +179,12 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldColors.Divider,
+            color = AppColors.Divider,
         )
         Text(
             text = stringResource(R.string.usage_timer_section_pause),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
         Row(
             verticalAlignment = Alignment.Bottom,
@@ -196,24 +196,24 @@ private fun UsageTimerContent(
                 label = {
                     Text(
                         text = stringResource(R.string.usage_timer_pause_duration_label),
-                        style = BoldTypography.Caption,
+                        style = AppTypography.Caption,
                     )
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = BoldColors.ContainerBorder,
-                    focusedBorderColor = BoldColors.Arrow,
-                    focusedTextColor = BoldColors.ItemName,
-                    unfocusedTextColor = BoldColors.ItemName,
-                    cursorColor = BoldColors.Title,
-                    focusedLabelColor = BoldColors.Caption,
-                    unfocusedLabelColor = BoldColors.Caption,
+                    unfocusedBorderColor = AppColors.ContainerBorder,
+                    focusedBorderColor = AppColors.Arrow,
+                    focusedTextColor = AppColors.ItemName,
+                    unfocusedTextColor = AppColors.ItemName,
+                    cursorColor = AppColors.Title,
+                    focusedLabelColor = AppColors.Caption,
+                    unfocusedLabelColor = AppColors.Caption,
                 ),
                 modifier = Modifier
                     .weight(1f)
                     .testTag("pause_duration_input"),
             )
-            BoldActionButton(
+            ActionButton(
                 text = stringResource(R.string.usage_timer_save),
                 onClick = onClickSave,
                 modifier = Modifier
@@ -234,7 +234,7 @@ private fun UsageTimerContent(
             modifier = Modifier.padding(top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            BoldActionButton(
+            ActionButton(
                 text = stringResource(R.string.usage_timer_pause),
                 onClick = onClickPause,
                 modifier = Modifier
@@ -242,7 +242,7 @@ private fun UsageTimerContent(
                     .testTag("pause_button"),
                 letterSpacing = 0.sp,
             )
-            BoldActionButton(
+            ActionButton(
                 text = stringResource(R.string.usage_timer_cancel_pause),
                 onClick = onClickCancelPause,
                 modifier = Modifier
@@ -256,14 +256,14 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldColors.Divider,
+            color = AppColors.Divider,
         )
         Text(
             text = stringResource(R.string.usage_timer_section_settings),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.usage_timer_accessibility),
             onClick = onClickAccessibility,
             modifier = Modifier
@@ -271,7 +271,7 @@ private fun UsageTimerContent(
                 .testTag("accessibility_button"),
             letterSpacing = 0.sp,
         )
-        BoldActionButton(
+        ActionButton(
             text = stringResource(R.string.select_app),
             onClick = onClickSelectApp,
             modifier = Modifier
@@ -285,12 +285,12 @@ private fun UsageTimerContent(
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),
             thickness = 1.dp,
-            color = BoldColors.Divider,
+            color = AppColors.Divider,
         )
         Text(
             text = stringResource(R.string.usage_timer_section_selected_apps),
             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
 
         if (uiState.selectedApps.isEmpty()) {
@@ -299,7 +299,7 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .padding(bottom = 24.dp)
                     .testTag("selected_apps_empty"),
-                style = BoldTypography.Body.copy(color = BoldColors.Caption),
+                style = AppTypography.Body.copy(color = AppColors.Caption),
             )
         } else {
             LazyRow(
@@ -346,11 +346,11 @@ private fun PauseRemainCountDown(
     ) {
         Text(
             text = stringResource(R.string.usage_timer_pause_remain),
-            style = BoldTypography.Caption,
+            style = AppTypography.Caption,
         )
         Text(
             text = DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis),
-            color = BoldColors.Title,
+            color = AppColors.Title,
             fontFamily = FontFamily.Monospace,
         )
     }
@@ -368,7 +368,7 @@ private fun SelectedAppItemContent(item: SelectedAppUiItem) {
         )
         Text(
             text = item.label,
-            color = BoldColors.Icon,
+            color = AppColors.Icon,
         )
     }
 }

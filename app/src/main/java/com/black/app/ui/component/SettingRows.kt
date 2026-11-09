@@ -19,21 +19,21 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.black.app.ui.theme.BoldColors
-import com.black.app.ui.theme.BoldTypography
+import com.black.app.ui.theme.AppColors
+import com.black.app.ui.theme.AppTypography
 
 /** 도구 화면 섹션 위 디바이더 + 한글 캡션 */
 @Composable
-internal fun BoldSectionHeader(title: String) {
+internal fun SectionHeader(title: String) {
     HorizontalDivider(
         modifier = Modifier.padding(top = 24.dp),
         thickness = 1.dp,
-        color = BoldColors.Divider,
+        color = AppColors.Divider,
     )
     Text(
         text = title,
         modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-        style = BoldTypography.Caption,
+        style = AppTypography.Caption,
     )
 }
 
@@ -43,7 +43,7 @@ internal fun BoldSectionHeader(title: String) {
  * 라벨까지 행 전체를 눌러 토글하고, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여
  */
 @Composable
-internal fun BoldSwitchRow(
+internal fun SwitchRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -56,7 +56,7 @@ internal fun BoldSwitchRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = BoldColors.ItemName,
+            color = AppColors.ItemName,
             fontSize = 16.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.ExtraBold,
@@ -67,11 +67,11 @@ internal fun BoldSwitchRow(
             onCheckedChange = null,
             // 테마 primary(#121212)가 검은 배경과 구분되지 않아 토큰 색 지정
             colors = SwitchDefaults.colors(
-                checkedThumbColor = BoldColors.ScreenBackground,
-                checkedTrackColor = BoldColors.Title,
-                uncheckedThumbColor = BoldColors.Arrow,
-                uncheckedTrackColor = BoldColors.ContainerBackground,
-                uncheckedBorderColor = BoldColors.ContainerBorder,
+                checkedThumbColor = AppColors.ScreenBackground,
+                checkedTrackColor = AppColors.Title,
+                uncheckedThumbColor = AppColors.Arrow,
+                uncheckedTrackColor = AppColors.ContainerBackground,
+                uncheckedBorderColor = AppColors.ContainerBorder,
             ),
         )
     }
@@ -83,7 +83,7 @@ internal fun BoldSwitchRow(
  * [onClick]이 있으면 조치가 필요한 상태라 상태값 뒤에 ›를 붙이고, 행을 누르면 조치 화면으로 이동
  */
 @Composable
-internal fun BoldStatusRow(
+internal fun StatusRow(
     label: String,
     value: String,
     onClick: (() -> Unit)?,
@@ -101,11 +101,11 @@ internal fun BoldStatusRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            style = BoldTypography.Body,
+            style = AppTypography.Body,
         )
         // 조치가 필요한 상태값은 흰색으로 강조
-        val valueStyle = BoldTypography.Body.copy(
-            color = if (onClick != null) BoldColors.Title else BoldColors.Icon,
+        val valueStyle = AppTypography.Body.copy(
+            color = if (onClick != null) AppColors.Title else AppColors.Icon,
             fontWeight = FontWeight.Bold,
         )
         Text(

@@ -11,8 +11,8 @@ object BlackThemeColors {
     val TextHint = Color(0xFF888888)
 }
 
-/** Bold 디자인 언어 색 (메인·도구 화면 공유) */
-object BoldColors {
+/** 메인·도구 화면 공용 색 */
+object AppColors {
     val ScreenBackground = Color(0xFF000000)
     val Title = Color(0xFFFFFFFF)
     val Caption = Color(0xFF595D64)

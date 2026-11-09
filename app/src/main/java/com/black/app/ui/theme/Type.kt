@@ -15,15 +15,15 @@ import androidx.compose.ui.unit.sp
 private val BaseTextStyle = Typography().bodyLarge
 
 /**
- * Bold 디자인 언어 텍스트 스타일
+ * 화면 공용 텍스트 스타일
  *
  * 영문 대문자 캡션은 모노스페이스에 자간을 넓히고([MonoCaption]), 한글 캡션은 자간을 넓히면 글자 사이가 벌어져 보여
  * SansSerif에 자간을 좁힌 별도 스타일([Caption]) 사용. 화면에 한 번만 쓰는 크기는 가까운 스타일을 copy로 조정
  */
-object BoldTypography {
+object AppTypography {
     /** 도구 화면 헤더 제목 */
     val ScreenTitle = BaseTextStyle.copy(
-        color = BoldColors.Title,
+        color = AppColors.Title,
         fontSize = 34.sp,
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Black,
@@ -32,7 +32,7 @@ object BoldTypography {
 
     /** 영문 대문자 모노스페이스 캡션(섹션 머리·보조 라벨) */
     val MonoCaption = BaseTextStyle.copy(
-        color = BoldColors.Caption,
+        color = AppColors.Caption,
         fontSize = 11.sp,
         fontFamily = FontFamily.Monospace,
         letterSpacing = 2.5.sp,
@@ -43,7 +43,7 @@ object BoldTypography {
 
     /** 한글 캡션(섹션 머리·보조 라벨) */
     val Caption = BaseTextStyle.copy(
-        color = BoldColors.Caption,
+        color = AppColors.Caption,
         fontSize = 12.sp,
         fontFamily = FontFamily.SansSerif,
         letterSpacing = 0.5.sp,
@@ -54,7 +54,7 @@ object BoldTypography {
 
     /** 한글 본문(상태 행·알림 메시지) */
     val Body = BaseTextStyle.copy(
-        color = BoldColors.Icon,
+        color = AppColors.Icon,
         fontSize = 14.sp,
         fontFamily = FontFamily.SansSerif,
         letterSpacing = 0.sp,
@@ -62,7 +62,7 @@ object BoldTypography {
 
     /** 액션 버튼 라벨(영문 대문자 기준 자간) */
     val ButtonLabel = BaseTextStyle.copy(
-        color = BoldColors.ItemName,
+        color = AppColors.ItemName,
         fontSize = 13.sp,
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.ExtraBold,

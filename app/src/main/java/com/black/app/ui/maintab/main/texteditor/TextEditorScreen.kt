@@ -44,9 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.black.app.R
-import com.black.app.ui.theme.BoldColors
-import com.black.app.ui.theme.BoldShapes
-import com.black.app.ui.theme.BoldTypography
+import com.black.app.ui.theme.AppColors
+import com.black.app.ui.theme.AppShapes
+import com.black.app.ui.theme.AppTypography
 import com.black.core.viewmodel.CollectEvents
 
 /**
@@ -171,7 +171,7 @@ private fun TextEditorContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BoldColors.ScreenBackground)
+            .background(AppColors.ScreenBackground)
             .statusBarsPadding()
             .padding(horizontal = 24.dp),
     ) {
@@ -185,14 +185,14 @@ private fun TextEditorContent(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "TOOL",
-                    style = BoldTypography.MonoHeaderCaption,
+                    style = AppTypography.MonoHeaderCaption,
                 )
                 Text(
                     text = "Memo",
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .testTag(TextEditorTestTags.TITLE),
-                    style = BoldTypography.ScreenTitle,
+                    style = AppTypography.ScreenTitle,
                 )
                 if (uiState.fileName.isNotEmpty()) {
                     Text(
@@ -200,7 +200,7 @@ private fun TextEditorContent(
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .testTag(TextEditorTestTags.FILE_NAME),
-                        style = BoldTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
+                        style = AppTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
                     )
                 }
             }
@@ -227,7 +227,7 @@ private fun TextEditorContent(
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 14.dp),
             thickness = 1.dp,
-            color = BoldColors.Divider,
+            color = AppColors.Divider,
         )
 
         // 본문 에디터
@@ -240,11 +240,11 @@ private fun TextEditorContent(
                 .padding(bottom = 16.dp)
                 .testTag(TextEditorTestTags.EDITOR_INPUT),
             textStyle = TextStyle(
-                color = BoldColors.ItemName,
+                color = AppColors.ItemName,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
             ),
-            cursorBrush = SolidColor(BoldColors.Title),
+            cursorBrush = SolidColor(AppColors.Title),
         )
     }
 }
@@ -257,13 +257,13 @@ private fun ToolbarIconButton(
     testTag: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = BoldShapes.Container
+    val shape = AppShapes.Container
     Box(
         modifier = modifier
             .size(40.dp)
             .clip(shape)
-            .background(BoldColors.ContainerBackground, shape)
-            .border(1.dp, BoldColors.ContainerBorder, shape)
+            .background(AppColors.ContainerBackground, shape)
+            .border(1.dp, AppColors.ContainerBorder, shape)
             .clickable(onClick = onClick)
             .testTag(testTag),
         contentAlignment = Alignment.Center,
@@ -272,7 +272,7 @@ private fun ToolbarIconButton(
             painter = painterResource(iconResId),
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = BoldColors.Icon,
+            tint = AppColors.Icon,
         )
     }
 }
@@ -286,12 +286,12 @@ private fun PermissionRequestDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.PERMISSION_REQUEST_DIALOG),
-        shape = BoldShapes.Container,
-        containerColor = BoldColors.ContainerBackground,
+        shape = AppShapes.Container,
+        containerColor = AppColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.text_editor_permission_required),
-                color = BoldColors.ItemName,
+                color = AppColors.ItemName,
             )
         },
         confirmButton = {
@@ -299,12 +299,12 @@ private fun PermissionRequestDialog(
                 onClick = onConfirm,
                 modifier = Modifier.testTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON),
             ) {
-                Text(stringResource(R.string.text_editor_select_document), color = BoldColors.Title)
+                Text(stringResource(R.string.text_editor_select_document), color = AppColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
+                Text(stringResource(R.string.cancel), color = AppColors.Caption)
             }
         },
     )
@@ -319,22 +319,22 @@ private fun ResetConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.RESET_CONFIRM_DIALOG),
-        shape = BoldShapes.Container,
-        containerColor = BoldColors.ContainerBackground,
+        shape = AppShapes.Container,
+        containerColor = AppColors.ContainerBackground,
         text = {
             Text(
                 text = stringResource(R.string.text_editor_new_file),
-                color = BoldColors.ItemName,
+                color = AppColors.ItemName,
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.ok), color = BoldColors.Title)
+                Text(stringResource(R.string.ok), color = AppColors.Title)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = BoldColors.Caption)
+                Text(stringResource(R.string.cancel), color = AppColors.Caption)
             }
         },
     )

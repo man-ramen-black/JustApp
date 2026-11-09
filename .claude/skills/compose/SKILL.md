@@ -68,8 +68,8 @@ private fun TextEditorContent(
 
 ## 작성 규칙
 
-- 색·모서리·텍스트 스타일은 `ui/theme`의 `BoldColors`(`Color.kt`)·`BoldShapes`(`Shape.kt`)·`BoldTypography`(`Type.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`나 Text의 색·크기·글꼴·자간 인자를 화면마다 반복해 쓰지 말고 해당 객체에 의미 이름으로 추가한 뒤 참조한다. 한 번만 쓰는 변형은 가까운 스타일을 `copy`한다. 새 텍스트 스타일은 `Type.kt`의 `BaseTextStyle`에서 만든다(Text에 `style`을 넘기면 `LocalTextStyle`의 줄 높이가 빠진다). Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
-- 여러 화면이 함께 쓰는 Composable(`BoldActionButton` 등)은 `ui/component`에 둔다.
+- 색·모서리·텍스트 스타일은 `ui/theme`의 `AppColors`(`Color.kt`)·`AppShapes`(`Shape.kt`)·`AppTypography`(`Type.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`나 Text의 색·크기·글꼴·자간 인자를 화면마다 반복해 쓰지 말고 해당 객체에 의미 이름으로 추가한 뒤 참조한다. 한 번만 쓰는 변형은 가까운 스타일을 `copy`한다. 새 텍스트 스타일은 `Type.kt`의 `BaseTextStyle`에서 만든다(Text에 `style`을 넘기면 `LocalTextStyle`의 줄 높이가 빠진다). Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
+- 여러 화면이 함께 쓰는 Composable(`ActionButton` 등)은 `ui/component`에 둔다.
 - 검증 대상 요소에는 testTag를 달고, 태그 문자열은 Screen 파일의 `internal object XxxTestTags`에 `const val`로 둬 화면과 테스트가 같은 상수를 참조한다(`TextEditorTestTags`). `Modifier.testTag("save_button")`·`onNodeWithTag("save_button")`처럼 문자열을 직접 쓰지 않는다. 값은 snake_case이고, XML에서 전환한 화면이면 기존 `@+id` 이름을 이어 쓴다.
 
 ## XML Fragment → Compose 전환
