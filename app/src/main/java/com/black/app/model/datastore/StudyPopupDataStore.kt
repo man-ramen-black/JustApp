@@ -27,8 +27,8 @@ class StudyPopupDataStore @Inject constructor(
     override fun getDataStore(context: Context): DataStore<Preferences>
         = context.studyPopupDataStore
 
-    suspend fun updateEnabled(enabled: Boolean) {
-        update(KEY_ENABLED, enabled)
+    suspend fun updateEnabled(enabled: Boolean): Result<Unit> {
+        return update(KEY_ENABLED, enabled)
     }
 
     /**

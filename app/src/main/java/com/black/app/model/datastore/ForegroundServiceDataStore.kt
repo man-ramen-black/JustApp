@@ -69,8 +69,8 @@ class ForegroundServiceDataStore @Inject constructor(
     override fun getDataStore(context: Context): DataStore<Preferences>
         = context.foregroundServiceDataStore
 
-    suspend fun updateActivated(activated: Boolean) {
-        update(KEY_ACTIVATED, activated)
+    suspend fun updateActivated(activated: Boolean): Result<Unit> {
+        return update(KEY_ACTIVATED, activated)
     }
 
     suspend fun getActivated(): Boolean {

@@ -5,6 +5,8 @@ import android.os.PowerManager
 import com.black.app.model.datastore.ForegroundServiceDataStore
 import com.black.app.service.ForegroundServiceController.StartResult
 import com.black.test.BaseTest
+import io.mockk.coEvery
+import io.mockk.mockkConstructor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -18,6 +20,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.io.IOException
 
 /** [ForegroundServiceController]의 실행 설정 저장과 시작 결과, 서비스 시작·중지 요청 검증 */
 @Config(sdk = [34])
@@ -122,6 +125,53 @@ class ForegroundServiceControllerTest : BaseTest() {
 
         /** Then **/
         assertEquals(StartResult.NotActivated, result)
+        assertNull(shadowOf(application).nextStartedService)
+    }
+
+    /**
+     * 꺼짐 저장에 실패하면 서비스를 멈추지 않고 실패를 돌려주는지 검증
+     *
+     * Given: 실행 설정 저장이 실패하는 DataStore
+     * When: deactivate 호출
+     * Then: 실패 결과, 중지 인텐트 없음
+     */
+    @Test
+    fun test_05_deactivateKeepsServiceWhenSaveFails() = runTest {
+        /** Given **/
+        mockkConstructor(ForegroundServiceDataStore::class)
+        coEvery { anyConstructed<ForegroundServiceDataStore>().updateActivated(false) } returns
+            Result.failure(IOException("disk full"))
+        val failingController = ForegroundServiceController(application)
+
+        /** When **/
+        val result = failingController.deactivate()
+
+        /** Then **/
+        assertTrue(result.isFailure)
+        assertNull(shadowOf(application).nextStoppedService)
+    }
+
+    /**
+     * 켜짐 저장에 실패하면 시작하지 않고 SaveFailed를 돌려주는지 검증
+     *
+     * Given: 실행 설정 저장이 실패하는 DataStore, 배터리 최적화 예외
+     * When: activate 호출
+     * Then: SaveFailed 반환, 시작 인텐트 없음
+     */
+    @Test
+    fun test_06_activateReturnsSaveFailedWhenSaveFails() = runTest {
+        /** Given **/
+        setIgnoringBatteryOptimizations(true)
+        mockkConstructor(ForegroundServiceDataStore::class)
+        coEvery { anyConstructed<ForegroundServiceDataStore>().updateActivated(true) } returns
+            Result.failure(IOException("disk full"))
+        val failingController = ForegroundServiceController(application)
+
+        /** When **/
+        val result = failingController.activate()
+
+        /** Then **/
+        assertEquals(StartResult.SaveFailed, result)
         assertNull(shadowOf(application).nextStartedService)
     }
 }

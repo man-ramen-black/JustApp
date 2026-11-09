@@ -94,6 +94,9 @@ fun AppInstallNotificationScreen(
                 Toast.makeText(context, R.string.app_install_notification_settings_guide, Toast.LENGTH_LONG).show()
                 PermissionHelper.showAppNotificationSettings(context)
             }
+            is AppInstallNotificationViewModel.EventShowToast -> {
+                Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
+            }
             else -> Unit
         }
     }

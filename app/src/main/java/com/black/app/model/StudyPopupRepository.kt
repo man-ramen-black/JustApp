@@ -76,8 +76,8 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
         return dataStore.getEnabled()
     }
 
-    suspend fun setEnabled(enabled: Boolean) {
-        dataStore.updateEnabled(enabled)
+    suspend fun setEnabled(enabled: Boolean): Result<Unit> {
+        return dataStore.updateEnabled(enabled)
     }
 
     fun loadLatestUri() : Uri? {

@@ -70,6 +70,7 @@
     <string name="usage_timer_paused">%1$d분 동안 일시정지합니다.</string>
     <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
     <string name="usage_timer_pause_duration_invalid">일시정지 시간은 1분 이상으로 입력해주세요.</string>
+    <string name="usage_timer_save_failed">저장에 실패했습니다.</string>
 
     <string name="text_editor_save">저장</string>
     <string name="text_editor_load">불러오기</string>
@@ -107,6 +108,7 @@
     <string name="app_install_notification_preview_update">업데이트</string>
     <string name="app_install_notification_preview_time">지금</string>
     <string name="app_install_notification_send_test">테스트 알림 보내기</string>
+    <string name="app_install_notification_save_failed">설정을 저장하지 못했습니다.</string>
     <string name="app_install_notification_settings_guide">설치 알림을 표시할 수 없습니다.\n알림 설정에서 알림과 \'앱 설치·업데이트\' 항목을 허용해주세요.</string>
     <string name="app_install_notification_section_icon">상단바 아이콘</string>
     <string name="app_install_notification_icon_dark">어두운 배경 24dp</string>

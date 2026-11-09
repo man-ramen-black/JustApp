@@ -45,24 +45,24 @@ class UsageTimerDataStore @Inject constructor(
     override fun getDataStore(context: Context): DataStore<Preferences>
         = context.usageTimerDataStore
 
-    suspend fun updatePauseEndTime(timestamp: Long) {
-        update(KEY_PAUSE_END_TIME, timestamp)
+    suspend fun updatePauseEndTime(timestamp: Long): Result<Unit> {
+        return update(KEY_PAUSE_END_TIME, timestamp)
     }
 
     suspend fun getPauseEndTime(): Long {
         return get(KEY_PAUSE_END_TIME, 0L)
     }
 
-    suspend fun updatePauseDuration(durationMinutes: Int) {
-        update(KEY_PAUSE_DURATION, durationMinutes)
+    suspend fun updatePauseDuration(durationMinutes: Int): Result<Unit> {
+        return update(KEY_PAUSE_DURATION, durationMinutes)
     }
 
     suspend fun getPauseDuration(): Int {
         return get(KEY_PAUSE_DURATION, DEFAULT_PAUSE_DURATION_MINUTES)
     }
 
-    suspend fun updateSelectedApps(packageNames: List<String>) {
-        update(KEY_SELECTED_APPS, packageNames.joinToString(","))
+    suspend fun updateSelectedApps(packageNames: List<String>): Result<Unit> {
+        return update(KEY_SELECTED_APPS, packageNames.joinToString(","))
     }
 
     suspend fun getSelectedApps(): List<String> {

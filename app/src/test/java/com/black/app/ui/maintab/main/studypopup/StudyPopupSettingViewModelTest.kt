@@ -25,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
+import java.io.IOException
 import org.junit.runners.MethodSorters
 
 /** [StudyPopupSettingViewModel]의 표시 설정·권한 안내·파일 불러오기와 저장·내용 편집 동작 검증 */
@@ -50,7 +51,10 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     @Before
     fun setupMocks() {
         every { repository.enabledFlow } returns savedEnabled
-        coEvery { repository.setEnabled(any()) } answers { savedEnabled.value = firstArg() }
+        coEvery { repository.setEnabled(any()) } answers {
+            savedEnabled.value = firstArg()
+            Result.success(Unit)
+        }
         coEvery { repository.countContents() } returns 0
         coEvery { repository.hasContents() } returns false
         every { repository.loadLatestUri() } returns null
@@ -427,5 +431,31 @@ class StudyPopupSettingViewModelTest : BaseTest() {
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_load_failed)),
             collectPendingEvents(viewModel),
         )
+    }
+
+    /**
+     * 표시 설정 저장에 실패하면 실패 토스트를 보내고 권한 안내를 띄우지 않는지 검증
+     *
+     * Given: 저장이 실패하는 저장소, 다른 앱 위에 표시 권한 없음
+     * When: setEnabled(true)
+     * Then: 저장 실패 토스트 수신, 권한 다이얼로그 미표시
+     */
+    @Test
+    fun test_15_setEnabledFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { repository.setEnabled(any()) } returns Result.failure(IOException("disk full"))
+        every { status.canDrawOverlays() } returns false
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.setEnabled(true)
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_save_failed)),
+            collectPendingEvents(viewModel),
+        )
+        assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
     }
 }

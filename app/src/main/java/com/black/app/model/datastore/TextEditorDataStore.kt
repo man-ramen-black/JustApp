@@ -33,8 +33,8 @@ class TextEditorDataStore(
     override fun getDataStore(context: Context): DataStore<Preferences>
         = dataStore
 
-    suspend fun updateLatestFileUri(uri: Uri) {
-        update(KEY_LATEST_FILE_URI, uri.toString())
+    suspend fun updateLatestFileUri(uri: Uri): Result<Unit> {
+        return update(KEY_LATEST_FILE_URI, uri.toString())
     }
 
     fun getLatestFileUriFlow(): Flow<Uri?> {
@@ -42,7 +42,7 @@ class TextEditorDataStore(
             .map { Uri.parse(it ?: return@map null) }
     }
 
-    suspend fun removeLatestFileUri() {
-        remove(KEY_LATEST_FILE_URI)
+    suspend fun removeLatestFileUri(): Result<Unit> {
+        return remove(KEY_LATEST_FILE_URI)
     }
 }

@@ -24,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
+import java.io.IOException
 import org.junit.runners.MethodSorters
 
 /** [UsageTimerViewModel]의 상태 로드·저장·이벤트 발송 동작 검증 */
@@ -82,7 +83,7 @@ class UsageTimerViewModelTest : BaseTest() {
     @Test
     fun test_02_onAppsSelectedSavesAndUpdates() = runTest {
         /** Given **/
-        coEvery { repository.saveSelectedApps(any()) } just Runs
+        coEvery { repository.saveSelectedApps(any()) } returns Result.success(Unit)
         val viewModel = createViewModel()
 
         /** When **/
@@ -107,8 +108,8 @@ class UsageTimerViewModelTest : BaseTest() {
     @Test
     fun test_03_onClickPauseSavesAndSendsEvents() = runTest {
         /** Given **/
-        coEvery { repository.savePauseDuration(any()) } just Runs
-        coEvery { repository.pause(any()) } just Runs
+        coEvery { repository.savePauseDuration(any()) } returns Result.success(Unit)
+        coEvery { repository.pause(any()) } returns Result.success(Unit)
         val viewModel = createViewModel()
         viewModel.onPauseDurationInputChanged("5")
         val receivedEvents = mutableListOf<ViewModelEvent>()
@@ -188,8 +189,8 @@ class UsageTimerViewModelTest : BaseTest() {
     @Test
     fun test_06_onClickPauseUpdatesRemainTime() = runTest {
         /** Given **/
-        coEvery { repository.savePauseDuration(any()) } just Runs
-        coEvery { repository.pause(any()) } just Runs
+        coEvery { repository.savePauseDuration(any()) } returns Result.success(Unit)
+        coEvery { repository.pause(any()) } returns Result.success(Unit)
         val viewModel = createViewModel()
         coEvery { repository.getPauseEndTime() } returns System.currentTimeMillis() + 5 * 60 * 1000L
 
@@ -200,6 +201,38 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Then **/
         assertTrue(viewModel.uiState.value.pauseRemainTimeMillis > 0L)
     }
+
+    /**
+     * 일시정지 시각을 저장하지 못하면 타이머를 떼지 않고 실패 토스트만 보내는지 검증
+     *
+     * Given: pause가 실패 결과를 돌려주는 저장소, 입력 "5"
+     * When: onClickPause 호출 뒤 구분용으로 onClickAccessibility 호출
+     * Then: 저장 실패 토스트 다음에 바로 접근성 설정 이벤트 수신(EventDetachTimerView 없음)
+     */
+    @Test
+    fun test_07_pauseSaveFailureShowsToastOnly() = runTest {
+        /** Given **/
+        coEvery { repository.savePauseDuration(any()) } returns Result.success(Unit)
+        coEvery { repository.pause(any()) } returns Result.failure(IOException("disk full"))
+        val viewModel = createViewModel()
+        viewModel.onPauseDurationInputChanged("5")
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.onClickPause()
+        waitCoroutine()
+        viewModel.onClickAccessibility()
+        viewModel.events.collectEvents(receivedEvents, count = 2)
+
+        /** Then **/
+        assertEquals(
+            listOf(
+                UsageTimerViewModel.EventShowToast(R.string.usage_timer_save_failed),
+                UsageTimerViewModel.EventOpenAccessibilitySettings,
+            ),
+            receivedEvents,
+        )
+    }
 }
 
 /** Flow에서 [count]개 이벤트를 수집하는 테스트 헬퍼 */
@@ -208,4 +241,5 @@ private suspend fun Flow<ViewModelEvent>.collectEvents(
     count: Int,
 ) {
     take(count).toList(into)
+
 }

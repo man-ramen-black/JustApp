@@ -11,17 +11,17 @@ import javax.inject.Inject
 class UsageTimerRepository @Inject constructor(@ApplicationContext context: Context) {
     private val dataStore = UsageTimerDataStore(context)
 
-    suspend fun savePauseDuration(pauseDurationMin: Int) {
-        dataStore.updatePauseDuration(pauseDurationMin)
+    suspend fun savePauseDuration(pauseDurationMin: Int): Result<Unit> {
+        return dataStore.updatePauseDuration(pauseDurationMin)
     }
 
-    suspend fun pause(pauseDurationMin: Int) {
+    suspend fun pause(pauseDurationMin: Int): Result<Unit> {
         // Int 곱셈은 약 35,792분부터 넘쳐 과거 시각이 저장되므로 Long으로 계산
-        dataStore.updatePauseEndTime(System.currentTimeMillis() + pauseDurationMin * 60_000L)
+        return dataStore.updatePauseEndTime(System.currentTimeMillis() + pauseDurationMin * 60_000L)
     }
 
-    suspend fun cancelPause() {
-        dataStore.updatePauseEndTime(0)
+    suspend fun cancelPause(): Result<Unit> {
+        return dataStore.updatePauseEndTime(0)
     }
 
     suspend fun getPauseDuration() : Int {
@@ -32,8 +32,8 @@ class UsageTimerRepository @Inject constructor(@ApplicationContext context: Cont
         return dataStore.getPauseEndTime()
     }
 
-    suspend fun saveSelectedApps(packageNames: List<String>) {
-        dataStore.updateSelectedApps(packageNames)
+    suspend fun saveSelectedApps(packageNames: List<String>): Result<Unit> {
+        return dataStore.updateSelectedApps(packageNames)
     }
 
     suspend fun getSelectedApps() : List<String> {

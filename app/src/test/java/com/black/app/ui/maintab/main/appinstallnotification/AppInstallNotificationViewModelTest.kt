@@ -6,6 +6,7 @@ import com.black.app.service.ForegroundServiceController.StartResult
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.viewmodel.ViewModelEvent
+import com.black.app.R
 import com.black.test.BaseTest
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -28,6 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
+import java.io.IOException
 import org.junit.runners.MethodSorters
 
 /** [AppInstallNotificationViewModel]의 상태 로드, 실행 설정 변경·상태 갱신·테스트 알림 동작과 이벤트 발송 검증 */
@@ -59,7 +61,10 @@ class AppInstallNotificationViewModelTest : BaseTest() {
             activated.value = true
             StartResult.Started
         }
-        coEvery { foregroundServiceController.deactivate() } answers { activated.value = false }
+        coEvery { foregroundServiceController.deactivate() } answers {
+            activated.value = false
+            Result.success(Unit)
+        }
         coEvery { foregroundServiceController.startIfActivated() } returns StartResult.Started
         every { notificationStatus.previewPackageName } returns "com.black.app"
         every { notificationStatus.notifierPackageName } returns "com.black.notifier"
@@ -381,5 +386,30 @@ class AppInstallNotificationViewModelTest : BaseTest() {
             ),
             receivedEvents,
         )
+    }
+
+    /**
+     * 설정 저장에 실패하면 끄기와 켜기 모두 실패 토스트를 보내는지 검증
+     *
+     * Given: deactivate는 실패 결과, activate는 SaveFailed를 돌려주는 컨트롤러
+     * When: setEnabled(false), setEnabled(true) 호출
+     * Then: 저장 실패 토스트 2개 수신
+     */
+    @Test
+    fun test_13_saveFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { foregroundServiceController.deactivate() } returns Result.failure(IOException("disk full"))
+        coEvery { foregroundServiceController.activate() } returns StartResult.SaveFailed
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.setEnabled(false)
+        viewModel.setEnabled(true)
+        waitCoroutine()
+
+        /** Then **/
+        val failedToast = AppInstallNotificationViewModel.EventShowToast(R.string.app_install_notification_save_failed)
+        assertEquals(listOf(failedToast, failedToast), receivedEvents)
     }
 }

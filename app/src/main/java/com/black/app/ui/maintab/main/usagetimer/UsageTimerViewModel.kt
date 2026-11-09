@@ -67,16 +67,19 @@ class UsageTimerViewModel @Inject constructor(
     fun onClickSave() {
         val pauseDuration = validPauseDurationMinutes() ?: return
         launch {
-            repository.savePauseDuration(pauseDuration)
-            sendEvent(EventShowToast(R.string.usage_timer_save_completed))
+            val result = repository.savePauseDuration(pauseDuration)
+            sendEvent(EventShowToast(saveResultMessage(result, R.string.usage_timer_save_completed)))
         }
     }
 
     fun onClickPause() {
         val pauseDuration = validPauseDurationMinutes() ?: return
         launch {
-            repository.savePauseDuration(pauseDuration)
-            repository.pause(pauseDuration)
+            // 일시정지 시각을 저장하지 못하면 타이머를 떼지 않고 실패만 안내
+            if (repository.savePauseDuration(pauseDuration).isFailure || repository.pause(pauseDuration).isFailure) {
+                sendEvent(EventShowToast(R.string.usage_timer_save_failed))
+                return@launch
+            }
             updatePauseRemainTime()
             sendEvent(EventDetachTimerView)
             sendEvent(EventShowToast(R.string.usage_timer_paused, listOf(pauseDuration)))
@@ -85,9 +88,9 @@ class UsageTimerViewModel @Inject constructor(
 
     fun onClickCancelPause() {
         launch {
-            repository.cancelPause()
+            val result = repository.cancelPause()
             updatePauseRemainTime()
-            sendEvent(EventShowToast(R.string.usage_timer_pause_canceled))
+            sendEvent(EventShowToast(saveResultMessage(result, R.string.usage_timer_pause_canceled)))
         }
     }
 
@@ -107,11 +110,20 @@ class UsageTimerViewModel @Inject constructor(
 
     fun onAppsSelected(packageNames: List<String>) {
         launch {
-            repository.saveSelectedApps(packageNames)
+            if (repository.saveSelectedApps(packageNames).isFailure) {
+                sendEvent(EventShowToast(R.string.usage_timer_save_failed))
+                return@launch
+            }
             mutableUiState.update {
                 it.copy(selectedApps = packageNames.map(installedAppResolver::resolve))
             }
         }
+    }
+
+    /** 저장 결과에 맞는 토스트 메시지(성공이면 [successMessageResId]) */
+    @StringRes
+    private fun saveResultMessage(result: Result<Unit>, @StringRes successMessageResId: Int): Int {
+        return if (result.isSuccess) successMessageResId else R.string.usage_timer_save_failed
     }
 
     /** 입력이 1분 이상의 정수면 그 값, 아니면 안내 토스트를 보내고 null */

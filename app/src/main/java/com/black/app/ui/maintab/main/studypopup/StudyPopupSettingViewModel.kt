@@ -70,7 +70,11 @@ class StudyPopupSettingViewModel @Inject constructor(
 
     fun setEnabled(enabled: Boolean) {
         launch {
-            repository.setEnabled(enabled)
+            // 저장에 실패하면 스위치는 저장값을 따라 이전 상태로 남음
+            if (repository.setEnabled(enabled).isFailure) {
+                sendEvent(EventShowToast(R.string.study_popup_save_failed))
+                return@launch
+            }
             // 권한이 없으면 화면이 켜져도 팝업을 띄우지 못하므로 켤 때 바로 허용하도록 안내
             if (enabled && !status.canDrawOverlays()) {
                 showOverlayPermissionDialog()

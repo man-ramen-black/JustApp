@@ -1,5 +1,7 @@
 package com.black.app.ui.maintab.main.appinstallnotification
 
+import androidx.annotation.StringRes
+import com.black.app.R
 import com.black.app.service.ForegroundServiceController
 import com.black.app.service.ForegroundServiceController.StartResult
 import com.black.app.ui.common.selectapp.InstalledAppResolver
@@ -28,6 +30,8 @@ class AppInstallNotificationViewModel @Inject constructor(
     data object EventOpenBatteryOptimizationSettings : AppInstallNotificationEvent()
     /** 앱 알림 설정 화면 이동 */
     data object EventOpenNotificationSettings : AppInstallNotificationEvent()
+    /** 문자열 리소스 토스트 표시 */
+    data class EventShowToast(@StringRes val messageResId: Int) : AppInstallNotificationEvent()
 
     private val mutableUiState = MutableStateFlow(
         AppInstallNotificationUiState(
@@ -76,7 +80,9 @@ class AppInstallNotificationViewModel @Inject constructor(
     fun setEnabled(enabled: Boolean) {
         launch {
             if (!enabled) {
+                // 저장에 실패하면 서비스를 멈추지 않으므로 스위치도 저장값(켜짐)을 따라 켜진 채 표시
                 foregroundServiceController.deactivate()
+                    .onFailure { sendEvent(EventShowToast(R.string.app_install_notification_save_failed)) }
                 return@launch
             }
             when (foregroundServiceController.activate()) {
@@ -86,8 +92,10 @@ class AppInstallNotificationViewModel @Inject constructor(
                 StartResult.Started -> if (!notificationStatus.canShowNotification()) {
                     sendEvent(EventOpenNotificationSettings)
                 }
-                // 실행 설정 저장 실패, 스위치는 저장값을 따라 꺼진 채 표시
+                // 시작 직전 다른 경로에서 설정이 꺼진 경우, 스위치는 저장값을 따라 꺼진 채 표시
                 StartResult.NotActivated -> Unit
+                // 스위치는 저장값을 따라 꺼진 채 표시
+                StartResult.SaveFailed -> sendEvent(EventShowToast(R.string.app_install_notification_save_failed))
             }
         }
     }

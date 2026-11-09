@@ -28,6 +28,8 @@ class ForegroundServiceController @Inject constructor(
         NotActivated,
         /** 배터리 최적화 예외 없음(백그라운드 시작 불가) */
         BatteryOptimizationRequired,
+        /** 실행 설정 저장 실패 */
+        SaveFailed,
     }
 
     private val appContext = context.applicationContext
@@ -43,16 +45,24 @@ class ForegroundServiceController @Inject constructor(
 
     /** 실행 설정 저장 후 서비스 시작 */
     suspend fun activate(): StartResult {
-        dataStore.updateActivated(true)
+        if (dataStore.updateActivated(true).isFailure) {
+            return StartResult.SaveFailed
+        }
         return startIfActivated()
     }
 
-    /** 실행 설정 저장 후 서비스 중지 */
-    suspend fun deactivate() {
-        // onDestroy의 재시작 확인이 꺼진 설정을 읽도록 중지 전에 저장 완료
-        dataStore.updateActivated(false)
-        // stopService는 멈춘 서비스를 생성하지 않고 대기 중인 시작 요청도 취소
-        appContext.stopService(Intent(appContext, ForegroundService::class.java))
+    /**
+     * 실행 설정 저장 후 서비스 중지
+     *
+     * onDestroy의 재시작 확인이 꺼진 설정을 읽도록 중지 전에 저장 완료.
+     * 저장에 실패하면 멈춰도 저장값(켜짐)을 읽고 다시 시작하므로 중지하지 않고 실패 반환
+     */
+    suspend fun deactivate(): Result<Unit> {
+        return dataStore.updateActivated(false)
+            .onSuccess {
+                // stopService는 멈춘 서비스를 생성하지 않고 대기 중인 시작 요청도 취소
+                appContext.stopService(Intent(appContext, ForegroundService::class.java))
+            }
     }
 
     /** 실행 설정이 켜져 있고 배터리 최적화 예외일 때만 서비스 시작 */
