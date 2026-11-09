@@ -191,4 +191,28 @@ class SelectAppViewModelTest : BaseTest() {
         /** Then **/
         assertEquals(listOf("com.c", "com.a", "com.b"), viewModel.itemList.value?.map { it.packageName })
     }
+
+    /**
+     * 다시 init해도 사용자가 바꾼 체크와 목록이 처음 값으로 돌아가지 않는지 검증
+     *
+     * Given: 초기 선택 [com.a]로 init한 뒤 com.b 체크
+     * When: 같은 인자로 init 다시 호출(회전 뒤 뷰 재생성)
+     * Then: com.b 체크 유지, isInitialized true
+     */
+    @Test
+    fun test_08_secondInitKeepsChangedChecks() = runTest {
+        /** Given **/
+        val items = listOf(item("com.a"), item("com.b"))
+        viewModel.init(items, listOf("com.a"))
+        waitCoroutine()
+        viewModel.onItemClick(items.first { it.packageName == "com.b" })
+
+        /** When **/
+        viewModel.init(listOf(item("com.a"), item("com.b")), listOf("com.a"))
+        waitCoroutine()
+
+        /** Then **/
+        assertTrue(viewModel.isInitialized)
+        assertTrue(viewModel.itemList.value!!.first { it.packageName == "com.b" }.isChecked.value!!)
+    }
 }

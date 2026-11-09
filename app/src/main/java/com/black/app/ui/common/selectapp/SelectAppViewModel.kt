@@ -21,8 +21,17 @@ class SelectAppViewModel @Inject constructor() : com.black.core.viewmodel.EventV
     val itemList = MutableLiveData<List<SelectAppItem>>(listOf())
     val isProgress = MutableLiveData(true)
 
+    /** 회전 등으로 뷰가 다시 만들어져도 바꾼 체크를 유지하도록 첫 초기화 여부 기록(Main에서만 읽고 씀) */
+    var isInitialized = false
+        private set
+
+    /** 첫 호출에서만 목록과 초기 선택을 반영하고 이후 호출은 무시 */
     fun init(list: List<SelectAppItem>, checkedPackageNames: List<String> = emptyList()) {
         viewModelScope.launch(Dispatchers.Main) {
+            if (isInitialized) {
+                return@launch
+            }
+            isInitialized = true
             isProgress.value = false
             val checkedSet = checkedPackageNames.toSet()
             list.forEach { it.isChecked.value = checkedSet.contains(it.packageName) }

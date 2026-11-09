@@ -60,6 +60,10 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // 회전으로 뷰만 다시 만들어지면 ViewModel의 목록과 바꾼 체크를 그대로 사용
+        if (viewModel.isInitialized) {
+            return
+        }
         val checkedPackageNames =
             arguments?.getStringArrayList(ARGUMENT_KEY_CHECKED_PACKAGE_NAMES) ?: emptyList<String>()
         lifecycleScope.launch(Dispatchers.IO) {
