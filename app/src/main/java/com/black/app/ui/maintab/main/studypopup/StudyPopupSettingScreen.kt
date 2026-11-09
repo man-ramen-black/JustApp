@@ -37,7 +37,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
-import com.black.app.ui.maintab.main.studypopup.popup.StudyPopupView
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ContainerIconButton
@@ -122,7 +121,7 @@ fun StudyPopupSettingScreen(
                 createDocumentLauncher.launch(context.getString(R.string.study_popup_default_file_name))
             }
             is StudyPopupSettingViewModel.EventShowPopupPreview -> {
-                StudyPopupView(context).attachView()
+                StudyPopupGlobal.showPreview(context)
             }
             is StudyPopupSettingViewModel.EventOpenOverlaySettings -> {
                 PermissionHelper.showDrawOverlaysSetting(context)

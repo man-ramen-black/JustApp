@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
-import com.black.app.broadcast.NotificationActionReceiver
 import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
 import com.black.app.ui.MainActivity
@@ -37,7 +36,6 @@ class ForegroundService : Service() {
 
     private val interfaces : List<Interface> = listOf(
         ScreenReceiver.ServiceInterface,
-        NotificationActionReceiver.ForegroundServiceInterface,
         PackageInstallReceiver.ServiceInterface
     )
 

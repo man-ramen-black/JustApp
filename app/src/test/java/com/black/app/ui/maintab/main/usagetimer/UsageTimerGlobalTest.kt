@@ -13,6 +13,8 @@ import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -28,10 +30,10 @@ class UsageTimerGlobalTest : BaseTest() {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    /** 각 테스트 후 남은 타이머 오버레이 제거(싱글턴 상태 격리) */
+    /** 각 테스트 후 남은 타이머 오버레이와 세션·닫기·지연 숨김 상태 초기화(싱글턴 상태 격리) */
     @After
-    fun detachTimerViews() {
-        UsageTimerGlobal.detachView()
+    fun resetTimerState() {
+        UsageTimerGlobal.reset()
         attachedTimerViews().forEach { it.detachView() }
     }
 
@@ -206,69 +208,60 @@ class UsageTimerGlobalTest : BaseTest() {
     }
 
     /**
-     * 닫은 앱이 그대로 활성이면 닫기 유지
+     * 닫은 앱에 머무는 중이면(떠난 시각 없음) 닫기 유지
      * 닫기 후 같은 앱 내 activity 전환 시 타이머가 재노출되지 않음
      *
-     * Given: 활성 앱과 닫은 앱이 동일
-     * When: resolveDismissedPackage 호출
-     * Then: 닫은 앱 유지
+     * Given: 요청 앱과 닫은 앱이 같고 떠난 시각 없음
+     * When: isDismissedOnShow 호출
+     * Then: true
      */
     @Test
-    fun test_13_keepDismissedWhenSameAppActive() = runTest {
+    fun test_13_keepDismissedWhileStaying() = runTest {
         /** Given / When / Then **/
-        assertEquals(
-            "com.a",
-            UsageTimerGlobal.resolveDismissedPackage("com.a", "com.a"),
-        )
+        assertTrue(UsageTimerGlobal.isDismissedOnShow("com.a", "com.a", null, 100_000L))
     }
 
     /**
-     * 다른 앱이 활성으로 확정되면 닫기 해제
-     * 다른 앱에 갔다가 닫은 앱으로 복귀하면 타이머가 다시 노출됨
+     * 닫은 앱을 떠났다가 유예 안에 돌아오면 닫기 유지(공유 시트·알림창 같은 일시 창 전환)
      *
-     * Given: 활성 앱과 닫은 앱이 다름
-     * When: resolveDismissedPackage 호출
-     * Then: null (닫기 해제)
+     * Given: 5초 전에 닫은 앱을 떠남
+     * When: 같은 앱으로 isDismissedOnShow 호출
+     * Then: true
      */
     @Test
-    fun test_14_clearDismissedWhenOtherAppActive() = runTest {
+    fun test_14_keepDismissedWhenReturningWithinGrace() = runTest {
         /** Given / When / Then **/
-        assertEquals(
-            null,
-            UsageTimerGlobal.resolveDismissedPackage("com.b", "com.a"),
-        )
+        assertTrue(UsageTimerGlobal.isDismissedOnShow("com.a", "com.a", 95_000L, 100_000L))
     }
 
     /**
-     * 활성 앱을 알 수 없으면(전환 순간 노드 미준비) 닫기 유지
+     * 닫은 앱을 떠났다가 유예를 넘겨 돌아오면 닫기 해제
      *
-     * Given: activePackage null, 닫은 앱 있음
-     * When: resolveDismissedPackage 호출
-     * Then: 닫은 앱 유지
+     * Given: 유예(10초)보다 1초 더 전에 닫은 앱을 떠남
+     * When: 같은 앱으로 isDismissedOnShow 호출
+     * Then: false
      */
     @Test
-    fun test_15_keepDismissedWhenActiveUnknown() = runTest {
-        /** Given / When / Then **/
-        assertEquals(
-            "com.a",
-            UsageTimerGlobal.resolveDismissedPackage(null, "com.a"),
-        )
+    fun test_15_releaseDismissedAfterGrace() = runTest {
+        /** Given **/
+        val leftAt = 100_000L - UsageTimerGlobal.SESSION_GRACE_MILLIS - 1_000L
+
+        /** When / Then **/
+        assertFalse(UsageTimerGlobal.isDismissedOnShow("com.a", "com.a", leftAt, 100_000L))
     }
 
     /**
-     * 닫은 앱이 없으면 결과도 없음
+     * 닫은 앱이 아닌 앱의 표시 요청이면 닫기 해제, 닫은 앱이 없으면 표시
      *
-     * Given: 닫은 앱 없음
-     * When: resolveDismissedPackage 호출
-     * Then: null
+     * Given: 닫은 앱 com.a, 요청 앱 com.b / 닫은 앱 없음
+     * When: isDismissedOnShow 호출
+     * Then: 모두 false
      */
     @Test
-    fun test_16_nullWhenNoDismissed() = runTest {
+    fun test_16_notDismissedForOtherAppOrNone() = runTest {
         /** Given / When / Then **/
-        assertEquals(
-            null,
-            UsageTimerGlobal.resolveDismissedPackage("com.a", null),
-        )
+        assertFalse(UsageTimerGlobal.isDismissedOnShow("com.b", "com.a", null, 100_000L))
+        assertFalse(UsageTimerGlobal.isDismissedOnShow("com.a", null, null, 100_000L))
     }
 
     /**
@@ -311,6 +304,101 @@ class UsageTimerGlobalTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(trackedView), remainingViews)
+        assertTrue(attachedTimerViews().isEmpty())
+    }
+
+    /**
+     * 앱 화면 미리보기는 여러 번 요청해도 하나만 붙고, 일시정지 경로의 detachAllViews로 함께 제거되는지 검증
+     *
+     * Given: 타이머 오버레이 없음
+     * When: showPreview를 두 번 호출한 뒤 detachAllViews 호출
+     * Then: 미리보기 호출 뒤 오버레이 1개, detachAllViews 뒤 0개
+     */
+    @Test
+    fun test_19_previewAttachesOnceAndDetachesWithTimer() = runTest {
+        /** Given **/
+        // 남은 오버레이 없음(@After 정리)
+
+        /** When **/
+        UsageTimerGlobal.showPreview(context)
+        UsageTimerGlobal.showPreview(context)
+        shadowOf(Looper.getMainLooper()).idle()
+        val previewViews = attachedTimerViews()
+        UsageTimerGlobal.detachAllViews()
+
+        /** Then **/
+        assertEquals(1, previewViews.size)
+        assertTrue(attachedTimerViews().isEmpty())
+    }
+
+    /**
+     * reset이 떠 있는 타이머와 닫기 상태를 모두 지워 같은 앱도 다시 표시되는지 검증(접근성 서비스 종료 경로)
+     *
+     * Given: 선택 앱 타이머를 띄운 뒤 닫기 버튼으로 닫음
+     * When: reset 호출 후 같은 앱으로 다시 표시 요청
+     * Then: reset 직후 오버레이 0개, 다시 표시 요청 뒤 1개
+     */
+    @Test
+    fun test_20_resetClearsViewsAndDismissedState() = runTest {
+        /** Given **/
+        UsageTimerGlobal.showForApp(context, "com.example.app")
+        // 대기 중인 바인딩을 실행해 닫기 버튼 클릭 리스너 연결
+        shadowOf(Looper.getMainLooper()).idle()
+        clickClose(attachedTimerViews().single())
+
+        /** When **/
+        UsageTimerGlobal.reset()
+        val afterReset = attachedTimerViews()
+        UsageTimerGlobal.showForApp(context, "com.example.app")
+        shadowOf(Looper.getMainLooper()).idle()
+
+        /** Then **/
+        assertTrue(afterReset.isEmpty())
+        assertEquals(1, attachedTimerViews().size)
+    }
+
+    /**
+     * 활성 창 확정 시 닫은 앱을 떠난 시각 기록 규칙 검증
+     *
+     * Given: 닫은 앱 com.a
+     * When: 활성 앱이 com.a, 처음 다른 앱, 이미 떠난 뒤 다른 앱, 불명일 때 resolveDismissedLeftAt 호출
+     * Then: 머무는 중 null, 처음 떠나면 지금, 이미 떠났으면 처음 시각 유지, 불명이면 현재 값 유지
+     */
+    @Test
+    fun test_21_resolveDismissedLeftAt() = runTest {
+        /** Given **/
+        val now = 100_000L
+
+        /** When / Then **/
+        assertNull(UsageTimerGlobal.resolveDismissedLeftAt("com.a", "com.a", 90_000L, now))
+        assertEquals(now, UsageTimerGlobal.resolveDismissedLeftAt("android", "com.a", null, now))
+        assertEquals(90_000L, UsageTimerGlobal.resolveDismissedLeftAt("com.android.systemui", "com.a", 90_000L, now))
+        assertEquals(90_000L, UsageTimerGlobal.resolveDismissedLeftAt(null, "com.a", 90_000L, now))
+        assertNull(UsageTimerGlobal.resolveDismissedLeftAt("android", null, null, now))
+    }
+
+    /**
+     * 닫은 뒤 알림창 같은 다른 창이 활성으로 확정됐다가 곧 돌아와도 타이머가 다시 뜨지 않는지 검증
+     *
+     * Given: 선택 앱 타이머를 띄운 뒤 닫기 버튼으로 닫음
+     * When: 시스템 UI가 활성인 숨김 예약이 디바운스를 통과한 뒤 같은 앱으로 다시 표시 요청
+     * Then: 타이머 오버레이 0개
+     */
+    @Test
+    fun test_22_transientWindowKeepsDismissed() = runTest {
+        /** Given **/
+        UsageTimerGlobal.showForApp(context, "com.example.app")
+        // 대기 중인 바인딩을 실행해 닫기 버튼 클릭 리스너 연결
+        shadowOf(Looper.getMainLooper()).idle()
+        clickClose(attachedTimerViews().single())
+
+        /** When **/
+        UsageTimerGlobal.scheduleHide("com.android.systemui")
+        waitCoroutine()
+        UsageTimerGlobal.showForApp(context, "com.example.app")
+        shadowOf(Looper.getMainLooper()).idle()
+
+        /** Then **/
         assertTrue(attachedTimerViews().isEmpty())
     }
 

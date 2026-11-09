@@ -92,7 +92,7 @@
     <string name="package_install_notification_updated">업데이트되었습니다.</string>
     <string name="app_install_notification_section_alert">알림 설정</string>
     <string name="app_install_notification_switch_label">설치·업데이트 알림 받기</string>
-    <string name="app_install_notification_switch_description">켜면 백그라운드 서비스를 실행합니다.\n화면을 켤 때 뜨는 스터디 팝업 등 화면 켜짐·꺼짐 연동 기능도 이 서비스로 동작합니다.</string>
+    <string name="app_install_notification_switch_description">켜면 백그라운드 서비스를 실행합니다.\n화면을 켤 때 뜨는 스터디 팝업도 이 서비스로 동작합니다.</string>
     <string name="app_install_notification_section_status">상태</string>
     <string name="app_install_notification_status_service">서비스</string>
     <string name="app_install_notification_status_running">실행 중</string>

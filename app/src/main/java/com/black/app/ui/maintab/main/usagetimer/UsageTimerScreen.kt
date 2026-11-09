@@ -41,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
@@ -77,7 +76,7 @@ fun UsageTimerScreen(
             is UsageTimerViewModel.EventShowTimerView -> {
                 // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 크래시하므로 권한 설정으로 안내
                 if (PermissionHelper.canDrawOverlays(context)) {
-                    UsageTimerView(context).attachView()
+                    UsageTimerGlobal.showPreview(context)
                 } else {
                     PermissionHelper.showDrawOverlaysSetting(context)
                 }
@@ -87,7 +86,7 @@ fun UsageTimerScreen(
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
             is UsageTimerViewModel.EventDetachTimerView -> {
-                UsageTimerGlobal.detachView()
+                UsageTimerGlobal.detachAllViews()
             }
             is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
                 PermissionHelper.openAccessibilityServiceDetailSetting(context, UsageTimerAccessibility::class.java)

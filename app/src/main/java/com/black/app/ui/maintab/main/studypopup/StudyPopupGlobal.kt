@@ -36,11 +36,30 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
             if (!canShow(StudyPopupRepository(context))) {
                 return@launch
             }
+            // 미리보기 등으로 이미 떠 있으면 겹쳐 붙이지 않음
+            if (studyPopupView?.isAttachedToWindow == true) {
+                return@launch
+            }
             // 확인하는 동안 권한이 회수되면 창 추가가 거부되므로 실패는 부착하지 않은 것으로 처리
             val view = StudyPopupView(ContextThemeWrapper(context, R.style.Theme_Black))
             if (view.tryAttachView()) {
                 studyPopupView = view
             }
+        }
+    }
+
+    /**
+     * 설정 화면에서 팝업 미리보기 표시(이미 떠 있으면 다시 붙이지 않음)
+     *
+     * TYPE_APPLICATION_OVERLAY 창은 Activity가 파괴돼도 걷히지 않아 Activity context로 만들면 Activity를 붙잡으므로 applicationContext로 생성
+     */
+    fun showPreview(context: Context) {
+        if (studyPopupView?.isAttachedToWindow == true) {
+            return
+        }
+        val view = StudyPopupView(ContextThemeWrapper(context.applicationContext, R.style.Theme_Black))
+        if (view.tryAttachView()) {
+            studyPopupView = view
         }
     }
 

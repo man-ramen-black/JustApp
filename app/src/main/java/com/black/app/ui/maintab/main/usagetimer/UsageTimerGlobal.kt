@@ -1,13 +1,9 @@
 package com.black.app.ui.maintab.main.usagetimer
 
 import android.content.Context
-import android.content.Intent
 import android.os.SystemClock
 import android.view.ContextThemeWrapper
-import android.widget.Toast
 import com.black.app.R
-import com.black.app.broadcast.NotificationActionReceiver
-import com.black.app.broadcast.ScreenReceiver
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
 import com.black.core.util.Log
@@ -18,21 +14,23 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.lang.ref.WeakReference
 
 /**
- * UsageTimerAccessibility, NotificationAction에서 UsageTimer 동작 구현
+ * UsageTimerAccessibility에서 UsageTimer 동작 구현
  * Created by jinhyuk.lee on 2022/04/29
  **/
-object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.Interface {
+object UsageTimerGlobal {
     private var usageTimerView : UsageTimerView? = null
     private var currentPackageName : String? = null
-    private var repository :  WeakReference<UsageTimerRepository>? = null
 
     /** 앱 전환 시 짧은 시간에 발생하는 창 이벤트 버스트로 인한 깜빡임 방지용 지연 숨김 시간(ms) */
     const val HIDE_DEBOUNCE_MILLIS = 500L
 
-    /** 숨김 후 같은 앱으로 복귀 시 세션을 이어가는 유예 시간(ms). 권한 다이얼로그·공유 시트 등 일시적 창 전환 흡수 */
+    /**
+     * 숨김 후 같은 앱으로 복귀 시 세션과 닫기를 이어가는 유예 시간(ms)
+     *
+     * 권한 다이얼로그·공유 시트·알림창 등 일시적 창 전환을 흡수
+     */
     const val SESSION_GRACE_MILLIS = 10_000L
 
     /** 세션 시작 시각(elapsedRealtime ms). 진행 중 세션 없으면 null */
@@ -44,11 +42,17 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     /** 뷰가 숨겨진 시각(elapsedRealtime ms). 유예 판정 기준, 표시 중이면 null */
     private var sessionHiddenElapsedMillis: Long? = null
 
-    /** 닫기 버튼으로 닫은 앱 패키지명. 같은 앱에 머무는 동안 재표시 차단 기준, 없으면 null */
+    /** 닫기 버튼으로 닫은 앱 패키지명. 같은 앱에 머물거나 유예 안에 돌아오는 동안 재표시 차단 기준, 없으면 null */
     private var dismissedPackageName: String? = null
+
+    /** 닫은 앱을 떠나 다른 창이 활성으로 확정된 시각(elapsedRealtime ms). 닫은 앱에 머무는 중이면 null */
+    private var dismissedLeftElapsedMillis: Long? = null
 
     private val mainScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hideJob: Job? = null
+
+    /** 앱 화면에서 띄운 미리보기 타이머. 선택 앱 세션과 별개로 하나만 유지 */
+    private var previewView: UsageTimerView? = null
 
     /**
      * 타이머 동작 종류
@@ -104,19 +108,51 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     }
 
     /**
-     * 활성 앱 확정 시 유지할 닫은 앱 패키지 결정
-     * - 닫은 앱이 그대로 활성: 닫기 유지(같은 앱 내 창 전환에 재표시하지 않음)
-     * - 다른 앱이 활성으로 확정: 닫기 해제(이후 닫은 앱 복귀 시 재표시)
-     * - 활성 앱 불명(activePackage null): 현재 상태 유지
+     * 활성 창 확정 시 닫은 앱을 떠난 시각 결정
+     * - 닫은 앱 없음: null
+     * - 활성 앱 불명(activePackage null): 현재 값 유지
+     * - 닫은 앱이 그대로 활성: null(머무는 중)
+     * - 다른 창이 활성: 처음 떠난 시각 유지, 없으면 지금
      *
      * @param activePackage 현재 활성 앱 패키지명(불명이면 null)
      * @param dismissedPackage 닫은 앱 패키지명(없으면 null)
-     * @return 유지할 닫은 앱 패키지명(해제 시 null)
+     * @param dismissedLeftElapsedMillis 이미 기록된 떠난 시각(elapsedRealtime ms, 없으면 null)
+     * @param nowElapsedMillis 현재 시각(elapsedRealtime ms)
+     * @return 기록할 떠난 시각(머무는 중이거나 닫은 앱이 없으면 null)
      */
-    fun resolveDismissedPackage(activePackage: String?, dismissedPackage: String?) : String? {
+    fun resolveDismissedLeftAt(
+        activePackage: String?,
+        dismissedPackage: String?,
+        dismissedLeftElapsedMillis: Long?,
+        nowElapsedMillis: Long
+    ) : Long? {
         dismissedPackage ?: return null
-        activePackage ?: return dismissedPackage
-        return if (activePackage == dismissedPackage) dismissedPackage else null
+        activePackage ?: return dismissedLeftElapsedMillis
+        if (activePackage == dismissedPackage) return null
+        return dismissedLeftElapsedMillis ?: nowElapsedMillis
+    }
+
+    /**
+     * 표시 요청 시 닫기를 유지할지 결정
+     * - 닫은 앱이 아닌 앱의 요청: 해제
+     * - 닫은 앱에 머무는 중이거나 떠난 뒤 유예 안에 복귀: 유지(공유 시트·알림창 같은 일시 창 전환 흡수)
+     * - 유예를 넘겨 복귀: 해제
+     *
+     * @param requestPackageName 표시를 요청한 앱 패키지명
+     * @param dismissedPackage 닫은 앱 패키지명(없으면 null)
+     * @param dismissedLeftElapsedMillis 닫은 앱을 떠난 시각(elapsedRealtime ms, 머무는 중이면 null)
+     * @param nowElapsedMillis 현재 시각(elapsedRealtime ms)
+     * @return 닫기를 유지해 표시하지 않으면 true
+     */
+    fun isDismissedOnShow(
+        requestPackageName: String,
+        dismissedPackage: String?,
+        dismissedLeftElapsedMillis: Long?,
+        nowElapsedMillis: Long
+    ) : Boolean {
+        if (requestPackageName != dismissedPackage) return false
+        dismissedLeftElapsedMillis ?: return true
+        return nowElapsedMillis - dismissedLeftElapsedMillis <= SESSION_GRACE_MILLIS
     }
 
     /**
@@ -132,14 +168,17 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         // 표시 요청 시 예약된 지연 숨김 취소(앱 전환 버스트로 인한 깜빡임 방지)
         cancelHide()
 
-        // 닫은 앱이 그대로 활성이면 재표시 차단, 다른 앱이면 닫기 해제 후 표시 진행
-        dismissedPackageName = resolveDismissedPackage(packageName, dismissedPackageName)
-        if (dismissedPackageName != null) {
+        // 닫은 앱에 머물거나 유예 안에 돌아오면 재표시 차단, 그 밖에는 닫기 해제 후 표시 진행
+        val now = SystemClock.elapsedRealtime()
+        if (isDismissedOnShow(packageName, dismissedPackageName, dismissedLeftElapsedMillis, now)) {
+            // 닫은 앱으로 돌아왔으므로 다시 머무는 상태
+            dismissedLeftElapsedMillis = null
             Log.d("UsageTimer dismissed : $packageName")
             return
         }
+        dismissedPackageName = null
+        dismissedLeftElapsedMillis = null
 
-        val now = SystemClock.elapsedRealtime()
         val sessionStart = resolveSessionStart(
             packageName, sessionPackageName, sessionStartElapsedMillis, sessionHiddenElapsedMillis, now
         )
@@ -168,16 +207,19 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     }
 
     /**
-     * 선택 앱이 백그라운드로 갈 때 타이머 제거
-     * 앱 전환 직후 표시가 재요청되는 깜빡임을 막기 위해 지연 숨김 예약(이미 예약 중이면 유지)
-     * 디바운스를 통과해 다른 앱이 활성으로 확정되면 닫기 해제(닫은 앱 복귀 시 재표시 허용)
+     * 선택 앱이 아닌 창이 활성이 되면 지연 숨김 예약(이미 예약 중이면 유지, 타이머가 없어도 예약)
+     *
+     * 앱 전환 직후 표시가 재요청되는 깜빡임을 막기 위해 바로 떼지 않음.
+     * 디바운스를 통과해 활성 창이 확정되면 타이머를 떼고 닫은 앱을 떠난 시각을 기록(유예 안에 돌아오면 닫기 유지)
      */
-    fun hideIfShown(activePackage: String?) {
+    fun scheduleHide(activePackage: String?) {
         if (hideJob?.isActive == true) return
         hideJob = mainScope.launch {
             delay(HIDE_DEBOUNCE_MILLIS)
             detachView()
-            dismissedPackageName = resolveDismissedPackage(activePackage, dismissedPackageName)
+            dismissedLeftElapsedMillis = resolveDismissedLeftAt(
+                activePackage, dismissedPackageName, dismissedLeftElapsedMillis, SystemClock.elapsedRealtime()
+            )
         }
     }
 
@@ -187,23 +229,51 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         hideJob = null
     }
 
+    /** 선택 앱 타이머 제거(앱 전환 숨김) */
     fun detachView() {
         usageTimerView?.detachView()
     }
 
+    /** 선택 앱 타이머와 앱 화면에서 띄운 미리보기 타이머를 함께 제거(일시정지) */
+    fun detachAllViews() {
+        detachView()
+        previewView?.detachView()
+    }
+
+    /**
+     * 앱 화면에서 타이머 미리보기 표시(이미 떠 있으면 다시 붙이지 않음)
+     *
+     * TYPE_APPLICATION_OVERLAY 창은 Activity가 파괴돼도 걷히지 않아 Activity context로 만들면 Activity를 붙잡으므로 applicationContext로 생성
+     */
+    fun showPreview(context: Context) {
+        if (previewView != null) {
+            return
+        }
+        val view = UsageTimerView(ContextThemeWrapper(context.applicationContext, R.style.Theme_Black))
+        if (view.tryAttachView()) {
+            previewView = view
+        }
+    }
+
     /**
      * 닫기 버튼으로 타이머 제거
-     * 같은 앱에 머무는 동안 재표시하지 않도록 닫은 앱 패키지 기록(다른 앱 전환 확정 시 해제)
+     * 같은 앱에 머무는 동안 재표시하지 않도록 닫은 앱 패키지 기록
+     * (다른 창으로 떠난 뒤 유예를 넘겨 돌아오거나 다른 선택 앱이 표시되면 해제)
      * 앱 화면 SHOW로 띄운 타이머처럼 추적하지 않는 뷰는 닫기 기록 없이 그 뷰만 제거
      */
     fun closeByUser(view: UsageTimerView) {
         if (view === usageTimerView) {
             dismissedPackageName = currentPackageName
+            dismissedLeftElapsedMillis = null
         }
         view.detachView()
     }
 
-    /** 표시 중인 타이머의 경과 시간 초기화 */
+    /**
+     * 표시 중인 타이머의 경과 시간 초기화
+     *
+     * 화면을 껐다 켜면 새 사용 세션으로 보고 경과 시간을 0부터 다시 시작하도록 [UsageTimerAccessibility]가 화면이 켜질 때 호출
+     */
     fun resetTimer() {
         if (sessionStartElapsedMillis != null) {
             sessionStartElapsedMillis = SystemClock.elapsedRealtime()
@@ -219,14 +289,20 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
     }
 
     /**
-     * 화면이 켜질 때 타이머 초기화
-     * 화면을 껐다 켜면 새 사용 세션으로 보고 경과 시간을 0부터 다시 시작
+     * 뷰·세션·닫기·지연 숨김 상태를 모두 초기화
+     *
+     * 접근성 서비스가 꺼질 때 서비스 context를 가진 뷰와 세션이 전역 object에 남지 않도록 호출(테스트 격리에도 사용)
      */
-    override fun onScreenOn(context: Context, intent: Intent) {
-        resetTimer()
-    }
-
-    override fun onScreenOff(context: Context, intent: Intent) {
+    fun reset() {
+        cancelHide()
+        usageTimerView?.detachView()
+        previewView?.detachView()
+        usageTimerView = null
+        previewView = null
+        currentPackageName = null
+        dismissedPackageName = null
+        dismissedLeftElapsedMillis = null
+        clearSession()
     }
 
     /**
@@ -235,6 +311,10 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
      * 추적하지 않는 뷰(앱 화면 SHOW 타이머)의 제거는 표시 중인 선택 앱 타이머 추적을 끊지 않도록 무시
      */
     fun onViewDetached(view: UsageTimerView) {
+        if (view === previewView) {
+            previewView = null
+            return
+        }
         if (view !== usageTimerView) return
         usageTimerView = null
         currentPackageName = null
@@ -250,28 +330,8 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
         return System.currentTimeMillis() < endTime
     }
 
-    override fun onNotificationAction(context: Context, intent: Intent): Boolean {
-        if (intent.action == NotificationActionReceiver.ACTION_PAUSE_USAGE_TIMER) {
-            mainScope.launch { pauseUsageTimerInNotificationAction(context) }
-            return true
-        }
-        return false
-    }
-
-    private suspend fun pauseUsageTimerInNotificationAction(context: Context) {
-        val repository = usageTimerRepository(context)
-
-        val pauseDuration = repository.getPauseDuration()
-        repository.pause(pauseDuration)
-        detachView()
-        clearSession()
-
-        Toast.makeText(context, "UsageTimer paused", Toast.LENGTH_SHORT)
-            .show()
-    }
-
-    /** 약참조로 캐시된 UsageTimerRepository 반환(없으면 생성 후 캐시) */
+    /** 접근성 서비스 context를 저장소가 붙잡지 않도록 applicationContext로 생성 */
     private fun usageTimerRepository(context: Context): UsageTimerRepository {
-        return repository?.get() ?: UsageTimerRepository(context).also { repository = WeakReference(it) }
+        return UsageTimerRepository(context.applicationContext)
     }
 }

@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import com.black.app.service.ForegroundService
 import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
-import com.black.app.ui.maintab.main.usagetimer.UsageTimerGlobal
 import com.black.core.util.Log
 
 class ScreenReceiver : BroadcastReceiver() {
@@ -58,7 +57,6 @@ class ScreenReceiver : BroadcastReceiver() {
 
     private val interfaces : List<Interface> = listOf(
         StudyPopupGlobal,
-        UsageTimerGlobal
     )
 
     override fun onReceive(context: Context?, intent: Intent?) {
