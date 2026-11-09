@@ -85,9 +85,14 @@ fun FloatingSettingScreen(
     }
 }
 
-/** 플로팅 버튼 설정 화면 콘텐츠(상태 무관 렌더링 전용) */
+/**
+ * 플로팅 버튼 설정 화면 콘텐츠(상태 무관 렌더링 전용)
+ *
+ * 계측 테스트가 상태를 주입해 기기 상태와 무관하게 스위치·상태 행의 분기마다 검증하도록 공개.
+ * 계측 테스트가 app 모듈 androidTest에 있어 internal 대신 public
+ */
 @Composable
-private fun FloatingSettingContent(
+fun FloatingSettingContent(
     uiState: FloatingSettingUiState,
     modifier: Modifier = Modifier,
     onNavigateUp: () -> Unit,

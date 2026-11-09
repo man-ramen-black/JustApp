@@ -112,9 +112,13 @@ fun AppInstallNotificationScreen(
     )
 }
 
-/** 앱 설치 알림 화면 콘텐츠(상태 무관 렌더링 전용) */
+/**
+ * 앱 설치 알림 화면 콘텐츠(상태 무관 렌더링 전용)
+ *
+ * 계측 테스트가 상태를 주입해 기기 상태와 무관하게 스위치·상태 행의 분기마다 검증하도록 private 대신 internal
+ */
 @Composable
-private fun AppInstallNotificationContent(
+internal fun AppInstallNotificationContent(
     uiState: AppInstallNotificationUiState,
     modifier: Modifier = Modifier,
     onNavigateUp: () -> Unit,

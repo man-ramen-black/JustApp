@@ -36,8 +36,8 @@ class UsageTimerScreenTest : BaseUiTest() {
 
     private val repository = UsageTimerRepository(context)
 
-    /** 테스트 전 사용자가 선택해 둔 앱 */
-    private var originalSelectedApps = emptyList<String>()
+    /** 테스트 전 사용자가 선택해 둔 앱, setup에서 읽기 전에는 null */
+    private var originalSelectedApps: List<String>? = null
 
     /** 사용자 선택 앱 보관 후 선택 앱 저장소 초기화 */
     override fun setup() {
@@ -47,9 +47,9 @@ class UsageTimerScreenTest : BaseUiTest() {
         }
     }
 
-    /** 사용자 선택 앱 복원(실사용 기기의 설정 유지) */
+    /** 사용자 선택 앱 복원(실사용 기기의 설정 유지), setup이 읽기 전에 실패했으면 덮어쓰지 않음 */
     override fun teardown() {
-        runBlocking { repository.saveSelectedApps(originalSelectedApps) }
+        originalSelectedApps?.let { runBlocking { repository.saveSelectedApps(it) } }
     }
 
     /**

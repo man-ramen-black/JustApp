@@ -45,6 +45,16 @@ android {
         buildConfig = true
         dataBinding = true
     }
+
+    testOptions {
+        // 리소스를 포함한 Robolectric 테스트는 매니페스트 targetSdk(기본은 compileSdk 36)를 쓰는데
+        // 현재 Robolectric은 34까지 지원하므로 app의 targetSdk와 같게 지정
+        targetSdk = 34
+        unitTests {
+            // 상성표 자산(poke_type_chart.json)을 Robolectric 유닛 테스트에서 읽도록 포함
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {

@@ -18,6 +18,7 @@ import org.junit.runners.MethodSorters
  * cmd statusbar로 타일 추가·클릭, 화면 시간 제한을 최소값(10초)으로 줄여 실제 화면 유지 여부 확인
  * 충전 중 화면 켜짐 유지(stay_on_while_plugged_in) 개발자 옵션은 테스트 중 비활성화 후 원복
  * 삼성 "화면을 보는 동안 켜진 상태 유지"(intelligent_sleep_mode)도 전면 카메라로 얼굴을 감지하면 화면을 켜 두므로 같은 방식으로 비활성화 후 원복
+ * 사용자가 테스트 전에 추가해 둔 타일과 화면 켜짐 유지 활성 여부는 테스트 후 그 상태로 되돌림
  *
  * 잠금 해제 상태에서 쓰는 기능이라 잠겨 있으면 각 테스트를 건너뜀
  * (잠금 중에는 시스템이 오버레이 창을 숨겨 FLAG_KEEP_SCREEN_ON 미적용, 보안 잠금은 테스트에서 해제 불가)
@@ -29,49 +30,64 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class KeepScreenOnTileUiTest : BaseUiTest() {
 
-    private val tileComponent =
-        ComponentName(context, KeepScreenOnTileService::class.java).flattenToString()
+    private val tileComponentName = ComponentName(context, KeepScreenOnTileService::class.java)
+    private val tileComponent = tileComponentName.flattenToString()
     private val keyguardManager = context.getSystemService(KeyguardManager::class.java)
 
-    private var originalScreenOffTimeout = ""
-    private var originalStayOnWhilePluggedIn = ""
-    private var originalSmartStay = ""
+    /** 테스트 전 사용자가 빠른 설정창에 이 타일을 추가해 뒀는지 여부, setup에서 확인하기 전에는 null */
+    private var wasTileAdded: Boolean? = null
+
+    /** 테스트 전 화면 켜짐 유지 활성 여부, setup에서 확인하기 전에는 null */
+    private var wasKeepScreenOnActive: Boolean? = null
 
     override fun setup() {
-        // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용)
-        device.executeShellCommand("appops set ${context.packageName} SYSTEM_ALERT_WINDOW allow")
-        // 화면 시간 제한·충전 중 켜짐 유지 설정 백업 후 테스트 값 적용
-        originalScreenOffTimeout = device.executeShellCommand("settings get system screen_off_timeout").trim()
-        originalStayOnWhilePluggedIn = device.executeShellCommand("settings get global stay_on_while_plugged_in").trim()
-        originalSmartStay = device.executeShellCommand("settings get system $SMART_STAY_SETTING").trim()
-        device.executeShellCommand("settings put global stay_on_while_plugged_in 0")
-        device.executeShellCommand("settings put system $SMART_STAY_SETTING 0")
-        device.executeShellCommand("settings put system screen_off_timeout $SCREEN_OFF_TIMEOUT")
-        // 빠른 설정창에 타일 추가
+        // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
+        // 화면 시간 제한·충전 중 켜짐 유지 설정에 테스트 값 적용(teardown 뒤 BaseUiTest가 테스트 전 값으로 복원)
+        putSetting("global", "stay_on_while_plugged_in", "0")
+        putSetting("system", SMART_STAY_SETTING, "0")
+        putSetting("system", "screen_off_timeout", SCREEN_OFF_TIMEOUT.toString())
+        // 사용자가 추가해 둔 타일은 teardown에서 지우지 않도록 추가 여부 보관 후 빠른 설정창에 타일 추가
+        wasTileAdded = isTileAdded()
         device.executeShellCommand("cmd statusbar add-tile $tileComponent")
         wakeUpAndUnlock()
         // 동영상 재생 앱 등 전면 앱의 FLAG_KEEP_SCREEN_ON 창이 화면을 붙잡지 않도록 홈 화면으로 이동
         device.pressHome()
-        // 같은 프로세스 싱글톤 비활성 상태로 시작
-        instrumentation.runOnMainSync { KeepScreenOnGlobal.deactivate(context) }
+        // 테스트 전 활성 여부 보관 후 같은 프로세스 싱글톤 비활성 상태로 시작
+        instrumentation.runOnMainSync {
+            wasKeepScreenOnActive = KeepScreenOnGlobal.isActive.value
+            KeepScreenOnGlobal.deactivate(context)
+        }
     }
 
+    /** 타일·활성 여부를 테스트 전 상태로 복원, 기기 설정·오버레이 표시 권한은 이 함수가 실패해도 BaseUiTest가 이후에 복원 */
     override fun teardown() {
-        // 이후 단계 실패 시에도 기기 설정 잔존 방지 목적의 설정 우선 복원
-        restoreSetting("system", "screen_off_timeout", originalScreenOffTimeout)
-        restoreSetting("global", "stay_on_while_plugged_in", originalStayOnWhilePluggedIn)
-        restoreSetting("system", SMART_STAY_SETTING, originalSmartStay)
-        instrumentation.runOnMainSync { KeepScreenOnGlobal.deactivate(context) }
-        device.executeShellCommand("cmd statusbar remove-tile $tileComponent")
+        // 테스트 전에 없던 타일만 제거
+        if (wasTileAdded == false) {
+            device.executeShellCommand("cmd statusbar remove-tile $tileComponent")
+        }
         wakeUpAndUnlock()
+        // 오버레이 창 추가에 쓰는 권한이 BaseUiTest 복원 전이라 여기서 활성 여부 복원
+        wasKeepScreenOnActive?.let { wasActive ->
+            instrumentation.runOnMainSync {
+                if (wasActive) {
+                    KeepScreenOnGlobal.activate(context)
+                } else {
+                    KeepScreenOnGlobal.deactivate(context)
+                }
+            }
+        }
     }
 
-    /** 원래 값이 없던 설정(null)은 삭제, 그 외 백업값으로 복원 */
-    private fun restoreSetting(namespace: String, key: String, value: String) {
-        if (value.isEmpty() || value == "null") {
-            device.executeShellCommand("settings delete $namespace $key")
-        } else {
-            device.executeShellCommand("settings put $namespace $key $value")
+    /**
+     * 빠른 설정창에 이 타일이 추가돼 있는지 여부
+     *
+     * 추가된 타일 목록 설정에서 TileService 타일은 `custom(컴포넌트)` 항목으로 저장
+     */
+    private fun isTileAdded(): Boolean {
+        val tileSpecs = getSetting("secure", QS_TILES_SETTING)?.split(",").orEmpty().map { it.trim() }
+        return tileSpecs.any {
+            it == "custom(${tileComponentName.flattenToShortString()})" || it == "custom($tileComponent)"
         }
     }
 
@@ -226,6 +242,8 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         private const val PANEL_ANIMATION_DELAY = 1_500L
         /** 삼성 "화면을 보는 동안 켜진 상태 유지" 설정 키(삼성 외 기기에는 없어 원복 시 삭제) */
         private const val SMART_STAY_SETTING = "intelligent_sleep_mode"
+        /** 빠른 설정창에 추가된 타일 목록 설정 키(secure) */
+        private const val QS_TILES_SETTING = "sysui_qs_tiles"
         /** dumpsys window 화면 유지 창 필드명 */
         private const val HOLD_SCREEN_FIELD = "mHoldScreenWindow"
     }

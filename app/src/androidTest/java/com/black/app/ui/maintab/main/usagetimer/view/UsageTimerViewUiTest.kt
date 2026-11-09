@@ -40,33 +40,18 @@ class UsageTimerViewUiTest : BaseUiTest() {
     private val keyguardManager = context.getSystemService(KeyguardManager::class.java)
 
     private var timerView: UsageTimerView? = null
-    private var originalAccelerometerRotation = ""
-    private var originalUserRotation = ""
 
     override fun setup() {
-        // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용)
-        device.executeShellCommand("appops set ${context.packageName} SYSTEM_ALERT_WINDOW allow")
-        // 회전 설정 백업 후 자동 회전 해제(user_rotation 고정 회전 적용 조건)
-        originalAccelerometerRotation = device.executeShellCommand("settings get system accelerometer_rotation").trim()
-        originalUserRotation = device.executeShellCommand("settings get system user_rotation").trim()
-        device.executeShellCommand("settings put system accelerometer_rotation 0")
+        // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
+        // 자동 회전 해제(user_rotation 고정 회전 적용 조건, teardown 뒤 BaseUiTest가 테스트 전 값으로 복원)
+        putSetting("system", "accelerometer_rotation", "0")
     }
 
+    /** 오버레이 창 제거, 회전 설정·오버레이 표시 권한은 이 함수 뒤 BaseUiTest가 복원 */
     override fun teardown() {
-        // 오버레이 창 제거 후 회전 설정 원복
         instrumentation.runOnMainSync { timerView?.detachView() }
         timerView = null
-        restoreSetting("user_rotation", originalUserRotation)
-        restoreSetting("accelerometer_rotation", originalAccelerometerRotation)
-    }
-
-    /** 원래 값이 없던 설정(null)은 삭제, 그 외 백업값으로 복원 */
-    private fun restoreSetting(key: String, value: String) {
-        if (value.isEmpty() || value == "null") {
-            device.executeShellCommand("settings delete system $key")
-        } else {
-            device.executeShellCommand("settings put system $key $value")
-        }
     }
 
     /**
@@ -155,7 +140,7 @@ class UsageTimerViewUiTest : BaseUiTest() {
      */
     private suspend fun prepareScreen(rotation: Int, isImmersive: Boolean): Rect {
         // 회전 고정 후 반영 대기
-        device.executeShellCommand("settings put system user_rotation $rotation")
+        putSetting("system", "user_rotation", rotation.toString())
         assertTrue("화면이 회전되지 않았습니다: ${device.displayRotation}", waitUntil { device.displayRotation == rotation })
 
         // 테스트 액티비티 표시, 몰입 모드면 유튜브 전체화면처럼 시스템 바 숨김·컷아웃 영역 확장

@@ -1,35 +1,35 @@
 package com.black.app.ui.maintab.main.appinstallnotification
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.hasText
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import com.black.app.R
-import com.black.app.broadcast.PackageInstallNotifier
-import com.black.app.service.ForegroundService
-import com.black.app.service.ForegroundServiceController
 import com.black.app.testutil.BaseUiTest
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
-import com.black.core.util.PermissionHelper
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
 /**
- * [AppInstallNotificationScreen]이 설정·상태·미리보기를 기기 상태대로 표시하는지 검증하는 Compose UI 테스트
+ * [AppInstallNotificationScreen]이 설정·상태·미리보기를 표시하는지 검증하는 Compose UI 테스트
  *
- * 테스트 기기가 사용자 실사용 기기라 스위치·테스트 알림 보내기는 누르지 않음(서비스 설정 변경·알림 잔류 방지).
+ * 스위치·상태 행은 기기의 실행 설정·권한 상태에 따라 한 분기만 실행되지 않도록 [AppInstallNotificationContent]에
+ * 테스트가 고른 상태를 주입해 분기마다 고정된 기대값으로 검증.
+ * 테스트 기기가 사용자 실사용 기기라 화면의 스위치·테스트 알림 보내기는 누르지 않음(서비스 설정 변경·알림 잔류 방지).
  * 그 동작은 ViewModel·ForegroundServiceController 유닛 테스트와 기기 수동 확인으로 검증.
  * 화면 재개 때 저장된 실행 설정이 켜져 있으면 서비스 시작을 요청하므로 그런 기기에서는 화면을 여는 것만으로 서비스가 시작될 수 있음
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class AppInstallNotificationScreenTest : BaseUiTest() {
+
+    /** [hostAppInstallNotificationContent]로 호스팅한 콘텐츠에 주입하는 화면 상태 */
+    private val contentUiState = mutableStateOf(AppInstallNotificationUiState())
 
     /** AppInstallNotificationScreen을 HiltTestActivity에 setContent로 호스팅 */
     private fun hostAppInstallNotificationScreen(onNavigateUp: () -> Unit = {}) {
@@ -42,8 +42,29 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
         }
     }
 
+    /** [contentUiState]를 주입한 AppInstallNotificationContent를 HiltTestActivity에 setContent로 호스팅 */
+    private fun hostAppInstallNotificationContent(
+        onClickBatteryOptimization: () -> Unit = {},
+        onClickNotificationSettings: () -> Unit = {},
+    ) {
+        onHostActivity { activity ->
+            activity.setContent {
+                BlackTheme {
+                    AppInstallNotificationContent(
+                        uiState = contentUiState.value,
+                        onNavigateUp = {},
+                        onEnabledChange = {},
+                        onClickBatteryOptimization = onClickBatteryOptimization,
+                        onClickNotificationSettings = onClickNotificationSettings,
+                        onClickSendTest = {},
+                    )
+                }
+            }
+        }
+    }
+
     /**
-     * 제목과 저장된 설정을 따르는 스위치가 표시되는지 검증
+     * 제목과 실행 설정 스위치가 표시되는지 검증
      *
      * Given:
      * - HiltTestActivity에 AppInstallNotificationScreen 호스팅
@@ -51,10 +72,10 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
      * - 제목 "앱 설치 알림" 표시
-     * - 스위치가 저장된 실행 설정과 같은 켜짐 상태
+     * - 실행 설정 스위치 표시
      */
     @Test
-    fun test_01_displaysTitleAndSwitchMatchingSavedSetting() {
+    fun test_01_displaysTitleAndSwitch() {
         /** Given **/
         hostAppInstallNotificationScreen()
 
@@ -68,73 +89,134 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
             context.getString(R.string.fragment_name_app_install_notification),
         )
         assertTagDisplayed(AppInstallNotificationTestTags.ENABLED_SWITCH)
-        val activated = runBlocking { ForegroundServiceController(context).activated.first() }
-        // 스위치는 DataStore 실행 설정 Flow를 따르고 Compose 유휴 대기는 DataStore 읽기를 기다리지 않아 반영까지 대기
-        waitUntilTagMatches(AppInstallNotificationTestTags.ENABLED_SWITCH) {
-            if (activated) isOn() else isOff()
-        }
     }
 
     /**
-     * 상태 행이 기기의 배터리 최적화·알림 허용 상태를 표시하는지 검증
+     * 스위치가 상태의 실행 설정 켜짐 여부를 따르는지 검증
      *
      * Given:
-     * - HiltTestActivity에 AppInstallNotificationScreen 호스팅
+     * - 실행 설정 꺼짐 상태로 AppInstallNotificationContent 호스팅
+     * - 스위치 꺼짐
      * When:
-     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * - 상태를 실행 설정 켜짐으로 변경
      * Then:
-     * - service_status에 서비스 라벨과 실제 실행 상태대로 실행 중 또는 중지됨
-     * - battery_optimization_status에 기기 상태대로 허용됨 또는 필요
-     * - notification_status에 설치 알림 표시 가능 여부대로 허용됨 또는 꺼짐
+     * - 스위치 켜짐
      */
     @Test
-    fun test_02_statusRowsReflectDeviceState() {
+    fun test_02_switchFollowsActivatedState() {
         /** Given **/
-        hostAppInstallNotificationScreen()
-        val allowedValue = context.getString(R.string.app_install_notification_status_allowed)
-        val batteryValue = if (PermissionHelper.isIgnoringBatteryOptimizations(context)) {
-            allowedValue
-        } else {
-            context.getString(R.string.app_install_notification_status_required)
-        }
-        val notificationValue = if (PackageInstallNotifier.canShow(context)) {
-            allowedValue
-        } else {
-            context.getString(R.string.app_install_notification_status_blocked)
-        }
+        contentUiState.value = AppInstallNotificationUiState(serviceActivated = false)
+        hostAppInstallNotificationContent()
+        assertTagMatches(AppInstallNotificationTestTags.ENABLED_SWITCH, isOff())
 
         /** When **/
-        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+        composeRule.runOnIdle { contentUiState.value = contentUiState.value.copy(serviceActivated = true) }
+
+        /** Then **/
+        assertTagMatches(AppInstallNotificationTestTags.ENABLED_SWITCH, isOn())
+    }
+
+    /**
+     * 서비스 중지·배터리 최적화 예외 없음·알림 차단 상태에서 상태 행이 조치 필요로 표시되고 누르면 조치 화면 이동을 요청하는지 검증
+     *
+     * Given:
+     * - 서비스 중지, 배터리 최적화 예외 없음, 설치 알림 표시 불가 상태로 AppInstallNotificationContent 호스팅
+     * When:
+     * - 배터리 최적화 상태 행 클릭 → 알림 상태 행 클릭
+     * Then:
+     * - service_status에 "서비스", "중지됨"
+     * - battery_optimization_status에 "배터리 최적화 예외", "필요", 클릭 시 배터리 최적화 콜백 1회
+     * - notification_status에 "알림", "꺼짐", 클릭 시 알림 설정 콜백 1회
+     */
+    @Test
+    fun test_03_statusRowsShowRequiredStates() {
+        /** Given **/
+        var batteryOptimizationClickCount = 0
+        var notificationSettingsClickCount = 0
+        contentUiState.value = AppInstallNotificationUiState(
+            serviceRunning = false,
+            batteryOptimizationIgnored = false,
+            notificationsEnabled = false,
+        )
+        hostAppInstallNotificationContent(
+            onClickBatteryOptimization = { batteryOptimizationClickCount++ },
+            onClickNotificationSettings = { notificationSettingsClickCount++ },
+        )
+
+        /** When **/
+        clickTag(AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS, scrollTo = true)
+        clickTag(AppInstallNotificationTestTags.NOTIFICATION_STATUS, scrollTo = true)
 
         /** Then **/
         assertTagTextContains(
             AppInstallNotificationTestTags.SERVICE_STATUS,
             context.getString(R.string.app_install_notification_status_service),
+            context.getString(R.string.app_install_notification_status_stopped),
             scrollTo = true,
         )
-        // 화면 재개가 서비스 시작을 요청할 수 있어, 앱과 같은 프로세스의 ForegroundService.running과 행이 일치할 때까지 대기
-        waitUntilTagMatches(AppInstallNotificationTestTags.SERVICE_STATUS) {
-            val serviceValue = context.getString(
-                if (ForegroundService.running.value) {
-                    R.string.app_install_notification_status_running
-                } else {
-                    R.string.app_install_notification_status_stopped
-                }
-            )
-            hasText(serviceValue, substring = true)
-        }
         assertTagTextContains(
             AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS,
-            batteryValue,
-            substring = true,
+            context.getString(R.string.app_install_notification_status_battery),
+            context.getString(R.string.app_install_notification_status_required),
             scrollTo = true,
         )
         assertTagTextContains(
             AppInstallNotificationTestTags.NOTIFICATION_STATUS,
-            notificationValue,
-            substring = true,
+            context.getString(R.string.app_install_notification_status_notification),
+            context.getString(R.string.app_install_notification_status_blocked),
             scrollTo = true,
         )
+        assertEquals(1, batteryOptimizationClickCount)
+        assertEquals(1, notificationSettingsClickCount)
+    }
+
+    /**
+     * 서비스 실행·배터리 최적화 예외·알림 허용 상태에서 상태 행이 허용으로 표시되고 누를 수 없는지 검증
+     *
+     * Given:
+     * - 서비스 실행 중, 배터리 최적화 예외, 설치 알림 표시 가능 상태로 AppInstallNotificationContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - service_status에 "서비스", "실행 중"
+     * - battery_optimization_status에 "배터리 최적화 예외", "허용됨", 클릭 동작 없음
+     * - notification_status에 "알림", "허용됨", 클릭 동작 없음
+     */
+    @Test
+    fun test_04_statusRowsShowAllowedStates() {
+        /** Given **/
+        contentUiState.value = AppInstallNotificationUiState(
+            serviceRunning = true,
+            batteryOptimizationIgnored = true,
+            notificationsEnabled = true,
+        )
+        hostAppInstallNotificationContent()
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        val allowedValue = context.getString(R.string.app_install_notification_status_allowed)
+        assertTagTextContains(
+            AppInstallNotificationTestTags.SERVICE_STATUS,
+            context.getString(R.string.app_install_notification_status_service),
+            context.getString(R.string.app_install_notification_status_running),
+            scrollTo = true,
+        )
+        assertTagTextContains(
+            AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS,
+            context.getString(R.string.app_install_notification_status_battery),
+            allowedValue,
+            scrollTo = true,
+        )
+        assertTagMatches(AppInstallNotificationTestTags.BATTERY_OPTIMIZATION_STATUS, !hasClickAction())
+        assertTagTextContains(
+            AppInstallNotificationTestTags.NOTIFICATION_STATUS,
+            context.getString(R.string.app_install_notification_status_notification),
+            allowedValue,
+            scrollTo = true,
+        )
+        assertTagMatches(AppInstallNotificationTestTags.NOTIFICATION_STATUS, !hasClickAction())
     }
 
     /**
@@ -150,7 +232,7 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
      * - 두 테스트 알림 보내기 버튼 존재
      */
     @Test
-    fun test_03_previewCardsShowAppNameAndMessages() {
+    fun test_05_previewCardsShowAppNameAndMessages() {
         /** Given **/
         hostAppInstallNotificationScreen()
         val appLabel = context.applicationInfo.loadLabel(context.packageManager).toString()
@@ -174,7 +256,7 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
      * - "설치·업데이트 알림 공통 아이콘" 표시
      */
     @Test
-    fun test_04_statusBarIconPreviewDisplayed() {
+    fun test_06_statusBarIconPreviewDisplayed() {
         /** Given **/
         hostAppInstallNotificationScreen()
 
@@ -194,7 +276,7 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
      * - onNavigateUp 1회 호출
      */
     @Test
-    fun test_05_clickNavigateUpCallsCallback() {
+    fun test_07_clickNavigateUpCallsCallback() {
         /** Given **/
         var navigateUpCount = 0
         hostAppInstallNotificationScreen(onNavigateUp = { navigateUpCount++ })

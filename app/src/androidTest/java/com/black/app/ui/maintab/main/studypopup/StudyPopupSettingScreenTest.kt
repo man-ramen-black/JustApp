@@ -2,6 +2,7 @@ package com.black.app.ui.maintab.main.studypopup
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasText
@@ -12,13 +13,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.black.app.R
-import com.black.app.model.StudyPopupRepository
 import com.black.app.model.datastore.StudyPopupDataStore
-import com.black.app.service.ForegroundService
 import com.black.app.testutil.BaseUiTest
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
-import com.black.core.util.PermissionHelper
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -31,6 +29,8 @@ import org.junit.runners.MethodSorters
 /**
  * [StudyPopupSettingScreen]이 설정·상태·내용 편집을 표시하고 처리하는지 검증하는 Compose UI 테스트
  *
+ * 상태 행은 기기의 권한·서비스 상태에 따라 한 분기만 실행되지 않도록 [StudyPopupSettingContent]에
+ * 테스트가 고른 상태를 주입해 분기마다 고정된 기대값으로 검증.
  * 테스트 기기가 사용자 실사용 기기라 화면 켜짐 팝업 표시 설정은 테스트 전 값을 보관했다가 테스트 후 되돌리고,
  * 내용 편집은 파일·팝업 DB에 저장하지 않는 범위(추가·삭제 후 저장 안 함)에서만 검증.
  * 파일 선택창·권한 설정 화면 이동은 ViewModel 유닛 테스트로 검증
@@ -41,8 +41,8 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
 
     private val dataStore = StudyPopupDataStore(context)
 
-    /** 테스트 전 사용자의 화면 켜짐 팝업 표시 설정 */
-    private var originalEnabled = false
+    /** 테스트 전 사용자의 화면 켜짐 팝업 표시 설정, setup에서 읽기 전에는 null */
+    private var originalEnabled: Boolean? = null
 
     /** 사용자 설정 보관 후 표시 설정을 꺼짐으로 초기화 */
     override fun setup() {
@@ -52,9 +52,9 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
         }
     }
 
-    /** 사용자 설정 복원 */
+    /** 사용자 설정 복원, setup이 읽기 전에 실패했으면 덮어쓰지 않음 */
     override fun teardown() {
-        runBlocking { dataStore.updateEnabled(originalEnabled) }
+        originalEnabled?.let { runBlocking { dataStore.updateEnabled(it) } }
     }
 
     /** StudyPopupSettingScreen을 HiltTestActivity에 setContent로 호스팅 */
@@ -63,6 +63,34 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
             activity.setContent {
                 BlackTheme {
                     StudyPopupSettingScreen(onNavigateUp = onNavigateUp)
+                }
+            }
+        }
+    }
+
+    /** 테스트가 고른 [uiState]를 주입한 StudyPopupSettingContent를 HiltTestActivity에 setContent로 호스팅 */
+    private fun hostStudyPopupSettingContent(
+        uiState: StudyPopupSettingUiState,
+        onClickOverlayPermission: () -> Unit = {},
+        onClickServiceStatus: () -> Unit = {},
+    ) {
+        onHostActivity { activity ->
+            activity.setContent {
+                BlackTheme {
+                    StudyPopupSettingContent(
+                        uiState = uiState,
+                        onNavigateUp = {},
+                        onEnabledChange = {},
+                        onClickPreview = {},
+                        onClickOverlayPermission = onClickOverlayPermission,
+                        onClickServiceStatus = onClickServiceStatus,
+                        onClickLoad = {},
+                        onClickReload = {},
+                        onClickSave = {},
+                        onClickContents = {},
+                        onClickDelete = {},
+                        onClickAdd = {},
+                    )
                 }
             }
         }
@@ -99,39 +127,106 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
     }
 
     /**
-     * 상태 행이 기기의 권한·서비스·팝업에 저장된 내용 개수를 표시하는지 검증
+     * 권한 없음·서비스 중지 상태에서 상태 행이 조치 필요로 표시되고 누르면 조치 화면 이동을 요청하는지 검증
      *
      * Given:
-     * - 기기의 다른 앱 위에 표시 권한, ForegroundService 실행 여부, 팝업 DB 내용 개수
+     * - 다른 앱 위에 표시 권한 없음, 서비스 중지, 팝업에 저장된 내용 0개 상태로 StudyPopupSettingContent 호스팅
      * When:
-     * - StudyPopupSettingScreen 호스팅
+     * - 권한 상태 행 클릭 → 서비스 상태 행 클릭
      * Then:
-     * - 각 상태 행이 기기 상태와 같은 값 표시
+     * - overlay_permission_status에 "다른 앱 위에 표시", "허용 필요", 클릭 시 권한 안내 콜백 1회
+     * - service_status에 "백그라운드 서비스", "중지됨", 클릭 시 앱 설치 알림 화면 이동 콜백 1회
+     * - saved_contents_status에 "팝업에 저장된 내용", "0개"
      */
     @Test
-    fun test_02_statusRowsMatchDevice() {
+    fun test_02_statusRowsShowRequiredStates() {
         /** Given **/
-        val overlayValue = if (PermissionHelper.canDrawOverlays(context)) {
-            context.getString(R.string.study_popup_status_allowed)
-        } else {
-            context.getString(R.string.study_popup_status_required)
-        }
-        val serviceValue = if (ForegroundService.running.value) {
-            context.getString(R.string.study_popup_status_running)
-        } else {
-            context.getString(R.string.study_popup_status_stopped)
-        }
-        val savedCount = runBlocking { StudyPopupRepository(context).countContents() }
-        val savedValue = context.getString(R.string.study_popup_saved_contents_count, savedCount)
+        var overlayPermissionClickCount = 0
+        var serviceStatusClickCount = 0
+        hostStudyPopupSettingContent(
+            uiState = StudyPopupSettingUiState(
+                overlayPermissionGranted = false,
+                serviceRunning = false,
+                savedContentsCount = 0,
+            ),
+            onClickOverlayPermission = { overlayPermissionClickCount++ },
+            onClickServiceStatus = { serviceStatusClickCount++ },
+        )
 
         /** When **/
-        hostStudyPopupSettingScreen()
+        clickTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS, scrollTo = true)
+        clickTag(StudyPopupSettingTestTags.SERVICE_STATUS, scrollTo = true)
 
         /** Then **/
-        assertTagTextContains(StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS, overlayValue, scrollTo = true)
-        assertTagTextContains(StudyPopupSettingTestTags.SERVICE_STATUS, serviceValue, scrollTo = true)
-        // 내용 개수는 DB 조회가 끝난 뒤 반영되므로 반영까지 대기
-        waitUntilTagMatches(StudyPopupSettingTestTags.SAVED_CONTENTS_STATUS) { hasText(savedValue, substring = true) }
+        assertTagTextContains(
+            StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS,
+            context.getString(R.string.study_popup_status_overlay),
+            context.getString(R.string.study_popup_status_required),
+            scrollTo = true,
+        )
+        assertTagTextContains(
+            StudyPopupSettingTestTags.SERVICE_STATUS,
+            context.getString(R.string.study_popup_status_service),
+            context.getString(R.string.study_popup_status_stopped),
+            scrollTo = true,
+        )
+        assertTagTextContains(
+            StudyPopupSettingTestTags.SAVED_CONTENTS_STATUS,
+            context.getString(R.string.study_popup_status_saved_contents),
+            context.getString(R.string.study_popup_saved_contents_count, 0),
+            scrollTo = true,
+        )
+        assertEquals(1, overlayPermissionClickCount)
+        assertEquals(1, serviceStatusClickCount)
+    }
+
+    /**
+     * 권한 허용·서비스 실행 상태에서 상태 행이 허용·실행 중으로 표시되고 누를 수 없는지 검증
+     *
+     * Given:
+     * - 다른 앱 위에 표시 권한 허용, 서비스 실행 중, 팝업에 저장된 내용 3개 상태로 StudyPopupSettingContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - overlay_permission_status에 "다른 앱 위에 표시", "허용됨", 클릭 동작 없음
+     * - service_status에 "백그라운드 서비스", "실행 중", 클릭 동작 없음
+     * - saved_contents_status에 "팝업에 저장된 내용", "3개"
+     */
+    @Test
+    fun test_03_statusRowsShowAllowedStates() {
+        /** Given **/
+        hostStudyPopupSettingContent(
+            uiState = StudyPopupSettingUiState(
+                overlayPermissionGranted = true,
+                serviceRunning = true,
+                savedContentsCount = 3,
+            ),
+        )
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        assertTagTextContains(
+            StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS,
+            context.getString(R.string.study_popup_status_overlay),
+            context.getString(R.string.study_popup_status_allowed),
+            scrollTo = true,
+        )
+        assertTagMatches(StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS, !hasClickAction())
+        assertTagTextContains(
+            StudyPopupSettingTestTags.SERVICE_STATUS,
+            context.getString(R.string.study_popup_status_service),
+            context.getString(R.string.study_popup_status_running),
+            scrollTo = true,
+        )
+        assertTagMatches(StudyPopupSettingTestTags.SERVICE_STATUS, !hasClickAction())
+        assertTagTextContains(
+            StudyPopupSettingTestTags.SAVED_CONTENTS_STATUS,
+            context.getString(R.string.study_popup_status_saved_contents),
+            context.getString(R.string.study_popup_saved_contents_count, 3),
+            scrollTo = true,
+        )
     }
 
     /**
@@ -147,7 +242,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
      * - 스위치 꺼짐 + 저장된 표시 설정 꺼짐
      */
     @Test
-    fun test_03_switchFollowsAndSavesSetting() {
+    fun test_04_switchFollowsAndSavesSetting() {
         /** Given **/
         runBlocking { dataStore.updateEnabled(true) }
         hostStudyPopupSettingScreen()
@@ -176,7 +271,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
      * - 입력한 내용이 목록에 표시되고 다이얼로그 닫힘
      */
     @Test
-    fun test_04_addContentsThroughDialog() {
+    fun test_05_addContentsThroughDialog() {
         /** Given **/
         hostStudyPopupSettingScreen()
 
@@ -203,7 +298,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
      * - 추가한 내용이 목록에서 사라짐
      */
     @Test
-    fun test_05_deleteContentsThroughDialog() {
+    fun test_06_deleteContentsThroughDialog() {
         /** Given **/
         hostStudyPopupSettingScreen()
         clickTag(StudyPopupSettingTestTags.ADD_BUTTON, scrollTo = true)
@@ -237,7 +332,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
      * - onNavigateUp 1회 호출
      */
     @Test
-    fun test_06_clickNavigateUpCallsCallback() {
+    fun test_07_clickNavigateUpCallsCallback() {
         /** Given **/
         var navigateUpCount = 0
         hostStudyPopupSettingScreen(onNavigateUp = { navigateUpCount++ })
