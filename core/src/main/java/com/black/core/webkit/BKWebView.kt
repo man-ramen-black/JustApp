@@ -80,8 +80,8 @@ open class BKWebView : WebView {
             // 기기 설정의 폰트사이즈(small, normal, large) 무시
             textZoom = 100
 
-            // https 웹페이지에서 http 이미지 로드 허용
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // https 웹페이지에서 http 리소스 로드 차단(http 스크립트 주입 경로 차단)
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
 
             // 위치 정보 기능 활성화
             setGeolocationEnabled(true)

@@ -50,6 +50,34 @@ open class BKWebViewClient : WebViewClient() {
     companion object {
         private const val SCHEME_INTENT = "intent"
         private const val SCHEME_MARKET = "market"
+
+        /** 웹 페이지가 지정할 수 없게 지우는 URI 권한 부여 플래그 */
+        private const val URI_GRANT_FLAGS = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+            Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+
+        /**
+         * intent:// URI를 웹 페이지가 실행해도 되는 인텐트로 변환(파싱 실패면 null)
+         *
+         * 웹 페이지가 앱의 비공개 Activity를 열거나 앱의 URI 권한을 넘기지 못하도록
+         * BROWSABLE 카테고리 강제, component·selector와 URI 권한 부여 플래그 제거
+         */
+        internal fun parseIntentDeepLink(uri: Uri): Intent? {
+            val intent = try {
+                Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME)
+            } catch (e: URISyntaxException) {
+                Log.w(e)
+                return null
+            }
+
+            return intent.apply {
+                addCategory(Intent.CATEGORY_BROWSABLE)
+                component = null
+                selector = null
+                flags = flags and URI_GRANT_FLAGS.inv()
+            }
+        }
     }
     interface Callback: OnPageStarted, OnPageLoading, OnPageFinished, OnVisitedHistoryUpdated
 
@@ -153,32 +181,31 @@ open class BKWebViewClient : WebViewClient() {
 
     /** intent:// 딥링크 처리 */
     private fun startIntentDeepLink(context: Context, uri: Uri, webView: WebView?){
-        val intent = try {
-            Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME).apply {
+        val intent = parseIntentDeepLink(uri)
+            ?.apply {
                 if (context !is Activity) {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             }
-
-        } catch (e: URISyntaxException) {
-            e.printStackTrace()
-            null
-        }
+            ?: return
 
         try {
             context.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            val fallbackUrl = intent?.getStringExtra("browser_fallback_url")
+            val fallbackUrl = intent.getStringExtra("browser_fallback_url")
             if (!fallbackUrl.isNullOrEmpty()) {
                 webView?.loadUrl(fallbackUrl)
                 return
             }
 
-            val packageName = intent?.getPackage()
+            val packageName = intent.getPackage()
             if (!packageName.isNullOrEmpty()) {
                 startDeepLink(context, "market://details?id=$packageName")
                 return
             }
+        } catch (e: Exception) {
+            // 대상 Activity가 권한을 요구하는 경우(SecurityException) 등 실행 실패 무시
+            Log.w(e)
         }
     }
 
@@ -220,13 +247,13 @@ open class BKWebViewClient : WebViewClient() {
 
         BKAlertDialog(activity)
             .setMessage(R.string.ssl_error_confirm_message)
-            .setPositiveButton(com.black.core.R.string.ok) { _, _ ->
+            .setPositiveButton(R.string.ok) { _, _ ->
                 sslErrorHandlers.removeAll {
                     it.proceed()
                     true
                 }
             }
-            .setNegativeButton(com.black.core.R.string.cancel) { dialog, _ -> dialog.cancel() }
+            .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.cancel() }
             .setOnCancelListener {
                 // onPageFinished에서 에러뷰가 노출되도록 isError = true로 설정
                 isError = true
