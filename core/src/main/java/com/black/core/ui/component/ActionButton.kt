@@ -1,4 +1,4 @@
-package com.black.app.ui.component
+package com.black.core.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppShapes
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppShapes
+import com.black.core.ui.theme.AppTypography
 
 /**
  * 화면 공용 액션 버튼
@@ -23,7 +23,7 @@ import com.black.app.ui.theme.AppTypography
  * 기본 자간은 영문 대문자 라벨용, 한글 라벨은 자간을 줄여 전달
  */
 @Composable
-internal fun ActionButton(
+fun ActionButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

@@ -31,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.black.app.R
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppShapes
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppShapes
+import com.black.core.ui.theme.AppTypography
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -114,7 +114,7 @@ private fun MainItemList(
     }
 }
 
-/** 기능 항목 row(아이콘 컨테이너 + 이름 + ↗ 화살표) */
+/** 기능 항목 row(아이콘 컨테이너 + 이름 + › 꺾쇠) */
 @Composable
 private fun MainItemRow(
     item: MainItem,
@@ -153,9 +153,9 @@ private fun MainItemRow(
             letterSpacing = (-0.8).sp,
         )
         Icon(
-            painter = painterResource(R.drawable.ic_arrow_up_right),
+            painter = painterResource(R.drawable.ic_chevron_right),
             contentDescription = null,
-            modifier = Modifier.size(17.dp),
+            modifier = Modifier.size(24.dp),
             tint = AppColors.Arrow,
         )
     }
@@ -170,6 +170,6 @@ private fun MainFooter(
     Text(
         text = stringResource(R.string.main_footer_hint, itemCount),
         modifier = modifier.padding(top = 18.dp, bottom = 14.dp, start = 2.dp),
-        style = AppTypography.MonoCaption.copy(color = AppColors.Arrow, letterSpacing = 1.5.sp),
+        style = AppTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
     )
 }

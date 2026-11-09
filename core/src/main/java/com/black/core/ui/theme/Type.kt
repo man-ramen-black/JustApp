@@ -1,4 +1,4 @@
-package com.black.app.ui.theme
+package com.black.core.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
@@ -21,13 +21,22 @@ private val BaseTextStyle = Typography().bodyLarge
  * SansSerif에 자간을 좁힌 별도 스타일([Caption]) 사용. 화면에 한 번만 쓰는 크기는 가까운 스타일을 copy로 조정
  */
 object AppTypography {
-    /** 도구 화면 헤더 제목 */
+    /** 큰 화면 제목(메인 화면이 크기를 키워 사용) */
     val ScreenTitle = BaseTextStyle.copy(
         color = AppColors.Title,
         fontSize = 34.sp,
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Black,
         letterSpacing = (-1).sp,
+    )
+
+    /** 도구 화면 상단 바 제목 */
+    val TopBarTitle = BaseTextStyle.copy(
+        color = AppColors.Title,
+        fontSize = 22.sp,
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 0.sp,
     )
 
     /** 영문 대문자 모노스페이스 캡션(섹션 머리·보조 라벨) */
@@ -48,9 +57,6 @@ object AppTypography {
         fontFamily = FontFamily.SansSerif,
         letterSpacing = 0.5.sp,
     )
-
-    /** 제목 위 한글 캡션 */
-    val HeaderCaption = Caption.copy(fontWeight = FontWeight.Medium)
 
     /** 한글 본문(상태 행·알림 메시지) */
     val Body = BaseTextStyle.copy(

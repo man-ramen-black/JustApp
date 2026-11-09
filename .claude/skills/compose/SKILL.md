@@ -16,10 +16,13 @@ argument-hint: [대상 화면 또는 Fragment]
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
 | `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 `.claude/rules/viewmodel.md` 형식으로 `[XxxScreen]` 링크 |
 
+feature 모듈 기능의 화면은 그 모듈의 `ui` 패키지에 두고 문자열도 그 모듈 `strings.xml`에 둔다(`FloatingSettingScreen`). 계측 테스트는 `HiltTestActivity`·`BaseUiTest`가 있는 app의 androidTest에 같은 패키지로 두므로 `XxxTestTags`는 public으로 연다.
+
 ```kotlin
 /** TextEditor 화면 */
 @Composable
 fun TextEditorScreen(
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TextEditorViewModel = hiltViewModel(),
 ) {
@@ -56,20 +59,21 @@ private fun TextEditorContent(
 - Context가 필요한 동작(토스트·`startActivity`·ActivityResult 실행·`supportFragmentManager`)은 ViewModel이 직접 하지 않는다. ViewModel은 이벤트(`EventXxx`)만 보내고 Screen이 `CollectEvents`로 받아 수행한다. ActivityResult는 Screen의 `rememberLauncherForActivityResult`로 만든다.
 - ViewModel 함수는 처리하는 동작(`save`), Content 콜백 매개변수는 `on`+동사(`onClickSave`)로 짓고 Screen에서 연결한다(`.claude/rules/viewmodel.md`). 참고 구현 ViewModel의 `onClickXxx`·`onPause` 함수는 이 규칙 이전 이름이라 따르지 않는다.
 - 화면 생명주기 처리는 `LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshStatus() }`처럼 Screen에서 한다.
+- 메인 목록에서 들어가는 하위 화면은 Material 3 small top app bar처럼 뒤로 가기와 제목을 한 줄에 둔 상단 바를 쓰고, 그 아래에 큰 제목을 따로 두지 않는다. Screen은 `onNavigateUp`을 필수 매개변수로 받고, 화면 틀은 core의 `ToolScreenScaffold`(상단 바 + 스크롤 콘텐츠)를 쓴다. 스크롤하지 않는 화면은 `ToolTopBar`만 쓰고 화면 동작 버튼은 상단 바 `actions`에 `TopBarIconButton`으로 둔다(`TextEditorScreen`).
 - 다이얼로그는 표시 여부를 `uiState`(예: `showResetConfirm`)에 두고 Screen에서 Material3 `AlertDialog`로 그린다. 아직 전환되지 않은 `DialogFragment`는 Screen에서 `supportFragmentManager`로 띄운다(`UsageTimerScreen`의 `SelectAppDialogFragment`).
 
 ## 네비게이션 등록
 
 1. `ui/navigation/AppRoute.kt`에 `@Serializable data object Xxx : AppRoute` 추가
-2. `ui/navigation/AppNavHost.kt`에 `composable<AppRoute.Xxx> { XxxScreen(Modifier.fillMaxSize()) }` 등록
+2. `ui/navigation/AppNavHost.kt`에 `composable<AppRoute.Xxx> { XxxScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize()) }` 등록
 3. 다른 화면에서 이동할 때 Fragment는 주입받은 `AppNavigator`의 `navigate(AppRoute.Xxx)`(연타 방지가 필요하면 `navigateSafely`)를 쓴다.
 
 `AppNavHost`는 `MainActivity`에서 `BlackTheme` + `Surface` 안에 있으므로 등록된 Screen은 테마를 다시 감싸지 않는다. Fragment 안에 `ComposeView`로 호스팅할 때만 `BlackTheme`으로 감싸고 `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed`를 설정한다(`MainFragment`).
 
 ## 작성 규칙
 
-- 색·모서리·텍스트 스타일은 `ui/theme`의 `AppColors`(`Color.kt`)·`AppShapes`(`Shape.kt`)·`AppTypography`(`Type.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`나 Text의 색·크기·글꼴·자간 인자를 화면마다 반복해 쓰지 말고 해당 객체에 의미 이름으로 추가한 뒤 참조한다. 한 번만 쓰는 변형은 가까운 스타일을 `copy`한다. 새 텍스트 스타일은 `Type.kt`의 `BaseTextStyle`에서 만든다(Text에 `style`을 넘기면 `LocalTextStyle`의 줄 높이가 빠진다). Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
-- 여러 화면이 함께 쓰는 Composable(`ActionButton` 등)은 `ui/component`에 둔다.
+- 색·모서리·텍스트 스타일은 core 모듈 `ui/theme`(`com.black.core.ui.theme`)의 `AppColors`(`Color.kt`)·`AppShapes`(`Shape.kt`)·`AppTypography`(`Type.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`나 Text의 색·크기·글꼴·자간 인자를 화면마다 반복해 쓰지 말고 해당 객체에 의미 이름으로 추가한 뒤 참조한다. 한 번만 쓰는 변형은 가까운 스타일을 `copy`한다. 새 텍스트 스타일은 `Type.kt`의 `BaseTextStyle`에서 만든다(Text에 `style`을 넘기면 `LocalTextStyle`의 줄 높이가 빠진다). Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
+- 여러 화면이 함께 쓰는 Composable(`ActionButton` 등)은 app·feature 모듈이 함께 쓰도록 core 모듈 `ui/component`(`com.black.core.ui.component`)에 public으로 둔다. app 모듈에 `internal`로 두지 않는다.
 - 검증 대상 요소에는 testTag를 달고, 태그 문자열은 Screen 파일의 `internal object XxxTestTags`에 `const val`로 둬 화면과 테스트가 같은 상수를 참조한다(`TextEditorTestTags`). `Modifier.testTag("save_button")`·`onNodeWithTag("save_button")`처럼 문자열을 직접 쓰지 않는다. 값은 snake_case이고, XML에서 전환한 화면이면 기존 `@+id` 이름을 이어 쓴다.
 
 ## XML Fragment → Compose 전환
@@ -77,7 +81,7 @@ private fun TextEditorContent(
 1. **동작 목록 작성**: Fragment·레이아웃 XML·ViewModel을 읽어 클릭, 관찰(LiveData·`collectEvent` 문자열 액션), 생명주기 처리, 다른 화면 이동을 빠짐없이 나열한다. 전환 후 이 목록과 대조한다.
 2. **ViewModel 정리**: 화면 상태를 `XxxUiState` 하나로 모아 `StateFlow`로 노출하고, 문자열 액션 이벤트는 `.claude/rules/viewmodel.md` 규칙대로 타입 이벤트(`EventXxx`)로 바꾼다.
 3. **Screen 작성**: 위 파일 구성대로 만들고, 레이아웃 수치(여백·크기)는 원본 XML 값을 대조해 옮긴다. 추측해서 넣지 않는다.
-4. **교체**: `AppNavHost`의 `AndroidFragment<XxxFragment>`를 `XxxScreen(Modifier.fillMaxSize())`로 바꾼다.
+4. **교체**: `AppNavHost`의 `AndroidFragment<XxxFragment>`를 위 2번 형식의 `XxxScreen` 호출로 바꾼다.
 5. **정리**: Fragment와 레이아웃 XML을 지우기 전에 참조를 모두 찾는다(`grep -rn "XxxFragment\|fragment_xxx" app/src feature`). import·바로가기 Activity·`main_tab_navigation.xml`·`<include layout>`에 남은 참조를 함께 정리한다. 문자열·drawable은 다른 곳에서 쓰지 않는 것이 확인될 때만 지운다.
 6. **테스트 전환**: 기존 Fragment 계측 테스트는 아래 Compose UI 테스트로 옮기고, ViewModel 유닛 테스트는 `unittest` 스킬로 갱신한다.
 
@@ -91,11 +95,11 @@ private fun TextEditorContent(
 class TextEditorScreenTest : BaseUiTest() {
 
     /** TextEditorScreen을 HiltTestActivity에 setContent로 호스팅 */
-    private fun hostTextEditorScreen() {
+    private fun hostTextEditorScreen(onNavigateUp: () -> Unit = {}) {
         onHostActivity { activity ->
             activity.setContent {
                 BlackTheme {
-                    TextEditorScreen()
+                    TextEditorScreen(onNavigateUp = onNavigateUp)
                 }
             }
         }

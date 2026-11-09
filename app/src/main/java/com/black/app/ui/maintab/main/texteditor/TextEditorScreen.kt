@@ -9,27 +9,19 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -44,9 +36,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.black.app.R
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppShapes
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.component.ToolTopBar
+import com.black.core.ui.component.TopBarIconButton
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppShapes
+import com.black.core.ui.theme.AppTypography
 import com.black.core.viewmodel.CollectEvents
 
 /**
@@ -69,6 +63,7 @@ internal object TextEditorTestTags {
 /** TextEditor 화면 */
 @Composable
 fun TextEditorScreen(
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TextEditorViewModel = hiltViewModel(),
 ) {
@@ -116,6 +111,7 @@ fun TextEditorScreen(
     TextEditorContent(
         uiState = uiState,
         modifier = modifier,
+        onNavigateUp = onNavigateUp,
         onClickSave = viewModel::onClickSave,
         onClickLoad = viewModel::onClickLoad,
         onClickNew = viewModel::onClickNew,
@@ -163,6 +159,7 @@ private class OpenTextDocumentAt : ActivityResultContract<Uri, Uri?>() {
 private fun TextEditorContent(
     uiState: TextEditorUiState,
     modifier: Modifier = Modifier,
+    onNavigateUp: () -> Unit,
     onClickSave: () -> Unit,
     onClickLoad: () -> Unit,
     onClickNew: () -> Unit,
@@ -172,60 +169,46 @@ private fun TextEditorContent(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.ScreenBackground)
-            .statusBarsPadding()
-            .padding(horizontal = 24.dp),
+            .statusBarsPadding(),
     ) {
-        // 헤더(캡션+타이틀) + 우측 액션 버튼
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 26.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        // 저장·불러오기·새 문서는 상단 바 오른쪽 액션
+        ToolTopBar(
+            title = stringResource(R.string.fragment_name_text_editor),
+            onNavigateUp = onNavigateUp,
+            titleModifier = Modifier.testTag(TextEditorTestTags.TITLE),
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "TOOL",
-                    style = AppTypography.MonoHeaderCaption,
-                )
-                Text(
-                    text = "Memo",
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .testTag(TextEditorTestTags.TITLE),
-                    style = AppTypography.ScreenTitle,
-                )
-                if (uiState.fileName.isNotEmpty()) {
-                    Text(
-                        text = uiState.fileName,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .testTag(TextEditorTestTags.FILE_NAME),
-                        style = AppTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
-                    )
-                }
-            }
-            ToolbarIconButton(
-                iconResId = R.drawable.ic_save,
+            TopBarIconButton(
+                painter = painterResource(R.drawable.ic_save),
+                contentDescription = stringResource(R.string.text_editor_save),
                 onClick = onClickSave,
-                testTag = TextEditorTestTags.SAVE_BUTTON,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.testTag(TextEditorTestTags.SAVE_BUTTON),
             )
-            ToolbarIconButton(
-                iconResId = R.drawable.ic_folder_open,
+            TopBarIconButton(
+                painter = painterResource(R.drawable.ic_folder_open),
+                contentDescription = stringResource(R.string.text_editor_load),
                 onClick = onClickLoad,
-                testTag = TextEditorTestTags.LOAD_BUTTON,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.testTag(TextEditorTestTags.LOAD_BUTTON),
             )
-            ToolbarIconButton(
-                iconResId = R.drawable.ic_note_add,
+            TopBarIconButton(
+                painter = painterResource(R.drawable.ic_note_add),
+                contentDescription = stringResource(R.string.text_editor_new),
                 onClick = onClickNew,
-                testTag = TextEditorTestTags.NEW_BUTTON,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.testTag(TextEditorTestTags.NEW_BUTTON),
+            )
+        }
+        // 연 문서 이름
+        if (uiState.fileName.isNotEmpty()) {
+            Text(
+                text = uiState.fileName,
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .testTag(TextEditorTestTags.FILE_NAME),
+                style = AppTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
             )
         }
 
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
             thickness = 1.dp,
             color = AppColors.Divider,
         )
@@ -237,7 +220,7 @@ private fun TextEditorContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(bottom = 16.dp)
+                .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
                 .testTag(TextEditorTestTags.EDITOR_INPUT),
             textStyle = TextStyle(
                 color = AppColors.ItemName,
@@ -249,33 +232,6 @@ private fun TextEditorContent(
     }
 }
 
-/** 툴바 아이콘 버튼(40dp, ContainerShape, ContainerBackground 배경) */
-@Composable
-private fun ToolbarIconButton(
-    iconResId: Int,
-    onClick: () -> Unit,
-    testTag: String,
-    modifier: Modifier = Modifier,
-) {
-    val shape = AppShapes.Container
-    Box(
-        modifier = modifier
-            .size(40.dp)
-            .clip(shape)
-            .background(AppColors.ContainerBackground, shape)
-            .border(1.dp, AppColors.ContainerBorder, shape)
-            .clickable(onClick = onClick)
-            .testTag(testTag),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(iconResId),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = AppColors.Icon,
-        )
-    }
-}
 
 /** 최근 문서 접근 권한 재요청 다이얼로그(확인 시 문서 다시 선택) */
 @Composable

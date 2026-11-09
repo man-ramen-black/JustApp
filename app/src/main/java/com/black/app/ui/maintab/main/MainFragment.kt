@@ -6,8 +6,8 @@ import com.black.app.databinding.FragmentMainBinding
 import com.black.app.deeplink.DeeplinkManager
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
-import com.black.app.ui.theme.BlackTheme
 import com.black.core.component.BaseFragment
+import com.black.core.ui.theme.BlackTheme
 import com.black.feature.pokerogue.R as PokeRogueR
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
