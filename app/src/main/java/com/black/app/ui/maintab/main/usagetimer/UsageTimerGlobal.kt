@@ -158,14 +158,11 @@ object UsageTimerGlobal : NotificationActionReceiver.Interface, ScreenReceiver.I
 
         currentPackageName = packageName
         Log.d("showForApp attach : $packageName, sessionStart : $sessionStart")
-        try {
-            usageTimerView = UsageTimerView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
-                it.baseElapsedRealtime = sessionStart
-                it.attachView()
-            }
-        } catch (error: Exception) {
-            Log.w("UsageTimerView attach 실패 : ${error.message}")
-            usageTimerView = null
+        val view = UsageTimerView(ContextThemeWrapper(context, R.style.Theme_Black))
+            .apply { baseElapsedRealtime = sessionStart }
+        if (view.tryAttachView()) {
+            usageTimerView = view
+        } else {
             currentPackageName = null
         }
     }

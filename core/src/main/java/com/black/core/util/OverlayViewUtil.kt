@@ -56,6 +56,28 @@ object OverlayViewUtil {
         windowManager.addView(view, layoutParams)
     }
 
+    /**
+     * [attachView]를 시도하고 성공 여부 반환
+     *
+     * 다른 앱 위에 표시 권한을 확인한 뒤 실제로 붙이기 전에 권한이 회수되면 시스템이 창 추가를 거부(BadTokenException·SecurityException)하므로,
+     * 서비스·접근성 서비스의 부착 경로가 프로세스를 죽이지 않도록 실패로 돌려줌
+     */
+    fun tryAttachView(
+        view: View,
+        onSetWindowParams: ((windowParams: WindowManager.LayoutParams) -> Unit)? = null
+    ): Boolean {
+        return try {
+            attachView(view, onSetWindowParams)
+            true
+        } catch (e: WindowManager.BadTokenException) {
+            Log.e("attach overlay failed : $e")
+            false
+        } catch (e: SecurityException) {
+            Log.e("attach overlay failed : $e")
+            false
+        }
+    }
+
     fun updateView(view: View, onUpdate: (windowParams: WindowManager.LayoutParams) -> Unit) {
         val windowParams = view.layoutParams as? WindowManager.LayoutParams
         windowParams ?: run {

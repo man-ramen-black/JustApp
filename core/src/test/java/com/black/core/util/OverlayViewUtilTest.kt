@@ -1,15 +1,23 @@
 package com.black.core.util
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Point
 import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
 import com.black.test.BaseTest
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import org.robolectric.RuntimeEnvironment
 
-/** [OverlayViewUtil]의 Gravity 기준 창 좌표를 Top·Left 기준 좌표로 바꾸는 계산 검증 */
+/** [OverlayViewUtil]의 Gravity 기준 창 좌표 계산과 창 추가 실패 처리 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class OverlayViewUtilTest : BaseTest() {
 
@@ -71,5 +79,38 @@ class OverlayViewUtilTest : BaseTest() {
 
         /** Then **/
         assertEquals(Point(390, 20), position)
+    }
+
+    /**
+     * 시스템이 창 추가를 거부하면 예외 대신 false를 돌려주는지 검증
+     *
+     * Given: addView가 BadTokenException, SecurityException을 던지는 WindowManager를 쓰는 뷰 두 개
+     * When: 각각 tryAttachView 호출
+     * Then: 모두 false
+     */
+    @Test
+    fun test_04_tryAttachViewReturnsFalseWhenRejected() = runTest {
+        /** Given **/
+        val badTokenView = View(contextWithWindowManager(WindowManager.BadTokenException("rejected")))
+        val securityView = View(contextWithWindowManager(SecurityException("permission revoked")))
+
+        /** When **/
+        val badTokenResult = OverlayViewUtil.tryAttachView(badTokenView)
+        val securityResult = OverlayViewUtil.tryAttachView(securityView)
+
+        /** Then **/
+        assertFalse(badTokenResult)
+        assertFalse(securityResult)
+    }
+
+    /** addView가 [error]를 던지는 WindowManager를 돌려주는 Context */
+    private fun contextWithWindowManager(error: Throwable): Context {
+        val windowManager: WindowManager = mockk {
+            every { addView(any(), any()) } throws error
+        }
+        return object : ContextWrapper(RuntimeEnvironment.getApplication()) {
+            override fun getSystemService(name: String): Any? =
+                if (name == Context.WINDOW_SERVICE) windowManager else super.getSystemService(name)
+        }
     }
 }

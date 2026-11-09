@@ -36,8 +36,10 @@ object StudyPopupGlobal : ScreenReceiver.Interface {
             if (!canShow(StudyPopupRepository(context))) {
                 return@launch
             }
-            studyPopupView = StudyPopupView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
-                it.attachView()
+            // 확인하는 동안 권한이 회수되면 창 추가가 거부되므로 실패는 부착하지 않은 것으로 처리
+            val view = StudyPopupView(ContextThemeWrapper(context, R.style.Theme_Black))
+            if (view.tryAttachView()) {
+                studyPopupView = view
             }
         }
     }

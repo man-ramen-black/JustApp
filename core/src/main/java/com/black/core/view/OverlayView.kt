@@ -29,6 +29,13 @@ abstract class OverlayView<T : ViewDataBinding> : DataBindingCustomView<T> {
         }
     }
 
+    /** 창 추가를 시도하고 성공 여부 반환([OverlayViewUtil.tryAttachView]) */
+    fun tryAttachView(): Boolean {
+        return OverlayViewUtil.tryAttachView(this) {
+            onInitializeWindowLayoutParams(it)
+        }
+    }
+
     open fun detachView() {
         OverlayViewUtil.detachView(this)
     }

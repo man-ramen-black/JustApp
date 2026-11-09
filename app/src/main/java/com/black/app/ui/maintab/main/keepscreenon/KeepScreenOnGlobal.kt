@@ -60,23 +60,18 @@ object KeepScreenOnGlobal {
 
         // 화면 꺼짐 방지 전용 1x1 투명 오버레이 창 추가
         val view = View(applicationContext)
-        try {
-            OverlayViewUtil.attachView(view) { windowParams ->
-                windowParams.width = 1
-                windowParams.height = 1
-                // attachView 기본 플래그(바깥 터치 감시 등)를 덮어써 터치·포커스를 아래 앱으로 통과
-                windowParams.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-                windowParams.title = WINDOW_TITLE
-            }
-        } catch (e: WindowManager.BadTokenException) {
-            // 권한 확인 직후 회수 등으로 시스템이 창 추가 거부
-            Log.e("attach overlay failed : $e")
-            return false
-        } catch (e: SecurityException) {
-            Log.e("attach overlay failed : $e")
+        val attached = OverlayViewUtil.tryAttachView(view) { windowParams ->
+            windowParams.width = 1
+            windowParams.height = 1
+            // attachView 기본 플래그(바깥 터치 감시 등)를 덮어써 터치·포커스를 아래 앱으로 통과
+            windowParams.flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+            windowParams.title = WINDOW_TITLE
+        }
+        // 권한 확인 직후 회수 등으로 시스템이 창 추가 거부
+        if (!attached) {
             return false
         }
 
