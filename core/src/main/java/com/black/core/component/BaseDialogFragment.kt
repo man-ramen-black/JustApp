@@ -1,7 +1,6 @@
 package com.black.core.component
 
 import android.app.Dialog
-import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,6 +11,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.LifecycleEventObserver
 import com.black.core.util.Log
 
 /**
@@ -25,6 +25,11 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
     private var onDismissListener: ((DialogInterface) -> Unit)? = null
 
     protected abstract val layoutResId : Int
+
+    init {
+        // 생명주기 로그는 단계마다 재정의하지 않고 관찰자 하나로 출력(자식 클래스 이름 출력을 위해 javaClass.simpleName)
+        lifecycle.addObserver(LifecycleEventObserver { _, event -> Log.d("${javaClass.simpleName} : $event") })
+    }
 
     abstract fun onBindVariable(binding: T)
 
@@ -42,19 +47,6 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
 
     protected fun cancel() {
         dialog?.cancel()
-    }
-
-    @CallSuper
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(javaClass.simpleName)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -83,37 +75,6 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         return bindingOrNull!!.root
     }
 
-    /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
-    @CallSuper
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStart() {
-        super.onStart()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onResume() {
-        super.onResume()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onPause() {
-        super.onPause()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStop() {
-        super.onStop()
-        Log.d(javaClass.simpleName)
-    }
-
     /**
      * 참고: 프래그먼트는 뷰보다 오래 지속됩니다.
      * 프래그먼트의 onDestroyView() 메서드에서 결합 클래스 인스턴스 참조를 정리해야 합니다.
@@ -124,18 +85,6 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         super.onDestroyView()
         Log.d(javaClass.simpleName)
         bindingOrNull = null
-    }
-
-    @CallSuper
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onDetach() {
-        super.onDetach()
-        Log.d(javaClass.simpleName)
     }
 
     @CallSuper

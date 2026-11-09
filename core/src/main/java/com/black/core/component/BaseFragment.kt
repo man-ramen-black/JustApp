@@ -1,6 +1,5 @@
 package com.black.core.component
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +10,7 @@ import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.black.core.util.Log
 
@@ -36,6 +36,11 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
 
     protected abstract val layoutResId : Int
 
+    init {
+        // 생명주기 로그는 단계마다 재정의하지 않고 관찰자 하나로 출력(자식 클래스 이름 출력을 위해 javaClass.simpleName)
+        lifecycle.addObserver(LifecycleEventObserver { _, event -> Log.d("${javaClass.simpleName} : $event") })
+    }
+
     abstract fun onBindVariable(binding: T)
 
     fun setOnBackPressed(onBackPressed: (() -> Unit)?) {
@@ -44,17 +49,8 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     }
 
     @CallSuper
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(javaClass.simpleName)
-
         isRestoring = savedInstanceState != null
     }
 
@@ -109,26 +105,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     @CallSuper
     override fun onStart() {
         super.onStart()
-        Log.d(javaClass.simpleName)
         isRestoring = false
-    }
-
-    @CallSuper
-    override fun onResume() {
-        super.onResume()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onPause() {
-        super.onPause()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStop() {
-        super.onStop()
-        Log.d(javaClass.simpleName)
     }
 
     /*
@@ -146,26 +123,9 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         bindingOrNull = null
     }
 
-    @CallSuper
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onDetach() {
-        super.onDetach()
-        Log.d(javaClass.simpleName)
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        Log.v(javaClass.simpleName)
         isRestoring = true
     }
 
-    override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        super.onViewStateRestored(savedInstanceState)
-        Log.v(javaClass.simpleName)
-    }
 }

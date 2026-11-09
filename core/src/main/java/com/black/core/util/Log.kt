@@ -1,12 +1,14 @@
 package com.black.core.util
 
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import com.black.core.BuildConfig
 
 object Log {
     private data class MethodInfo(val className: String, val packageName: String, val simpleName: String, val methodName: String, val lineNumber: Int)
 
-    private const val LOG_SPLIT_LENGTH = 3000
+    @VisibleForTesting
+    internal const val LOG_SPLIT_LENGTH = 3000
 
     fun v(obj: Any? = "") {
         printLog("$obj", 'v')
@@ -49,6 +51,11 @@ object Log {
     }
 
     private fun printLog(message: String, level: Char, tag: String? = null) {
+        // release 빌드에서 로그 미출력(호출 정보 수집이 스택 트레이스를 만들어 비싸므로 가장 먼저 확인)
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+
         val methodInfo = getMethodInfo()
         val logTag = tag ?: methodInfo.simpleName
         val prefix = methodInfo.methodName + ": ".takeIf { message.isNotBlank() }.orEmpty()
@@ -61,11 +68,6 @@ object Log {
      * 로그캣 출력 제한은 Terminal에서 "adb logcat -g" 입력 시 확인 가능
      */
     private fun printLongLog(tag: String, level: Char, longLogMessage: String, prefix: String, suffix: String) {
-        // release 빌드에서 로그 미출력
-        if (!BuildConfig.DEBUG) {
-            return
-        }
-
         val logList: List<String> = splitLog(longLogMessage)
         logList.forEachIndexed { index, log ->
             val logMessage = when (index) {
@@ -95,19 +97,13 @@ object Log {
      * ex
      * split("12345", 2) => "12", "34", "5"
      */
-    private fun splitLog(log: String): List<String> {
+    @VisibleForTesting
+    internal fun splitLog(log: String): List<String> {
         if (log.isEmpty()) {
             return listOf("")
         }
-
-        val list = ArrayList<String>()
-        for (i in 0 .. log.length / LOG_SPLIT_LENGTH) {
-            val start = i * LOG_SPLIT_LENGTH
-            var end = (i + 1) * LOG_SPLIT_LENGTH
-            end = end.coerceAtMost(log.length)
-            list.add(log.substring(start, end))
-        }
-        return list
+        // 길이가 LOG_SPLIT_LENGTH의 배수여도 빈 조각을 만들지 않음
+        return log.chunked(LOG_SPLIT_LENGTH)
     }
 
     /** Log를 호출한 클래스, 메소드 정보를 획득 */
