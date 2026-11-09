@@ -74,6 +74,7 @@
     <string name="usage_timer_save_completed">저장되었습니다.</string>
     <string name="usage_timer_paused">%1$d분 동안 일시정지합니다.</string>
     <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
+    <string name="usage_timer_pause_duration_invalid">일시정지 시간은 1분 이상으로 입력해주세요.</string>
 
     <string name="notification_permission_guide">알림 권한이 꺼져 있습니다.\n설정에서 허용해주세요.</string>
 

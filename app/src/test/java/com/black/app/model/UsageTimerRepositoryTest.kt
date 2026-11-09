@@ -5,10 +5,14 @@ import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 
-/** [UsageTimerRepository]의 선택 앱 저장/조회 동작 검증 */
+/** [UsageTimerRepository]의 선택 앱 저장/조회와 일시정지 종료 시각 계산 검증 */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerRepositoryTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
@@ -66,5 +70,25 @@ class UsageTimerRepositoryTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf("com.only"), repository.getSelectedApps())
+    }
+
+    /**
+     * Int 곱셈이면 넘치는 긴 일시정지 시간도 미래 시각으로 저장되는지 검증
+     *
+     * Given: 40,000분(Int 밀리초 곱셈이면 넘치는 값)
+     * When: pause 호출
+     * Then: 종료 시각이 현재 시각 + 40,000분 이상
+     */
+    @Test
+    fun test_04_longPauseDurationDoesNotOverflow() = runTest {
+        /** Given **/
+        val minutes = 40_000
+        val before = System.currentTimeMillis()
+
+        /** When **/
+        repository.pause(minutes)
+
+        /** Then **/
+        assertTrue(repository.getPauseEndTime() >= before + minutes * 60_000L)
     }
 }

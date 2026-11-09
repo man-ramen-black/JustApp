@@ -22,10 +22,13 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 
 /** [UsageTimerViewModel]의 상태 로드·저장·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerViewModelTest : BaseTest() {
 
     @MockK
@@ -146,25 +149,33 @@ class UsageTimerViewModelTest : BaseTest() {
     }
 
     /**
-     * 잘못된 숫자 입력 시 0으로 저장되는지 검증
+     * 숫자가 아니거나 1분 미만인 입력은 저장·일시정지하지 않고 안내 토스트를 보내는지 검증
      *
-     * Given: pauseDurationInput "abc" 입력
-     * When: onClickSave 호출 후 코루틴 완료 대기
-     * Then: repository.savePauseDuration(0) 호출
+     * Given: pauseDurationInput "abc"로 저장, "0"으로 일시정지
+     * When: onClickSave, onClickPause 호출 후 코루틴 완료 대기
+     * Then: savePauseDuration·pause 미호출, 안내 토스트 2개 수신
      */
     @Test
-    fun test_05_invalidDurationInputSavesZero() = runTest {
+    fun test_05_invalidDurationInputIsRejected() = runTest {
         /** Given **/
-        coEvery { repository.savePauseDuration(any()) } just Runs
         val viewModel = createViewModel()
-        viewModel.onPauseDurationInputChanged("abc")
+        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
+        viewModel.onPauseDurationInputChanged("abc")
         viewModel.onClickSave()
+        viewModel.onPauseDurationInputChanged("0")
+        viewModel.onClickPause()
         waitCoroutine()
+        viewModel.events.collectEvents(receivedEvents, count = 2)
 
         /** Then **/
-        coVerify { repository.savePauseDuration(0) }
+        coVerify(exactly = 0) {
+            repository.savePauseDuration(any())
+            repository.pause(any())
+        }
+        val invalidToast = UsageTimerViewModel.EventShowToast(R.string.usage_timer_pause_duration_invalid)
+        assertEquals(listOf(invalidToast, invalidToast), receivedEvents)
     }
 
     /**

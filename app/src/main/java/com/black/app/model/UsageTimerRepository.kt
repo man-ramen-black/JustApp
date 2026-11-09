@@ -16,7 +16,8 @@ class UsageTimerRepository @Inject constructor(@ApplicationContext context: Cont
     }
 
     suspend fun pause(pauseDurationMin: Int) {
-        dataStore.updatePauseEndTime(System.currentTimeMillis() + (pauseDurationMin * 1000 * 60))
+        // Int 곱셈은 약 35,792분부터 넘쳐 과거 시각이 저장되므로 Long으로 계산
+        dataStore.updatePauseEndTime(System.currentTimeMillis() + pauseDurationMin * 60_000L)
     }
 
     suspend fun cancelPause() {

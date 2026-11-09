@@ -65,15 +65,16 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickSave() {
+        val pauseDuration = validPauseDurationMinutes() ?: return
         launch {
-            repository.savePauseDuration(pauseDurationMinutes())
+            repository.savePauseDuration(pauseDuration)
             sendEvent(EventShowToast(R.string.usage_timer_save_completed))
         }
     }
 
     fun onClickPause() {
+        val pauseDuration = validPauseDurationMinutes() ?: return
         launch {
-            val pauseDuration = pauseDurationMinutes()
             repository.savePauseDuration(pauseDuration)
             repository.pause(pauseDuration)
             updatePauseRemainTime()
@@ -113,8 +114,14 @@ class UsageTimerViewModel @Inject constructor(
         }
     }
 
-    private fun pauseDurationMinutes(): Int {
-        return uiState.value.pauseDurationInput.toIntOrNull() ?: 0
+    /** 입력이 1분 이상의 정수면 그 값, 아니면 안내 토스트를 보내고 null */
+    private fun validPauseDurationMinutes(): Int? {
+        val minutes = uiState.value.pauseDurationInput.toIntOrNull()
+        if (minutes == null || minutes < 1) {
+            sendEvent(EventShowToast(R.string.usage_timer_pause_duration_invalid))
+            return null
+        }
+        return minutes
     }
 
     private suspend fun updatePauseRemainTime() {
