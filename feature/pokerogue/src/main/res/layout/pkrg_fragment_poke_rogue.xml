@@ -10,6 +10,10 @@
         <variable
             name="viewModel"
             type="com.black.feature.pokerogue.ui.PokeRogueViewModel" />
+        <!-- Fragment가 보관하는 게임 WebView(방향별 레이아웃을 바꿔도 같은 인스턴스를 옮겨 붙임) -->
+        <variable
+            name="webView"
+            type="com.black.core.webkit.BKWebView" />
         <variable
             name="selectedTypeAdapter"
             type="com.black.feature.pokerogue.ui.TypeAdapter" />
@@ -77,7 +81,7 @@
             android:layout_height="0dp"
             app:layout_constraintTop_toBottomOf="@id/top"
             app:layout_constraintBottom_toBottomOf="parent"
-            webView="@{viewModel.webView}"
+            webView="@{webView}"
             />
 
         <ProgressBar

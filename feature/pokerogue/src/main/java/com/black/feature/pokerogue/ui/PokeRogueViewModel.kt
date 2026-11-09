@@ -7,18 +7,19 @@ import androidx.lifecycle.asLiveData
 import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
-import com.black.core.webkit.BKWebView
 import com.black.core.webkit.BKWebViewClient
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-/** [PokeRogueFragment]의 상태·이벤트 관리 ViewModel */
+/**
+ * [PokeRogueFragment]의 상태·이벤트 관리 ViewModel
+ *
+ * WebView는 Fragment가 보관하고, 페이지 로딩 콜백([BKWebViewClient.Callback])으로 이 ViewModel을 등록·해제하는 것도 Fragment 담당
+ */
 @HiltViewModel
 class PokeRogueViewModel @Inject constructor(
     private val repo: PokeRepository
@@ -31,11 +32,8 @@ class PokeRogueViewModel @Inject constructor(
     data object EventShowReloadConfirm : PokeRogueEvent()
     /** 화면 방향 전환 */
     data object EventRotate : PokeRogueEvent()
-
-    private val mutableWebView = MutableStateFlow<BKWebView?>(null)
-
-    /** 화면 회전에도 게임 상태를 유지하도록 ViewModel이 보관하는 WebView(파기는 [onCleared]) */
-    val webView: StateFlow<BKWebView?> = mutableWebView.asStateFlow()
+    /** WebView에서 [url] 페이지 열기 */
+    data class EventLoadUrl(val url: String) : PokeRogueEvent()
 
     val isLoading = MutableStateFlow(false)
     val isStarted = MutableStateFlow(false)
@@ -69,33 +67,17 @@ class PokeRogueViewModel @Inject constructor(
         .asLiveData()
 
     /**
-     * 보관 중인 WebView 반환, 없으면 [create]로 만들어 보관
+     * 페이지를 열지 않은 새 WebView에 맞춰 게임 시작 전 상태로 되돌림
      *
-     * 첫 진입과 프로세스 종료 뒤 복원(새 ViewModel)에서 생성
+     * WebView는 Fragment와 함께 파기되므로, 지정하지 않은 설정 변경으로 Activity가 다시 만들어져 ViewModel만 남으면 이전 게임의 시작·로딩 상태가 남아 있음
      */
-    fun obtainWebView(create: () -> BKWebView): BKWebView {
-        mutableWebView.value?.let { return it }
-        return create()
-            .also {
-                it.addWebViewClientCallback(this)
-                mutableWebView.value = it
-                isStarted.value = false
-            }
-    }
-
-    override fun onCleared() {
-        mutableWebView.value?.let {
-            it.removeWebViewClientCallback(this)
-            // pauseTimers는 프로세스 전역이라 이후 만드는 WebView가 멈춘 채 시작하지 않도록 되돌림
-            it.resumeTimers()
-            it.clear()
-        }
-        mutableWebView.value = null
-        super.onCleared()
+    fun resetGameState() {
+        isStarted.value = false
+        isLoading.value = false
     }
 
     fun play() {
-        webView.value?.loadUrl("https://pokerogue.net/")
+        sendEvent(EventLoadUrl("https://pokerogue.net/"))
         isStarted.value = true
     }
 
@@ -105,7 +87,7 @@ class PokeRogueViewModel @Inject constructor(
 
     /** 게임을 시작하기 전(페이지를 열기 전)에만 화면 방향 전환 */
     fun rotate() {
-        if (webView.value?.url != null) {
+        if (isStarted.value) {
             return
         }
         sendEvent(EventRotate)

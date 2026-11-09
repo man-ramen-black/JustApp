@@ -111,7 +111,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
     /**
      * Activity가 다시 만들어진 뒤에도 뒤로가기를 PokeRogueFragment가 먼저 처리하는지 검증
      *
-     * PokeRogue 진입 시 가로 회전으로 Activity가 다시 만들어지는 상황 재현.
+     * MainActivity는 회전을 configChanges로 직접 처리하므로 언어·글꼴 크기 변경처럼 처리하지 않는 설정 변경으로 Activity가 다시 만들어지는 상황 재현.
      * 복원된 Fragment는 콜백을 NavHost 컴포지션보다 먼저 등록해 NavHost 뒤로가기 콜백이 우선함.
      *
      * Given:

@@ -65,14 +65,40 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        bindingOrNull = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        bindingOrNull = inflateBinding(inflater, container)
+
+        onBindVariable(binding)
+        return binding.root
+    }
+
+    /** 현재 설정에 맞는 [layoutResId] 리소스로 바인딩 생성 */
+    private fun inflateBinding(inflater: LayoutInflater, parent: ViewGroup?): T {
+        return DataBindingUtil.inflate<T>(inflater, layoutResId, parent, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
+    }
 
+    /**
+     * 현재 설정의 [layoutResId] 리소스로 바인딩을 다시 만들어 [parent] 안의 이전 바인딩 루트와 교체
+     *
+     * Activity가 configChanges로 설정 변경을 직접 처리하면 방향별 레이아웃(layout-land 등)이 자동으로 다시 적용되지 않아 [onConfigurationChanged]에서 호출.
+     * Fragment 뷰는 교체할 수 없으므로 [parent]는 바인딩 루트를 감싸 Fragment 뷰로 돌려준 컨테이너.
+     * 새 바인딩에도 [onBindVariable]을 다시 호출하므로 거기서는 바인딩 변수만 연결하고, 관찰·수집 등록은 뷰마다 한 번 호출되는 [onViewCreated]에서 수행
+     */
+    protected fun replaceBinding(parent: ViewGroup) {
+        val previous = binding
+        bindingOrNull = inflateBinding(layoutInflater, parent)
         onBindVariable(binding)
-        return binding.root
+        // 붙이기 전에 바인딩을 실행해 바인딩 전 기본값으로 그려지는 프레임 방지
+        binding.executePendingBindings()
+
+        // 이전 바인딩의 관찰과 수명주기 연결 해제
+        previous.unbind()
+        previous.lifecycleOwner = null
+        parent.removeView(previous.root)
+        parent.addView(binding.root)
     }
 
     /** View 셋팅은 onViewCreated에서 하는 것을 권장 */

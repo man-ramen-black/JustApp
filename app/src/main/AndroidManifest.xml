@@ -50,11 +50,18 @@
         orientation|screenSize : 화면 회전
         keyboardHidden : 키보드 노출/숨김
         keyboard : 외부 키보드 연결
+        uiMode : 다크 모드 전환 등
 
         [configChanges : Foldable]
         https://developer.samsung.com/sdp/blog/en-us/2019/01/31/how-to-update-your-apps-for-foldable-displays
         https://medium.com/@WeAreMobile1st/how-to-develop-android-apps-for-foldable-devices-950a3b26327f
         screenLayout|smallestScreenSize : 폴더블 접음/펼침 (with resizeableActivity = true)
+
+        [MainActivity configChanges]
+        PokeRogue 게임(WebView의 JS 메모리)이 회전·폴더블 접음/펼침으로 끊기지 않도록 재생성 없이 직접 처리.
+        방향별 레이아웃(layout-land)은 자동으로 다시 적용되지 않아 그 화면이 onConfigurationChanged에서 교체(PokeRogueFragment).
+        앱이 항상 어두운 테마(night 리소스 없음)라 uiMode가 바뀌어도 화면이 달라지지 않아 함께 처리.
+        언어·글꼴 크기처럼 지정하지 않은 설정이 바뀌면 재생성되어 게임이 처음부터 시작됨
 
         [LaunchMode]
         https://developer.android.com/guide/components/activities/tasks-and-back-stack?hl=ko
@@ -64,6 +71,7 @@
             android:name="com.black.app.ui.MainActivity"
             android:theme="@style/Theme.Black.Starting"
             android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:exported="true">
             <!-- #Android13에서는 #IntentFilter가 정확히 매칭되야지만 #startActivity가 동작-->
             <!-- https://codechacha.com/ko/android-13-intent-matching/ -->
