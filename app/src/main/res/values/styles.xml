@@ -24,9 +24,8 @@
         <!-- Ripple 이펙트 색상 -->
         <item name="colorControlHighlight">@color/ripple_color</item>
 
-        <!-- StatusBar 색상 -->
-        <item name="colorPrimaryVariant">?attr/colorPrimaryVariant</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- StatusBar 색상(NavigationBar와 같은 창 배경색) -->
+        <item name="android:statusBarColor">@color/window_background</item>
 
         <!-- NavigationBar 색상 -->
         <item name="android:navigationBarColor">@color/window_background</item>
