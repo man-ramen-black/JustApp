@@ -4,21 +4,16 @@ import android.os.SystemClock
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -46,10 +41,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.app.ui.component.ActionButton
 import com.black.app.ui.maintab.main.usagetimer.view.UsageTimerView
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.ToolScreenScaffold
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppTypography
 import com.black.core.util.DataUtil
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
@@ -58,6 +54,7 @@ import kotlinx.coroutines.delay
 /** UsageTimer 화면 */
 @Composable
 fun UsageTimerScreen(
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: UsageTimerViewModel = hiltViewModel(),
 ) {
@@ -107,6 +104,7 @@ fun UsageTimerScreen(
     UsageTimerContent(
         uiState = uiState,
         modifier = modifier,
+        onNavigateUp = onNavigateUp,
         onPauseDurationInputChanged = viewModel::onPauseDurationInputChanged,
         onClickShow = viewModel::onClickShow,
         onClickSave = viewModel::onClickSave,
@@ -123,6 +121,7 @@ fun UsageTimerScreen(
 private fun UsageTimerContent(
     uiState: UsageTimerUiState,
     modifier: Modifier = Modifier,
+    onNavigateUp: () -> Unit,
     onPauseDurationInputChanged: (String) -> Unit,
     onClickShow: () -> Unit,
     onClickSave: () -> Unit,
@@ -132,29 +131,12 @@ private fun UsageTimerContent(
     onClickSelectApp: () -> Unit,
     onFinishTimer: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppColors.ScreenBackground)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    ToolScreenScaffold(
+        title = stringResource(R.string.fragment_name_usage_timer),
+        onNavigateUp = onNavigateUp,
+        modifier = modifier,
+        titleModifier = Modifier.testTag("usage_timer_title"),
     ) {
-        // 헤더 캡션
-        Text(
-            text = stringResource(R.string.usage_timer_caption),
-            modifier = Modifier.padding(top = 26.dp),
-            style = AppTypography.HeaderCaption,
-        )
-        // 헤더 타이틀
-        Text(
-            text = stringResource(R.string.fragment_name_usage_timer),
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .testTag("usage_timer_title"),
-            style = AppTypography.ScreenTitle,
-        )
-
         // 타이머 표시 섹션
         HorizontalDivider(
             modifier = Modifier.padding(top = 24.dp),

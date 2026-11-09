@@ -1,8 +1,9 @@
-package com.black.app.ui.component
+package com.black.core.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.HorizontalDivider
@@ -19,12 +20,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppTypography
 
 /** 도구 화면 섹션 위 디바이더 + 한글 캡션 */
 @Composable
-internal fun SectionHeader(title: String) {
+fun SectionHeader(title: String) {
     HorizontalDivider(
         modifier = Modifier.padding(top = 24.dp),
         thickness = 1.dp,
@@ -43,14 +44,17 @@ internal fun SectionHeader(title: String) {
  * 라벨까지 행 전체를 눌러 토글하고, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여
  */
 @Composable
-internal fun SwitchRow(
+fun SwitchRow(
     label: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+        // 스위치(32dp)만으로는 Android 권장 최소 터치 높이(48dp)에 못 미쳐 행 높이를 보장
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -69,9 +73,9 @@ internal fun SwitchRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = AppColors.ScreenBackground,
                 checkedTrackColor = AppColors.Title,
-                uncheckedThumbColor = AppColors.Arrow,
+                uncheckedThumbColor = AppColors.UncheckedControl,
                 uncheckedTrackColor = AppColors.ContainerBackground,
-                uncheckedBorderColor = AppColors.ContainerBorder,
+                uncheckedBorderColor = AppColors.UncheckedControl,
             ),
         )
     }
@@ -83,7 +87,7 @@ internal fun SwitchRow(
  * [onClick]이 있으면 조치가 필요한 상태라 상태값 뒤에 ›를 붙이고, 행을 누르면 조치 화면으로 이동
  */
 @Composable
-internal fun StatusRow(
+fun StatusRow(
     label: String,
     value: String,
     onClick: (() -> Unit)?,
@@ -92,6 +96,8 @@ internal fun StatusRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // 누를 수 있는 행이 Android 권장 최소 터치 높이(48dp)를 갖도록 보장
+            .heightIn(min = 48.dp)
             .clickableIfPresent(onClick)
             // 라벨·상태값을 한 노드로 검증하도록 병합
             .semantics(mergeDescendants = true) {}
