@@ -86,7 +86,7 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
                     return
                 }
 
-                context.sendBroadcast(Intent(FloatingAccessibilityService.ACTION_REQUEST_BACK))
+                context.sendBroadcast(FloatingAccessibilityService.createRequestBackIntent(context))
             }
 
             FloatingViewModel.EVENT_VOLUME_DOWN -> {
