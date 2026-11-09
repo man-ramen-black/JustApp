@@ -51,12 +51,17 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
     }
 
     /**
-     * 팝업에 보여 줄 내용 개수
+     * 팝업에 보여 줄 내용 목록
      *
-     * 공백뿐인 항목은 빈 페이지가 되므로 내용으로 치지 않음
+     * 공백뿐인 항목은 빈 페이지가 되므로 제외. 표시 여부 판정([hasContents])과 같은 기준
      */
+    suspend fun loadPopupContents() : List<StudyPopupData.Contents> {
+        return load().filter { it.contents.isNotBlank() }
+    }
+
+    /** 팝업에 보여 줄 내용 개수 */
     suspend fun countContents() : Int {
-        return load().count { it.contents.isNotBlank() }
+        return loadPopupContents().size
     }
 
     /** 팝업에 보여 줄 내용 존재 여부 */

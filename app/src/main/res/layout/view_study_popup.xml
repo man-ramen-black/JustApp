@@ -15,7 +15,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:onClick="@{() -> viewModel.onClickOutside()}"
+        android:onClick="@{() -> viewModel.close()}"
         >
 
         <View
@@ -69,7 +69,7 @@
             android:layout_marginBottom="10dp"
             android:layout_marginRight="5dp"
             android:scaleType="fitCenter"
-            android:onClick="@{() -> viewModel.onClickPrev()}"
+            android:onClick="@{() -> viewModel.showPrevious()}"
             />
 
         <ImageButton
@@ -86,7 +86,7 @@
             android:layout_marginBottom="10dp"
             android:layout_marginLeft="5dp"
             android:scaleType="fitCenter"
-            android:onClick="@{() -> viewModel.onClickNext()}"
+            android:onClick="@{() -> viewModel.showNext()}"
             />
 
 
@@ -103,7 +103,7 @@
             android:background="@drawable/bt_dark_circle"
             android:src="@drawable/ic_close"
             android:scaleType="fitCenter"
-            android:onClick="@{() -> viewModel.onClickClose()}"
+            android:onClick="@{() -> viewModel.close()}"
             />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

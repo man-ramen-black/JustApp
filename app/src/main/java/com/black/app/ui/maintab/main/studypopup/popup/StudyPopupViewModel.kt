@@ -1,70 +1,61 @@
 package com.black.app.ui.maintab.main.studypopup.popup
 
 import androidx.databinding.ObservableField
-import androidx.lifecycle.viewModelScope
 import com.black.app.databinding.ViewStudyPopupBinding
 import com.black.app.model.StudyPopupRepository
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.util.Log
-import kotlinx.coroutines.launch
+import com.black.core.viewmodel.EventViewModel
+import com.black.core.viewmodel.ViewModelEvent
 import kotlin.random.Random
 
 /**
- * [StudyPopupView]
- * [ViewStudyPopupBinding]
+ * [StudyPopupView]의 상태·이벤트 관리 ViewModel
+ *
+ * 레이아웃은 [ViewStudyPopupBinding]
  * Created by jinhyuk.lee on 2022/05/24
  **/
-class StudyPopupViewModel : com.black.core.viewmodel.EventViewModel() {
-    companion object {
-        const val EVENT_CLOSE = "Close"
-        const val EVENT_SUBMIT_LIST = "SubmitList"
-        const val EVENT_SET_CURRENT_ITEM = "SetCurrentItem"
-        const val EVENT_TOAST = "Toast"
-    }
+class StudyPopupViewModel(
+    private val repository: StudyPopupRepository,
+) : EventViewModel() {
+
+    /** 스터디 팝업 일회성 이벤트 */
+    sealed class StudyPopupEvent : ViewModelEvent
+
+    /** 팝업 닫기 */
+    data object EventClose : StudyPopupEvent()
+    /** 섞은 내용 목록 표시 */
+    data class EventShowContents(val contents: List<StudyPopupData.Contents>) : StudyPopupEvent()
 
     val isProgress = ObservableField(true)
     val currentItem =  ObservableField(0)
     val currentItemSmooth =  ObservableField(0)
-    private val list = ArrayList<StudyPopupData.Contents>()
-    private var model: StudyPopupRepository? = null
 
-    fun setModel(model: StudyPopupRepository) {
-        this.model = model
-    }
-
-    fun initList() {
+    /** 팝업에 보여 줄 내용을 섞어서 표시 */
+    fun loadContents() {
         Log.d()
-        viewModelScope.launch {
+        launch {
             isProgress.set(true)
-            val contentList = model?.load() ?: run {
-                Log.w("model is null")
-                return@launch
-            }
-            list.addAll(contentList.shuffled(Random(System.currentTimeMillis())))
+            val contents = repository.loadPopupContents()
+                .shuffled(Random(System.currentTimeMillis()))
             isProgress.set(false)
-            sendEvent(EVENT_SUBMIT_LIST, list)
-            // submitList 시점과 맞추기 위해 sendEvent로 currentItem 설정
-            sendEvent(EVENT_SET_CURRENT_ITEM, com.black.core.view.LoopingPagerAdapter.INITIAL_POSITION)
+            sendEvent(EventShowContents(contents))
         }
     }
 
-    fun onClickClose() {
-        sendEvent(EVENT_CLOSE)
+    fun close() {
+        sendEvent(EventClose)
     }
 
-    fun onClickPrev() {
+    fun showPrevious() {
         Log.d("${currentItemSmooth.get()}")
         val value = currentItemSmooth.get() ?: return
         currentItemSmooth.set(value - 1)
     }
 
-    fun onClickNext() {
+    fun showNext() {
         Log.d("${currentItemSmooth.get()}")
         val value = currentItemSmooth.get() ?: return
         currentItemSmooth.set(value + 1)
-    }
-
-    fun onClickOutside() {
-        onClickClose()
     }
 }

@@ -5,18 +5,24 @@ import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.black.app.R
 import com.black.app.databinding.ViewStudyPopupBinding
 import com.black.app.model.StudyPopupRepository
-import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.util.Log
+import com.black.core.view.LoopingPagerAdapter
+import com.black.core.view.OverlayView
+import com.black.core.viewmodel.ViewModelEvent
+import kotlinx.coroutines.launch
 
 /**
  * Created by jinhyuk.lee on 2022/05/24
  **/
-class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
-    com.black.core.viewmodel.EventObserver {
+class StudyPopupView : OverlayView<ViewStudyPopupBinding> {
     constructor(context: Context) : super(context)
 
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -27,7 +33,13 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int)
             : super(context, attrs, defStyleAttr, defStyleRes)
 
-    private val viewModel by lazy { StudyPopupViewModel() }
+    /** 오버레이는 ViewModelStoreOwner 안에 있지 않아 뷰가 가진 저장소로 ViewModel 수명 관리(창에서 떼면 onCleared) */
+    private val viewModelStore = ViewModelStore()
+    private val viewModel by lazy {
+        val repository = StudyPopupRepository(context)
+        val factory = viewModelFactory { initializer { StudyPopupViewModel(repository) } }
+        ViewModelProvider(viewModelStore, factory)[StudyPopupViewModel::class.java]
+    }
     private val adapter by lazy { StudyPopupPagerAdapter() }
 
     override val layoutId: Int
@@ -43,12 +55,13 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
     override fun bindVariable(binding: ViewStudyPopupBinding) {
         super.bindVariable(binding)
         Log.d()
-        binding.viewModel = viewModel.apply {
-            setModel(StudyPopupRepository(context))
-            observeEventForever(this@StudyPopupView)
-        }
+        binding.viewModel = viewModel
         binding.adapter = adapter
-        viewModel.initList()
+        // 창에서 떼면(DESTROYED) 수집도 함께 종료
+        lifecycleScope.launch {
+            viewModel.events.collect { handleEvent(it) }
+        }
+        viewModel.loadContents()
     }
 
     override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
@@ -59,28 +72,23 @@ class StudyPopupView : com.black.core.view.OverlayView<ViewStudyPopupBinding>,
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun onReceivedEvent(action: String, data: Any?) {
-        when (action) {
-            StudyPopupViewModel.EVENT_CLOSE -> {
+    private fun handleEvent(event: ViewModelEvent) {
+        when (event) {
+            is StudyPopupViewModel.EventClose -> {
                 detachView()
             }
-            StudyPopupViewModel.EVENT_SUBMIT_LIST -> {
-                Log.d("EVENT_SUBMIT_LIST")
-                adapter.submitList(data as List<StudyPopupData.Contents>)
-            }
-            StudyPopupViewModel.EVENT_SET_CURRENT_ITEM -> {
-                Log.d("EVENT_SET_CURRENT_ITEM : $data, size : ${adapter.itemCount}")
-                viewModel.currentItem.set(data as Int)
-            }
-            StudyPopupViewModel.EVENT_TOAST -> {
-                Toast.makeText(context, data as String, Toast.LENGTH_SHORT).show()
+            is StudyPopupViewModel.EventShowContents -> {
+                Log.d("contents size : ${event.contents.size}")
+                // 목록 반영이 끝난 뒤 시작 위치를 정해야 첫 페이지가 바로 보임
+                adapter.submitList(event.contents) {
+                    viewModel.currentItem.set(LoopingPagerAdapter.INITIAL_POSITION)
+                }
             }
         }
     }
 
     override fun onDetachedFromWindow() {
-        viewModel.removeEventObserver(this)
         super.onDetachedFromWindow()
+        viewModelStore.clear()
     }
 }

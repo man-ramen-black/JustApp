@@ -6,11 +6,12 @@ import com.black.app.R
 import com.black.app.databinding.ItemStudyPopupPagerContentsBinding
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.core.view.BaseViewHolder
+import com.black.core.view.LoopingPagerAdapter
 
 /**
  * Created by jinhyuk.lee on 2022/05/24
  **/
-class StudyPopupPagerAdapter : com.black.core.view.LoopingPagerAdapter<StudyPopupData.Contents>() {
+class StudyPopupPagerAdapter : LoopingPagerAdapter<StudyPopupData.Contents>() {
     class ViewHolder(binding: ItemStudyPopupPagerContentsBinding)
         : BaseViewHolder<ItemStudyPopupPagerContentsBinding, StudyPopupData.Contents>(binding) {
         override fun bind(item: StudyPopupData.Contents) {
