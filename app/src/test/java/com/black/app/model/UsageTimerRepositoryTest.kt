@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -22,6 +23,12 @@ class UsageTimerRepositoryTest : BaseTest() {
     @Before
     fun clearSelectedApps() {
         runTest { repository.saveSelectedApps(emptyList()) }
+    }
+
+    /** 일시정지 종료 시각 초기화(DataStore가 프로세스 단일 인스턴스라 다른 테스트 클래스의 타이머가 일시정지로 판단하지 않도록) */
+    @After
+    fun clearPause() {
+        runTest { repository.cancelPause() }
     }
 
     /**
