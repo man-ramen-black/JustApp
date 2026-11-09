@@ -20,7 +20,6 @@ preferenceKtx = "1.2.1"
 retrofit = "2.9.0"
 hilt = "2.59.2"
 ksp = "2.3.8"
-paging = "3.2.1"
 datastore = "1.1.1"
 parcelize = "2.3.21"
 retrofit2KotlinxSerializationConverter = "1.0.0"
@@ -51,7 +50,6 @@ androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-view
 androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationFragmentKtx" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
-androidx-paging = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 androidx-datastore = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }

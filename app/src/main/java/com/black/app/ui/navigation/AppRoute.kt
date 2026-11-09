@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 /** 루트 Compose Navigation 라우트 */
 sealed interface AppRoute {
-    @Serializable data object MainTab : AppRoute
+    @Serializable data object Main : AppRoute
     @Serializable data object Black : AppRoute
     @Serializable data object TextEditor : AppRoute
     @Serializable data object StudyPopup : AppRoute

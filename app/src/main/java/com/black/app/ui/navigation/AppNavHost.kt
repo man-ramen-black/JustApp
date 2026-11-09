@@ -9,7 +9,7 @@ import androidx.fragment.compose.AndroidFragment
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.black.app.ui.maintab.MainTabFragment
+import com.black.app.ui.maintab.main.MainFragment
 import com.black.app.ui.maintab.main.appinstallnotification.AppInstallNotificationScreen
 import com.black.app.ui.maintab.main.etc.BlackFragment
 import com.black.app.ui.maintab.main.studypopup.StudyPopupSettingScreen
@@ -29,14 +29,14 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = AppRoute.MainTab,
+        startDestination = AppRoute.Main,
         modifier = modifier,
         enterTransition = { fadeIn() },
         exitTransition = { fadeOut() },
         popEnterTransition = { fadeIn() },
         popExitTransition = { fadeOut() },
     ) {
-        composable<AppRoute.MainTab> { AndroidFragment<MainTabFragment>(Modifier.fillMaxSize()) }
+        composable<AppRoute.Main> { AndroidFragment<MainFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Black> { AndroidFragment<BlackFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.TextEditor> { TextEditorScreen(Modifier.fillMaxSize()) }
         composable<AppRoute.StudyPopup> {

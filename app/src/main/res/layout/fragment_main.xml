@@ -4,5 +4,6 @@
         android:id="@+id/compose_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        fitsStatusBar="@{true}" />
+        fitsStatusBar="@{true}"
+        fitsNavigationBar="@{true}" />
 </layout>

@@ -67,7 +67,6 @@ android {
 
 dependencies {
     implementation(project(":core"))
-    implementation(project(":feature:imagesearcher"))
     implementation(project(":feature:pokerogue"))
     implementation(project(":feature:floatingbutton"))
     implementation(libs.androidx.core.ktx)
@@ -77,7 +76,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
-    implementation(libs.androidx.paging)
     implementation(libs.androidx.datastore)
 
     implementation(libs.androidx.room.runtime)

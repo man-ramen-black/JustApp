@@ -59,7 +59,6 @@ dependencies {
     api(libs.androidx.lifecycle.livedata.ktx)
     api(libs.androidx.lifecycle.viewmodel.ktx)
 
-    api(libs.androidx.paging)
     api(libs.androidx.datastore)
 
     api(libs.retrofit)

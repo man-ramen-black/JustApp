@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                                 launchSingleTop = true
                                 restoreState = true
                                 if (it.clearBackStack) {
-                                    popUpTo<AppRoute.MainTab> { inclusive = false }
+                                    popUpTo<AppRoute.Main> { inclusive = false }
                                 }
                             }
                         }
