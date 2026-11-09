@@ -9,6 +9,7 @@ import com.black.feature.pokerogue.model.PokeTypeChart
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
 import javax.inject.Inject
 
 class PokeRepository @Inject constructor(
@@ -23,7 +24,9 @@ class PokeRepository @Inject constructor(
         }
 
         val inputStream = context.assets.open("poke_type_chart.json")
-        return@withContext JsonUtil.from<List<PokeTypeChart>>(FileUtil.readText(inputStream), true)!!
+        // 번들 자산이 깨졌으면 원인(SerializationException)을 그대로 남기도록 null을 돌려주는 from 대신 직접 파싱
+        return@withContext JsonUtil.kotlinSerialization
+            .decodeFromString<List<PokeTypeChart>>(FileUtil.readText(inputStream))
             .also { pokeTypeChart = it }
     }
 
