@@ -35,7 +35,7 @@ android {
                 "proguard-rules.pro"
             )
         }
-        // 계측 테스트 전용 빌드 타입(com.black.app.uitest), 매일 쓰는 debug 앱과 패키지가 달라 am instrument의 강제 종료·테스트 데이터가 그 앱에 닿지 않음
+        // 계측 테스트 전용 빌드 타입(com.black.app.uitest), 실사용 debug 앱과 패키지가 달라 am instrument의 강제 종료·테스트 데이터가 그 앱에 닿지 않음
         create("uitest") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".uitest"

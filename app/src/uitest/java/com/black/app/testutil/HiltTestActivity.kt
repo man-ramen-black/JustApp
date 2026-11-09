@@ -8,7 +8,7 @@ import dagger.hilt.android.AndroidEntryPoint
  *
  * launchFragmentInContainer가 제공하는 기본 Activity는 @AndroidEntryPoint가 아니어서
  * Hilt Fragment를 주입할 수 없으므로 테스트 전용 호스트 Activity를 계측 테스트 빌드 타입(uitest) 소스셋에 배치
- * (androidTest는 uitest 변형에만 있어 매일 쓰는 debug 앱에는 미포함)
+ * (androidTest는 uitest 변형에만 있어 실사용 debug 앱에는 미포함)
  */
 @AndroidEntryPoint
 class HiltTestActivity : AppCompatActivity()

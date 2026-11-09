@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 같은 기기의 매일 쓰는 debug 앱과 런처·앱 정보에서 구분되는 이름(화면 문구 app_name은 유지) -->
+    <!-- 같은 기기의 실사용 debug 앱과 런처·앱 정보에서 구분되는 이름(화면 문구 app_name은 유지) -->
     <application
         android:label="@string/uitest_app_label"
         tools:replace="android:label">

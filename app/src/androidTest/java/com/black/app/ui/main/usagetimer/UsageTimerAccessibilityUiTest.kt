@@ -29,7 +29,7 @@ import org.junit.runners.MethodSorters
  *
  * 사용자가 켜 둔 다른 접근성 서비스는 그대로 두고 이 서비스만 더해 켬.
  * 접근성 설정·오버레이 표시 권한·선택 앱은 테스트 후 테스트 전 값으로 되돌림
- * 같은 기기의 매일 쓰는 debug 앱과 서비스 라벨(JustApp - UsageTimer)이 같아, 그 앱의 서비스가 켜져 있으면 라벨로 찾는 바인딩 확인이 이 앱과 구분되지 않음
+ * 같은 기기의 실사용 debug 앱과 서비스 라벨(JustApp - UsageTimer)이 같아, 그 앱의 서비스가 켜져 있으면 라벨로 찾는 바인딩 확인이 이 앱과 구분되지 않음
  *
  * [수동 검증 방법] 정상 설치 앱에서 다음 절차로 오버레이 표시·유지 확인(`<패키지>`는 설치한 빌드의 applicationId)
  * 1. `ANDROID_SERIAL=<시리얼> ./gradlew :app:installDebug`
