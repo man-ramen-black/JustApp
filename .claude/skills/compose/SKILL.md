@@ -12,11 +12,11 @@ argument-hint: [대상 화면 또는 Fragment]
 
 | 파일 | 내용 |
 |---|---|
-| `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless) + 그 화면 전용 private 하위 Composable + testTag 상수 `internal object XxxTestTags` |
+| `XxxScreen.kt` | public `XxxScreen`(stateful) + private `XxxContent`(stateless, 상태 주입 테스트 예외는 "Compose UI 테스트" 절) + 그 화면 전용 private 하위 Composable + testTag 상수 `internal object XxxTestTags` |
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
 | `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 `.claude/rules/viewmodel.md` 형식으로 `[XxxScreen]` 링크 |
 
-feature 모듈 기능의 화면은 그 모듈의 `ui` 패키지에 두고 문자열도 그 모듈 `strings.xml`에 둔다(`FloatingSettingScreen`). 계측 테스트는 `HiltTestActivity`·`BaseUiTest`가 있는 app의 androidTest에 같은 패키지로 두므로 `XxxTestTags`는 public으로 연다.
+feature 모듈 기능의 화면은 그 모듈의 `ui` 패키지에 두고 문자열도 그 모듈 `strings.xml`에 둔다(`FloatingSettingScreen`). 계측 테스트는 `BaseUiTest`가 있는 app의 androidTest(호스트 `HiltTestActivity`는 `app/src/uitest`)에 같은 패키지로 두므로 `XxxTestTags`는 public으로 연다.
 
 ```kotlin
 /** TextEditor 화면 */
@@ -78,8 +78,8 @@ private fun TextEditorContent(
 
 ## XML Fragment → Compose 전환
 
-1. **동작 목록 작성**: Fragment·레이아웃 XML·ViewModel을 읽어 클릭, 관찰(LiveData·`collectEvent` 문자열 액션), 생명주기 처리, 다른 화면 이동을 빠짐없이 나열한다. 전환 후 이 목록과 대조한다.
-2. **ViewModel 정리**: 화면 상태를 `XxxUiState` 하나로 모아 `StateFlow`로 노출하고, 문자열 액션 이벤트는 `.claude/rules/viewmodel.md` 규칙대로 타입 이벤트(`EventXxx`)로 바꾼다.
+1. **동작 목록 작성**: Fragment·레이아웃 XML·ViewModel을 읽어 클릭, 관찰(LiveData·`StateFlow`·`events` 수집), 생명주기 처리, 다른 화면 이동을 빠짐없이 나열한다. 전환 후 이 목록과 대조한다.
+2. **ViewModel 정리**: 화면 상태를 `XxxUiState` 하나로 모아 `StateFlow`로 노출하고, Fragment가 `repeatOnLifecycle` 안에서 수집하던 `events`의 처리는 Screen의 `CollectEvents`로 옮긴다. 이벤트 정의는 `.claude/rules/viewmodel.md`를 따른다.
 3. **Screen 작성**: 위 파일 구성대로 만들고, 레이아웃 수치(여백·크기)는 원본 XML 값을 대조해 옮긴다. 추측해서 넣지 않는다.
 4. **교체**: `AppNavHost`의 `AndroidFragment<XxxFragment>`를 위 2번 형식의 `XxxScreen` 호출로 바꾼다.
 5. **정리**: Fragment와 레이아웃 XML을 지우기 전에 참조를 모두 찾는다(`grep -rn "XxxFragment\|fragment_xxx" app/src feature`). import·바로가기 Activity·`main_tab_navigation.xml`·`<include layout>`에 남은 참조를 함께 정리한다. 문자열·drawable은 다른 곳에서 쓰지 않는 것이 확인될 때만 지운다.
@@ -132,14 +132,15 @@ class TextEditorScreenTest : BaseUiTest() {
 - `BaseUiTest`가 `hiltRule`·`composeRule`·`onHostActivity`를 제공한다. `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으므로 클래스마다 단다.
 - 검증·조작은 `BaseUiTest` 헬퍼(`assertTagDisplayed`·`assertTagExists`·`assertTagNotExists`·`assertTagText`·`assertTextDisplayed`·`clickTag`·`clickText`·`waitUntilTagExists`·`waitUntilTextExists`)로 쓴다. 헬퍼가 없는 `composeRule` 호출이 반복되면 테스트 클래스에 늘어놓지 말고 `BaseUiTest`에 헬퍼를 추가한다. `MainScreenTest`·`UsageTimerScreenTest`의 문자열 태그와 `composeRule.onNodeWithTag(...)` 직접 호출은 본보기로 삼지 않는다.
 - `HiltTestActivity`에 `setContent`로 Screen을 띄우면 `hiltViewModel()` 주입까지 실제 경로로 검증된다. Content는 private이므로 Screen을 통해 검증한다.
-- 함수명 `test_{2자리순번}_{camelCase 동작}`, KDoc 요약 + `Given:`/`When:`/`Then:`, 본문 `/** Given **/` 구획은 `ui-test` 스킬과 같다.
+    - 예외: 표시가 권한·서비스 실행 같은 기기 상태로 갈려 Screen으로는 한 분기만 실행되면, Content를 `internal`(app androidTest와 다른 모듈이면 `public`)로 열고 테스트가 `uiState`를 주입해 분기마다 고정된 기대값으로 검증한다. 연 이유는 Content KDoc에 적는다(`AppInstallNotificationContent`·`FloatingSettingContent`). 기대값을 구현과 같은 함수(`PermissionHelper` 등)나 기기 상태로 계산하지 않는다.
+- 함수명 `test_{2자리순번}_{camelCase 동작}`, KDoc 요약 + `Given:`/`When:`/`Then:`, 본문 `/** Given **/` 구획, 기기 설정·앱 작업 변경 시 복원 헬퍼 사용은 `ui-test` 스킬과 같다.
 
 ## 검증
 
 ```
 ./gradlew :app:compileDebugKotlin
 ./gradlew :app:testDebugUnitTest --tests "<ViewModel 테스트 FQCN>"
-ANDROID_SERIAL=<시리얼> ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
+ANDROID_SERIAL=<시리얼> ./gradlew :app:connectedUitestAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
 ```
 
-계측 테스트는 기기가 연결돼 있을 때 실행해 통과를 확인한다. 기기가 없으면 `./gradlew :app:assembleDebugAndroidTest`로 컴파일까지 확인하고, 실행하지 못한 사실과 미검증 범위를 보고한다.
+계측 테스트는 기기가 연결돼 있을 때 실행해 통과를 확인하고, `app/build/outputs/androidTest-results/connected/uitest/`의 XML에서 실패와 건너뜀(`skipped`) 수를 본다. 기기가 없으면 `./gradlew :app:assembleUitestAndroidTest`로 컴파일까지 확인하고, 실행하지 못한 사실과 미검증 범위를 보고한다.

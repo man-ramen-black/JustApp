@@ -1,21 +1,25 @@
 // Claude Code PostToolUse(Bash) hook (Mac/Windows 공통)
-// 설치(gradlew install*·adb install)와 am instrument는 JustApp 프로세스를 종료해 화면 켜짐 유지 오버레이 창도 함께 제거.
+// 실사용 debug 앱(com.black.app)의 설치(gradlew install*·adb install)와 그 앱 대상 am instrument는 앱 프로세스를 종료해
+// 화면 켜짐 유지 오버레이 창도 함께 제거.
 // 메모리 규칙("설치·계측이 끝날 때마다 다시 켜기")만으로는 세션이 빠뜨려 기기가 꺼지고 잠기므로, 명령이 끝나면 대상 기기에 다시 켬
 // debug 빌드 KeepScreenOnReceiver의 ACTIVATE broadcast 사용(이미 켜져 있으면 그대로, Receiver 없는 빌드는 data 없는 결과)
+// 계측 테스트 전용 빌드(uitest, com.black.app.uitest)의 설치·계측은 다른 패키지라 실사용 앱을 종료하지 않아 대상 제외
 // 건너뜀: 백그라운드 실행(끝난 시점을 알 수 없고 계측 중 broadcast는 KeepScreenOnTileUiTest를 깸),
-// 화면 꺼짐(꺼지면 해제되는 KeepScreenOnGlobal 설계 유지), 다른 세션의 JustApp 계측 진행 중
+// 화면 꺼짐(꺼지면 해제되는 KeepScreenOnGlobal 설계 유지), 다른 세션의 JustApp 계측(두 패키지 모두) 진행 중
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
 const packageName = "com.black.app";
+// 계측 테스트 전용 빌드 패키지(app/build.gradle.kts의 uitest applicationIdSuffix)
+const uitestPackageName = `${packageName}.uitest`;
 const activateAction = "com.black.app.action.ACTIVATE_KEEP_SCREEN_ON";
 const adbTimeoutMillis = 10000;
 
-// 기기 앱 프로세스를 종료하는 명령: gradlew 설치·연결 테스트 작업, adb 설치·계측
-const gradleDevicePattern = /\bgradlew(?:\.bat)?\b[^;&|\n]*\b(?:install[A-Z]\w*|connected\w*AndroidTest)\b/;
-const adbDevicePattern = /\badb(?:\.exe)?\b[^;&|\n]*?[\s"'](?:install(?:-multiple)?|am\s+instrument|pm\s+install)\b/;
+// 실사용 앱 프로세스를 종료하는 명령: gradlew 설치·연결 테스트 작업, adb 설치·계측(Uitest 작업, uitest가 들어간 APK 경로·계측 대상은 제외)
+const gradleDevicePattern = /\bgradlew(?:\.bat)?\b[^;&|\n]*\b(?:install(?!Uitest)[A-Z]\w*|connected(?!Uitest)\w*AndroidTest)\b/;
+const adbDevicePattern = /\badb(?:\.exe)?\b[^;&|\n]*?[\s"'](?:install(?:-multiple)?|am\s+instrument|pm\s+install)\b(?![^;&|\n]*uitest)/;
 // 셸 백그라운드 실행(끝의 단독 &), 2>&1·&& 제외
 const shellBackgroundPattern = /[^&>]&\s*(?:$|[\n;])/;
 
@@ -79,11 +83,13 @@ function connectedSerials(adb) {
 /** 기기 하나에 켜짐 유지 요청 후 결과 문구 반환 */
 function activateOn(adb, serial) {
   // 화면 상태·다른 세션 계측 여부를 한 번에 조회(계측이 없으면 grep 종료 코드 1이 adb로 전달되므로 true로 마무리)
+  // uitest 계측 중에 켜면 실사용 앱의 켜짐 유지 창이 KeepScreenOnTileUiTest의 화면 유지 판정을 깨므로 두 패키지 모두 확인
   const state = runAdb(adb, [
     "-s",
     serial,
     "shell",
-    `dumpsys power | grep mWakefulness=; dumpsys activity processes ${packageName} | grep 'Active instrumentation'; true`,
+    `dumpsys power | grep mWakefulness=; dumpsys activity processes ${packageName} | grep 'Active instrumentation'; ` +
+      `dumpsys activity processes ${uitestPackageName} | grep 'Active instrumentation'; true`,
   ]);
   if (!/mWakefulness=Awake/.test(state)) {
     return `${serial} 화면이 꺼져 있어 켜지 않음(꺼지면 해제되는 설계)`;

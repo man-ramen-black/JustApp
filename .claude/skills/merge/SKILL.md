@@ -36,7 +36,7 @@ git branch -a --contains <release..브랜치의 가장 오래된 커밋>   # 작
 작업 브랜치 워크트리에서 `git rebase release`로 올린다.
 
 - import·문서 행처럼 양쪽이 각자 추가한 충돌은 양쪽 유지로 해소한다. 같은 로직을 양쪽이 다르게 고쳤으면 `git rebase --abort` 후 보고한다.
-- 해소했으면 컴파일로 확인한다(`:app:compileDebugKotlin`, 테스트 코드가 대상이면 `:app:compileDebugAndroidTestKotlin`). 한쪽이 지운 import를 다른 쪽 신규 코드가 쓰는 경우처럼 충돌 없이 자동 병합된 부분은 컴파일에서만 드러난다.
+- 해소했으면 컴파일로 확인한다(`:app:compileDebugKotlin`, 테스트 코드가 대상이면 `:app:compileUitestAndroidTestKotlin`). 한쪽이 지운 import를 다른 쪽 신규 코드가 쓰는 경우처럼 충돌 없이 자동 병합된 부분은 컴파일에서만 드러난다.
 - 리베이스 뒤 `git log --oneline HEAD..release`가 비어 있지 않으면 한 번 더 올리고, 두 번 넘게 밀리면 `--no-ff`로 바꾼다.
 
 ## 3. 머지 (기본 체크아웃)
