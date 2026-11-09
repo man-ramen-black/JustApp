@@ -8,7 +8,6 @@ import androidx.compose.ui.test.isOn
 import com.black.app.testutil.BaseUiTest
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
-import com.black.core.util.PermissionHelper
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.feature.floatingbutton.service.FloatingForegroundService
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -225,7 +223,7 @@ class FloatingSettingScreenTest : BaseUiTest() {
     /**
      * 스위치를 누를 때마다 플로팅 버튼 서비스가 켜지고 꺼지며 스위치가 그 상태를 따르는지 검증
      *
-     * 권한이 없으면 서비스 대신 권한 안내 다이얼로그가 떠 건너뜀
+     * 권한이 없으면 서비스 대신 권한 안내 다이얼로그가 뜨므로 테스트가 권한을 직접 허용(테스트 후 BaseUiTest가 테스트 전 모드로 복원)
      *
      * Given:
      * - 다른 앱 위에 표시 권한 허용, FloatingSettingScreen 호스팅
@@ -238,7 +236,7 @@ class FloatingSettingScreenTest : BaseUiTest() {
     @Test
     fun test_05_switchStartsAndStopsService() {
         /** Given **/
-        assumeTrue(PermissionHelper.canDrawOverlays(context))
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
         val initialRunning = requireNotNull(originalRunning)
         hostFloatingSettingScreen()
         waitUntilTagMatches(FloatingSettingTestTags.RUNNING_SWITCH) { if (initialRunning) isOn() else isOff() }

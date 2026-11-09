@@ -19,6 +19,8 @@ import org.junit.runners.MethodSorters
  * 충전 중 화면 켜짐 유지(stay_on_while_plugged_in) 개발자 옵션은 테스트 중 비활성화 후 원복
  * 삼성 "화면을 보는 동안 켜진 상태 유지"(intelligent_sleep_mode)도 전면 카메라로 얼굴을 감지하면 화면을 켜 두므로 같은 방식으로 비활성화 후 원복
  * 사용자가 테스트 전에 추가해 둔 타일과 화면 켜짐 유지 활성 여부는 테스트 후 그 상태로 되돌림
+ * 같은 기기의 매일 쓰는 debug 앱은 다른 패키지라 계측 중에도 켜짐 유지 창이 남고 창 제목이 같아 화면 유지 판정을 흐리므로,
+ * 테스트 동안 그 앱의 켜짐 유지를 끄고 켜져 있었으면 테스트 후 다시 켬
  *
  * 잠금 해제 상태에서 쓰는 기능이라 잠겨 있으면 각 테스트를 건너뜀
  * (잠금 중에는 시스템이 오버레이 창을 숨겨 FLAG_KEEP_SCREEN_ON 미적용, 보안 잠금은 테스트에서 해제 불가)
@@ -40,6 +42,16 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
     /** 테스트 전 화면 켜짐 유지 활성 여부, setup에서 확인하기 전에는 null */
     private var wasKeepScreenOnActive: Boolean? = null
 
+    /**
+     * 같은 기기의 매일 쓰는 debug 앱 패키지
+     *
+     * 계측 테스트는 applicationIdSuffix(.uitest)가 붙은 uitest 빌드 타입에서 돌아 이 앱 패키지에서 suffix를 떼면 매일 쓰는 앱 패키지
+     */
+    private val dailyPackageName = context.packageName.removeSuffix(UITEST_PACKAGE_SUFFIX)
+
+    /** setup에서 매일 쓰는 앱의 화면 켜짐 유지를 껐는지 여부(teardown에서 다시 켬) */
+    private var isDailyKeepScreenOnDeactivated = false
+
     override fun setup() {
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
         setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
@@ -58,6 +70,8 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
             wasKeepScreenOnActive = KeepScreenOnGlobal.isActive.value
             KeepScreenOnGlobal.deactivate(context)
         }
+        // 이 앱의 창이 없는 상태에서 화면을 붙잡는 매일 쓰는 앱의 켜짐 유지 창 해제
+        deactivateDailyKeepScreenOn()
     }
 
     /** 타일·활성 여부를 테스트 전 상태로 복원, 기기 설정·오버레이 표시 권한은 이 함수가 실패해도 BaseUiTest가 이후에 복원 */
@@ -77,6 +91,51 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
                 }
             }
         }
+        // setup에서 끈 매일 쓰는 앱의 켜짐 유지 복원
+        restoreDailyKeepScreenOn()
+    }
+
+    /**
+     * 매일 쓰는 앱의 화면 켜짐 유지 창이 화면을 붙잡고 있으면 끄고 끈 여부 보관
+     *
+     * 이 앱의 창을 없앤 뒤 호출하므로 화면 유지 창이 KeepScreenOn 창이면 매일 쓰는 앱의 창(두 앱의 창 제목이 같음).
+     * KeepScreenOnReceiver는 처리 후 활성 여부만 돌려줘 테스트 전 상태는 이 창으로 판정.
+     * 매일 쓰는 앱 미설치, KeepScreenOnReceiver가 없는 빌드면 broadcast 결과에 data가 없어 아무것도 바꾸지 않음
+     */
+    private fun deactivateDailyKeepScreenOn() {
+        // uitest가 아닌 빌드에서 실행돼 패키지가 같으면 이 앱 자신이라 대상 없음
+        if (dailyPackageName == context.packageName) return
+        // 홈 이동 직후 이전 전면 앱 창이 남아 있을 수 있어 화면 유지 창이 없어지거나 KeepScreenOn 창이 될 때까지 대기
+        val isHeldByDaily = runBlocking {
+            waitUntil(STATE_TIMEOUT) { hasNoScreenHolder() || holdScreenLine().contains(KeepScreenOnGlobal.WINDOW_TITLE) }
+            holdScreenLine().contains(KeepScreenOnGlobal.WINDOW_TITLE)
+        }
+        // 화면 유지 창이 없거나 다른 창이면 매일 쓰는 앱은 건드리지 않음(다른 창은 이후 assertNoOtherScreenHolder가 실패로 알림)
+        if (!isHeldByDaily) return
+        isDailyKeepScreenOnDeactivated = sendDailyKeepScreenOnAction(ACTION_DEACTIVATE_DAILY) == "active=false"
+    }
+
+    /**
+     * setup에서 끈 매일 쓰는 앱의 화면 켜짐 유지 복원
+     *
+     * 잠긴 상태(화면 끄기 테스트 뒤)면 테스트가 없었어도 화면 꺼짐으로 해제됐을 상태라 생략
+     */
+    private fun restoreDailyKeepScreenOn() {
+        if (!isDailyKeepScreenOnDeactivated) return
+        isDailyKeepScreenOnDeactivated = false
+        if (keyguardManager.isKeyguardLocked) return
+        sendDailyKeepScreenOnAction(ACTION_ACTIVATE_DAILY)
+    }
+
+    /**
+     * 매일 쓰는 앱의 debug KeepScreenOnReceiver에 [action]을 보내고 결과 data(`active=true`·`active=false`) 반환
+     *
+     * shell(DUMP 권한 보유)이 보내는 am broadcast는 순서 있는 브로드캐스트라 처리 후 활성 여부가 결과로 돌아오고,
+     * Receiver가 없거나 앱이 없으면 data 없이 끝나 null
+     */
+    private fun sendDailyKeepScreenOnAction(action: String): String? {
+        val output = device.executeShellCommand("am broadcast -a $action -p $dailyPackageName")
+        return BROADCAST_DATA_REGEX.find(output)?.groupValues?.get(1)
     }
 
     /**
@@ -246,5 +305,13 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         private const val QS_TILES_SETTING = "sysui_qs_tiles"
         /** dumpsys window 화면 유지 창 필드명 */
         private const val HOLD_SCREEN_FIELD = "mHoldScreenWindow"
+        /** 계측 테스트 빌드 타입(app/build.gradle.kts의 uitest)의 applicationIdSuffix */
+        private const val UITEST_PACKAGE_SUFFIX = ".uitest"
+        /** 매일 쓰는 앱의 KeepScreenOnReceiver 켜기 액션(debug 소스셋 클래스라 uitest 변형에서 상수 참조 불가) */
+        private const val ACTION_ACTIVATE_DAILY = "com.black.app.action.ACTIVATE_KEEP_SCREEN_ON"
+        /** 매일 쓰는 앱의 KeepScreenOnReceiver 끄기 액션 */
+        private const val ACTION_DEACTIVATE_DAILY = "com.black.app.action.DEACTIVATE_KEEP_SCREEN_ON"
+        /** am broadcast 출력(`Broadcast completed: result=0, data="active=false"`)의 결과 data */
+        private val BROADCAST_DATA_REGEX = Regex("""data="([^"]*)"""")
     }
 }

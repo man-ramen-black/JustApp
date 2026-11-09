@@ -28,7 +28,7 @@ import org.junit.runners.MethodSorters
  *
  * 실제 앱과 같이 AndroidFragment로 호스팅하고, 컴포지션에서 빼는 방식으로 뒤로가기 이탈을 재현.
  * AndroidFragment는 폐기 시 saveFragmentInstanceState를 호출한 뒤 Fragment를 제거하므로 상태 저장과 제거가 연달아 발생.
- * HiltTestActivity는 회전 시 재생성되지 않도록 debug 매니페스트에서 configChanges를 처리
+ * HiltTestActivity는 회전 시 재생성되지 않도록 계측 테스트 빌드 타입(uitest) 매니페스트에서 configChanges를 처리
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
