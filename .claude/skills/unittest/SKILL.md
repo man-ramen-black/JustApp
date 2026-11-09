@@ -6,7 +6,7 @@ argument-hint: [대상 클래스명 또는 파일 경로]
 
 # 유닛 테스트 작성 스킬
 
-`$ARGUMENTS`의 유닛 테스트를 저장소 컨벤션에 맞게 작성한다. 기준 예시: `app/src/test/java/com/black/app/ui/maintab/main/usagetimer/UsageTimerViewModelTest.kt`(ViewModel), `app/src/test/java/com/black/app/model/UsageTimerRepositoryTest.kt`(Repository).
+`$ARGUMENTS`의 유닛 테스트를 저장소 컨벤션에 맞게 작성한다. 기준 예시: `app/src/test/java/com/black/app/ui/main/usagetimer/UsageTimerViewModelTest.kt`(ViewModel), `app/src/test/java/com/black/app/model/UsageTimerRepositoryTest.kt`(Repository).
 
 ## 작업 순서
 
@@ -16,7 +16,7 @@ argument-hint: [대상 클래스명 또는 파일 경로]
 4. **작성**: 아래 규칙.
 5. **실행·통과 확인**: 작성으로 끝내지 않는다. 실패하면 원인을 고친 뒤 다시 돌린다.
    ```
-   ./gradlew :app:testDebugUnitTest --tests "com.black.app.ui.maintab.main.usagetimer.UsageTimerViewModelTest"
+   ./gradlew :app:testDebugUnitTest --tests "com.black.app.ui.main.usagetimer.UsageTimerViewModelTest"
    ```
    core 모듈 대상이면 `:core:testDebugUnitTest`를 쓴다.
 

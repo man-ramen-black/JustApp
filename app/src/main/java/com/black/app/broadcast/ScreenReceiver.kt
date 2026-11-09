@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
-import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
+import com.black.app.ui.main.studypopup.StudyPopupGlobal
 import com.black.core.util.Log
 
 /**

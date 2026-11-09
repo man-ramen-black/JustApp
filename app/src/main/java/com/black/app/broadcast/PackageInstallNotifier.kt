@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.black.app.R
-import com.black.app.ui.maintab.main.appinstallnotification.AppInstallNotificationStatus
+import com.black.app.ui.main.appinstallnotification.AppInstallNotificationStatus
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
 

@@ -5,7 +5,7 @@ description: 이 저장소 컨벤션(BaseUiTest 상속, @HiltAndroidTest, Espres
 
 # UI 테스트 코드 생성 스킬
 
-`app/src/androidTest`에서 Fragment를 계측 환경에 띄워 검증하는 Espresso UI 테스트를 저장소 컨벤션에 맞게 생성한다. 기준 예시: `app/src/androidTest/java/com/black/app/ui/maintab/main/etc/BlackFragmentTest.kt`(패턴 B).
+`app/src/androidTest`에서 Fragment를 계측 환경에 띄워 검증하는 Espresso UI 테스트를 저장소 컨벤션에 맞게 생성한다. 기준 예시: `app/src/androidTest/java/com/black/app/ui/main/etc/BlackFragmentTest.kt`(패턴 B).
 
 ## 작업 순서
 

@@ -9,12 +9,12 @@ import androidx.fragment.compose.AndroidFragment
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.black.app.ui.maintab.main.MainFragment
-import com.black.app.ui.maintab.main.appinstallnotification.AppInstallNotificationScreen
-import com.black.app.ui.maintab.main.etc.BlackFragment
-import com.black.app.ui.maintab.main.studypopup.StudyPopupSettingScreen
-import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
-import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
+import com.black.app.ui.main.MainFragment
+import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
+import com.black.app.ui.main.etc.BlackFragment
+import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
+import com.black.app.ui.main.texteditor.TextEditorScreen
+import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 

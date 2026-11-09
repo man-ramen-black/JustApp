@@ -5,7 +5,7 @@ import android.net.Uri
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.model.database.studypopup.StudyPopupDatabase
 import com.black.app.model.datastore.StudyPopupDataStore
-import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
+import com.black.app.ui.main.studypopup.StudyPopupGlobal
 import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.getFileName
 import com.black.core.file.SAFHelper.openInputStream

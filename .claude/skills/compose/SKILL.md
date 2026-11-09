@@ -6,7 +6,7 @@ argument-hint: [대상 화면 또는 Fragment]
 
 # Compose 화면 스킬
 
-참고 구현: `TextEditorScreen`(ViewModel·이벤트·다이얼로그·ActivityResult), `UsageTimerScreen`(기존 DialogFragment 연동), `MainScreen`(Fragment 안 `ComposeView` 호스팅). 경로는 `app/src/main/java/com/black/app/ui/maintab/main/` 아래다.
+참고 구현: `TextEditorScreen`(ViewModel·이벤트·다이얼로그·ActivityResult), `UsageTimerScreen`(기존 DialogFragment 연동), `MainScreen`(Fragment 안 `ComposeView` 호스팅). 경로는 `app/src/main/java/com/black/app/ui/main/` 아래다.
 
 ## 파일 구성
 

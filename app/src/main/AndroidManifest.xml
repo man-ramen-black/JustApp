@@ -94,7 +94,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".ui.maintab.main.usagetimer.UsageTimerAccessibility"
+        <service android:name=".ui.main.usagetimer.UsageTimerAccessibility"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="JustApp - UsageTimer"
             android:exported="true"
@@ -109,7 +109,7 @@
         </service>
 
         <!-- 빠른 설정창 화면 켜짐 유지 타일 -->
-        <service android:name=".ui.maintab.main.keepscreenon.KeepScreenOnTileService"
+        <service android:name=".ui.main.keepscreenon.KeepScreenOnTileService"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:icon="@drawable/ic_keep_screen_on"
             android:label="@string/keep_screen_on_tile_label"
