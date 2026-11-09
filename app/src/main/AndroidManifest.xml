@@ -13,12 +13,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <!-- dumpysys alarm 쉘커맨드 동작용 -->
-    <permission android:name="android.permission.DUMP"
-        android:protectionLevel="signature|privileged|development|appop" />
-    <permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        android:protectionLevel="signature|privileged|development|appop" />
-
     <!-- BOOT_COMPLETED Broadcast를 받기 위한 권한 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
@@ -90,24 +84,6 @@
         <meta-data
             android:name="NOTIFICATION_ICON"
             android:resource="@drawable/ic_notification" />
-
-        <activity android:name=".ui.maintab.main.launcher.internal.LauncherActivity"
-            android:theme="@style/Theme.Black.Launcher"
-            android:exported="true">
-            <intent-filter>
-                <!-- 런처용 카테고리 -->
-                <category android:name="android.intent.category.HOME"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".ui.maintab.main.etc.EtcActivity"
-            android:parentActivityName=".ui.MainActivity"/>
-
-        <activity android:name=".ui.maintab.main.architecture.mvc.MVCActivity"
-            android:parentActivityName=".ui.MainActivity"/>
-
-        <activity android:name=".ui.maintab.main.architecture.mvvm.MVVMActivity"
-            android:parentActivityName=".ui.MainActivity"/>
 
         <service android:name=".service.ForegroundService"
             android:foregroundServiceType="specialUse" />

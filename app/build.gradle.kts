@@ -80,10 +80,6 @@ dependencies {
     implementation(libs.androidx.paging)
     implementation(libs.androidx.datastore)
 
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.logging.interceptor)
-
     implementation(libs.androidx.room.runtime)
     implementation(libs.firebase.bom)
     implementation(libs.firebase.analytics)
@@ -98,7 +94,6 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
 
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.retrofit2.kotlinx.serialization.converter)
 
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
