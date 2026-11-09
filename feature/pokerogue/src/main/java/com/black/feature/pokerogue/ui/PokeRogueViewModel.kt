@@ -14,9 +14,10 @@ import com.black.feature.pokerogue.data.PokeRepository
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.lang.ref.SoftReference
 import javax.inject.Inject
 
 /** [PokeRogueFragment] */
@@ -30,9 +31,10 @@ class PokeRogueViewModel @Inject constructor(
         const val EVENT_ROTATE = "rotate"
     }
 
-    // 화면 회전 시 객체 유지를 위해 ViewModel에서 관리
-    lateinit var webView: SoftReference<BKWebView>
-        private set
+    private val mutableWebView = MutableStateFlow<BKWebView?>(null)
+
+    /** 화면 회전에도 게임 상태를 유지하도록 ViewModel이 보관하는 WebView(파기는 [onCleared]) */
+    val webView: StateFlow<BKWebView?> = mutableWebView.asStateFlow()
 
     val isLoading = MutableStateFlow(false)
     val isStarted = MutableStateFlow(false)
@@ -65,13 +67,34 @@ class PokeRogueViewModel @Inject constructor(
         }
         .asLiveData()
 
-    fun init(webView: SoftReference<BKWebView>) {
-        this.webView = webView
-        isStarted.value = false
+    /**
+     * 보관 중인 WebView 반환, 없으면 [create]로 만들어 보관
+     *
+     * 첫 진입과 프로세스 종료 뒤 복원(새 ViewModel)에서 생성
+     */
+    fun obtainWebView(create: () -> BKWebView): BKWebView {
+        mutableWebView.value?.let { return it }
+        return create()
+            .also {
+                it.addWebViewClientCallback(this)
+                mutableWebView.value = it
+                isStarted.value = false
+            }
+    }
+
+    override fun onCleared() {
+        mutableWebView.value?.let {
+            it.removeWebViewClientCallback(this)
+            // pauseTimers는 프로세스 전역이라 이후 만드는 WebView가 멈춘 채 시작하지 않도록 되돌림
+            it.resumeTimers()
+            it.clear()
+        }
+        mutableWebView.value = null
+        super.onCleared()
     }
 
     fun onClickPlay() {
-        webView.get()?.loadUrl("https://pokerogue.net/")
+        webView.value?.loadUrl("https://pokerogue.net/")
         isStarted.value = true
     }
 
@@ -80,7 +103,7 @@ class PokeRogueViewModel @Inject constructor(
     }
 
     fun onClickRotate() = viewModelScope.launch {
-        if (webView.get()?.url != null) {
+        if (webView.value?.url != null) {
             return@launch
         }
         eventFlow.emit(Event(EVENT_ROTATE, null))

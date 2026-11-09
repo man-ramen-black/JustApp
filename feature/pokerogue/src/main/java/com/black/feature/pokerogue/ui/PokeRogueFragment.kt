@@ -1,9 +1,11 @@
 package com.black.feature.pokerogue.ui
 
+import android.content.MutableContextWrapper
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -19,7 +21,6 @@ import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
-import java.lang.ref.SoftReference
 
 @AndroidEntryPoint
 class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
@@ -56,6 +57,9 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     }
 
     override fun onBindVariable(binding: PkrgFragmentPokeRogueBinding) {
+        // ViewModel이 보관한 WebView를 현재 Activity에 연결(JS 다이얼로그를 띄울 Activity)
+        val webView = viewModel.obtainWebView { BKWebView(MutableContextWrapper(requireActivity())) }
+        (webView.context as? MutableContextWrapper)?.baseContext = requireActivity()
         binding.viewModel = viewModel
 
         selectedTypeAdapter = TypeAdapter()
@@ -85,7 +89,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                     BKAlertDialog(requireActivity())
                         .setMessage(R.string.reload_confirm_message)
                         .setPositiveButton(R.string.ok) { dialog, _ ->
-                            viewModel.webView.get()?.reload()
+                            viewModel.webView.value?.reload()
                             dialog.dismiss()
                         }
                         .setNegativeButton(R.string.cancel) { dialog, _ ->
@@ -110,10 +114,6 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (savedInstanceState == null) {
-            initViewModel()
-        }
-
         viewLifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
             val window = requireActivity().window
             when (event) {
@@ -128,23 +128,32 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                     requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                 }
                 Lifecycle.Event.ON_RESUME -> {
-                    viewModel.webView.get()?.onResume()
-                        // WebView 객체가 제거된 경우 ViewModel을 다시 초기화
-                        ?: run { initViewModel() }
-
+                    viewModel.webView.value?.let {
+                        it.onResume()
+                        // 게임 화면만 쓰는 프로세스 전역 JS 타이머 재개
+                        it.resumeTimers()
+                    }
                 }
                 Lifecycle.Event.ON_PAUSE -> {
-                    viewModel.webView.get()?.onPause()
+                    viewModel.webView.value?.let {
+                        it.onPause()
+                        // 백그라운드에서 게임 JS가 돌지 않도록 프로세스 전역 JS 타이머 정지
+                        it.pauseTimers()
+                    }
                 }
                 Lifecycle.Event.ON_DESTROY -> {
-                    // 화면 이탈로 Fragment가 제거될 때만 복구(회전 등 Activity 재생성 시 유지)
+                    // 회전 등 Activity 재생성 동안 파기된 Activity를 붙잡지 않도록 WebView 분리
+                    viewModel.webView.value?.let {
+                        (it.parent as? ViewGroup)?.removeView(it)
+                        (it.context as? MutableContextWrapper)?.baseContext = requireContext().applicationContext
+                    }
+
+                    // 화면 이탈로 Fragment가 제거될 때만 복구(회전 등 Activity 재생성 시 유지), WebView 파기는 ViewModel 담당
                     // AndroidFragment는 제거 직전에 상태를 저장해 isRestoring이 true가 되므로 isRemoving으로 구분
                     if (!isRemoving) {
                         return@LifecycleEventObserver
                     }
 
-                    viewModel.webView.get()?.clear()
-                    viewModel.webView.clear()
                     requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
                     UiUtil.setImmersiveMode(requireActivity().window, false)
                     UiUtil.setCutout(requireActivity().window, Cutout.DEFAULT)
@@ -152,12 +161,5 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                 else -> {}
             }
         })
-    }
-
-    private fun initViewModel() {
-        val webView = BKWebView(requireContext().applicationContext)
-            .apply { addWebViewClientCallback(viewModel) }
-            .let { SoftReference(it) }
-        viewModel.init(webView)
     }
 }

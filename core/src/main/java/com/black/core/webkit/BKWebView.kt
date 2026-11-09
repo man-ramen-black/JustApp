@@ -161,16 +161,6 @@ open class BKWebView : WebView {
         addJavascriptInterface(obj, "native")
     }
 
-    override fun onResume() {
-        super.onResume()
-        resumeTimers()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        pauseTimers()
-    }
-
     /** 메모리 최적화 */
     fun clear() {
         clearCache(false)
