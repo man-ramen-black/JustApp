@@ -1,6 +1,6 @@
 ---
 name: compose
-description: 이 저장소의 Jetpack Compose 화면 개발 컨벤션이다. 새 Compose 화면 작성, 기존 `*Screen.kt` 수정, 기존 XML/DataBinding Fragment를 Compose로 전환("이 화면 Compose로 바꿔줘", "XML을 Compose로 전환"), Compose 화면 계측 테스트("Compose UI 테스트", "Screen 테스트") 작성에 명시적으로 요청하지 않아도 사용한다. Fragment 계측 테스트는 `ui-test`, JVM 유닛 테스트는 `unittest` 스킬이 담당한다.
+description: 이 저장소의 Jetpack Compose 화면 개발 컨벤션이다. 새 Compose 화면 작성, 기존 `*Screen.kt` 수정, 기존 XML/DataBinding Fragment를 Compose로 전환("이 화면 Compose로 바꿔줘", "XML을 Compose로 전환"), Compose 화면 계측 테스트("Compose UI 테스트", "Screen 테스트") 작성에 명시적으로 요청하지 않아도 사용한다. Fragment 계측 테스트는 `ui-test`, JVM 유닛 테스트는 `unit-test` 스킬이 담당한다.
 argument-hint: [대상 화면 또는 Fragment]
 ---
 
@@ -83,7 +83,7 @@ private fun TextEditorContent(
 3. **Screen 작성**: 위 파일 구성대로 만들고, 레이아웃 수치(여백·크기)는 원본 XML 값을 대조해 옮긴다. 추측해서 넣지 않는다.
 4. **교체**: `AppNavHost`의 `AndroidFragment<XxxFragment>`를 위 2번 형식의 `XxxScreen` 호출로 바꾼다.
 5. **정리**: Fragment와 레이아웃 XML을 지우기 전에 참조를 모두 찾는다(`grep -rn "XxxFragment\|fragment_xxx" app/src feature`). import·바로가기 Activity·`main_tab_navigation.xml`·`<include layout>`에 남은 참조를 함께 정리한다. 문자열·drawable은 다른 곳에서 쓰지 않는 것이 확인될 때만 지운다.
-6. **테스트 전환**: 기존 Fragment 계측 테스트는 아래 Compose UI 테스트로 옮기고, ViewModel 유닛 테스트는 `unittest` 스킬로 갱신한다.
+6. **테스트 전환**: 기존 Fragment 계측 테스트는 아래 Compose UI 테스트로 옮기고, ViewModel 유닛 테스트는 `unit-test` 스킬로 갱신한다.
 
 ## Compose UI 테스트
 

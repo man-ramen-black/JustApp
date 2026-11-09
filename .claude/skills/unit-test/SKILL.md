@@ -1,5 +1,5 @@
 ---
-name: unittest
+name: unit-test
 description: 이 저장소 컨벤션(BaseTest 상속, MockK, test_NN_ + GWT)에 맞춰 JVM 유닛 테스트(`src/test`)를 작성한다. ViewModel·Repository·DataStore·유틸 클래스의 "유닛 테스트", "단위 테스트", "테스트 코드 작성해줘", "테스트 케이스 추가해줘"를 요청하면 반드시 사용한다. 기기에서 화면을 띄우는 계측 테스트(`src/androidTest`)는 `ui-test`(Fragment)·`compose`(Compose 화면) 스킬이 담당한다.
 argument-hint: [대상 클래스명 또는 파일 경로]
 ---
