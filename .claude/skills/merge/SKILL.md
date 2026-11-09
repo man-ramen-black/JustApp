@@ -62,10 +62,11 @@ git merge --ff-only <브랜치>        # 또는 git merge --no-ff --no-edit <브
   - 커밋하지 않는 `docs/superpowers/` 문서는 기본 체크아웃의 같은 경로로 먼저 옮긴다. `remove --force`가 함께 지운다.
   - `git worktree remove --force <워크트리>` 후 `git branch -d <브랜치>`
 - 이번 작업의 `backup/*` 브랜치도 지운다. `git branch --list 'backup/*'` 전량을 나열해 이번 작업의 것인지 가른다.
+- auto-memory 디렉터리(세션 시스템 프롬프트가 알려 주는 경로)에서 `grep -l "규칙 이동: <브랜치>"`로 찾은 메모리는 지우고, `MEMORY.md`에서 그 파일을 가리키는 줄도 지운다. 그 내용은 이번 머지로 release 규칙에 들어갔다.
 
 ## 5. 보고
 
 - 판정 결과와 근거(병행이면 다른 워크트리의 브랜치명), 쓴 머지 방식
 - release 최신 커밋과 이번에 올라간 커밋
-- 지운 브랜치, 남긴 브랜치·워크트리
+- 지운 브랜치·메모리, 남긴 브랜치·워크트리
 - push하지 않았다는 사실
