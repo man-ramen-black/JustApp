@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModelStore
 import com.black.core.webkit.BKWebView
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.test.BaseTest
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -72,5 +76,53 @@ class PokeRogueViewModelTest : BaseTest() {
             webView.clear()
         }
         assertNull(viewModel.webView.value)
+    }
+
+    /**
+     * 다시 불러오기 요청과 게임 시작 전 회전 요청이 타입 이벤트로 전달되는지 검증
+     *
+     * Given: 페이지를 열지 않은 WebView를 보관한 ViewModel
+     * When: requestReload, rotate 호출
+     * Then: EventShowReloadConfirm, EventRotate 순서로 수신
+     */
+    @Test
+    fun test_03_reloadAndRotateSendEvents() = runTest {
+        /** Given **/
+        val viewModel = PokeRogueViewModel(repository)
+        val webView: BKWebView = mockk(relaxed = true) { every { url } returns null }
+        viewModel.obtainWebView { webView }
+
+        /** When **/
+        viewModel.requestReload()
+        viewModel.rotate()
+        val events = viewModel.events.take(2).toList()
+
+        /** Then **/
+        assertEquals(
+            listOf(PokeRogueViewModel.EventShowReloadConfirm, PokeRogueViewModel.EventRotate),
+            events,
+        )
+    }
+
+    /**
+     * 게임 페이지를 연 뒤에는 회전 요청을 무시하는지 검증
+     *
+     * Given: 페이지 주소가 있는 WebView를 보관한 ViewModel
+     * When: rotate 호출 뒤 requestReload 호출
+     * Then: 첫 이벤트가 EventShowReloadConfirm(회전 이벤트 없음)
+     */
+    @Test
+    fun test_04_rotateIgnoredAfterPageOpened() = runTest {
+        /** Given **/
+        val viewModel = PokeRogueViewModel(repository)
+        val webView: BKWebView = mockk(relaxed = true) { every { url } returns "https://pokerogue.net/" }
+        viewModel.obtainWebView { webView }
+
+        /** When **/
+        viewModel.rotate()
+        viewModel.requestReload()
+
+        /** Then **/
+        assertEquals(PokeRogueViewModel.EventShowReloadConfirm, viewModel.events.first())
     }
 }

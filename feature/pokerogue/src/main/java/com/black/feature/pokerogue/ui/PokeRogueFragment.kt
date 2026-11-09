@@ -9,25 +9,27 @@ import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialog
 import com.black.core.util.BackPressHelper
 import com.black.core.util.Cutout
-import com.black.core.util.Extensions.collect
 import com.black.core.util.FragmentExtension.viewLifecycleScope
 import com.black.core.util.UiUtil
+import com.black.core.viewmodel.ViewModelEvent
 import com.black.core.webkit.BKWebView
 import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
 
     private val typeList by lazy {
         PokeType.entries
-            .map { it -> TypeUIState(it) { viewModel.onTypeClick(it.type) } }
+            .map { it -> TypeUIState(it) { viewModel.toggleType(it.type) } }
     }
 
     private val viewModel: PokeRogueViewModel by viewModels()
@@ -41,7 +43,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setOnBackPressed {
-            if (viewModel.onBackPressed()) {
+            if (viewModel.handleBack()) {
                 return@setOnBackPressed
             }
 
@@ -83,29 +85,35 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
         typeAdapter = TypeAdapter().also { it.submitList(typeList) }
         binding.typeSelectAdapter = typeAdapter
 
-        viewModel.eventFlow.collect(viewLifecycleScope) {
-            when (it.action) {
-                PokeRogueViewModel.EVENT_RELOAD -> {
-                    BKAlertDialog(requireActivity())
-                        .setMessage(R.string.reload_confirm_message)
-                        .setPositiveButton(R.string.ok) { dialog, _ ->
-                            viewModel.webView.value?.reload()
-                            dialog.dismiss()
-                        }
-                        .setNegativeButton(R.string.cancel) { dialog, _ ->
-                            dialog.cancel()
-                        }
-                        .show()
-                }
+        viewLifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { handleEvent(it) }
+            }
+        }
+    }
 
-                PokeRogueViewModel.EVENT_ROTATE -> {
-                    val orientation = requireActivity().resources.configuration.orientation
-                    requireActivity().requestedOrientation = if (orientation == ORIENTATION_PORTRAIT) {
-                        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                    } else {
-                        viewModel.isLandscapeButtonShowing.value = true
-                        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    private fun handleEvent(event: ViewModelEvent) {
+        when (event) {
+            is PokeRogueViewModel.EventShowReloadConfirm -> {
+                BKAlertDialog(requireActivity())
+                    .setMessage(R.string.reload_confirm_message)
+                    .setPositiveButton(R.string.ok) { dialog, _ ->
+                        viewModel.webView.value?.reload()
+                        dialog.dismiss()
                     }
+                    .setNegativeButton(R.string.cancel) { dialog, _ ->
+                        dialog.cancel()
+                    }
+                    .show()
+            }
+
+            is PokeRogueViewModel.EventRotate -> {
+                val orientation = requireActivity().resources.configuration.orientation
+                requireActivity().requestedOrientation = if (orientation == ORIENTATION_PORTRAIT) {
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                } else {
+                    viewModel.isLandscapeButtonShowing.value = true
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 }
             }
         }

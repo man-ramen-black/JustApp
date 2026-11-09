@@ -55,7 +55,7 @@
             app:layout_constraintLeft_toLeftOf="@id/web_view_container"
             app:layout_constraintRight_toRightOf="@id/web_view_container"
             android:src="@drawable/ic_play"
-            android:onClick="@{_->viewModel.onClickPlay()}"
+            android:onClick="@{_->viewModel.play()}"
             android:visibility="@{viewModel.isStarted ? View.GONE : View.VISIBLE}"
             />
 
@@ -93,7 +93,7 @@
             android:layout_margin="15dp"
             android:padding="5dp"
             android:src="@{viewModel.isMatchUpOpen ? @drawable/ic_close : @drawable/ic_menu}"
-            android:onClick="@{_-> viewModel.onClickMatchUp()}"
+            android:onClick="@{_-> viewModel.toggleMatchUp()}"
             />
 
         <ImageButton
@@ -106,7 +106,7 @@
             android:layout_margin="15dp"
             android:padding="5dp"
             android:src="@drawable/ic_screen_rotate"
-            android:onClick="@{_-> viewModel.onClickRotate()}"
+            android:onClick="@{_-> viewModel.rotate()}"
             android:visibility="@{viewModel.isStarted || !viewModel.isLandscapeButtonShowing ? View.GONE : View.VISIBLE}"
             />
 
@@ -119,7 +119,7 @@
             android:layout_margin="15dp"
             android:padding="5dp"
             android:src="@drawable/ic_refresh"
-            android:onClick="@{_-> viewModel.onClickReload()}"
+            android:onClick="@{_-> viewModel.requestReload()}"
             />
 
         <ImageButton
@@ -131,7 +131,7 @@
             android:layout_margin="15dp"
             android:padding="5dp"
             android:src="@drawable/ic_invisible"
-            android:onClick="@{_-> viewModel.onClickHide()}"
+            android:onClick="@{_-> viewModel.hideLandscapeButton()}"
             />
 
         <androidx.constraintlayout.widget.Group

@@ -182,7 +182,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
         scenario.onActivity { activity ->
             val fragment = activity.supportFragmentManager.fragments.filterIsInstance<PokeRogueFragment>().single()
             viewModel = ViewModelProvider(fragment)[PokeRogueViewModel::class.java]
-            viewModel.onClickMatchUp()
+            viewModel.toggleMatchUp()
         }
         composeRule.waitForIdle()
         assertTrue("매치업 창이 열리지 않았습니다", viewModel.isMatchUpOpen.value)

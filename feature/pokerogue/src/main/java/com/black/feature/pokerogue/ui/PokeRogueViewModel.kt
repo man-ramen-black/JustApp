@@ -4,10 +4,9 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.WebView
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.black.core.util.Log
-import com.black.core.viewmodel.Event
 import com.black.core.viewmodel.EventViewModel
+import com.black.core.viewmodel.ViewModelEvent
 import com.black.core.webkit.BKWebView
 import com.black.core.webkit.BKWebViewClient
 import com.black.feature.pokerogue.data.PokeRepository
@@ -17,19 +16,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** [PokeRogueFragment] */
+/** [PokeRogueFragment]의 상태·이벤트 관리 ViewModel */
 @HiltViewModel
 class PokeRogueViewModel @Inject constructor(
     private val repo: PokeRepository
 ): EventViewModel(), BKWebViewClient.Callback {
 
-    companion object {
-        const val EVENT_RELOAD = "reload"
-        const val EVENT_ROTATE = "rotate"
-    }
+    /** PokeRogue 화면 일회성 이벤트 */
+    sealed class PokeRogueEvent : ViewModelEvent
+
+    /** 다시 불러오기 확인 다이얼로그 표시 */
+    data object EventShowReloadConfirm : PokeRogueEvent()
+    /** 화면 방향 전환 */
+    data object EventRotate : PokeRogueEvent()
 
     private val mutableWebView = MutableStateFlow<BKWebView?>(null)
 
@@ -93,46 +94,48 @@ class PokeRogueViewModel @Inject constructor(
         super.onCleared()
     }
 
-    fun onClickPlay() {
+    fun play() {
         webView.value?.loadUrl("https://pokerogue.net/")
         isStarted.value = true
     }
 
-    fun onClickReload() = viewModelScope.launch {
-        eventFlow.emit(Event(EVENT_RELOAD, null))
+    fun requestReload() {
+        sendEvent(EventShowReloadConfirm)
     }
 
-    fun onClickRotate() = viewModelScope.launch {
+    /** 게임을 시작하기 전(페이지를 열기 전)에만 화면 방향 전환 */
+    fun rotate() {
         if (webView.value?.url != null) {
-            return@launch
+            return
         }
-        eventFlow.emit(Event(EVENT_ROTATE, null))
+        sendEvent(EventRotate)
     }
 
-    fun onClickMatchUp() = viewModelScope.launch {
+    fun toggleMatchUp() {
         isMatchUpOpen.value = !isMatchUpOpen.value
     }
 
-    fun onClickHide() {
+    fun hideLandscapeButton() {
         isLandscapeButtonShowing.value = false
     }
 
-    fun onTypeClick(type: PokeType) {
+    fun toggleType(type: PokeType) {
         Log.d(type)
         if (setSelectedTypes.value.all { it.type != type }) {
             if (setSelectedTypes.value.size < 2) {
-                setSelectedTypes.value += TypeUIState(type) { onSelectedTypeClick(it) }
+                setSelectedTypes.value += TypeUIState(type) { deselectType(it) }
             }
         } else {
-            setSelectedTypes.value -= TypeUIState(type) { onSelectedTypeClick(it) }
+            setSelectedTypes.value -= TypeUIState(type) { deselectType(it) }
         }
     }
 
-    private fun onSelectedTypeClick(typeUIState: TypeUIState) {
+    private fun deselectType(typeUIState: TypeUIState) {
         setSelectedTypes.value -= typeUIState
     }
 
-    fun onBackPressed(): Boolean {
+    /** 뒤로 가기를 화면 안에서 처리했으면 true(상성표 닫기, 숨긴 가로 버튼 다시 표시) */
+    fun handleBack(): Boolean {
         return if (isMatchUpOpen.value) {
             isMatchUpOpen.value = false
             true

@@ -1,91 +1,67 @@
 package com.black.core.viewmodel
 
-import androidx.annotation.MainThread
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
-import com.black.core.util.Extensions.collect
 import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 open class EventViewModel : ViewModel()  {
 
-    companion object {
-        fun Flow<Event>.collectEvent(lifecycleOwner: LifecycleOwner, collector: EventCollector): Job {
-            return collect(lifecycleOwner) { (action, data) -> collector.onEventCollected(action, data) }
-        }
-    }
+    /** 구독 중인 구독자마다 받을 때까지 이벤트를 보관하는 수신함(이 목록을 잠금 대상으로도 사용) */
+    private val inboxes = mutableListOf<Channel<ViewModelEvent>>()
 
-    private val jobs = ConcurrentHashMap<String, Job>()
-    private val event = LiveEvent()
-
-    val eventFlow = MutableSharedFlow<Event>()
-
+    /** 구독자가 없는 동안 보낸 이벤트(다음 첫 구독자에게 순서대로 전달) */
     private val pendingEvents = ArrayDeque<ViewModelEvent>()
-    private val mutableEvents = MutableSharedFlow<ViewModelEvent>()
 
     /**
-     * 타입 이벤트 스트림. 구독 전 누적분은 첫 구독자에게 순서대로 전달, 이후 구독자는 구독 후 발생분만 수신.
-     * 구독자가 없는 동안의 이벤트는 ViewModel 수명 동안 누적되므로 화면(구독자)이 곧 붙는 일회성 이벤트 용도
+     * 타입 이벤트 스트림. 각 이벤트는 그때 구독 중인 모든 구독자에게 한 번씩 전달
+     *
+     * 구독자가 없는 동안 보낸 이벤트는 누적했다가 첫 구독자에게 순서대로 전달하고, 추가 구독자는 구독 이후 보낸 이벤트만 수신.
+     * 마지막 구독자의 수집이 끝날 때 그 구독자가 아직 받지 못한 이벤트는 누적분으로 되돌림.
+     * 그래서 핸들러가 이전 이벤트를 처리하며 멈춘 사이 보낸 이벤트도 백그라운드 전환으로 수집이 취소될 때 사라지지 않음
      */
-    val events: Flow<ViewModelEvent> = mutableEvents.onSubscription {
-        while (true) {
-            val pending = synchronized(pendingEvents) { pendingEvents.removeFirstOrNull() } ?: break
-            emit(pending)
+    val events: Flow<ViewModelEvent> = flow {
+        val inbox = Channel<ViewModelEvent>(Channel.UNLIMITED)
+        synchronized(inboxes) {
+            // 첫 구독자면 누적분을 먼저 수신함에 이동
+            if (inboxes.isEmpty()) {
+                while (pendingEvents.isNotEmpty()) inbox.trySend(pendingEvents.removeFirst())
+            }
+            inboxes.add(inbox)
         }
-    }
 
-    /**
-     * 타입 이벤트 전송. 구독자가 없으면 누적, 있으면 즉시 전달.
-     * 전송은 [viewModelScope](Main)로 직렬화되어 호출 순서 보장 — Main 디스패처 단일 구독 전제의 계약
-     */
-    fun sendEvent(event: ViewModelEvent) {
-        launch {
-            if (mutableEvents.subscriptionCount.value == 0) {
-                synchronized(pendingEvents) { pendingEvents.addLast(event) }
-            } else {
-                mutableEvents.emit(event)
+        try {
+            for (event in inbox) emit(event)
+        } finally {
+            synchronized(inboxes) {
+                inboxes.remove(inbox)
+                inbox.close()
+                // 마지막 구독자면 받지 못한 이벤트를 누적분으로 복귀
+                if (inboxes.isEmpty()) {
+                    while (true) pendingEvents.addLast(inbox.tryReceive().getOrNull() ?: break)
+                }
             }
         }
     }
 
-    @MainThread
-    fun sendEvent(action: String = "", data: Any? = null) {
-        launch { eventFlow.emit(Event(action, data)) }
-        // TODO 삭제
-        event.send(action, data)
+    /** 타입 이벤트 전송(호출한 순서대로 전달, 어느 스레드에서 불러도 됨) */
+    fun sendEvent(event: ViewModelEvent) {
+        synchronized(inboxes) {
+            if (inboxes.isEmpty()) {
+                pendingEvents.addLast(event)
+            } else {
+                inboxes.forEach { it.trySend(event) }
+            }
+        }
     }
-
-    /** 백그라운드 스레드에서 전송 시 사용 */
-    fun postEvent(action: String = "", data: Any? = null)
-        = event.post(action, data)
-
-    @MainThread
-    fun observeEvent(owner: LifecycleOwner, eventObserver: EventObserver)
-        = event.observe(owner, eventObserver)
-
-    @MainThread
-    fun removeEventObservers(owner: LifecycleOwner)
-        = event.removeObservers(owner)
-
-    @MainThread
-    fun observeEventForever(eventObserver: EventObserver)
-        = event.observeForever(eventObserver)
-
-    @MainThread
-    fun removeEventObserver(observer: EventObserver)
-        = event.removeObserver(observer)
 
     /** [viewModelScope]에서 코루틴 실행 */
     protected fun launch(
@@ -94,51 +70,8 @@ open class EventViewModel : ViewModel()  {
         block: suspend CoroutineScope.() -> Unit
     ): Job = viewModelScope.launch(context, start, block)
 
-    fun launchSingle(
-        context: CoroutineContext = EmptyCoroutineContext,
-        start: CoroutineStart = CoroutineStart.DEFAULT,
-        block: suspend CoroutineScope.() -> Unit
-    ) {
-        val methodName = Thread.currentThread().stackTrace[3].methodName
-        if (jobs[methodName]?.isCompleted == false) {
-            Log.v("$methodName job is not completed")
-            return
-        }
-        jobs[methodName] = viewModelScope.launch(context, start, block)
-    }
-
     override fun onCleared() {
         super.onCleared()
         Log.v(this::class.java.simpleName)
     }
-
-    fun collectEvent(
-        lifecycleOwner: LifecycleOwner,
-        collector: EventCollector
-    ): Job = collectEvent(lifecycleOwner.lifecycleScope, collector)
-
-    fun collectEvent(
-        lifecycleOwner: LifecycleOwner,
-        coroutineContext: CoroutineContext = Dispatchers.Main,
-        collector: EventCollector
-    ): Job = collectEvent(lifecycleOwner.lifecycleScope, coroutineContext, collector)
-
-    fun collectEvent(
-        scope: CoroutineScope,
-        collector: EventCollector
-    ): Job = eventFlow.collect(scope) { (action, data) -> collector.onEventCollected(action, data) }
-
-    fun collectEvent(
-        scope: CoroutineScope,
-        coroutineContext: CoroutineContext = Dispatchers.Main,
-        collector: EventCollector
-    ): Job = eventFlow.collect(scope, coroutineContext) { (action, data) -> collector.onEventCollected(action, data) }
-}
-
-fun interface EventObserver {
-    fun onReceivedEvent(action: String, data: Any?)
-}
-
-fun interface EventCollector {
-    suspend fun onEventCollected(action: String, data: Any?)
 }
