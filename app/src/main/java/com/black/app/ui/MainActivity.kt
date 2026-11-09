@@ -27,7 +27,7 @@ import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
-import com.black.app.ui.theme.BlackTheme
+import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.map

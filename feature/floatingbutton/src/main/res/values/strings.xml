@@ -10,4 +10,19 @@
     <string name="shortcut_floating_off_label">JustApp - 플로팅 Off</string>
 
     <string name="accessibility_service_label_floating">JustApp - FloatingButton</string>
+
+    <string name="fragment_name_floating">플로팅 버튼</string>
+    <string name="floating_setting_section_setting">버튼 설정</string>
+    <string name="floating_setting_running_label">플로팅 버튼 표시</string>
+    <string name="floating_setting_running_description">켜면 다른 앱 위에 시계와 홈·뒤로 가기·알림창·볼륨 버튼을 띄웁니다.</string>
+    <string name="floating_setting_section_status">상태</string>
+    <string name="floating_setting_status_overlay">다른 앱 위에 표시</string>
+    <string name="floating_setting_status_accessibility">접근성 서비스</string>
+    <string name="floating_setting_status_allowed">허용됨</string>
+    <string name="floating_setting_status_required">허용 필요</string>
+    <string name="floating_setting_status_enabled">켜짐</string>
+    <string name="floating_setting_status_disabled">꺼짐</string>
+    <string name="floating_setting_accessibility_description">뒤로 가기 버튼은 접근성 서비스를 켜야 동작합니다.</string>
+    <string name="floating_setting_overlay_permission_guide">플로팅 버튼을 띄우려면 다른 앱 위에 표시 권한이 필요합니다.\n설정에서 JustApp을 허용해주세요.</string>
+    <string name="floating_setting_open_overlay_settings">허용하러 가기</string>
 </resources>

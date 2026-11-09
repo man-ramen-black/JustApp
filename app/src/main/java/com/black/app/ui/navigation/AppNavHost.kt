@@ -15,7 +15,7 @@ import com.black.app.ui.maintab.main.etc.BlackFragment
 import com.black.app.ui.maintab.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.maintab.main.texteditor.TextEditorScreen
 import com.black.app.ui.maintab.main.usagetimer.UsageTimerScreen
-import com.black.feature.floatingbutton.ui.FloatingSettingFragment
+import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 
 /**
@@ -38,9 +38,12 @@ fun AppNavHost(
     ) {
         composable<AppRoute.Main> { AndroidFragment<MainFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.Black> { AndroidFragment<BlackFragment>(Modifier.fillMaxSize()) }
-        composable<AppRoute.TextEditor> { TextEditorScreen(Modifier.fillMaxSize()) }
+        composable<AppRoute.TextEditor> {
+            TextEditorScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
         composable<AppRoute.StudyPopup> {
             StudyPopupSettingScreen(
+                onNavigateUp = { navController.navigateUp() },
                 modifier = Modifier.fillMaxSize(),
                 // 화면 켜짐을 감지하는 서비스는 앱 설치 알림 화면이 켜고 끔
                 onOpenAppInstallNotification = {
@@ -48,9 +51,15 @@ fun AppNavHost(
                 },
             )
         }
-        composable<AppRoute.UsageTimer> { UsageTimerScreen(Modifier.fillMaxSize()) }
+        composable<AppRoute.UsageTimer> {
+            UsageTimerScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
         composable<AppRoute.PokeRogue> { AndroidFragment<PokeRogueFragment>(Modifier.fillMaxSize()) }
-        composable<AppRoute.Floating> { AndroidFragment<FloatingSettingFragment>(Modifier.fillMaxSize()) }
-        composable<AppRoute.AppInstallNotification> { AppInstallNotificationScreen(Modifier.fillMaxSize()) }
+        composable<AppRoute.Floating> {
+            FloatingSettingScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
+        composable<AppRoute.AppInstallNotification> {
+            AppInstallNotificationScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
     }
 }

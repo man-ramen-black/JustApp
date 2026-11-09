@@ -7,7 +7,6 @@
     <string name="study_popup_list_contents_empty">[터치하여 내용 입력]</string>
     <string name="study_popup_pager_contents_empty">[내용 없음]</string>
     <string name="study_popup_no_contents">저장된 내용이 없습니다.\n내용을 추가한 뒤 저장해주세요.</string>
-    <string name="study_popup_caption">도구</string>
     <string name="study_popup_section_setting">팝업 설정</string>
     <string name="study_popup_enabled_label">화면을 켤 때 팝업 표시</string>
     <string name="study_popup_enabled_description">켜면 화면을 켤 때마다 저장된 내용을 팝업으로 보여줍니다.\n저장된 내용이 없으면 표시하지 않습니다.</string>
@@ -21,11 +20,9 @@
     <string name="study_popup_status_running">실행 중</string>
     <string name="study_popup_status_stopped">중지됨</string>
     <string name="study_popup_saved_contents_count">%1$d개</string>
-    <string name="study_popup_service_description">백그라운드 서비스는 앱 설치 알림 화면에서 켭니다.\n중지됨을 누르면 그 화면으로 이동합니다.</string>
     <string name="study_popup_section_file">내용 파일</string>
     <string name="study_popup_file_none">연 파일 없음</string>
     <string name="study_popup_file_modified">저장하지 않은 변경이 있습니다.</string>
-    <string name="study_popup_file_description">저장하면 파일과 팝업에 함께 반영됩니다.</string>
     <string name="study_popup_load">불러오기</string>
     <string name="study_popup_reload">다시 불러오기</string>
     <string name="study_popup_save">저장</string>
@@ -47,7 +44,6 @@
     <string name="shortcut_memo_id">shortcut_memo</string>
     <string name="shortcut_memo_label">메모</string>
 
-    <string name="fragment_name_floating">플로팅 버튼</string>
     <string name="fragment_name_study_popup">스터디 팝업</string>
     <string name="fragment_name_text_editor">메모장</string>
     <string name="fragment_name_usage_timer">앱 사용 타이머</string>
@@ -58,7 +54,6 @@
 
     <string name="accessibility_usage_timer_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우기 위해 접근성 서비스를 활성화합니다.</string>
 
-    <string name="usage_timer_caption">도구</string>
     <string name="usage_timer_section_overlay">타이머 표시</string>
     <string name="usage_timer_show">타이머 띄우기</string>
     <string name="usage_timer_section_pause">일시정지</string>
@@ -76,6 +71,9 @@
     <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
     <string name="usage_timer_pause_duration_invalid">일시정지 시간은 1분 이상으로 입력해주세요.</string>
 
+    <string name="text_editor_save">저장</string>
+    <string name="text_editor_load">불러오기</string>
+    <string name="text_editor_new">새 문서</string>
     <string name="text_editor_hint">내용을 작성해주세요.</string>
     <string name="text_editor_new_file">새 문서를 작성하시겠습니까?</string>
     <string name="text_editor_load_failed_latest_file">최근 문서를 불러올 수 없습니다.</string>
@@ -92,7 +90,6 @@
     <string name="package_install_notification_channel_name">앱 설치·업데이트</string>
     <string name="package_install_notification_installed">설치되었습니다.</string>
     <string name="package_install_notification_updated">업데이트되었습니다.</string>
-    <string name="app_install_notification_caption">도구</string>
     <string name="app_install_notification_section_alert">알림 설정</string>
     <string name="app_install_notification_switch_label">설치·업데이트 알림 받기</string>
     <string name="app_install_notification_switch_description">켜면 백그라운드 서비스를 실행합니다.\n화면을 켤 때 뜨는 스터디 팝업 등 화면 켜짐·꺼짐 연동 기능도 이 서비스로 동작합니다.</string>

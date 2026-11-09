@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import com.black.app.R
 import com.black.app.testutil.BaseUiTest
-import com.black.app.ui.theme.BlackTheme
+import com.black.core.ui.theme.BlackTheme
 import com.black.feature.pokerogue.R as PokeRogueR
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Assert.assertEquals

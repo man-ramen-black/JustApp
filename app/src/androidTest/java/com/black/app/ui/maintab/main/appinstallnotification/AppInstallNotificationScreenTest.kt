@@ -9,11 +9,13 @@ import com.black.app.broadcast.PackageInstallNotifier
 import com.black.app.service.ForegroundService
 import com.black.app.service.ForegroundServiceController
 import com.black.app.testutil.BaseUiTest
-import com.black.app.ui.theme.BlackTheme
+import com.black.core.ui.component.ToolTopBarTestTags
+import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -30,11 +32,11 @@ import org.junit.runners.MethodSorters
 class AppInstallNotificationScreenTest : BaseUiTest() {
 
     /** AppInstallNotificationScreen을 HiltTestActivity에 setContent로 호스팅 */
-    private fun hostAppInstallNotificationScreen() {
+    private fun hostAppInstallNotificationScreen(onNavigateUp: () -> Unit = {}) {
         onHostActivity { activity ->
             activity.setContent {
                 BlackTheme {
-                    AppInstallNotificationScreen()
+                    AppInstallNotificationScreen(onNavigateUp = onNavigateUp)
                 }
             }
         }
@@ -179,5 +181,28 @@ class AppInstallNotificationScreenTest : BaseUiTest() {
         /** When / Then **/
         assertTagDisplayed(AppInstallNotificationTestTags.STATUS_BAR_ICON_PREVIEW, scrollTo = true)
         assertTextDisplayed(context.getString(R.string.app_install_notification_icon_shared), scrollTo = true)
+    }
+
+    /**
+     * 상단 바 뒤로 가기 버튼을 누르면 onNavigateUp이 호출되는지 검증
+     *
+     * Given:
+     * - AppInstallNotificationScreen 호스팅
+     * When:
+     * - 뒤로 가기 버튼 클릭
+     * Then:
+     * - onNavigateUp 1회 호출
+     */
+    @Test
+    fun test_05_clickNavigateUpCallsCallback() {
+        /** Given **/
+        var navigateUpCount = 0
+        hostAppInstallNotificationScreen(onNavigateUp = { navigateUpCount++ })
+
+        /** When **/
+        clickTag(ToolTopBarTestTags.NAVIGATE_UP_BUTTON)
+
+        /** Then **/
+        assertEquals(1, navigateUpCount)
     }
 }

@@ -15,9 +15,11 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
-import com.black.app.ui.theme.BlackTheme
+import com.black.core.ui.component.ToolTopBarTestTags
+import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -188,7 +190,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 도구/타이머 표시/설정/선택한 앱 캡션 존재
+     * - 타이머 표시/설정/선택한 앱 캡션 존재
      * - TOOL/OVERLAY/SETTINGS/SELECTED APPS 캡션 미존재
      */
     @Test
@@ -200,7 +202,6 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 캡션은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithText("도구").assertExists()
         composeRule.onNodeWithText("타이머 표시").assertExists()
         composeRule.onNodeWithText("설정").assertExists()
         composeRule.onNodeWithText("선택한 앱").assertExists()
@@ -211,13 +212,36 @@ class UsageTimerScreenTest : BaseUiTest() {
     }
 
     /** UsageTimerScreen을 HiltTestActivity에 setContent로 호스팅 */
-    private fun hostUsageTimerScreen() {
+    private fun hostUsageTimerScreen(onNavigateUp: () -> Unit = {}) {
         onHostActivity { activity ->
             activity.setContent {
                 BlackTheme {
-                    UsageTimerScreen()
+                    UsageTimerScreen(onNavigateUp = onNavigateUp)
                 }
             }
         }
+    }
+
+    /**
+     * 상단 바 뒤로 가기 버튼을 누르면 onNavigateUp이 호출되는지 검증
+     *
+     * Given:
+     * - UsageTimerScreen 호스팅
+     * When:
+     * - 뒤로 가기 버튼 클릭
+     * Then:
+     * - onNavigateUp 1회 호출
+     */
+    @Test
+    fun test_07_clickNavigateUpCallsCallback() {
+        /** Given **/
+        var navigateUpCount = 0
+        hostUsageTimerScreen(onNavigateUp = { navigateUpCount++ })
+
+        /** When **/
+        clickTag(ToolTopBarTestTags.NAVIGATE_UP_BUTTON)
+
+        /** Then **/
+        assertEquals(1, navigateUpCount)
     }
 }

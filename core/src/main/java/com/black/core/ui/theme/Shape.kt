@@ -1,4 +1,4 @@
-package com.black.app.ui.theme
+package com.black.core.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp

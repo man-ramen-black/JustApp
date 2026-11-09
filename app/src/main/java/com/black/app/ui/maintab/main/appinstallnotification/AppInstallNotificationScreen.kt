@@ -9,14 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,13 +40,14 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
-import com.black.app.ui.component.ActionButton
-import com.black.app.ui.component.SectionHeader
-import com.black.app.ui.component.StatusRow
-import com.black.app.ui.component.SwitchRow
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppShapes
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.SectionHeader
+import com.black.core.ui.component.StatusRow
+import com.black.core.ui.component.SwitchRow
+import com.black.core.ui.component.ToolScreenScaffold
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppShapes
+import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 
@@ -75,6 +72,7 @@ internal object AppInstallNotificationTestTags {
 /** 앱 설치 알림 화면 */
 @Composable
 fun AppInstallNotificationScreen(
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppInstallNotificationViewModel = hiltViewModel(),
 ) {
@@ -103,6 +101,7 @@ fun AppInstallNotificationScreen(
     AppInstallNotificationContent(
         uiState = uiState,
         modifier = modifier,
+        onNavigateUp = onNavigateUp,
         onEnabledChange = viewModel::setEnabled,
         onClickBatteryOptimization = viewModel::openBatteryOptimizationSettings,
         onClickNotificationSettings = viewModel::openNotificationSettings,
@@ -115,34 +114,18 @@ fun AppInstallNotificationScreen(
 private fun AppInstallNotificationContent(
     uiState: AppInstallNotificationUiState,
     modifier: Modifier = Modifier,
+    onNavigateUp: () -> Unit,
     onEnabledChange: (Boolean) -> Unit,
     onClickBatteryOptimization: () -> Unit,
     onClickNotificationSettings: () -> Unit,
     onClickSendTest: (isUpdate: Boolean) -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppColors.ScreenBackground)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    ToolScreenScaffold(
+        title = stringResource(R.string.fragment_name_app_install_notification),
+        onNavigateUp = onNavigateUp,
+        modifier = modifier,
+        titleModifier = Modifier.testTag(AppInstallNotificationTestTags.TITLE),
     ) {
-        // 헤더 캡션
-        Text(
-            text = stringResource(R.string.app_install_notification_caption),
-            modifier = Modifier.padding(top = 26.dp),
-            style = AppTypography.HeaderCaption,
-        )
-        // 헤더 타이틀
-        Text(
-            text = stringResource(R.string.fragment_name_app_install_notification),
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .testTag(AppInstallNotificationTestTags.TITLE),
-            style = AppTypography.ScreenTitle,
-        )
-
         // 알림 설정 섹션
         SectionHeader(title = stringResource(R.string.app_install_notification_section_alert))
         SwitchRow(

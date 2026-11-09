@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrains.kotlin.parcelize)
+    alias(libs.plugins.jetbrains.kotlin.compose)
     alias(libs.plugins.dagger.hilt)
 }
 
@@ -44,12 +45,14 @@ android {
     buildFeatures {
         buildConfig = true
         dataBinding = true
+        compose = true
     }
 }
 
 dependencies {
     implementation(project(":core"))
     implementation(libs.hilt)
+    implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(project(":test"))
     ksp(libs.hilt.compiler)
     testImplementation(libs.junit)

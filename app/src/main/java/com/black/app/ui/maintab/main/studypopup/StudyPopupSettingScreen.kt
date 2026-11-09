@@ -3,23 +3,15 @@ package com.black.app.ui.maintab.main.studypopup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -31,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -46,14 +37,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
-import com.black.app.ui.component.ActionButton
-import com.black.app.ui.component.SectionHeader
-import com.black.app.ui.component.StatusRow
-import com.black.app.ui.component.SwitchRow
 import com.black.app.ui.maintab.main.studypopup.popup.StudyPopupView
-import com.black.app.ui.theme.AppColors
-import com.black.app.ui.theme.AppShapes
-import com.black.app.ui.theme.AppTypography
+import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.ConfirmDialog
+import com.black.core.ui.component.ContainerIconButton
+import com.black.core.ui.component.SectionHeader
+import com.black.core.ui.component.StatusRow
+import com.black.core.ui.component.SwitchRow
+import com.black.core.ui.component.ToolScreenScaffold
+import com.black.core.ui.theme.AppColors
+import com.black.core.ui.theme.AppShapes
+import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 
@@ -97,6 +91,7 @@ internal object StudyPopupSettingTestTags {
  */
 @Composable
 fun StudyPopupSettingScreen(
+    onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenAppInstallNotification: () -> Unit = {},
     viewModel: StudyPopupSettingViewModel = hiltViewModel(),
@@ -142,6 +137,7 @@ fun StudyPopupSettingScreen(
     StudyPopupSettingContent(
         uiState = uiState,
         modifier = modifier,
+        onNavigateUp = onNavigateUp,
         onEnabledChange = viewModel::setEnabled,
         onClickPreview = viewModel::showPopupPreview,
         onClickOverlayPermission = viewModel::showOverlayPermissionDialog,
@@ -182,6 +178,7 @@ fun StudyPopupSettingScreen(
 private fun StudyPopupSettingContent(
     uiState: StudyPopupSettingUiState,
     modifier: Modifier = Modifier,
+    onNavigateUp: () -> Unit,
     onEnabledChange: (Boolean) -> Unit,
     onClickPreview: () -> Unit,
     onClickOverlayPermission: () -> Unit,
@@ -193,29 +190,12 @@ private fun StudyPopupSettingContent(
     onClickDelete: (index: Int) -> Unit,
     onClickAdd: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppColors.ScreenBackground)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    ToolScreenScaffold(
+        title = stringResource(R.string.fragment_name_study_popup),
+        onNavigateUp = onNavigateUp,
+        modifier = modifier,
+        titleModifier = Modifier.testTag(StudyPopupSettingTestTags.TITLE),
     ) {
-        // 헤더 캡션
-        Text(
-            text = stringResource(R.string.study_popup_caption),
-            modifier = Modifier.padding(top = 26.dp),
-            style = AppTypography.HeaderCaption,
-        )
-        // 헤더 타이틀
-        Text(
-            text = stringResource(R.string.fragment_name_study_popup),
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .testTag(StudyPopupSettingTestTags.TITLE),
-            style = AppTypography.ScreenTitle,
-        )
-
         // 팝업 설정 섹션
         SectionHeader(title = stringResource(R.string.study_popup_section_setting))
         SwitchRow(
@@ -267,11 +247,6 @@ private fun StudyPopupSettingContent(
             onClick = null,
             modifier = Modifier.testTag(StudyPopupSettingTestTags.SAVED_CONTENTS_STATUS),
         )
-        Text(
-            text = stringResource(R.string.study_popup_service_description),
-            modifier = Modifier.padding(top = 4.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
-        )
 
         // 내용 파일 섹션
         SectionHeader(title = stringResource(R.string.study_popup_section_file))
@@ -280,15 +255,14 @@ private fun StudyPopupSettingContent(
             modifier = Modifier.testTag(StudyPopupSettingTestTags.FILE_NAME),
             style = AppTypography.Body.copy(color = AppColors.ItemName),
         )
-        Text(
-            text = if (uiState.modified) {
-                stringResource(R.string.study_popup_file_modified)
-            } else {
-                stringResource(R.string.study_popup_file_description)
-            },
-            modifier = Modifier.padding(top = 4.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
-        )
+        // 저장하지 않은 변경이 있을 때만 표시
+        if (uiState.modified) {
+            Text(
+                text = stringResource(R.string.study_popup_file_modified),
+                modifier = Modifier.padding(top = 4.dp),
+                style = AppTypography.Caption.copy(lineHeight = 18.sp),
+            )
+        }
         Row(
             modifier = Modifier.padding(top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -375,7 +349,7 @@ private fun ContentsRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -384,31 +358,26 @@ private fun ContentsRow(
             } else {
                 AnnotatedString.fromHtml(contents.replace("\n", "<br>"))
             },
-            modifier = Modifier.weight(1f),
+            // 행 위아래 여백 12dp 중 6dp는 삭제 버튼 터치 영역(48dp)과 겹치도록 내용에만 적용
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 6.dp),
             style = AppTypography.Body.copy(color = AppColors.ItemName),
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
-        // 삭제 아이콘 버튼(36dp, 컨테이너 톤 박스)
-        val shape = AppShapes.Container
-        Box(
+        // 삭제 아이콘 버튼(보이는 박스 36dp, 터치 영역 48dp)
+        // 보이는 박스 오른쪽 끝을 콘텐츠 여백에 맞추도록 터치 영역 차이의 절반(6dp)만큼 오른쪽으로 이동
+        ContainerIconButton(
+            painter = painterResource(R.drawable.ic_delete),
+            contentDescription = stringResource(R.string.study_popup_delete),
+            onClick = onClickDelete,
             modifier = Modifier
-                .padding(start = 12.dp)
-                .size(36.dp)
-                .clip(shape)
-                .background(AppColors.ContainerBackground, shape)
-                .border(1.dp, AppColors.ContainerBorder, shape)
-                .clickable(onClick = onClickDelete)
+                .offset(x = 6.dp)
                 .testTag(deleteButtonTestTag),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_delete),
-                contentDescription = stringResource(R.string.study_popup_delete),
-                modifier = Modifier.size(16.dp),
-                tint = AppColors.Icon,
-            )
-        }
+            boxSize = 36.dp,
+            iconSize = 16.dp,
+        )
     }
 }
 
@@ -474,30 +443,13 @@ private fun DeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ConfirmDialog(
+        message = stringResource(R.string.study_popup_delete_confirm),
+        confirmText = stringResource(R.string.study_popup_delete),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_DIALOG),
-        shape = AppShapes.Container,
-        containerColor = AppColors.ContainerBackground,
-        text = {
-            Text(
-                text = stringResource(R.string.study_popup_delete_confirm),
-                color = AppColors.ItemName,
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_CONFIRM_BUTTON),
-            ) {
-                Text(stringResource(R.string.study_popup_delete), color = AppColors.Title)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = AppColors.Caption)
-            }
-        },
+        confirmButtonModifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_CONFIRM_BUTTON),
     )
 }
 
@@ -511,29 +463,12 @@ private fun OverlayPermissionDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ConfirmDialog(
+        message = stringResource(R.string.study_popup_overlay_permission_guide),
+        confirmText = stringResource(R.string.study_popup_open_overlay_settings),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_DIALOG),
-        shape = AppShapes.Container,
-        containerColor = AppColors.ContainerBackground,
-        text = {
-            Text(
-                text = stringResource(R.string.study_popup_overlay_permission_guide),
-                color = AppColors.ItemName,
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.testTag(StudyPopupSettingTestTags.OPEN_OVERLAY_SETTINGS_BUTTON),
-            ) {
-                Text(stringResource(R.string.study_popup_open_overlay_settings), color = AppColors.Title)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = AppColors.Caption)
-            }
-        },
+        confirmButtonModifier = Modifier.testTag(StudyPopupSettingTestTags.OPEN_OVERLAY_SETTINGS_BUTTON),
     )
 }

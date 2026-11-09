@@ -15,12 +15,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import com.black.app.R
 import com.black.app.model.datastore.TextEditorDataStore
 import com.black.app.testutil.BaseUiTest
-import com.black.app.ui.theme.BlackTheme
+import com.black.core.ui.component.ToolTopBarTestTags
+import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -49,11 +52,11 @@ class TextEditorScreenTest : BaseUiTest() {
     }
 
     /** TextEditorScreen을 HiltTestActivity에 setContent로 호스팅 */
-    private fun hostTextEditorScreen() {
+    private fun hostTextEditorScreen(onNavigateUp: () -> Unit = {}) {
         onHostActivity { activity ->
             activity.setContent {
                 BlackTheme {
-                    TextEditorScreen()
+                    TextEditorScreen(onNavigateUp = onNavigateUp)
                 }
             }
         }
@@ -67,7 +70,8 @@ class TextEditorScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - text_editor_title, save_button, load_button, new_button, editor_input 표시
+     * - text_editor_title이 "메모장"으로 표시
+     * - save_button, load_button, new_button, editor_input 표시
      */
     @Test
     fun test_01_textEditorScreenDisplaysCoreElements() {
@@ -79,6 +83,7 @@ class TextEditorScreenTest : BaseUiTest() {
 
         /** Then **/
         assertTagDisplayed(TextEditorTestTags.TITLE)
+        assertTagText(TextEditorTestTags.TITLE, context.getString(R.string.fragment_name_text_editor))
         assertTagDisplayed(TextEditorTestTags.SAVE_BUTTON)
         assertTagDisplayed(TextEditorTestTags.LOAD_BUTTON)
         assertTagDisplayed(TextEditorTestTags.NEW_BUTTON)
@@ -207,6 +212,29 @@ class TextEditorScreenTest : BaseUiTest() {
         val mediaUri = requireNotNull(context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
         context.contentResolver.openOutputStream(mediaUri)!!.use { it.write(TEST_FILE_CONTENT.toByteArray()) }
         return mediaUri
+    }
+
+    /**
+     * 상단 바 뒤로 가기 버튼을 누르면 onNavigateUp이 호출되는지 검증
+     *
+     * Given:
+     * - TextEditorScreen 호스팅
+     * When:
+     * - 뒤로 가기 버튼 클릭
+     * Then:
+     * - onNavigateUp 1회 호출
+     */
+    @Test
+    fun test_06_clickNavigateUpCallsCallback() {
+        /** Given **/
+        var navigateUpCount = 0
+        hostTextEditorScreen(onNavigateUp = { navigateUpCount++ })
+
+        /** When **/
+        clickTag(ToolTopBarTestTags.NAVIGATE_UP_BUTTON)
+
+        /** Then **/
+        assertEquals(1, navigateUpCount)
     }
 
     companion object {
