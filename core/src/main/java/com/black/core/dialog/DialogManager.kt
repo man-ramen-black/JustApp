@@ -9,7 +9,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.black.core.di.Hilt
-import com.black.core.util.Log
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -81,7 +80,6 @@ class DialogManager @Inject constructor(activity: Activity) {
 
     // 노출 중인 Dialog, <tag, ArrayList<Dialog>>
     private val showingDialogs = hashMapOf<String, MutableList<Dialog>>()
-    private var isNoShow = false
 
     fun isShowing(tag: String): Boolean
         = showingDialogs[tag]?.any { it.isShowing } == true
@@ -99,11 +97,6 @@ class DialogManager @Inject constructor(activity: Activity) {
         onShow: ((DialogInterface) -> Unit)? = null,
         onDismiss: ((DialogInterface) -> Unit)? = null,
     ) {
-        if (isNoShow) {
-            Log.v("No show")
-            return
-        }
-
         // onDismiss 처리가 되지 않는 일부 Dialog가 남아 있는 상황 방지를 위해 노출 중이지 않은 Dialog 제거
         removeNotShowingDialogs()
 
@@ -123,12 +116,6 @@ class DialogManager @Inject constructor(activity: Activity) {
         onDismiss?.let { dialog.setOnDismissListener(it) }
         dialog.show()
         showingDialogs.getOrPut(tag) { mutableListOf() } += dialog
-    }
-
-    /** DialogManager.show가 동작하지 않도록 설정 */
-    fun setNoShow(isNoShow: Boolean) {
-        Log.v(isNoShow)
-        this.isNoShow = isNoShow
     }
 
     /** @param tag null인 경우 모든 Dialog */

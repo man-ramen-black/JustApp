@@ -9,15 +9,7 @@ import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
-import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
-
 object UiUtil {
-    fun pxToDp(context: Context, px: Int) : Float {
-        return px.toFloat() / context.resources.displayMetrics.density
-    }
-
     fun dpToPx(context: Context, dp: Float) : Int {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.resources.displayMetrics).toInt()
     }
@@ -120,12 +112,6 @@ object UiUtil {
         }
     }
 
-    /** TabLayout과 ViewPager2 연결 */
-    fun TabLayout.setupWithViewPager2(viewPager: ViewPager2, autoRefresh: Boolean = true, smoothScroll: Boolean = true, tabText: ((TabLayout.Tab, Int) -> String)? = null) {
-        TabLayoutMediator(this, viewPager, autoRefresh, smoothScroll) { tab, position ->
-            tab.text = tabText?.invoke(tab, position) ?: ""
-        }.attach()
-    }
 }
 
 annotation class Cutout {

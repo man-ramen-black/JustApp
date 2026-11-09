@@ -8,9 +8,9 @@ import com.black.app.model.datastore.StudyPopupDataStore
 import com.black.app.model.preferences.StudyPopupPreferences
 import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
 import com.black.core.file.SAFHelper
-import com.black.core.file.SAFHelper.Companion.getFileName
-import com.black.core.file.SAFHelper.Companion.openInputStream
-import com.black.core.file.SAFHelper.Companion.openOutputStream
+import com.black.core.file.SAFHelper.getFileName
+import com.black.core.file.SAFHelper.openInputStream
+import com.black.core.file.SAFHelper.openOutputStream
 import com.black.core.util.FileUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

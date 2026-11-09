@@ -53,8 +53,7 @@ class KeepScreenOnTileService : TileService() {
     /** 백그라운드 Activity 시작 제한 회피용 startActivityAndCollapse로 권한 설정 화면 이동 */
     private fun showDrawOverlaysSetting() {
         val intent = PermissionHelper.getDrawOverlaysSettingIntent(this)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            ?: return
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         // Android 14(targetSdk 34) 이상에서 Intent 버전은 UnsupportedOperationException, PendingIntent 버전 필요
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

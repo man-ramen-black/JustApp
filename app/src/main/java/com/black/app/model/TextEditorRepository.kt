@@ -4,17 +4,15 @@ import android.content.Context
 import android.net.Uri
 import com.black.app.model.datastore.TextEditorDataStore
 import com.black.core.file.SAFHelper
-import com.black.core.file.SAFHelper.Companion.getFileName
-import com.black.core.file.SAFHelper.Companion.openInputStream
-import com.black.core.file.SAFHelper.Companion.openOutputStream
+import com.black.core.file.SAFHelper.getFileName
+import com.black.core.file.SAFHelper.openInputStream
+import com.black.core.file.SAFHelper.openOutputStream
 import com.black.core.util.FileUtil
-import com.black.core.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import javax.inject.Inject
 
 /**

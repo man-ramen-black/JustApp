@@ -3,11 +3,10 @@ package com.black.app.ui.maintab.main.etc
 import androidx.appcompat.app.AppCompatActivity
 import com.black.app.R
 import com.black.app.databinding.FragmentBlackBinding
-import com.black.app.ui.common.base.TitleFragment
+import com.black.core.component.BaseFragment
 import com.black.core.util.UiUtil
 
-class BlackFragment : TitleFragment<FragmentBlackBinding>() {
-    override val title: String = ""
+class BlackFragment : BaseFragment<FragmentBlackBinding>() {
     override val layoutResId: Int = R.layout.fragment_black
     override fun onBindVariable(binding: FragmentBlackBinding) { }
 

@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
 import com.black.app.broadcast.NotificationActionReceiver
@@ -72,11 +71,7 @@ class ForegroundService : Service() {
             it.setOngoing(true)
             // One UI 8.5 "그 외 알림"(백그라운드 활동) 분류 조건은 액션 버튼·커스텀 뷰 없는 FGS 알림, 분류된 알림은 Samsung 강제 자동 묶음에서도 제외
             // setColorized FGS 알림은 SystemUI가 상단 FGS 구역으로 먼저 분류하므로 액션·색 미지정
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            } else {
-                PendingIntent.FLAG_CANCEL_CURRENT
-            }
+            val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
         }
         startForeground(NOTIFICATION_ID, notification)

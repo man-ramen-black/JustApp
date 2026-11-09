@@ -6,8 +6,8 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.content.Intent
-import com.black.core.file.SAFHelper.Companion.getFileName
-import com.black.core.file.SAFHelper.Companion.openInputStream
+import com.black.core.file.SAFHelper.getFileName
+import com.black.core.file.SAFHelper.openInputStream
 import com.black.test.BaseTest
 import io.mockk.every
 import io.mockk.just

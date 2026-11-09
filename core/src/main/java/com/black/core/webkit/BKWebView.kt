@@ -28,8 +28,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.core.view.doOnAttach
-import androidx.core.view.doOnDetach
 import com.black.core.BuildConfig
 import com.black.core.util.Log
 
@@ -190,16 +188,6 @@ open class BKWebView : WebView {
     fun removeWebViewClientCallback(callback: BKWebViewClient.Callback) {
         bkWebViewClient?.removeCallback(callback)
             ?: run { Log.v("${BKWebViewClient::class.java.simpleName} is null") }
-    }
-
-    fun addWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.addCallback(callback)
-            ?: run { Log.w("${BKWebChromeClient::class.java.simpleName} is null") }
-    }
-
-    fun removeWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.removeCallback(callback)
-            ?: run { Log.v("${BKWebChromeClient::class.java.simpleName} is null") }
     }
 
     /** NMWebChromeClient 파일 업로드가 동작을 위한 FileChooser 설정 */

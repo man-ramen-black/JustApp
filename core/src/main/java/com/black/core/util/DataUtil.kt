@@ -1,13 +1,10 @@
 package com.black.core.util
 
-import java.security.SecureRandom
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 object DataUtil {
-    private val RANDOM_CHAR_LIST : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
     private const val SEC_IN_MS = 1000
     private const val MIN_IN_MS = SEC_IN_MS * 60
@@ -73,17 +70,4 @@ object DataUtil {
         }
     }
 
-    fun generateRandomString(length: Int): String {
-        val random = SecureRandom()
-        val bytes = ByteArray(length)
-        random.nextBytes(bytes)
-
-        return bytes.indices
-            .map { RANDOM_CHAR_LIST[random.nextInt(RANDOM_CHAR_LIST.size)] }
-            .joinToString("")
-    }
-
-    fun withComma(number: Int) : String {
-        return DecimalFormat("#,###").format(number)
-    }
 }
