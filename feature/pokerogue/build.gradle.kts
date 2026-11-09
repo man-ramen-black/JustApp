@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.black.feature.pokerogue"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrains.kotlin.parcelize)
     alias(libs.plugins.dagger.hilt)
-    alias(libs.plugins.androidx.navigation.safeargs)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.firebase.crashlytics)
     alias(libs.plugins.jetbrains.kotlin.compose)
@@ -79,16 +78,12 @@ dependencies {
     implementation(libs.androidx.datastore)
 
     implementation(libs.androidx.room.runtime)
-    implementation(libs.firebase.bom)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     testImplementation(project(":test"))
     ksp(libs.androidx.room.compiler)
-    implementation(libs.glide)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.core.splashscreen)
-    implementation(libs.androidx.swiperefreshlayout)
 
     implementation(libs.kotlinx.serialization.json)
 
@@ -117,6 +112,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.hilt.android.testing)
-    androidTestImplementation(libs.androidx.navigation.testing)
     kspAndroidTest(libs.hilt.compiler)
 }
