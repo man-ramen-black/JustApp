@@ -9,7 +9,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.black.core.util.Extensions.alsoIf
-import com.black.core.util.Extensions.applyIf
+import com.black.core.util.Log
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.FileNotFoundException
@@ -27,35 +27,57 @@ class SAFHelper(
     private val createMimeType: String = "*/*",
 ) {
     companion object {
-        /** 재부팅 시에도 해당 URI의 권한이 유지되도록 설정 */
-        fun keepUriPermission(context: Context, uri: Uri) {
-            context.contentResolver
-                .takePersistableUriPermission(
+        /**
+         * 문서를 고른 직후 재부팅 뒤에도 접근할 수 있도록 영구 권한 요청
+         *
+         * 선택 결과(Uri)만으로는 부여된 플래그를 알 수 없어 읽기·쓰기를 먼저 요청하고, 쓰기를 주지 않는 문서는 읽기만 요청.
+         * 스트림을 열 때마다 읽기·쓰기를 요청하면 쓰기 권한이 없는 문서는 읽기도 실패하므로 선택 직후 한 번만 호출
+         * @return 영구 권한을 받았으면 true
+         */
+        fun keepUriPermission(context: Context, uri: Uri): Boolean {
+            val contentResolver = context.contentResolver
+            return try {
+                contentResolver.takePersistableUriPermission(
                     uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 )
+                true
+            } catch (e: SecurityException) {
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    true
+                } catch (e: SecurityException) {
+                    Log.w(e)
+                    false
+                }
+            }
         }
 
+        /**
+         * 읽기 스트림 열기(파일이 없으면 null)
+         *
+         * 권한이 없는 uri는 SecurityException을 그대로 던짐. 호출부가 이 예외로 문서 재선택을 안내
+         */
         @SuppressLint("Recycle")
-        fun Uri.openInputStream(context: Context, keepPermission: Boolean = true): InputStream? {
+        fun Uri.openInputStream(context: Context): InputStream? {
             return try {
-                context.contentResolver
-                    .applyIf({ keepPermission }) { keepUriPermission(context, this@openInputStream) }
-                    .openInputStream(this)
+                context.contentResolver.openInputStream(this)
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
                 null
             }
         }
 
-        /** @param mode "w" : 덮어쓰기, "a" : 내용 추가, "t" : 텍스트 모드, "b" : 바이너리 모드 */
+        /**
+         * 쓰기 스트림 열기(파일이 없으면 null)
+         *
+         * 권한이 없는 uri는 SecurityException을 그대로 던짐
+         * @param mode "w" : 덮어쓰기, "a" : 내용 추가, "t" : 텍스트 모드, "b" : 바이너리 모드
+         */
         @SuppressLint("Recycle")
-        fun Uri.openOutputStream(context: Context, mode: String = "w", keepPermission: Boolean = true): OutputStream? {
+        fun Uri.openOutputStream(context: Context, mode: String = "w"): OutputStream? {
             return try {
-                context.contentResolver
-                    .applyIf({ keepPermission }) { keepUriPermission(context, this@openOutputStream) }
-                    .openOutputStream(this, mode)
+                context.contentResolver.openOutputStream(this, mode)
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
                 null

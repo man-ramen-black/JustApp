@@ -44,6 +44,7 @@ class TextEditorViewModelTest : BaseTest() {
         repository = mockk()
         coEvery { repository.fileNameFlow } returns flowOf("")
         coEvery { repository.currentFileUriFlow } returns flowOf(null)
+        coEvery { repository.keepPermission(any()) } returns true
     }
 
     /** ViewModel 생성 및 init 코루틴 완료 대기 */
@@ -144,7 +145,7 @@ class TextEditorViewModelTest : BaseTest() {
      *
      * Given: loadTextFile이 "loaded" 반환
      * When: onDocumentOpened(uri) 호출 후 코루틴 완료 대기
-     * Then: uiState.text == "loaded"
+     * Then: 고른 문서의 영구 권한 요청, uiState.text == "loaded"
      */
     @Test
     fun test_05_onDocumentOpenedLoadsTextIntoUiState() = runTest {
@@ -159,6 +160,7 @@ class TextEditorViewModelTest : BaseTest() {
         val loadedState = viewModel.uiState.filter { it.text == "loaded" }.first()
 
         /** Then **/
+        coVerify { repository.keepPermission(uri) }
         assertEquals("loaded", loadedState.text)
     }
 

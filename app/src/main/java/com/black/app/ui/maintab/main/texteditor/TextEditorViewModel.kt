@@ -118,7 +118,9 @@ class TextEditorViewModel @Inject constructor(
 
     fun onDocumentOpened(uri: Uri?) {
         launch {
-            loadFile(uri ?: return@launch).exceptionOrNull()?.let {
+            uri ?: return@launch
+            textEditorRepository.keepPermission(uri)
+            loadFile(uri).exceptionOrNull()?.let {
                 it.printStackTrace()
                 sendEvent(EventShowToast(R.string.text_editor_load_failed))
             }
@@ -127,7 +129,9 @@ class TextEditorViewModel @Inject constructor(
 
     fun onDocumentCreated(uri: Uri?) {
         launch {
-            val result = saveFile(uri ?: return@launch)
+            uri ?: return@launch
+            textEditorRepository.keepPermission(uri)
+            val result = saveFile(uri)
             sendEvent(EventShowToast(saveResultMessage(result)))
         }
     }

@@ -3,13 +3,16 @@ package com.black.app.model.database.studypopup
 import android.content.Context
 import android.net.Uri
 import com.black.app.model.datastore.TextEditorDataStore
+import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.Companion.getFileName
 import com.black.core.file.SAFHelper.Companion.openInputStream
 import com.black.core.file.SAFHelper.Companion.openOutputStream
 import com.black.core.util.FileUtil
 import com.black.core.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
 
@@ -23,6 +26,11 @@ class TextEditorRepository @Inject constructor(
     val currentFileUriFlow = dataStore.getLatestFileUriFlow()
     val fileNameFlow = currentFileUriFlow
         .map { it?.getFileName(context) ?: "" }
+
+    /** 선택창에서 고른 문서에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
+    suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {
+        SAFHelper.keepUriPermission(context, uri)
+    }
 
     suspend fun saveTextFile(uri: Uri?, text: String): Result<Unit> {
         return try {

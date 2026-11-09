@@ -121,6 +121,7 @@ class StudyPopupSettingViewModel @Inject constructor(
     fun loadFile(uri: Uri?) {
         uri ?: return
         launch {
+            repository.keepPermission(uri)
             repository.readFile(uri)
                 .onSuccess { contents ->
                     applyLoadedFile(uri, contents)
@@ -146,6 +147,7 @@ class StudyPopupSettingViewModel @Inject constructor(
     fun saveFileTo(uri: Uri?) {
         uri ?: return
         launch {
+            repository.keepPermission(uri)
             repository.writeFile(uri, uiState.value.contents)
                 .onSuccess {
                     fileUri = uri

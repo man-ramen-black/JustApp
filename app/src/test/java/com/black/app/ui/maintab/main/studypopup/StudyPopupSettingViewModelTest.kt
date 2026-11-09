@@ -56,6 +56,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         every { repository.loadLatestUri() } returns null
         every { repository.removeLatestUri() } just Runs
         coEvery { repository.getFileName(any()) } returns "study_popup.xml"
+        coEvery { repository.keepPermission(any()) } returns true
         every { status.canDrawOverlays() } returns true
         every { foregroundServiceController.running } returns serviceRunning
     }
@@ -377,7 +378,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
      *
      * Given: 내용 [x] 편집 중(변경 있음), 불러올 파일 내용 [a, b]
      * When: loadFile(uri)
-     * Then: 내용 [a, b], 변경 없음, 불러오기 완료 토스트 수신
+     * Then: 고른 파일의 영구 권한 요청, 내용 [a, b], 변경 없음, 불러오기 완료 토스트 수신
      */
     @Test
     fun test_13_loadFileReplacesContents() = runTest {
@@ -392,6 +393,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
+        coVerify { repository.keepPermission(fileUri) }
         assertEquals(listOf("a", "b"), viewModel.uiState.value.contents)
         assertFalse(viewModel.uiState.value.modified)
         assertEquals(

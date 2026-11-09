@@ -7,6 +7,7 @@ import com.black.app.model.database.studypopup.StudyPopupDatabase
 import com.black.app.model.datastore.StudyPopupDataStore
 import com.black.app.model.preferences.StudyPopupPreferences
 import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
+import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.Companion.getFileName
 import com.black.core.file.SAFHelper.Companion.openInputStream
 import com.black.core.file.SAFHelper.Companion.openOutputStream
@@ -85,7 +86,7 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
     /**
      * [uri] 내용 파일의 내용 목록 읽기
      *
-     * 다음에 화면을 열 때 자동으로 다시 읽도록 영구 접근 권한을 받고 마지막으로 연 파일로 기록.
+     * 다음에 화면을 열 때 자동으로 다시 읽도록 마지막으로 연 파일로 기록(영구 권한은 선택 직후 [keepPermission]).
      * 재설치 등으로 영구 권한이 사라진 uri는 SecurityException으로 실패
      */
     suspend fun readFile(uri: Uri) : Result<List<String>> = withContext(Dispatchers.IO) {
@@ -117,6 +118,11 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /** 선택창에서 고른 내용 파일에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
+    suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {
+        SAFHelper.keepUriPermission(appContext, uri)
     }
 
     /** 표시용 파일 이름, 조회할 수 없으면 빈 문자열 */
