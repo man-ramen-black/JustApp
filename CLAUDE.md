@@ -43,6 +43,6 @@
 - 작업을 마치면 워크트리에 머문 채 브랜치·커밋·검증 결과만 보고하고, release 병합·reset은 하지 않습니다(기기 설치도 작업 브랜치 빌드로 합니다). "스쿼시"는 `squash` 스킬, "머지"는 `merge` 스킬(방식 판정, release 병합, 그 워크트리와 브랜치 삭제까지)을 따릅니다. "마무리해줘"는 남은 단계(스쿼시·머지·정리)를 나열하거나 묻지 않고 끝까지 수행하라는 뜻입니다.
 - `git push`는 명시적으로 지시받았을 때만 합니다. 머지 커밋 메시지는 git 기본 한 줄(`Merge branch '<브랜치>' into release`)에 타입 접두사·본문·`Co-Authored-By`를 붙이지 않습니다.
 - 테스트 코드를 작성·수정하면 관련 테스트를 실제로 실행해 통과를 확인해야 완료입니다(컴파일 성공만으로는 미완료). 실패하면 변경 전 형상에서 같은 테스트를 돌려 이번 변경 탓인지 가리고, 변경과 무관한 전체 테스트는 요청받았을 때만 실행합니다. 실행할 수 없으면 사유와 미검증 범위를 알립니다.
-- 기기에 설치하는 Gradle 작업(`installDebug`·`installUitest`·`connectedUitestAndroidTest` 등)은 연결된 기기 전부에 설치되므로 `ANDROID_SERIAL=<시리얼> ./gradlew …`로 대상 기기 하나만 지정해 실행합니다. 작업 도중 기기가 새로 연결될 수 있어 연결된 기기가 한 대뿐이어도 생략하지 않습니다(빠지면 `.claude/hooks/require-android-serial.mjs`가 명령을 거부).
-- 계측 테스트는 `testBuildType`인 `uitest` 빌드 타입(`com.black.app.uitest`)에서 돌아 실사용 debug 앱(`com.black.app`)의 프로세스·데이터·권한을 건드리지 않습니다. 실행은 `connectedUitestAndroidTest`, 컴파일 확인은 `compileUitestAndroidTestKotlin`이며 `*DebugAndroidTest` 작업은 없습니다.
+- 기기에 설치하는 Gradle 작업(`installStable`·`installDebug`·`connectedDebugAndroidTest` 등)은 연결된 기기 전부에 설치되므로 `ANDROID_SERIAL=<시리얼> ./gradlew …`로 대상 기기 하나만 지정해 실행합니다. 작업 도중 기기가 새로 연결될 수 있어 연결된 기기가 한 대뿐이어도 생략하지 않습니다(빠지면 `.claude/hooks/require-android-serial.mjs`가 명령을 거부).
+- 실사용 앱은 `stable` 빌드 타입(`com.black.app`, 설치는 `installStable`)이고, `debug`는 개발·계측 테스트 앱(`com.black.app.dev`, 이름 `(Dev)JustApp`)입니다. Studio 실행과 계측 테스트(`connectedDebugAndroidTest`)는 개발 앱에서 돌아 실사용 앱의 프로세스·데이터·권한을 건드리지 않습니다.
 - 작업을 마치면 변경한 파일을 `git add`로 스테이징합니다. (Write·Edit한 파일은 `.claude/hooks/auto-git-add.mjs`가 자동 스테이징하며 `docs/`는 제외)

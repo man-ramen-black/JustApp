@@ -16,7 +16,7 @@ argument-hint: [대상 화면 또는 Fragment]
 | `XxxUiState.kt` | 화면 상태 `data class`. 필드마다 KDoc 한 줄 |
 | `XxxViewModel.kt` | `EventViewModel` 상속, `uiState: StateFlow<XxxUiState>` 노출, KDoc에 `.claude/rules/viewmodel.md` 형식으로 `[XxxScreen]` 링크 |
 
-feature 모듈 기능의 화면은 그 모듈의 `ui` 패키지에 두고 문자열도 그 모듈 `strings.xml`에 둔다(`FloatingSettingScreen`). 계측 테스트는 `BaseUiTest`가 있는 app의 androidTest(호스트 `HiltTestActivity`는 `app/src/uitest`)에 같은 패키지로 두므로 `XxxTestTags`는 public으로 연다.
+feature 모듈 기능의 화면은 그 모듈의 `ui` 패키지에 두고 문자열도 그 모듈 `strings.xml`에 둔다(`FloatingSettingScreen`). 계측 테스트는 `BaseUiTest`가 있는 app의 androidTest(호스트 `HiltTestActivity`는 `app/src/debug`)에 같은 패키지로 두므로 `XxxTestTags`는 public으로 연다.
 
 ```kotlin
 /** TextEditor 화면 */
@@ -140,7 +140,7 @@ class TextEditorScreenTest : BaseUiTest() {
 ```
 ./gradlew :app:compileDebugKotlin
 ./gradlew :app:testDebugUnitTest --tests "<ViewModel 테스트 FQCN>"
-ANDROID_SERIAL=<시리얼> ./gradlew :app:connectedUitestAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
+ANDROID_SERIAL=<시리얼> ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<Screen 테스트 FQCN>
 ```
 
-계측 테스트는 기기가 연결돼 있을 때 실행해 통과를 확인하고, `app/build/outputs/androidTest-results/connected/uitest/`의 XML에서 실패와 건너뜀(`skipped`) 수를 본다. 기기가 없으면 `./gradlew :app:assembleUitestAndroidTest`로 컴파일까지 확인하고, 실행하지 못한 사실과 미검증 범위를 보고한다.
+계측 테스트는 기기가 연결돼 있을 때 실행해 통과를 확인하고, `app/build/outputs/androidTest-results/connected/debug/`의 XML에서 실패와 건너뜀(`skipped`) 수를 본다. 기기가 없으면 `./gradlew :app:assembleDebugAndroidTest`로 컴파일까지 확인하고, 실행하지 못한 사실과 미검증 범위를 보고한다.

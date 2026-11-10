@@ -1,7 +1,9 @@
 package com.black.app.ui.main.keepscreenon
 
+import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
@@ -136,6 +138,28 @@ class KeepScreenOnReceiverTest : BaseTest() {
         assertTrue(KeepScreenOnGlobal.isActive.value)
         assertEquals(1, resultCode)
         assertEquals("active=true", resultData)
+    }
+
+    /**
+     * 매니페스트 Receiver가 공개되면서도 shell만 가진 DUMP 권한으로 보호되는지 검증
+     *
+     * Robolectric은 권한 없는 송신자의 브로드캐스트도 전달하므로 전달 여부가 아닌 등록 정보로 판정
+     *
+     * Given: 병합된 매니페스트
+     * When: KeepScreenOnReceiver 등록 정보 조회
+     * Then: exported, 요구 권한 DUMP
+     */
+    @Test
+    fun test_05_receiverRequiresDumpPermission() = runTest {
+        /** Given **/
+        val componentName = ComponentName(context, KeepScreenOnReceiver::class.java)
+
+        /** When **/
+        val receiverInfo = context.packageManager.getReceiverInfo(componentName, 0)
+
+        /** Then **/
+        assertTrue(receiverInfo.exported)
+        assertEquals(Manifest.permission.DUMP, receiverInfo.permission)
     }
 
     /** WindowManager에 추가된 뷰 목록 조회 */

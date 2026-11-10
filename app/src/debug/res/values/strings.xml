@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 개발 앱(com.black.app.dev)이 실사용 앱과 같은 기기에 함께 설치될 때 시스템 화면에서 구분되는 라벨 -->
+<!-- 접근성 설정, 빠른 설정 타일 편집, 런처 바로가기에 보이는 라벨만 덮어쓰고 앱 화면 문구는 그대로 둠 -->
+<resources>
+    <string name="dev_app_label">(Dev)JustApp</string>
+    <string name="accessibility_service_label_usage_timer">(Dev)JustApp - UsageTimer</string>
+    <string name="accessibility_service_label_floating">(Dev)JustApp - FloatingButton</string>
+    <string name="keep_screen_on_tile_label">(Dev)화면 켜짐 유지</string>
+    <string name="shortcut_memo_label">(Dev)메모</string>
+    <string name="shortcut_floating_on_label">(Dev)JustApp - 플로팅 On</string>
+    <string name="shortcut_floating_off_label">(Dev)JustApp - 플로팅 Off</string>
+</resources>

@@ -29,10 +29,10 @@ import org.junit.runners.MethodSorters
  *
  * 사용자가 켜 둔 다른 접근성 서비스는 그대로 두고 이 서비스만 더해 켬.
  * 접근성 설정·오버레이 표시 권한·선택 앱은 테스트 후 테스트 전 값으로 되돌림
- * 같은 기기의 실사용 debug 앱과 서비스 라벨(JustApp - UsageTimer)이 같아, 그 앱의 서비스가 켜져 있으면 라벨로 찾는 바인딩 확인이 이 앱과 구분되지 않음
+ * 바인딩 확인은 개발 앱 서비스 라벨((Dev)JustApp - UsageTimer)로 해 같은 기기의 실사용 앱 서비스와 구분
  *
  * [수동 검증 방법] 정상 설치 앱에서 다음 절차로 오버레이 표시·유지 확인(`<패키지>`는 설치한 빌드의 applicationId)
- * 1. `ANDROID_SERIAL=<시리얼> ./gradlew :app:installDebug`
+ * 1. `ANDROID_SERIAL=<시리얼> ./gradlew :app:installDebug`(개발 앱) 또는 `:app:installStable`(실사용 앱)
  * 2. 선택 앱 저장: 앱의 UsageTimer 화면에서 앱 선택으로 대상 앱 선택
  * 3. `adb shell appops set <패키지> SYSTEM_ALERT_WINDOW allow`
  * 4. `adb shell settings get secure enabled_accessibility_services`로 켜 둔 서비스를 확인한 뒤 그 값 끝에
@@ -162,16 +162,18 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         assertTrue("접근성 서비스가 ${ENABLE_TIMEOUT}ms 안에 바인딩되지 않았습니다", bound)
     }
 
-    /** dumpsys accessibility의 "Bound services" 항목에 이 서비스 라벨이 있는지 여부 */
+    /**
+     * dumpsys accessibility의 "Bound services" 항목에 이 서비스 라벨이 있는지 여부
+     *
+     * 라벨은 이 앱의 리소스에서 읽어 개발 앱 라벨((Dev)…)로 실사용 앱의 같은 서비스와 구분
+     */
     private fun isServiceBound(): Boolean {
         val dump = device.executeShellCommand("dumpsys accessibility")
         val boundSection = dump.substringAfter("Bound services:", "").substringBefore("Enabled services:")
-        return boundSection.contains(SERVICE_LABEL)
+        return boundSection.contains(context.getString(R.string.accessibility_service_label_usage_timer))
     }
 
     companion object {
-        // AndroidManifest의 UsageTimerAccessibility android:label과 일치
-        private const val SERVICE_LABEL = "JustApp - UsageTimer"
         private const val ENABLE_TIMEOUT = 12000L
         private const val LAUNCH_TIMEOUT = 5000L
         private const val SHOW_TIMEOUT = 5000L

@@ -1,4 +1,3 @@
-import com.android.build.api.variant.HostTestBuilder
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -35,16 +34,19 @@ android {
                 "proguard-rules.pro"
             )
         }
-        // 계측 테스트 전용 빌드 타입(com.black.app.uitest), 실사용 debug 앱과 패키지가 달라 am instrument의 강제 종료·테스트 데이터가 그 앱에 닿지 않음
-        create("uitest") {
+        // 개발·계측 테스트 앱(com.black.app.dev), 실사용 앱과 패키지가 달라 Studio 실행·am instrument가 실사용 앱을 덮어쓰거나 종료하지 않음
+        debug {
+            applicationIdSuffix = ".dev"
+        }
+        // 실사용 앱(com.black.app), 기존 설치본과 같은 패키지·debug 서명이라 데이터·권한을 유지한 채 업데이트 설치
+        create("stable") {
             initWith(getByName("debug"))
-            applicationIdSuffix = ".uitest"
-            // core·feature 모듈에는 uitest 빌드 타입이 없어 debug 변형 사용(initWith가 debug의 빈 목록을 복사하므로 그 뒤에 추가)
+            // initWith가 복사한 debug의 .dev 접미사 제거
+            applicationIdSuffix = null
+            // core·feature 모듈에는 stable 빌드 타입이 없어 debug 변형 사용(initWith가 debug의 빈 목록을 복사하므로 그 뒤에 추가)
             matchingFallbacks += listOf("debug")
         }
     }
-
-    testBuildType = "uitest"
 
     buildFeatures {
         buildConfig = true
@@ -74,17 +76,9 @@ android {
     }
 }
 
-androidComponents {
-    // AGP 9는 JVM 유닛 테스트를 testBuildType(uitest) 변형에만 만들므로(android.onlyEnableUnitTestForTheTestedBuildType 기본 true)
-    // 유닛 테스트는 debug(testDebugUnitTest, testDebug 소스셋 포함)에서만 만들고 계측 테스트 호스트 전용인 uitest에서는 생략
-    beforeVariants { variantBuilder ->
-        variantBuilder.hostTests[HostTestBuilder.UNIT_TEST_TYPE]?.enable = variantBuilder.buildType == "debug"
-    }
-}
-
-// google-services.json의 클라이언트는 com.black.app뿐이라 uitest 변형은 처리 생략("No matching client" 빌드 실패 회피)
-// google_app_id 리소스가 없어 테스트 앱은 Firebase 초기화 없이 실행(Firebase API를 직접 부르는 코드가 생기면 이 앱에서 예외)
-tasks.named { it == "processUitestGoogleServices" }.configureEach { enabled = false }
+// google-services.json의 클라이언트는 com.black.app뿐이라 개발 앱(debug, .dev) 변형은 처리 생략("No matching client" 빌드 실패 회피)
+// google_app_id 리소스가 없어 개발 앱은 Firebase 초기화 없이 실행(Firebase API를 직접 부르는 코드가 생기면 이 앱에서 예외)
+tasks.named { it == "processDebugGoogleServices" }.configureEach { enabled = false }
 
 dependencies {
     implementation(project(":core"))
@@ -124,8 +118,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    // createComposeRule이 쓰는 ComponentActivity 등록(계측 테스트 빌드 타입 전용)
-    "uitestImplementation"(libs.androidx.compose.ui.test.manifest)
+    // createComposeRule이 쓰는 ComponentActivity 등록(계측 테스트가 도는 개발 앱 전용)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

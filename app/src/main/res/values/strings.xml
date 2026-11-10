@@ -52,6 +52,7 @@
     <string name="fragment_name_black">Blackout</string>
     <string name="main_footer_hint">%1$d TOOLS · DARK ALWAYS</string>
 
+    <string name="accessibility_service_label_usage_timer">JustApp - UsageTimer</string>
     <string name="accessibility_usage_timer_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우기 위해 접근성 서비스를 활성화합니다.</string>
 
     <string name="usage_timer_section_overlay">타이머 표시</string>
