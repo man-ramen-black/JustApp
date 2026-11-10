@@ -9,7 +9,7 @@
 ## 1. 대상 범위(기준점) 결정과 출력
 
 - `$ARGUMENTS`에 base ref가 오면 그것을 기준점으로 쓴다.
-- 없으면 `git merge-base HEAD release`를 기준점으로 쓴다(작업 브랜치는 release에서 분기한다). release를 찾지 못하면 기준점 또는 커밋 범위를 묻는다.
+- 없으면 `git merge-base HEAD release`를 기준점으로 쓴다(작업 브랜치는 release에서 분기한다). 브랜치명이 버전으로 시작하면(`<버전>/<타입>/<주제>`, 버전은 `1.2.0`처럼 숫자와 점) `release` 대신 `<버전>/release`를 쓴다. 그 브랜치를 찾지 못하면 기준점 또는 커밋 범위를 묻는다.
 - `git log --oneline <base>..HEAD`(스쿼시 대상 커밋), `git diff --name-only <base> HEAD`(대상 파일), 만들 리뷰 브랜치명(3단계), 리뷰 문서 경로(6단계)를 출력하고 바로 2단계로 진행한다.
 
 ## 2. 미커밋 변경 체크포인트 커밋
@@ -18,7 +18,9 @@
 
 ## 3. 리뷰 브랜치 분기(백업 보존)
 
-- 현재 브랜치명 `{타입}/{주제}`의 타입을 `review`로 바꾼 `review/{주제}` 브랜치를 현재 HEAD에서 만든다(예: `feature/usage-timer-compose` → `review/usage-timer-compose`). 형식이 다르면 `<현재 브랜치>-review`를 쓴다.
+- 리뷰 브랜치는 `review/{주제}`로 현재 HEAD에서 만든다. `{주제}`는 현재 브랜치명의 마지막 `/` 뒤 부분이다. 브랜치명이 버전으로 시작하면 버전을 유지해 `<버전>/review/{주제}`로 만든다.
+    - 금지: `fix/codebase-review-findings` → `fix/codebase-review-findings-review`, `1.2.0/feature/usage-timer-compose` → `review/usage-timer-compose`
+    - 허용: `fix/codebase-review-findings` → `review/codebase-review-findings`, `1.2.0/feature/usage-timer-compose` → `1.2.0/review/usage-timer-compose`
 - 같은 이름의 리뷰 브랜치가 이미 있으면 묻지 않고 기존 것을 `<리뷰 브랜치명>-old-<n>`(가장 작은 미사용 n)으로 이름을 바꿔 보존한 뒤 새로 만든다.
 
 ## 4. 작업 시작점으로 soft reset
@@ -44,6 +46,11 @@
 4. 새로 들어온 코드 형태: 저장소에 처음 들어온 패턴·API·빌드 설정 방식과 그 위치
 5. 새로 생기거나 없어진 기능: 사용자에게 보이는 동작·문구·알림 채널·설치되는 앱
 6. 검증 현황(참고): Claude가 한 검증과 이어서 할 검증. 체크박스를 달지 않는다
+
+3·4절은 항목마다 열어 볼 파일을 저장소 기준 전체 경로로 적는다. 이름 변경은 바뀐 식별자마다 정의 파일과 호출부 파일을 적고, `등`으로 묶지 않는다.
+
+- 금지: `| 이름 | BKAlertDialog, PokeTypeChart.weaknesses 등 | 하는 일에 맞춘 이름 |`
+- 허용: `` `core/src/main/java/com/black/core/dialog/DialogManager.kt`: `BKAlertDialog` → `BKAlertDialogBuilder`(호출부 `core/src/main/java/com/black/core/webkit/BKWebChromeClient.kt`) ``
 
 2절 선택지 규칙
 
