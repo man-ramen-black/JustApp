@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
@@ -22,23 +21,13 @@ import org.junit.runners.MethodSorters
  * 접근성 서비스를 UiAutomator로 직접 켜고 선택 앱 포그라운드 시 UsageTimer가
  * 노출된 뒤 사라지지 않고 유지되는지 검증하는 계측 테스트
  *
- * [한계로 @Ignore 처리]
- * 시스템은 계측(instrumentation) 중인 앱의 AccessibilityService를 바인딩하지 않으므로,
- * connectedAndroidTest로 자기 자신의 접근성 서비스를 활성화해도 onAccessibilityEvent가
- * 호출되지 않아 자동 검증 불가
+ * 계측 중에도 이 앱의 접근성 서비스가 바인딩되는 것은 `HiltTestRunner`가 UiAutomation의 접근성 서비스 억제를 끄기 때문
+ * 선택 앱은 기기의 홈 앱으로 함. 설정 앱은 HIDE_NON_SYSTEM_OVERLAY_WINDOWS로 다른 앱의 오버레이 창을 숨겨
+ * UiAutomator가 타이머를 찾지 못하고, 이 앱 자신을 띄우면 접근성 서비스가 활성 창(rootInActiveWindow)을 얻지 못해 판정 불가
  *
  * 사용자가 켜 둔 다른 접근성 서비스는 그대로 두고 이 서비스만 더해 켬.
  * 접근성 설정·오버레이 표시 권한·선택 앱은 테스트 후 테스트 전 값으로 되돌림
  * 바인딩 확인은 개발 앱 서비스 라벨((Dev)JustApp - UsageTimer)로 해 같은 기기의 실사용 앱 서비스와 구분
- *
- * [수동 검증 방법] 정상 설치 앱에서 다음 절차로 오버레이 표시·유지 확인(`<패키지>`는 설치한 빌드의 applicationId)
- * 1. `ANDROID_SERIAL=<시리얼> ./gradlew :app:installDebug`(개발 앱) 또는 `:app:installStable`(실사용 앱)
- * 2. 선택 앱 저장: 앱의 UsageTimer 화면에서 앱 선택으로 대상 앱 선택
- * 3. `adb shell appops set <패키지> SYSTEM_ALERT_WINDOW allow`
- * 4. `adb shell settings get secure enabled_accessibility_services`로 켜 둔 서비스를 확인한 뒤 그 값 끝에
- *    `:<패키지>/com.black.app.ui.main.usagetimer.UsageTimerAccessibility`를 붙여 put(켜 둔 서비스가 없으면 콜론 없이)
- *    `adb shell settings put secure accessibility_enabled 1`
- * 5. 선택 앱을 포그라운드로 실행 후 dumpsys window로 오버레이 유지 확인
  *
  * 표시 판정 로직은 [UsageTimerGlobalTest]가 단위 테스트로 검증
  *
@@ -46,7 +35,6 @@ import org.junit.runners.MethodSorters
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@Ignore("계측 중인 앱은 자기 자신의 AccessibilityService가 바인딩되지 않아 자동 검증 불가, KDoc의 수동 절차로 검증")
 class UsageTimerAccessibilityUiTest : BaseUiTest() {
 
     private val repository = UsageTimerRepository(context)
@@ -60,7 +48,10 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
     // 리소스 이름의 패키지 부분을 applicationId·namespace 중 하나로 가정하지 않고 실제 리소스 이름(패키지:id/timer)으로 조회
     private val timerSelector = By.res(context.resources.getResourceName(R.id.timer))
 
-    // 선택 앱으로 사용할 설정 화면 앱 패키지(기기별 차이 대비 동적 조회)
+    /** 선택 앱으로 저장할 홈 앱 패키지 */
+    private val homePackage: String by lazy { device.launcherPackageName }
+
+    // 홈으로 새 포그라운드 전환을 만들려고 거쳐 가는 설정 화면 앱 패키지(기기별 차이 대비 동적 조회)
     private val settingsPackage: String by lazy {
         context.packageManager.resolveActivity(Intent(Settings.ACTION_SETTINGS), 0)
             ?.activityInfo?.packageName ?: "com.android.settings"
@@ -69,10 +60,10 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
     override fun setup() {
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
         setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
-        // 사용자 선택 앱 보관 후 설정 화면 앱을 선택 앱으로 저장
+        // 사용자 선택 앱 보관 후 홈 앱을 선택 앱으로 저장
         runBlocking {
             originalSelectedApps = repository.getSelectedApps()
-            repository.saveSelectedApps(listOf(settingsPackage))
+            repository.saveSelectedApps(listOf(homePackage))
         }
         // 켜 둔 접근성 서비스에 이 서비스를 더해 활성화(teardown 뒤 BaseUiTest가 테스트 전 값으로 복원)
         putSetting("secure", Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, enabledServicesWithUsageTimer())
@@ -83,18 +74,17 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
 
     /** 오버레이 제거·사용자 선택 앱 복원, 접근성 설정·오버레이 표시 권한은 이 함수 뒤 BaseUiTest가 복원 */
     override fun teardown() {
-        // 앞에 남은 설정 화면 앱의 접근성 이벤트로 타이머가 다시 붙지 않도록 오버레이 제거 전에 홈으로 이동
-        device.pressHome()
+        // 홈 화면의 이후 접근성 이벤트로 타이머가 다시 붙지 않도록 선택 앱을 먼저 복원
+        originalSelectedApps?.let { runBlocking { repository.saveSelectedApps(it) } }
         // 오버레이 제거(같은 프로세스 싱글톤이므로 메인 스레드에서 직접 정리)
         instrumentation.runOnMainSync { UsageTimerGlobal.detachView() }
-        originalSelectedApps?.let { runBlocking { repository.saveSelectedApps(it) } }
     }
 
     /**
      * 접근성 서비스를 켠 뒤 선택 앱을 포그라운드로 띄우면 타이머가 노출되고 유지되는지 검증
      *
-     * Given: 접근성 서비스 활성화 + 설정 화면 앱을 선택 앱으로 저장(setUp)
-     * When: 설정 화면 앱을 포그라운드로 실행
+     * Given: 접근성 서비스 활성화 + 홈 앱을 선택 앱으로 저장(setUp)
+     * When: 설정 화면을 거쳐 홈으로 이동
      * Then: 타이머 오버레이가 노출되고, 일정 시간 동안 사라지지 않고 유지(즉시 사라짐 회귀 방지)
      */
     @Test
@@ -103,10 +93,11 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         // setUp에서 접근성 서비스 활성화 및 선택 앱 저장 완료
 
         /** When **/
-        // 바인딩 완료 후 새 포그라운드 전환 이벤트를 발생시키려고 홈 경유 후 설정 화면 실행
-        device.pressHome()
+        // 바인딩 완료 후 홈으로 새 포그라운드 전환 이벤트를 발생시키려고 설정 화면을 거쳐 홈으로 이동
         device.executeShellCommand("am start -a android.settings.SETTINGS")
         device.wait(Until.hasObject(By.pkg(settingsPackage)), LAUNCH_TIMEOUT)
+        device.pressHome()
+        device.wait(Until.hasObject(By.pkg(homePackage)), LAUNCH_TIMEOUT)
 
         /** Then **/
         // 선택 앱 포그라운드 진입 후 타이머 오버레이 노출 확인
