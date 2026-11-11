@@ -44,26 +44,30 @@ fun assertEffectiveGone(@IdRes viewId: Int): ViewInteraction =
     checkView(viewId, "effectiveVisibility가 GONE이 아닙니다", matches(withEffectiveVisibility(Visibility.GONE)))
 
 /**
- * [viewId] 뷰의 상단이 status bar 영역 아래에 위치하여 겹치지 않는지 검증한다.
+ * [viewId] 뷰의 상단이 표시 중인 status bar 영역과 겹치지 않는지 검증
  *
- * 콘텐츠가 status bar 뒤까지 그려지는 edge-to-edge 환경에서, fitsStatusBar 처리로
- * 뷰 상단이 status bar 높이만큼 내려갔는지(화면 절대 y 좌표 기준) 확인한다.
+ * 뷰 상단과 status bar 높이를 같은 창 기준으로 비교해, 창이 status bar 뒤까지 그려지는 경우(edge-to-edge)와
+ * 창 자체가 status bar를 피해 배치되는 경우(decorFitsSystemWindows)를 함께 처리.
+ * 뒤의 경우 창 기준 status bar 높이가 0이라, 이 값이 0보다 크다고 가정하면 창 애니메이션을 끈 실행
+ * (`am instrument --no-window-animation`, Gradle connected 테스트)에서 정상 배치도 실패
  */
 fun assertBelowStatusBar(@IdRes viewId: Int): ViewInteraction =
     checkView(viewId, "뷰 상단이 status bar 영역과 겹칩니다", ViewAssertion { view, notFound ->
         view ?: throw (notFound ?: AssertionError("뷰를 찾을 수 없습니다"))
 
-        val location = IntArray(2)
-        view.getLocationOnScreen(location)
-        val viewTop = location[1]
-        val statusBarHeight = ViewCompat.getRootWindowInsets(view)
-            ?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
-
-        if (statusBarHeight <= 0) {
-            throw AssertionError("status bar 높이를 가져올 수 없어 겹침 검증 불가(statusBarHeight=$statusBarHeight)")
+        val insets = ViewCompat.getRootWindowInsets(view)
+            ?: throw AssertionError("창의 WindowInsets를 가져올 수 없어 겹침 검증 불가")
+        // status bar가 숨겨져 있으면 겹칠 대상이 없어 검증이 무의미하므로 실패 처리
+        if (!insets.isVisible(WindowInsetsCompat.Type.statusBars())) {
+            throw AssertionError("status bar가 표시되지 않아 겹침 검증 불가")
         }
+        val location = IntArray(2)
+        view.getLocationInWindow(location)
+        val viewTop = location[1]
+        // 창 기준 status bar 영역 높이(창이 status bar를 피해 배치되면 0)
+        val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
         if (viewTop < statusBarHeight) {
-            throw AssertionError("뷰 상단(y=$viewTop)이 status bar 높이($statusBarHeight)보다 위에 있어 겹칩니다")
+            throw AssertionError("뷰 상단(창 기준 y=$viewTop)이 status bar 높이($statusBarHeight)보다 위에 있어 겹칩니다")
         }
     })
 
