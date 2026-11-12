@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -135,9 +136,28 @@ abstract class BaseUiTest {
         composeRule.onNodeWithTag(tag).assertDoesNotExist()
     }
 
-    /** testTag가 [tag]인 노드의 텍스트가 [text]와 일치하는지 검증 */
-    protected fun assertTagText(tag: String, text: String): SemanticsNodeInteraction =
-        composeRule.onNodeWithTag(tag).assertTextEquals(text)
+    /**
+     * testTag가 [tag]인 노드의 텍스트가 [text]와 일치하는지 검증
+     *
+     * [useUnmergedTree]가 true면 부모에 병합되지 않은 트리에서 노드를 찾음(입력 칸의 placeholder처럼 자손에 달린 태그)
+     */
+    protected fun assertTagText(
+        tag: String,
+        text: String,
+        useUnmergedTree: Boolean = false,
+    ): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag, useUnmergedTree).assertTextEquals(text)
+
+    /**
+     * testTag가 [tag]인 입력 칸의 텍스트를 [text]로 교체
+     *
+     * 칸의 기존 값 위에 덮어씀.
+     */
+    protected fun replaceTagText(tag: String, text: String): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithTag(tag)
+        node.performTextReplacement(text)
+        return node
+    }
 
     /**
      * testTag가 [tag]인 노드가 [matcher]를 만족하는지 검증
@@ -212,15 +232,18 @@ abstract class BaseUiTest {
      * testTag가 [tag]이고 [matcher]를 만족하는 노드가 생길 때까지 최대 [timeoutMillis] 대기
      *
      * [matcher]는 확인할 때마다 다시 만들어, 서비스 실행 상태처럼 대기 중에 바뀌는 기대값도 반영.
-     * DataStore 읽기처럼 Compose 유휴 대기가 기다리지 않는 비동기 상태 반영에 사용
+     * DataStore 읽기처럼 Compose 유휴 대기가 기다리지 않는 비동기 상태 반영에 사용.
+     * [useUnmergedTree]가 true면 부모에 병합되지 않은 트리에서 노드를 찾음
      */
     protected fun waitUntilTagMatches(
         tag: String,
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+        useUnmergedTree: Boolean = false,
         matcher: () -> SemanticsMatcher,
     ) {
         composeRule.waitUntil(timeoutMillis) {
-            composeRule.onAllNodes(hasTestTag(tag) and matcher()).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(hasTestTag(tag) and matcher(), useUnmergedTree)
+                .fetchSemanticsNodes().isNotEmpty()
         }
     }
 

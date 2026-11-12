@@ -32,13 +32,13 @@ class MainScreenTest : BaseUiTest() {
      * 헤더(날짜·타이틀)와 푸터가 정상 노출되는지 검증
      *
      * Given:
-     * - 7개 항목으로 MainScreen 호스팅
+     * - 8개 항목으로 MainScreen 호스팅
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
      * - 날짜 텍스트 영역 표시
      * - 타이틀 "JustApp" 표시
-     * - 푸터 "7 TOOLS · DARK ALWAYS" 표시(화면 높이에 따라 스크롤 후)
+     * - 푸터 "8 TOOLS · DARK ALWAYS" 표시(화면 높이에 따라 스크롤 후)
      */
     @Test
     fun test_01_headerAndFooterDisplayed() {
@@ -51,18 +51,18 @@ class MainScreenTest : BaseUiTest() {
         /** Then **/
         composeRule.onNodeWithTag("main_date").assertIsDisplayed()
         composeRule.onNodeWithText("JustApp").assertIsDisplayed()
-        assertTextDisplayed("7 TOOLS · DARK ALWAYS", scrollTo = true)
+        assertTextDisplayed("8 TOOLS · DARK ALWAYS", scrollTo = true)
     }
 
     /**
-     * 노출 항목 7개가 모두 표시되는지 검증
+     * 노출 항목 8개가 모두 표시되는지 검증
      *
      * Given:
-     * - 실제 노출 구성과 동일한 이름의 7개 항목으로 MainScreen 호스팅
+     * - 실제 노출 구성과 동일한 이름의 8개 항목으로 MainScreen 호스팅
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 7개 항목 이름 모두 표시(화면 높이에 따라 스크롤 후)
+     * - 8개 항목 이름 모두 표시(화면 높이에 따라 스크롤 후)
      */
     @Test
     fun test_02_allItemsDisplayed() {
@@ -75,6 +75,7 @@ class MainScreenTest : BaseUiTest() {
         /** Then **/
         assertTextDisplayed("앱 사용 타이머", scrollTo = true)
         assertTextDisplayed("메모장", scrollTo = true)
+        assertTextDisplayed("계산기", scrollTo = true)
         assertTextDisplayed("PokéRogue", scrollTo = true)
         assertTextDisplayed("플로팅 버튼", scrollTo = true)
         assertTextDisplayed("앱 설치 알림", scrollTo = true)
@@ -153,11 +154,12 @@ class MainScreenTest : BaseUiTest() {
         assertEquals(listOf("Blackout"), clickedNames)
     }
 
-    /** 실제 노출 구성과 동일한 7개 항목 리스트 생성. [onClick]으로 클릭된 항목 이름 수집 */
+    /** 실제 노출 구성과 동일한 8개 항목 리스트 생성. [onClick]으로 클릭된 항목 이름 수집 */
     private fun defaultItemList(onClick: (String) -> Unit = {}): List<MainItem> {
         return listOf(
             "앱 사용 타이머" to R.drawable.ic_timer,
             "메모장" to R.drawable.ic_editor,
+            "계산기" to R.drawable.ic_calculator,
             "PokéRogue" to PokeRogueR.drawable.ic_poke_rogue,
             "플로팅 버튼" to R.drawable.ic_floating,
             "앱 설치 알림" to R.drawable.ic_app_install,
