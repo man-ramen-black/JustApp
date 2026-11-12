@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
@@ -39,6 +40,7 @@ import org.junit.runner.RunWith
  * - [composeRule]: Compose UI 검증 규칙. 호스팅 없는 빈 규칙이라 Compose 미사용 테스트에도 무해하다.
  * - [assertTagDisplayed]·[clickTag]·[waitUntilTagExists]·[waitUntilTagMatches] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
  * - [launchHost]/[launchActivity]: 실행한 [ActivityScenario]를 보관해 [teardown]에서 자동으로 close 한다.
+ * - [putSetting]/[setAppOpMode]: 기기 설정·앱 작업 변경. 테스트 전 값을 보관해 [teardown] 뒤 자동 복원
  * - [setup]/[teardown]: 하위 클래스가 override 하여 확장하는 훅. super 호출이 필요 없도록 프레임워크 훅과 분리했다.
  */
 @RunWith(AndroidJUnit4::class)
@@ -61,6 +63,12 @@ abstract class BaseUiTest {
 
     private var scenario: ActivityScenario<out Activity>? = null
 
+    /** [putSetting]으로 바꾼 기기 설정의 테스트 전 값. 키는 namespace와 설정 키, 값이 없던 설정은 null */
+    private val originalSettings = LinkedHashMap<Pair<String, String>, String?>()
+
+    /** [setAppOpMode]로 바꾼 이 앱의 앱 작업별 테스트 전 모드 */
+    private val originalAppOpModes = LinkedHashMap<String, String>()
+
     @Before
     fun baseSetup() {
         hiltRule.inject()
@@ -69,9 +77,14 @@ abstract class BaseUiTest {
 
     @After
     fun baseTeardown() {
-        teardown()
-        scenario?.close()
-        scenario = null
+        try {
+            teardown()
+        } finally {
+            // 하위 클래스 정리가 실패해도 사용자 기기 설정은 테스트 전 값으로 복원
+            restoreDeviceState()
+            scenario?.close()
+            scenario = null
+        }
     }
 
     /** [HiltTestActivity]를 실행하고 scenario를 보관한다. teardown에서 자동으로 close 된다. */
@@ -125,6 +138,14 @@ abstract class BaseUiTest {
     /** testTag가 [tag]인 노드의 텍스트가 [text]와 일치하는지 검증 */
     protected fun assertTagText(tag: String, text: String): SemanticsNodeInteraction =
         composeRule.onNodeWithTag(tag).assertTextEquals(text)
+
+    /**
+     * testTag가 [tag]인 노드가 [matcher]를 만족하는지 검증
+     *
+     * 스위치 켜짐(`isOn`)·클릭 가능 여부(`hasClickAction`)처럼 텍스트 밖의 의미 검증에 사용
+     */
+    protected fun assertTagMatches(tag: String, matcher: SemanticsMatcher): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag).assert(matcher)
 
     /**
      * testTag가 [tag]인 노드의 텍스트에 [texts]가 모두 있는지 검증
@@ -210,6 +231,73 @@ abstract class BaseUiTest {
         }
     }
 
+    /** 기기 설정 [namespace](system·secure·global)의 [key] 값, 값이 없으면 null */
+    protected fun getSetting(namespace: String, key: String): String? {
+        val value = device.executeShellCommand("settings get $namespace $key").trim()
+        // 값이 없는 설정은 "null"로 출력
+        return value.takeUnless { it.isEmpty() || it == "null" }
+    }
+
+    /**
+     * 기기 설정 [namespace]의 [key]를 [value]로 변경
+     *
+     * 처음 바꿀 때 테스트 전 값을 보관해 [teardown] 뒤 자동으로 되돌림(값이 없던 설정은 삭제).
+     * shell 명령은 셸을 거치지 않고 공백으로만 나뉘므로 [value]에 공백·따옴표를 쓰지 않음
+     */
+    protected fun putSetting(namespace: String, key: String, value: String) {
+        val settingKey = namespace to key
+        if (settingKey !in originalSettings) {
+            originalSettings[settingKey] = getSetting(namespace, key)
+        }
+        device.executeShellCommand("settings put $namespace $key $value")
+    }
+
+    /**
+     * 이 앱의 앱 작업 [operation](SYSTEM_ALERT_WINDOW 등)을 [mode](allow 등)로 변경
+     *
+     * shell 권한으로 권한 화면 없이 직접 변경. 처음 바꿀 때 테스트 전 모드를 보관해 [teardown] 뒤 자동으로 되돌림
+     */
+    protected fun setAppOpMode(operation: String, mode: String) {
+        if (operation !in originalAppOpModes) {
+            originalAppOpModes[operation] = getAppOpMode(operation)
+        }
+        device.executeShellCommand("appops set ${context.packageName} $operation $mode")
+    }
+
+    /**
+     * 이 앱의 앱 작업 [operation] 패키지 모드
+     *
+     * appops get 출력의 `OPERATION: mode; time=...` 줄에서 모드만 추출, 따로 정한 모드가 없으면(No operations.) default.
+     * `Uid mode: OPERATION: mode` 줄은 appops set이 바꾸지 않는 uid 모드라 제외
+     */
+    private fun getAppOpMode(operation: String): String {
+        return device.executeShellCommand("appops get ${context.packageName} $operation")
+            .lineSequence()
+            .map { it.trim() }
+            .firstOrNull { it.startsWith("$operation:") }
+            ?.substringAfter(':')
+            ?.substringBefore(';')
+            ?.trim()
+            ?: APP_OP_MODE_DEFAULT
+    }
+
+    /** [putSetting]·[setAppOpMode]로 바꾼 기기 설정·앱 작업을 테스트 전 값으로 복원(설정은 바꾼 순서의 역순) */
+    private fun restoreDeviceState() {
+        originalSettings.entries.reversed().forEach { (settingKey, value) ->
+            val (namespace, key) = settingKey
+            if (value == null) {
+                device.executeShellCommand("settings delete $namespace $key")
+            } else {
+                device.executeShellCommand("settings put $namespace $key $value")
+            }
+        }
+        originalSettings.clear()
+        originalAppOpModes.forEach { (operation, mode) ->
+            device.executeShellCommand("appops set ${context.packageName} $operation $mode")
+        }
+        originalAppOpModes.clear()
+    }
+
     /** 하위 클래스 확장용 셋업 훅. hiltRule.inject() 이후 호출된다. */
     protected open fun setup() {}
 
@@ -219,5 +307,8 @@ abstract class BaseUiTest {
     companion object {
         /** [waitUntilTagExists]·[waitUntilTagMatches]·[waitUntilTextExists] 기본 대기 시간 */
         const val DEFAULT_TIMEOUT_MILLIS = 10_000L
+
+        /** 앱 작업에 따로 정한 모드가 없을 때의 모드 이름(appops set으로 되돌릴 때도 사용) */
+        private const val APP_OP_MODE_DEFAULT = "default"
     }
 }

@@ -3,7 +3,6 @@ package com.black.core.view
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.findViewTreeLifecycleOwner
@@ -23,10 +22,16 @@ abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> =
 
     constructor(areItemTheSame:(old:DATA, new:DATA) -> Boolean) : this(SimpleItemCallback(areItemTheSame))
 
+    /** prefetch 뒤 목록이 바뀌어도 옛 위치를 읽지 않도록 받은 위치로 즉시 바인딩 */
     override fun onBindViewHolder(holder: BaseViewHolder<ViewDataBinding, DATA>, position: Int) {
-        holder.itemView.doOnAttach {
+        holder.bind(getItem(position))
+    }
+
+    /** LiveData 바인딩용 lifecycleOwner는 뷰 트리에 붙은 뒤에만 찾을 수 있어 부착 시점에 한 번 지정 */
+    override fun onViewAttachedToWindow(holder: BaseViewHolder<ViewDataBinding, DATA>) {
+        super.onViewAttachedToWindow(holder)
+        if (holder.binding.lifecycleOwner == null) {
             holder.binding.lifecycleOwner = holder.itemView.findViewTreeLifecycleOwner()
-            holder.bind(getItem(position))
         }
     }
 

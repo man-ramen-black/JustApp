@@ -14,7 +14,7 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import com.black.core.R
-import com.black.core.dialog.BKAlertDialog
+import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.dialog.DialogManager.Companion.showByDialogManager
 import com.black.core.util.Extensions.activity
 import com.black.core.util.Log
@@ -67,7 +67,7 @@ class BKWebChromeClient : WebChromeClient() {
             return true
         }
 
-        BKAlertDialog(activity)
+        BKAlertDialogBuilder(activity)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { dialog, _ -> dialog.dismiss() }
             .showByDialogManager(activity, onDismiss = { result?.confirm() })
@@ -77,8 +77,9 @@ class BKWebChromeClient : WebChromeClient() {
     override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
         val activity = view?.context?.activity()
             ?: run {
+                // 사용자에게 묻지 못했으므로 승인이 아닌 취소로 응답
                 Log.w("activity is null")
-                result?.confirm()
+                result?.cancel()
                 return true
             }
 
@@ -88,7 +89,7 @@ class BKWebChromeClient : WebChromeClient() {
             return true
         }
 
-        BKAlertDialog(activity)
+        BKAlertDialogBuilder(activity)
             .setMessage(message)
             .setPositiveButton(R.string.ok) { dialog, _ ->
                 result?.confirm()
@@ -108,8 +109,17 @@ class BKWebChromeClient : WebChromeClient() {
     /** 파일 업로드 구현 */
     override fun onShowFileChooser(webView: WebView, filePathCallback: ValueCallback<Array<Uri>>, fileChooserParams: FileChooserParams): Boolean {
         Log.v("onShowFileChooser")
+        val fileChooser = webViewFileChooser
+            ?: run {
+                // 콜백을 쥔 채 응답하지 않으면 이후 파일 선택이 열리지 않으므로 기본 처리(취소)에 위임
+                Log.w("webViewFileChooser not set")
+                return false
+            }
+
+        // 응답하지 않은 이전 요청이 남아 있으면 취소해야 새 요청이 동작
+        onShowFileChooserCallback?.onReceiveValue(null)
         onShowFileChooserCallback = filePathCallback
-        showFileChooser(fileChooserParams)
+        fileChooser.showFileChooser(fileChooserParams, this::onOpenDocuments)
         return true
     }
 
@@ -186,6 +196,8 @@ class BKWebChromeClient : WebChromeClient() {
                 // 외부 브라우저에서 링크 실행
                 run { startDeepLink(context, url ?: return@run) }
                 view?.stopLoading()
+                // 링크 전달용 임시 웹뷰라 역할이 끝나면 파기(콜백 안에서 바로 파기하지 않도록 다음 루프로 미룸)
+                view?.post { view.destroy() }
             }
         }
 
@@ -218,18 +230,10 @@ class BKWebChromeClient : WebChromeClient() {
         }
     }
 
-    /** 파일 선택 액티비티 실행 */
-    private fun showFileChooser(fileChooserParams: FileChooserParams?) {
-        webViewFileChooser?.showFileChooser(fileChooserParams, this::onOpenDocuments)
-            ?: run {
-                Log.e("webViewFileChooser not set")
-            }
-    }
-
-    /** 파일 열고 난 후 처리 */
+    /** 파일 열고 난 후 처리(선택하지 않고 닫으면 취소를 뜻하는 null 전달) */
     private fun onOpenDocuments(uriList: List<Uri>) {
         onShowFileChooserCallback?.let {
-            it.onReceiveValue(uriList.toTypedArray())
+            it.onReceiveValue(uriList.takeIf { list -> list.isNotEmpty() }?.toTypedArray())
             onShowFileChooserCallback = null
         }
     }

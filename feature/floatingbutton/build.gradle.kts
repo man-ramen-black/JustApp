@@ -12,7 +12,7 @@ plugins {
 
 android {
     namespace = "com.black.feature.floatingbutton"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

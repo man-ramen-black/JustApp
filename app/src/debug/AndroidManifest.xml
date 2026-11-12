@@ -1,25 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 테스트에서 Hilt Fragment를 호스팅하기 위한 전용 Activity 등록 (debug 전용) -->
-    <!-- 화면 방향을 바꾸는 Fragment를 띄워도 재생성으로 호스팅 콘텐츠가 사라지지 않도록 회전 구성 변경 직접 처리 -->
-    <application>
+    <!-- 같은 기기의 실사용 앱과 런처·앱 정보에서 구분되는 개발 앱 이름(화면 문구 app_name은 유지) -->
+    <application
+        android:label="@string/dev_app_label"
+        tools:replace="android:label">
+
+        <!-- 테스트에서 Hilt Fragment를 호스팅하기 위한 전용 Activity 등록 (계측 테스트가 도는 개발 앱 전용) -->
+        <!-- 화면 방향을 바꾸는 Fragment를 띄워도 재생성으로 호스팅 콘텐츠가 사라지지 않도록 회전 구성 변경 직접 처리 -->
         <activity
             android:name="com.black.app.testutil.HiltTestActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:theme="@style/Theme.Black" />
-
-        <!-- adb로 화면 켜짐 유지를 켜고 끄는 Receiver (debug 전용) -->
-        <!-- shell은 다른 앱의 비공개 Receiver를 호출할 수 없어 공개하되, shell만 가진 DUMP 권한으로 다른 앱의 호출 차단 -->
-        <receiver
-            android:name="com.black.app.ui.maintab.main.keepscreenon.KeepScreenOnReceiver"
-            android:exported="true"
-            android:permission="android.permission.DUMP">
-            <intent-filter>
-                <action android:name="com.black.app.action.ACTIVATE_KEEP_SCREEN_ON" />
-                <action android:name="com.black.app.action.DEACTIVATE_KEEP_SCREEN_ON" />
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>

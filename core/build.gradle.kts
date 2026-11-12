@@ -55,30 +55,20 @@ dependencies {
 
     api(libs.androidx.core.ktx)
     api(libs.androidx.appcompat)
+    // BaseFragment 하위 화면이 쓰는 by viewModels()(이전에는 navigation-fragment-ktx를 거쳐 들어옴)
+    api(libs.androidx.fragment.ktx)
     api(libs.material)
 
     api(libs.androidx.lifecycle.livedata.ktx)
     api(libs.androidx.lifecycle.viewmodel.ktx)
 
-    api(libs.androidx.paging)
     api(libs.androidx.datastore)
 
-    api(libs.retrofit)
-    api(libs.converter.gson)
-    api(libs.logging.interceptor)
-
-    api(libs.androidx.room.runtime)
     api(libs.flexbox)
-    ksp(libs.androidx.room.compiler)
-    api(libs.glide)
-    api(libs.androidx.preference.ktx)
-    api(libs.androidx.navigation.fragment.ktx)
-    api(libs.androidx.navigation.ui.ktx)
-    api(libs.androidx.core.splashscreen)
-    api(libs.androidx.swiperefreshlayout)
 
     api(libs.kotlinx.serialization.json)
-    api(libs.retrofit2.kotlinx.serialization.converter)
+    // JsonUtil이 공개 API로 노출(이전에는 retrofit converter-gson을 거쳐 들어오던 버전 유지)
+    api(libs.gson)
 
     api(libs.hilt)
     ksp(libs.hilt.compiler)

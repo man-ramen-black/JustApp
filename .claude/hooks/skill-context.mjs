@@ -20,7 +20,7 @@ const contextBySkill = {
     "- 대상 플랜 문서(docs/superpowers/plans/)가 이미 있으면 통째로 다시 쓰지 말고 읽어서 검토·보강",
     "- 스펙 문서의 시작 HEAD를 플랜 문서에 옮겨 적음",
     '- 플랜 문서를 쓴 뒤 "계획 검토"·"실행 방식 선택"을 묻지 말고 같은 턴에 subagent-driven-development로 구현 시작(사용자 검토는 스펙 문서에서만 받음)',
-    '- 각 태스크에 "적용 스킬"과 그 SKILL.md 경로를 명시. 스킬명은 외워 쓰지 말고 사용 가능한 스킬 목록에서 description으로 확인 (예: JVM 유닛 테스트 unittest, Fragment 계측 테스트 ui-test, Compose 화면 compose, 커밋 commit)',
+    '- 각 태스크에 "적용 스킬"과 그 SKILL.md 경로를 명시. 스킬명은 외워 쓰지 말고 사용 가능한 스킬 목록에서 description으로 확인 (예: JVM 유닛 테스트 unit-test, Fragment 계측 테스트 ui-test, Compose 화면 compose, 커밋 commit)',
     "- 플랜 문서는 git add·커밋 금지",
   ],
   "superpowers:subagent-driven-development": [

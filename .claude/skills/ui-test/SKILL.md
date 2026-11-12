@@ -5,7 +5,7 @@ description: 이 저장소 컨벤션(BaseUiTest 상속, @HiltAndroidTest, Espres
 
 # UI 테스트 코드 생성 스킬
 
-`app/src/androidTest`에서 Fragment를 계측 환경에 띄워 검증하는 Espresso UI 테스트를 저장소 컨벤션에 맞게 생성한다. 기준 예시: `app/src/androidTest/java/com/black/app/ui/maintab/main/usagetimer/UsageTimerFragmentTest.kt`.
+`app/src/androidTest`에서 Fragment를 계측 환경에 띄워 검증하는 Espresso UI 테스트를 저장소 컨벤션에 맞게 생성한다. 기준 예시: `app/src/androidTest/java/com/black/app/ui/main/etc/BlackFragmentTest.kt`(패턴 B).
 
 ## 작업 순서
 
@@ -33,6 +33,8 @@ class XxxFragmentTest : BaseUiTest() { ... }
 
 `BaseUiTest`가 Hilt 룰·`onHostActivity`(HiltTestActivity 호스팅)·scenario 자동 close를 제공하므로 `@RunWith`/`@get:Rule`을 직접 쓰지 않는다. 공통 필드 `instrumentation`·`device`·`context`(applicationContext)도 제공하므로 하위 클래스에서 다시 선언하지 않고 그대로 쓴다. 셋업·정리는 `@Before`/`@After` 대신 `setup()`/`teardown()` 훅을 override 한다(`baseSetup`/`baseTeardown`이 호출). `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으니 클래스마다 직접 단다 — `NAME_ASCENDING`이 있어야 `test_01`, `test_02` 순번이 실행 순서가 된다. `@AndroidEntryPoint`가 아닌 Fragment도 동일 구조를 쓴다.
 
+기기 설정(`settings`)이나 이 앱의 앱 작업(appops)을 바꾸는 테스트는 `BaseUiTest`의 `putSetting`·`setAppOpMode`를 쓴다. 처음 바꿀 때 테스트 전 값을 보관해 `teardown` 뒤(하위 `teardown`이 실패해도) 되돌리므로 백업·복원 코드를 따로 두지 않는다. 테스트 기기가 사용자 실사용 기기라 바꾼 값이 남으면 안 되기 때문이다. shell로 줄 수 있는 권한(다른 앱 위에 표시 등)이 필요하면 `assumeTrue`로 건너뛰지 않고 `setAppOpMode`로 허용한다. (금지: `device.executeShellCommand("settings put system screen_off_timeout 10000")`, 허용: `putSetting("system", "screen_off_timeout", "10000")`)
+
 ## Espresso 헬퍼
 
 검증·인터랙션은 `com.black.app.testutil` 헬퍼를 import해서 쓰고, raw `onView`를 테스트에 직접 쓰지 않는다(실패 시 뷰 이름+사유를 메시지에 담는 책임이 헬퍼에 모여 있다).
@@ -54,35 +56,36 @@ class XxxFragmentTest : BaseUiTest() { ... }
 
 ## 테스트 함수 스타일
 
-`feedback-test-function-style` 메모리와 동일하다.
-
-- 함수명 `test_{2자리순번}_{테스트명}` (예: `test_01_alarmFragmentDisplaysCoreViews`)
+- 함수명 `test_{2자리순번}_{테스트명}` (예: `test_01_contentNotOverlappingStatusBarAfterExit`)
 - KDoc: 한 줄 요약 + `Given:`/`When:`/`Then:`
 - 본문: 단계를 `/** Given **/`, `/** When **/`, `/** Then **/`로 구획. 조작 없는 단계는 "별도 조작 없음"으로 명시.
 - 주석·KDoc은 CLAUDE.md 규칙대로 명사형 종결(`~한다` 금지).
 
 ```kotlin
 /**
- * AlarmFragment가 계측 환경에서 핵심 View를 정상 노출하는지 검증
+ * BlackFragment 이탈 후 콘텐츠가 status bar와 겹치지 않는지 검증
  *
  * Given:
- * - AlarmFragment 호스팅
+ * - BlackFragment 호스팅(onResume에서 immersive 모드 진입, status bar 숨김)
  * When:
- * - 초기 렌더링 상태 유지(별도 조작 없음)
+ * - BlackFragment 제거(onPause에서 immersive 모드 해제, status bar 복원)
  * Then:
- * - 타이틀·핵심 조작 View 노출
+ * - 콘텐츠 컨테이너 상단이 status bar 아래로 복원(겹침 없음)
  */
 @Test
-fun test_01_alarmFragmentDisplaysCoreViews() {
+fun test_01_contentNotOverlappingStatusBarAfterExit() {
     /** Given **/
-    hostAlarmFragment()
+    val scenario = hostBlackFragment()
+    waitUntilStatusBarVisibility(scenario, visible = false, failureMessage = "immersive 진입 후 status bar가 숨겨지지 않았습니다")
 
     /** When **/
-    // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+    removeBlackFragment(scenario)
+    waitUntilStatusBarVisibility(scenario, visible = true, failureMessage = "BlackFragment 이탈 후 status bar가 다시 표시되지 않았습니다")
 
     /** Then **/
-    assertDisplayed(R.id.title)
-    assertText(R.id.title, "Alarm")
+    // Window 재배치(insets 적용)가 비동기이므로 복원 완료까지 대기 후 겹침 검증
+    waitUntilContainerTop(scenario, "BlackFragment 이탈 후 컨테이너 상단이 status bar 아래로 복원되지 않았습니다") { top -> top > 0 }
+    assertBelowStatusBar(containerId)
 }
 ```
 

@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,24 +24,15 @@ class PermissionHelper(private val activity: Activity, private val activityResul
 
     companion object {
         fun canDrawOverlays(context: Context) : Boolean {
-            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                true
-            } else {
-                Settings.canDrawOverlays(context)
-            }
+            return Settings.canDrawOverlays(context)
         }
 
-        fun getDrawOverlaysSettingIntent(context: Context) : Intent? {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                Log.w("Build.VERSION.SDK_INT < Build.VERSION_CODES.M")
-                return null
-            }
+        fun getDrawOverlaysSettingIntent(context: Context) : Intent {
             return Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri())
         }
 
         fun showDrawOverlaysSetting(context: Context) {
             val intent = getDrawOverlaysSettingIntent(context)
-                ?: return
 
             if (context !is Activity) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -55,28 +45,10 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             }
         }
 
-        fun requestDrawOverlaysPermission(activity: ComponentActivity, onResult: (Boolean) -> Unit) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                onResult(true)
-                return
-            }
-            val activityLauncher = activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                onResult(canDrawOverlays(activity))
-            }
-            val intent = getDrawOverlaysSettingIntent(activity)
-                ?: return
-            activityLauncher.launch(intent)
-        }
-
         // https://blog.kmshack.kr/ignore_battery_optimizations/
         // ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS를 사용하면
         // dialog에서 바로 배터리 최적화 해제가 가능하지만, 구글 스토어에서 반려
         fun showIgnoreBatteryOptimizationSettings(context: Context, withToast: Boolean = false) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                Log.i("API Level < 23")
-                return
-            }
-
             if (withToast) {
                 Toast.makeText(context, "배터리 최적화를 해제해주세요.", Toast.LENGTH_LONG)
                     .show()
@@ -99,10 +71,6 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         }
 
         fun isIgnoringBatteryOptimizations(context: Context) : Boolean {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                return true
-            }
-
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             return powerManager.isIgnoringBatteryOptimizations(context.packageName)
         }

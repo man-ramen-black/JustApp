@@ -28,7 +28,7 @@
             android:theme="@style/Theme.Transparent"
             android:label="@string/shortcut_floating_on_label"
             android:launchMode="singleTask"
-            android:taskAffinity="com.black.app.shortcut"
+            android:taskAffinity="${applicationId}.shortcut"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:exported="true">
@@ -42,7 +42,7 @@
             android:theme="@style/Theme.Transparent"
             android:label="@string/shortcut_floating_off_label"
             android:launchMode="singleTask"
-            android:taskAffinity="com.black.app.shortcut"
+            android:taskAffinity="${applicationId}.shortcut"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:exported="true">

@@ -8,18 +8,21 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
+import com.black.core.component.BaseDialogFragment
+import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<DialogSelectAppBinding>(),
-    com.black.core.viewmodel.EventObserver {
+class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>() {
     companion object {
         const val TAG = "SelectAppDialog"
         private const val REQUEST_KEY_SELECT_APP = "selectApp"
@@ -54,12 +57,20 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
     override fun onBindVariable(binding: DialogSelectAppBinding) {
         binding.viewModel = viewModel
         binding.adapter = adapter
-        viewModel.observeEvent(viewLifecycleOwner, this)
         viewModel.itemList.observe(viewLifecycleOwner) { adapter.submitList(it) }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { handleEvent(it) }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // 회전으로 뷰만 다시 만들어지면 ViewModel의 목록과 바꾼 체크를 그대로 사용
+        if (viewModel.isInitialized) {
+            return
+        }
         val checkedPackageNames =
             arguments?.getStringArrayList(ARGUMENT_KEY_CHECKED_PACKAGE_NAMES) ?: emptyList<String>()
         lifecycleScope.launch(Dispatchers.IO) {
@@ -67,17 +78,16 @@ class SelectAppDialogFragment : com.black.core.component.BaseDialogFragment<Dial
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun onReceivedEvent(action: String, data: Any?) {
-        when (action) {
-            SelectAppViewModel.EVENT_APP_SELECTED -> {
+    private fun handleEvent(event: ViewModelEvent) {
+        when (event) {
+            is SelectAppViewModel.EventAppSelected -> {
                 parentFragmentManager.setFragmentResult(
                     REQUEST_KEY_SELECT_APP,
-                    bundleOf(RESULT_KEY_PACKAGE_NAME_LIST to ArrayList(data as List<String>)),
+                    bundleOf(RESULT_KEY_PACKAGE_NAME_LIST to ArrayList(event.packageNames)),
                 )
             }
 
-            SelectAppViewModel.EVENT_CLOSE -> {
+            is SelectAppViewModel.EventClose -> {
                 dismiss()
             }
         }

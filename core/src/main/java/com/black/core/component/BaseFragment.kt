@@ -1,22 +1,23 @@
 package com.black.core.component
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.CallSuper
 import androidx.core.view.doOnAttach
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.black.core.util.Log
 
 abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
-    private var _binding: T? = null
+    private var bindingOrNull: T? = null
     // onCreateView ~ onDestroyView까지 유효
-    protected val binding get() = _binding!!
+    protected val binding get() = bindingOrNull!!
 
     /**
      * 저장된 상태로 재생성 중이거나 상태 저장 이후인지 여부
@@ -27,15 +28,20 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     protected var isRestoring = false
     val onBackPressedDispatcher get() = requireActivity().onBackPressedDispatcher
     private var onBackPressed: (() -> Unit)? = null
-    private val onBackPressedCallback = OnBackPressedCallback(false) { onBackPressed?.invoke() }
+    private val onBackPressedCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            onBackPressed?.invoke()
+        }
+    }
 
     protected abstract val layoutResId : Int
 
-    abstract fun onBindVariable(binding: T)
-
-    open fun onBindVariable(binding: T, savedInstanceState: Bundle?) {
-        onBindVariable(binding)
+    init {
+        // 생명주기 로그는 단계마다 재정의하지 않고 관찰자 하나로 출력(자식 클래스 이름 출력을 위해 javaClass.simpleName)
+        lifecycle.addObserver(LifecycleEventObserver { _, event -> Log.d("${javaClass.simpleName} : $event") })
     }
+
+    abstract fun onBindVariable(binding: T)
 
     fun setOnBackPressed(onBackPressed: (() -> Unit)?) {
         onBackPressedCallback.isEnabled = onBackPressed != null
@@ -43,17 +49,8 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     }
 
     @CallSuper
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(javaClass.simpleName)
-
         isRestoring = savedInstanceState != null
     }
 
@@ -68,14 +65,40 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        _binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        bindingOrNull = inflateBinding(inflater, container)
+
+        onBindVariable(binding)
+        return binding.root
+    }
+
+    /** 현재 설정에 맞는 [layoutResId] 리소스로 바인딩 생성 */
+    private fun inflateBinding(inflater: LayoutInflater, parent: ViewGroup?): T {
+        return DataBindingUtil.inflate<T>(inflater, layoutResId, parent, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = this@BaseFragment.viewLifecycleOwner
         }
+    }
 
+    /**
+     * 현재 설정의 [layoutResId] 리소스로 바인딩을 다시 만들어 [parent] 안의 이전 바인딩 루트와 교체
+     *
+     * Activity가 configChanges로 설정 변경을 직접 처리하면 방향별 레이아웃(layout-land 등)이 자동으로 다시 적용되지 않아 [onConfigurationChanged]에서 호출.
+     * Fragment 뷰는 교체할 수 없으므로 [parent]는 바인딩 루트를 감싸 Fragment 뷰로 돌려준 컨테이너.
+     * 새 바인딩에도 [onBindVariable]을 다시 호출하므로 거기서는 바인딩 변수만 연결하고, 관찰·수집 등록은 뷰마다 한 번 호출되는 [onViewCreated]에서 수행
+     */
+    protected fun replaceBinding(parent: ViewGroup) {
+        val previous = binding
+        bindingOrNull = inflateBinding(layoutInflater, parent)
         onBindVariable(binding)
-        return binding.root
+        // 붙이기 전에 바인딩을 실행해 바인딩 전 기본값으로 그려지는 프레임 방지
+        binding.executePendingBindings()
+
+        // 이전 바인딩의 관찰과 수명주기 연결 해제
+        previous.unbind()
+        previous.lifecycleOwner = null
+        parent.removeView(previous.root)
+        parent.addView(binding.root)
     }
 
     /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
@@ -108,26 +131,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     @CallSuper
     override fun onStart() {
         super.onStart()
-        Log.d(javaClass.simpleName)
         isRestoring = false
-    }
-
-    @CallSuper
-    override fun onResume() {
-        super.onResume()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onPause() {
-        super.onPause()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStop() {
-        super.onStop()
-        Log.d(javaClass.simpleName)
     }
 
     /*
@@ -142,29 +146,12 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
         Log.d(javaClass.simpleName)
         // 상위 화면 수명주기로 등록한 뒤로가기 콜백은 뷰와 함께 해제(상위 화면이 Fragment보다 오래 유지될 수 있음)
         onBackPressedCallback.remove()
-        _binding = null
-    }
-
-    @CallSuper
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onDetach() {
-        super.onDetach()
-        Log.d(javaClass.simpleName)
+        bindingOrNull = null
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        Log.v(javaClass.simpleName)
         isRestoring = true
     }
 
-    override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        super.onViewStateRestored(savedInstanceState)
-        Log.v(javaClass.simpleName)
-    }
 }

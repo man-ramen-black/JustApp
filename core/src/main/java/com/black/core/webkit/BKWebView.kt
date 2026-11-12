@@ -1,20 +1,3 @@
-/*
- * Copyright (c) 2020-present Netmarble Corp.
- *
- * This file contains Original Code and/or Modifications of Original Code as defined
- * in and that are subject to the Netmarble SDK Source License(the 'License').
- * You may not use this file except in compliance with the License.
- * Please obtain a copy of the License at https://developer.nmn.io/docs/policy/sdk-terms
- * and read it before using this file.
- *
- * The Original Code and all software distributed under the License are distributed
- * on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
- * AND NETMARBLE HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION,
- * ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
- * QUIET ENJOYMENT OR NON-INFRINGEMENT. Please see the License for the specific language
- * governing rights and limitations under the License.
- */
-
 package com.black.core.webkit
 
 import android.annotation.SuppressLint
@@ -28,8 +11,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.core.view.doOnAttach
-import androidx.core.view.doOnDetach
 import com.black.core.BuildConfig
 import com.black.core.util.Log
 
@@ -80,8 +61,8 @@ open class BKWebView : WebView {
             // 기기 설정의 폰트사이즈(small, normal, large) 무시
             textZoom = 100
 
-            // https 웹페이지에서 http 이미지 로드 허용
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            // https 웹페이지에서 http 리소스 로드 차단(http 스크립트 주입 경로 차단)
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
 
             // 위치 정보 기능 활성화
             setGeolocationEnabled(true)
@@ -161,16 +142,6 @@ open class BKWebView : WebView {
         addJavascriptInterface(obj, "native")
     }
 
-    override fun onResume() {
-        super.onResume()
-        resumeTimers()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        pauseTimers()
-    }
-
     /** 메모리 최적화 */
     fun clear() {
         clearCache(false)
@@ -202,20 +173,10 @@ open class BKWebView : WebView {
             ?: run { Log.v("${BKWebViewClient::class.java.simpleName} is null") }
     }
 
-    fun addWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.addCallback(callback)
-            ?: run { Log.w("${BKWebChromeClient::class.java.simpleName} is null") }
-    }
-
-    fun removeWebChromeClientCallback(callback: BKWebChromeClient.Callback) {
-        bkWebChromeClient?.removeCallback(callback)
-            ?: run { Log.v("${BKWebChromeClient::class.java.simpleName} is null") }
-    }
-
-    /** NMWebChromeClient 파일 업로드가 동작을 위한 FileChooser 설정 */
+    /** [BKWebChromeClient]의 파일 업로드가 동작하기 위한 FileChooser 설정 */
     fun setFileChooser(fileChooser: WebViewFileChooser?) {
         bkWebChromeClient?.setFileChooser(fileChooser)
-            ?: run { Log.w("nmWebChromeClient is null") }
+            ?: run { Log.w("bkWebChromeClient is null") }
     }
 
     /** 중복 스크롤 예외 처리 구현(ex. 스크롤 뷰 내에 웹뷰) */

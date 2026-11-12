@@ -9,6 +9,7 @@ import com.black.feature.pokerogue.model.PokeTypeChart
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
 import javax.inject.Inject
 
 class PokeRepository @Inject constructor(
@@ -23,7 +24,9 @@ class PokeRepository @Inject constructor(
         }
 
         val inputStream = context.assets.open("poke_type_chart.json")
-        return@withContext JsonUtil.from<List<PokeTypeChart>>(FileUtil.readText(inputStream), true)!!
+        // 번들 자산이 깨졌으면 원인(SerializationException)을 그대로 남기도록 null을 돌려주는 from 대신 직접 파싱
+        return@withContext JsonUtil.kotlinSerialization
+            .decodeFromString<List<PokeTypeChart>>(FileUtil.readText(inputStream))
             .also { pokeTypeChart = it }
     }
 
@@ -33,7 +36,7 @@ class PokeRepository @Inject constructor(
             .flatMap { chart ->
                 listOf(
                     chart.immunes.map { it to Damage.X0 },
-                    chart.weaknesses.map { it to Damage.X05 },
+                    chart.resistedBy.map { it to Damage.X05 },
                     chart.strengths.map { it to Damage.X2 }
                 )
             }
@@ -42,7 +45,7 @@ class PokeRepository @Inject constructor(
                 { PokeType.valueOf(it.first) },
                 { it.second }
             )
-            .mapValues { it.value.reduce { a, b -> Damage.valueOf(a.multiplier * b.multiplier) } }
+            .mapValues { it.value.reduce { a, b -> Damage.fromMultiplier(a.multiplier * b.multiplier) } }
             .filterValues { it != Damage.X1 }
     }
 
@@ -53,7 +56,7 @@ class PokeRepository @Inject constructor(
                 listOf(
                     chart.immunes.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X0 },
-                    chart.weaknesses.filter { typeNames.contains(it) }
+                    chart.resistedBy.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X05 },
                     chart.strengths.filter { typeNames.contains(it) }
                         .map { chart.name to Damage.X2 }
@@ -64,7 +67,7 @@ class PokeRepository @Inject constructor(
                 { PokeType.valueOf(it.first) },
                 { it.second }
             )
-            .mapValues { it.value.reduce { a, b -> Damage.valueOf(a.multiplier * b.multiplier) } }
+            .mapValues { it.value.reduce { a, b -> Damage.fromMultiplier(a.multiplier * b.multiplier) } }
             .filterValues { it != Damage.X1 }
     }
 }

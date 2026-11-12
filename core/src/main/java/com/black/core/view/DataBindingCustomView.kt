@@ -11,12 +11,16 @@ import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.setViewTreeLifecycleOwner
-
 // https://gun0912.tistory.com/38
 // #CustomView 가이드
 // https://0391kjy.tistory.com/28
 // CustomView ViewBinding
+/**
+ * 데이터 바인딩과 자체 수명주기를 가진 커스텀 뷰
+ *
+ * 창에 붙으면 RESUMED, 떼면 DESTROYED가 되고 DESTROYED에서 다시 시작할 수 없으므로 한 인스턴스는 한 번만 붙임.
+ * 다시 표시할 때는 새 인스턴스를 만듦
+ */
 abstract class DataBindingCustomView<T : ViewDataBinding> : FrameLayout, LifecycleOwner {
 
     private lateinit var lifecycleRegistry: LifecycleRegistry

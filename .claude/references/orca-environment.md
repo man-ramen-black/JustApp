@@ -7,7 +7,7 @@ Orca(https://github.com/stablyai/orca, 문서 https://www.onorca.dev/docs)는 �
 
 ## 워크트리
 
-- 기본 체크아웃(`/Users/netmarble/AndroidStudioProjects/JustApp`, Orca 사이드바의 JustApp 기본 항목)은 `release`에 두고 브랜치를 바꾸지 않는다. Orca 저장소 기준 브랜치(worktreeBaseRef)도 `release`이며, 세션은 여기서 시작한다.
+- 기본 체크아웃(`~/AndroidStudioProjects/JustApp`, Orca 사이드바의 JustApp 기본 항목)은 `release`에 두고 브랜치를 바꾸지 않는다. Orca 저장소 기준 브랜치(worktreeBaseRef)도 `release`이며, 세션은 여기서 시작한다.
 - 새 브랜치는 `git worktree add -b <브랜치> .claude/worktrees/<주제> release` 후 `EnterWorktree(path)`로 세션을 옮긴다. `EnterWorktree(name)`은 origin 기본 브랜치(`master`)에서 분기하므로 쓰지 않는다. 기존 브랜치는 `git -C <기본 체크아웃> worktree add .claude/worktrees/<주제> <브랜치>` 후 같은 방식으로 옮긴다.
 - `orca worktree create`로 최상위 워크트리를 만들지 않는다. 브랜치명의 `/`가 `-`로 바뀌고 사이드바 항목이 계속 늘어난다. `.claude/worktrees` 아래는 외부 워크트리 숨김(`externalWorktreeVisibility: hide`)이라 사이드바에 늘어나지 않는다.
 - "새 세션에서 워크트리 만들어서 진행"은 위처럼 워크트리를 만들고 커밋하지 않는 `docs/superpowers/`·`local.properties`를 복사한 뒤, `orca agent launch --agent claude --worktree id:<JustApp repoId>::<기본 체크아웃>`으로 기본 체크아웃에 세션을 띄우고 프롬프트 첫 단계에 `EnterWorktree(path)`를 넣는다. 숨김 외부 워크트리라 Orca에서 그 경로를 직접 대상으로 잡지 않는다.

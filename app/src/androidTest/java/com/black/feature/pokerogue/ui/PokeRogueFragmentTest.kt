@@ -28,7 +28,7 @@ import org.junit.runners.MethodSorters
  *
  * 실제 앱과 같이 AndroidFragment로 호스팅하고, 컴포지션에서 빼는 방식으로 뒤로가기 이탈을 재현.
  * AndroidFragment는 폐기 시 saveFragmentInstanceState를 호출한 뒤 Fragment를 제거하므로 상태 저장과 제거가 연달아 발생.
- * HiltTestActivity는 회전 시 재생성되지 않도록 debug 매니페스트에서 configChanges를 처리
+ * HiltTestActivity는 회전 시 재생성되지 않도록 개발 앱(debug) 매니페스트에서 configChanges를 처리
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -111,7 +111,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
     /**
      * Activity가 다시 만들어진 뒤에도 뒤로가기를 PokeRogueFragment가 먼저 처리하는지 검증
      *
-     * PokeRogue 진입 시 가로 회전으로 Activity가 다시 만들어지는 상황 재현.
+     * MainActivity는 회전을 configChanges로 직접 처리하므로 언어·글꼴 크기 변경처럼 처리하지 않는 설정 변경으로 Activity가 다시 만들어지는 상황 재현.
      * 복원된 Fragment는 콜백을 NavHost 컴포지션보다 먼저 등록해 NavHost 뒤로가기 콜백이 우선함.
      *
      * Given:
@@ -182,7 +182,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
         scenario.onActivity { activity ->
             val fragment = activity.supportFragmentManager.fragments.filterIsInstance<PokeRogueFragment>().single()
             viewModel = ViewModelProvider(fragment)[PokeRogueViewModel::class.java]
-            viewModel.onClickMatchUp()
+            viewModel.toggleMatchUp()
         }
         composeRule.waitForIdle()
         assertTrue("매치업 창이 열리지 않았습니다", viewModel.isMatchUpOpen.value)

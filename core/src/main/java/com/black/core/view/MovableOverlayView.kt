@@ -21,20 +21,11 @@ import kotlin.math.sqrt
  * https://developer.android.com/guide/topics/ui/drag-drop?hl=ko
  */
 abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
-    companion object {
-        const val ACTION_MOVE_STARTED = 0
-        const val ACTION_MOVING = 1
-        const val ACTION_MOVE_ENDED = 2
-    }
-
-    private var onMoveListener : ((view: View, action: Int, x: Float, y: Float) -> Unit)? = null
-
     var isMovable = false
         set(value) {
             field = value
             if (isDown) {
                 isMoving = true
-                onMoveListener?.invoke(this, ACTION_MOVE_STARTED, 0f, 0f)
             }
         }
 
@@ -119,13 +110,11 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
                             cancelEvent.recycle()
 
                             isMoving = true
-                            onMoveListener?.invoke(this, ACTION_MOVE_STARTED, x, y)
                         }
                     }
 
                     if (isMoving) {
                         OverlayViewUtil.moveView(this, x, y)
-                        onMoveListener?.invoke(this, ACTION_MOVING, x, y)
                     }
                 }
             }
@@ -135,13 +124,9 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
                 if (isMoving) {
                     isMoving = false
                     val viewPosition = OverlayViewUtil.getAbsoluteWindowPosition(this)
-                    onMoveListener?.invoke(this, ACTION_MOVE_ENDED, viewPosition.x.toFloat(), viewPosition.y.toFloat())
                 }
             }
         }
     }
 
-    fun setOnMoveListener(onMoveListener: ((view: View, action: Int, x: Float, y: Float) -> Unit)?) {
-        this.onMoveListener = onMoveListener
-    }
 }

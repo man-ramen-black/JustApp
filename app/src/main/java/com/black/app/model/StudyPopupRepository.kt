@@ -5,11 +5,11 @@ import android.net.Uri
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.model.database.studypopup.StudyPopupDatabase
 import com.black.app.model.datastore.StudyPopupDataStore
-import com.black.app.model.preferences.StudyPopupPreferences
-import com.black.app.ui.maintab.main.studypopup.StudyPopupGlobal
-import com.black.core.file.SAFHelper.Companion.getFileName
-import com.black.core.file.SAFHelper.Companion.openInputStream
-import com.black.core.file.SAFHelper.Companion.openOutputStream
+import com.black.app.ui.main.studypopup.StudyPopupGlobal
+import com.black.core.file.SAFHelper
+import com.black.core.file.SAFHelper.getFileName
+import com.black.core.file.SAFHelper.openInputStream
+import com.black.core.file.SAFHelper.openOutputStream
 import com.black.core.util.FileUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,6 @@ import javax.inject.Inject
  **/
 class StudyPopupRepository @Inject constructor(@ApplicationContext context: Context) {
     private val appContext = context.applicationContext
-    private val preferences = StudyPopupPreferences(context)
     private val database = StudyPopupDatabase.getInstance(context)
     private val dataStore = StudyPopupDataStore(context)
 
@@ -50,12 +49,17 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
     }
 
     /**
-     * 팝업에 보여 줄 내용 개수
+     * 팝업에 보여 줄 내용 목록
      *
-     * 공백뿐인 항목은 빈 페이지가 되므로 내용으로 치지 않음
+     * 공백뿐인 항목은 빈 페이지가 되므로 제외. 표시 여부 판정([hasContents])과 같은 기준
      */
+    suspend fun loadPopupContents() : List<StudyPopupData.Contents> {
+        return load().filter { it.contents.isNotBlank() }
+    }
+
+    /** 팝업에 보여 줄 내용 개수 */
     suspend fun countContents() : Int {
-        return load().count { it.contents.isNotBlank() }
+        return loadPopupContents().size
     }
 
     /** 팝업에 보여 줄 내용 존재 여부 */
@@ -70,22 +74,22 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
         return dataStore.getEnabled()
     }
 
-    suspend fun setEnabled(enabled: Boolean) {
-        dataStore.updateEnabled(enabled)
+    suspend fun setEnabled(enabled: Boolean): Result<Unit> {
+        return dataStore.updateEnabled(enabled)
     }
 
-    fun loadLatestUri() : Uri? {
-        return preferences.loadLatestUri()
+    suspend fun loadLatestUri() : Uri? {
+        return dataStore.getLatestUri()
     }
 
-    fun removeLatestUri() {
-        preferences.removeLatestUri()
+    suspend fun removeLatestUri() {
+        dataStore.removeLatestUri()
     }
 
     /**
      * [uri] 내용 파일의 내용 목록 읽기
      *
-     * 다음에 화면을 열 때 자동으로 다시 읽도록 영구 접근 권한을 받고 마지막으로 연 파일로 기록.
+     * 다음에 화면을 열 때 자동으로 다시 읽도록 마지막으로 연 파일로 기록(영구 권한은 선택 직후 [keepPermission]).
      * 재설치 등으로 영구 권한이 사라진 uri는 SecurityException으로 실패
      */
     suspend fun readFile(uri: Uri) : Result<List<String>> = withContext(Dispatchers.IO) {
@@ -93,7 +97,7 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
             val stream = uri.openInputStream(appContext)
                 ?: throw FileNotFoundException("openInputStream failed, uri : $uri")
             val contents = StudyPopupXml.parse(FileUtil.readText(stream))
-            preferences.saveLatestUri(uri)
+            dataStore.updateLatestUri(uri)
             Result.success(contents)
         } catch (e: Exception) {
             Result.failure(e)
@@ -111,12 +115,17 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
             val stream = uri.openOutputStream(appContext, "wt")
                 ?: throw FileNotFoundException("openOutputStream failed, uri : $uri")
             FileUtil.writeText(stream) { it.write(StudyPopupXml.serialize(contents)) }
-            preferences.saveLatestUri(uri)
+            dataStore.updateLatestUri(uri)
             save(contents.map { StudyPopupData.Contents(it) })
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /** 선택창에서 고른 내용 파일에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
+    suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {
+        SAFHelper.keepUriPermission(appContext, uri)
     }
 
     /** 표시용 파일 이름, 조회할 수 없으면 빈 문자열 */

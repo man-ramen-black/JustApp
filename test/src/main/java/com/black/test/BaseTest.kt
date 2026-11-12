@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TestWatcher
@@ -80,10 +81,9 @@ open class BaseTest {
         testDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
     }
 
+    /** Kotlin assert는 -ea 없이는 검사하지 않으므로 JUnit 단언 사용 */
     protected fun assert(name: String, value: Any?, expected: Any?) {
-        assert(value == expected) {
-            "Unexpected $name: $value, Expected: $expected"
-        }
+        Assert.assertEquals("Unexpected $name", expected, value)
         println("Expected $name : $value")
     }
 }

@@ -1,6 +1,8 @@
 package com.black.core.viewmodel
 
 import com.black.test.BaseTest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -8,9 +10,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 
 /** [EventViewModel]의 타입 이벤트 전송·구독 동작 검증 */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class EventViewModelTest : BaseTest() {
 
     /** 테스트용 이벤트 */
@@ -129,6 +134,61 @@ class EventViewModelTest : BaseTest() {
     }
 
     /**
+     * 처리 중인 핸들러가 멈춘 사이 보낸 이벤트가 수집 취소 뒤에도 다음 구독자에게 전달되는지 검증
+     *
+     * Given: EventFirst를 받아 처리하며 멈춘 구독자
+     * When: 그 사이 EventSecond 전송 후 구독 취소(백그라운드 전환), 다시 구독
+     * Then: 새 구독자가 EventSecond 수신
+     */
+    @Test
+    fun test_05_eventSentWhileHandlerSuspendedSurvivesCancellation() = runTest {
+        /** Given **/
+        val viewModel = TestEventViewModel()
+        val handling = CompletableDeferred<Unit>()
+        val firstJob = launch {
+            viewModel.events.collect {
+                handling.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        viewModel.sendEvent(TestEvent.EventFirst)
+        handling.await()
+
+        /** When **/
+        viewModel.sendEvent(TestEvent.EventSecond)
+        waitCoroutine()
+        firstJob.cancelAndJoin()
+        val received = mutableListOf<ViewModelEvent>()
+        viewModel.events.take(1).toList(received)
+
+        /** Then **/
+        assertEquals(listOf(TestEvent.EventSecond), received)
+    }
+
+    /**
+     * 이미 받은 이벤트는 다시 구독해도 다시 전달되지 않는지 검증
+     *
+     * Given: EventFirst를 받은 구독자가 끝남
+     * When: EventSecond 전송 후 다시 구독
+     * Then: 새 구독자는 EventSecond만 수신
+     */
+    @Test
+    fun test_06_receivedEventIsNotRedelivered() = runTest {
+        /** Given **/
+        val viewModel = TestEventViewModel()
+        viewModel.sendEvent(TestEvent.EventFirst)
+        viewModel.events.take(1).toList(mutableListOf())
+
+        /** When **/
+        viewModel.sendEvent(TestEvent.EventSecond)
+        val received = mutableListOf<ViewModelEvent>()
+        viewModel.events.take(1).toList(received)
+
+        /** Then **/
+        assertEquals(listOf(TestEvent.EventSecond), received)
+    }
+
+    /**
      * 전체 구독 해지 후 보낸 이벤트가 재누적되어 재구독 시 수신되는지 검증
      *
      * Given: 구독 후 전체 해지
@@ -136,7 +196,7 @@ class EventViewModelTest : BaseTest() {
      * Then: 재구독자가 EventFirst 수신
      */
     @Test
-    fun test_05_eventsAfterAllUnsubscribedBufferedAgain() = runTest {
+    fun test_07_eventsAfterAllUnsubscribedBufferedAgain() = runTest {
         /** Given **/
         val viewModel = TestEventViewModel()
         val firstJob = launch { viewModel.events.collect {} }
@@ -151,5 +211,44 @@ class EventViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(TestEvent.EventFirst), received)
+    }
+
+    /**
+     * 다른 구독자가 남아 있으면 취소된 구독자가 받지 못한 이벤트를 누적분으로 되돌리지 않는지 검증
+     *
+     * Given: EventFirst를 받아 처리하며 멈춘 구독자와 계속 수신하는 구독자
+     * When: EventSecond 전송 후 멈춘 구독자 취소, 남은 구독자도 해지한 뒤 재구독하고 EventValue(1) 전송
+     * Then: 재구독자는 EventSecond 없이 EventValue(1)만 수신
+     */
+    @Test
+    fun test_08_undeliveredEventNotRestoredWhileOtherSubscriberRemains() = runTest {
+        /** Given **/
+        val viewModel = TestEventViewModel()
+        val handling = CompletableDeferred<Unit>()
+        val suspendedJob = launch {
+            viewModel.events.collect {
+                handling.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        val activeJob = launch { viewModel.events.collect {} }
+        waitCoroutine()
+        viewModel.sendEvent(TestEvent.EventFirst)
+        handling.await()
+
+        /** When **/
+        viewModel.sendEvent(TestEvent.EventSecond)
+        waitCoroutine()
+        suspendedJob.cancelAndJoin()
+        activeJob.cancelAndJoin()
+        val received = mutableListOf<ViewModelEvent>()
+        val collectJob = launch { viewModel.events.take(1).toList(received) }
+        waitCoroutine()
+        viewModel.sendEvent(TestEvent.EventValue(1))
+        waitCoroutine()
+
+        /** Then **/
+        assertTrue(collectJob.isCompleted)
+        assertEquals(listOf(TestEvent.EventValue(1)), received)
     }
 }

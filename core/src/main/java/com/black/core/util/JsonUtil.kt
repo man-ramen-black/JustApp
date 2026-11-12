@@ -10,8 +10,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import org.json.JSONException
-import org.json.JSONObject
 import java.lang.reflect.Type
 
 /**
@@ -162,14 +160,6 @@ object JsonUtil {
             e.printStackTrace()
             e
         }.let { Result.failure(JsonUtilParseException(it)) }
-    }
-
-    fun Map<*, *>.toJSONObject(): JSONObject
-            = try {
-        JSONObject(JsonUtil.to(this)?:"{}")
-    } catch (e: JSONException) {
-        e.printStackTrace()
-        JSONObject()
     }
 }
 

@@ -146,4 +146,31 @@ class StudyPopupRepositoryTest : BaseTest() {
         assertTrue(result.isFailure)
         assertNull(repository.loadLatestUri())
     }
+
+    /**
+     * 팝업 내용 목록이 표시 여부 판정과 같은 기준으로 공백 항목을 빼는지 검증
+     *
+     * Given: 공백 문자열, 일반 내용 두 개, 줄바꿈 문자열 저장
+     * When: loadPopupContents 호출
+     * Then: 일반 내용 두 개만 저장 순서대로 반환, countContents도 2
+     */
+    @Test
+    fun test_07_loadPopupContentsExcludesBlank() = runTest {
+        /** Given **/
+        repository.save(
+            listOf(
+                StudyPopupData.Contents(" "),
+                StudyPopupData.Contents("first"),
+                StudyPopupData.Contents("second"),
+                StudyPopupData.Contents("\n"),
+            )
+        )
+
+        /** When **/
+        val contents = repository.loadPopupContents()
+
+        /** Then **/
+        assertEquals(listOf("first", "second"), contents.map { it.contents })
+        assertEquals(2, repository.countContents())
+    }
 }

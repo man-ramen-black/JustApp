@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:padding="7dp"
         android:background="@{item.isChecked ? 0x33FFFFFF : 0x00000000}"
-        android:onClick="@{_->viewModel.onItemClick(item)}"
+        android:onClick="@{_->viewModel.toggleChecked(item)}"
         >
         <ImageView
             android:id="@+id/icon"

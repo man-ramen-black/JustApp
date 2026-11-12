@@ -27,40 +27,40 @@ class FloatingDataStore @Inject constructor(
         return context.floatingDataStore
     }
 
-    suspend fun putMargin(margin: Float) {
-        update(KEY_FLOATING_MARGIN, margin)
+    suspend fun putMargin(margin: Float): Result<Unit> {
+        return update(KEY_FLOATING_MARGIN, margin)
     }
 
     fun getMarginFlow(): Flow<Float?> {
         return flow(KEY_FLOATING_MARGIN)
     }
 
-    suspend fun putOpacity(alpha: Float) {
-        update(KEY_FLOATING_OPACITY, alpha)
+    suspend fun putOpacity(alpha: Float): Result<Unit> {
+        return update(KEY_FLOATING_OPACITY, alpha)
     }
 
     fun getOpacityFlow(): Flow<Float?> {
         return flow(KEY_FLOATING_OPACITY)
     }
 
-    suspend fun putPadding(padding: Float) {
-        update(KEY_FLOATING_PADDING, padding)
+    suspend fun putPadding(padding: Float): Result<Unit> {
+        return update(KEY_FLOATING_PADDING, padding)
     }
 
     fun getPaddingFlow(): Flow<Float?> {
         return flow(KEY_FLOATING_PADDING)
     }
 
-    suspend fun putSize(size: Float) {
-        update(KEY_FLOATING_SIZE, size)
+    suspend fun putSize(size: Float): Result<Unit> {
+        return update(KEY_FLOATING_SIZE, size)
     }
 
     fun getSizeFlow(): Flow<Float?> {
         return flow(KEY_FLOATING_SIZE)
     }
 
-    suspend fun putRadius(radius: Float) {
-        update(KEY_FLOATING_RADIUS, radius)
+    suspend fun putRadius(radius: Float): Result<Unit> {
+        return update(KEY_FLOATING_RADIUS, radius)
     }
 
     fun getRadiusFlow(): Flow<Float?> {

@@ -1,7 +1,6 @@
 package com.black.core.component
 
 import android.app.Dialog
-import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,19 +11,25 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.LifecycleEventObserver
 import com.black.core.util.Log
 
 /**
  * Created by jinhyuk.lee on 2022/05/20
  **/
 abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
-    private var _binding: T? = null
+    private var bindingOrNull: T? = null
     // onCreateView ~ onDestroyView까지 유효
-    protected val binding get() = _binding!!
+    protected val binding get() = bindingOrNull!!
 
     private var onDismissListener: ((DialogInterface) -> Unit)? = null
 
     protected abstract val layoutResId : Int
+
+    init {
+        // 생명주기 로그는 단계마다 재정의하지 않고 관찰자 하나로 출력(자식 클래스 이름 출력을 위해 javaClass.simpleName)
+        lifecycle.addObserver(LifecycleEventObserver { _, event -> Log.d("${javaClass.simpleName} : $event") })
+    }
 
     abstract fun onBindVariable(binding: T)
 
@@ -44,19 +49,6 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         dialog?.cancel()
     }
 
-    @CallSuper
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        // 자식 클래스 이름 출력을 위해 javaClass.simpleName 출력
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(javaClass.simpleName)
-    }
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         super.onCreateDialog(savedInstanceState)
         return object: Dialog(requireActivity(), theme) {
@@ -74,44 +66,13 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         Log.d(javaClass.simpleName)
-        _binding = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
+        bindingOrNull = DataBindingUtil.inflate<T>(inflater, layoutResId, container, false).apply {
             // lifecycleOwner를 적용하지 않으면 liveData 변경 시 뷰에 반영되지 않음
             // https://stackoverflow.com/questions/59545195/mutablelivedata-not-updating-in-ui
             lifecycleOwner = viewLifecycleOwner
         }
-        onBindVariable(_binding!!)
-        return _binding!!.root
-    }
-
-    /** View 셋팅은 onViewCreated에서 하는 것을 권장 */
-    @CallSuper
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStart() {
-        super.onStart()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onResume() {
-        super.onResume()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onPause() {
-        super.onPause()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onStop() {
-        super.onStop()
-        Log.d(javaClass.simpleName)
+        onBindVariable(bindingOrNull!!)
+        return bindingOrNull!!.root
     }
 
     /**
@@ -123,19 +84,7 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(javaClass.simpleName)
-        _binding = null
-    }
-
-    @CallSuper
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(javaClass.simpleName)
-    }
-
-    @CallSuper
-    override fun onDetach() {
-        super.onDetach()
-        Log.d(javaClass.simpleName)
+        bindingOrNull = null
     }
 
     @CallSuper

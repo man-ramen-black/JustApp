@@ -9,7 +9,7 @@
 ## 1. 대상 범위(기준점) 결정과 출력
 
 - `$ARGUMENTS`에 base ref가 오면 그것을 기준점으로 쓴다.
-- 없으면 `git merge-base HEAD release`를 기준점으로 쓴다(작업 브랜치는 release에서 분기한다). release를 찾지 못하면 기준점 또는 커밋 범위를 묻는다.
+- 없으면 `git merge-base HEAD release`를 기준점으로 쓴다(작업 브랜치는 release에서 분기한다). 브랜치명이 버전으로 시작하면(`<버전>/<타입>/<주제>`, 버전은 `1.2.0`처럼 숫자와 점) `release` 대신 `<버전>/release`를 쓴다. 그 브랜치를 찾지 못하면 기준점 또는 커밋 범위를 묻는다.
 - `git log --oneline <base>..HEAD`(스쿼시 대상 커밋), `git diff --name-only <base> HEAD`(대상 파일), 만들 리뷰 브랜치명(3단계), 리뷰 문서 경로(6단계)를 출력하고 바로 2단계로 진행한다.
 
 ## 2. 미커밋 변경 체크포인트 커밋
@@ -18,7 +18,9 @@
 
 ## 3. 리뷰 브랜치 분기(백업 보존)
 
-- 현재 브랜치명 `{타입}/{주제}`의 타입을 `review`로 바꾼 `review/{주제}` 브랜치를 현재 HEAD에서 만든다(예: `feature/usage-timer-compose` → `review/usage-timer-compose`). 형식이 다르면 `<현재 브랜치>-review`를 쓴다.
+- 리뷰 브랜치는 `review/{주제}`로 현재 HEAD에서 만든다. `{주제}`는 현재 브랜치명의 마지막 `/` 뒤 부분이다. 브랜치명이 버전으로 시작하면 버전을 유지해 `<버전>/review/{주제}`로 만든다.
+    - 금지: `fix/codebase-review-findings` → `fix/codebase-review-findings-review`, `1.2.0/feature/usage-timer-compose` → `review/usage-timer-compose`
+    - 허용: `fix/codebase-review-findings` → `review/codebase-review-findings`, `1.2.0/feature/usage-timer-compose` → `1.2.0/review/usage-timer-compose`
 - 같은 이름의 리뷰 브랜치가 이미 있으면 묻지 않고 기존 것을 `<리뷰 브랜치명>-old-<n>`(가장 작은 미사용 n)으로 이름을 바꿔 보존한 뒤 새로 만든다.
 
 ## 4. 작업 시작점으로 soft reset
@@ -28,21 +30,37 @@
 
 ## 5. 단일 리뷰 커밋 생성
 
-- 1단계의 **대상 파일만 pathspec으로 한정**해 한 커밋으로 만들고, 캡처한 author date를 `git commit --date`로 적용한다.
+- 1단계의 **대상 파일만 pathspec으로 한정**해 한 커밋으로 만들고, 캡처한 author date를 `git commit --date`로 적용한다. reset 직후 `git diff --cached --shortstat`이 1단계 범위와 같고 무관 staged 변경이 없으면 pathspec 없이 커밋해도 된다(파일이 수백 개면 pathspec 나열이 불가능).
 - 메시지는 `commit` 스킬 형식을 따르되 카테고리는 `리뷰`로 한다(예: `리뷰: UsageTimer 화면 Compose 전환`). 리뷰 브랜치는 release에 머지하지 않으므로 이 카테고리는 리뷰 브랜치에서만 쓴다. 스쿼시된 커밋 내용을 파일별로 요약해 본문에 담는다.
 - `git show --stat HEAD`로 대상 파일만 들어갔는지, `git status`로 무관 변경이 보존됐는지 확인한다.
 
 ## 6. 리뷰 참고 문서 생성
 
-- `docs/code-review/<주제>.md`(영문 kebab-case)에 리뷰어용 문서를 쓴다. 구성:
-    1. 대상 커밋·리뷰 브랜치·백업 브랜치·범위(파일 수·증감)
-    2. 배경과 해결한 문제
-    3. 접근·설계의 핵심 원칙
-    4. 파일별 변경과 "여기를 봐 달라"는 리뷰 포인트
-    5. 테스트 커버리지
-    6. 자동 검증이 안 되는 부분의 수동 QA 체크리스트
-    7. 리뷰 체크리스트
-- 리뷰 문서는 **git add·커밋하지 않는다**(untracked 유지, 자동 스테이징 훅도 `docs/`는 제외한다). staged 됐으면 `git restore --staged <문서>`로 되돌린다.
+`docs/code-review/<주제>.md`(영문 kebab-case)에 쓴다. **사용자가 판단할 것만 담는다.** 동작이 맞는지, 참조가 남았는지, 기기에서 되는지 같은 검증은 Claude가 끝내고 사용자에게 확인을 청하지 않는다(수동 QA 체크리스트·"여기를 봐 달라" 항목 금지).
+
+구성(해당 없는 절은 뺀다):
+
+1. 대상: 리뷰 브랜치(커밋 해시), 백업 브랜치, 기준점, 범위(파일 수·증감), 근거 문서(스펙 등) 경로
+2. 결정이 필요한 항목: Claude가 묻지 않고 정했거나 계획과 다르게 정한 것, 아직 정하지 않은 것. 항목마다 지금 방식과 그 이유를 쓰고 아래에 선택지를 둔다
+3. 코드 구조 변경: 책임 배치·의존 방향·이름이 바뀐 곳을 이전과 지금으로 대조
+4. 새로 들어온 코드 형태: 저장소에 처음 들어온 패턴·API·빌드 설정 방식과 그 위치
+5. 새로 생기거나 없어진 기능: 사용자에게 보이는 동작·문구·알림 채널·설치되는 앱
+6. 검증 현황(참고): Claude가 한 검증과 이어서 할 검증. 체크박스를 달지 않는다
+
+3·4절은 항목마다 열어 볼 파일을 저장소 기준 전체 경로로 적는다. 이름 변경은 바뀐 식별자마다 정의 파일과 호출부 파일을 적고, `등`으로 묶지 않는다.
+
+- 금지: `| 이름 | BKAlertDialog, PokeTypeChart.weaknesses 등 | 하는 일에 맞춘 이름 |`
+- 허용: `` `core/src/main/java/com/black/core/dialog/DialogManager.kt`: `BKAlertDialog` → `BKAlertDialogBuilder`(호출부 `core/src/main/java/com/black/core/webkit/BKWebChromeClient.kt`) ``
+
+2절 선택지 규칙
+
+- 지금 방식을 항상 `A`로, 실제로 채택 가능한 다른 안을 `B`·`C`로 둔다. 안마다 얻는 것과 치르는 것을 한 줄로 쓴다.
+- 안마다 `- [ ] **A. …**` 체크박스 한 줄로 쓰고 표 셀에 넣지 않는다(표 안에서는 렌더되지 않는다). 하나에만 `(권장)`을 붙이고 미리 체크하지 않는다.
+- 규칙이 그 조치를 지시했거나 다른 안이 검증을 약하게 만드는 안뿐이면 결정이 아니다. 2절에 올리지 않고 3·4절에 근거만 적는다.
+    - 금지: `- [ ] 메모 바로가기가 콜드 스타트 뒤에도 메모 화면으로 가는지 확인`
+    - 허용: `- [ ] **B. ui.maintab 패키지를 ui.main으로 이름 변경**: 하단 탭이 없어진 구조와 이름이 맞음, 그 패키지의 파일과 매니페스트 경로를 모두 옮김`
+
+리뷰 문서는 **git add·커밋하지 않는다**(untracked 유지, 자동 스테이징 훅도 `docs/`는 제외한다). staged 됐으면 `git restore --staged <문서>`로 되돌린다.
 
 ## 7. 결과 보고
 

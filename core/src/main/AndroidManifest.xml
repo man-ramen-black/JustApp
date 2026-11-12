@@ -9,7 +9,7 @@
             android:theme="@style/Theme.Transparent"
             android:exported="true"
             android:launchMode="singleTask"
-            android:taskAffinity="com.black.app.service"
+            android:taskAffinity="${applicationId}.service"
             android:excludeFromRecents="true"
             android:noHistory="true">
             <intent-filter>

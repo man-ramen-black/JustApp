@@ -2,7 +2,7 @@ package com.black.feature.floatingbutton.service
 
 import android.content.Context
 import android.content.Intent
-import com.black.core.service.ForegroundService
+import com.black.core.service.BaseForegroundService
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +34,6 @@ class FloatingButtonController @Inject constructor(
 
     /** 서비스 중지(stopService로 멈추면 onDestroy가 재시작하므로 중지 인텐트 사용) */
     fun stop() {
-        ForegroundService.stop(appContext, FloatingForegroundService::class.java)
+        BaseForegroundService.stop(appContext, FloatingForegroundService::class.java)
     }
 }

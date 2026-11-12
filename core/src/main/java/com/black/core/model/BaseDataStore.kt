@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.black.core.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -68,27 +69,35 @@ abstract class BaseDataStore(private val context: Context) {
             .map { it[key] }
     }
 
-    protected suspend fun <T> update(key: Preferences.Key<T>, data: T): Throwable? {
+    /**
+     * 값 저장 결과 반환(실패 시 원인 예외)
+     *
+     * 코루틴 취소는 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함
+     */
+    protected suspend fun <T> update(key: Preferences.Key<T>, data: T): Result<Unit> {
         Log.v("[${key.name}] $data")
         return try {
             getDataStore(context).edit { it[key] = data }
-            null
-        } catch (e: IOException) {
-            e
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e
+            Log.e(e)
+            Result.failure(e)
         }
     }
 
-    protected suspend fun <T> remove(key: Preferences.Key<T>): Throwable? {
+    /** 값 삭제 결과 반환(실패 시 원인 예외, 코루틴 취소는 다시 던짐) */
+    protected suspend fun <T> remove(key: Preferences.Key<T>): Result<Unit> {
         Log.v("[${key.name}]")
         return try {
             getDataStore(context).edit { it.remove(key) }
-            null
-        } catch (e: IOException) {
-            e
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e
+            Log.e(e)
+            Result.failure(e)
         }
     }
 }

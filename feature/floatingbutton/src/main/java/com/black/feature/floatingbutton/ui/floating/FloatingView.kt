@@ -12,28 +12,20 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import com.black.core.di.Hilt
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.black.core.view.MovableOverlayView
-import com.black.core.viewmodel.EventCollector
 import com.black.feature.floatingbutton.R
+import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import com.black.feature.floatingbutton.databinding.ViewFloatingBinding
 import com.black.feature.floatingbutton.service.FloatingAccessibilityService
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
 
-class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
+class FloatingView : MovableOverlayView<ViewFloatingBinding> {
 
-    private val viewModel by lazy {
-        Hilt.fromApplication(context, FloatingViewModel.EntryPoint::class.java)
-            .floatingViewModel
-    }
-
-    private val mainScope = MainScope()
+    private val state by lazy { FloatingViewState(FloatingDataStore(context.applicationContext)) }
 
     override val layoutId: Int get() = R.layout.view_floating
-    override val styleableId: IntArray? = null
+    override val styleableId: IntArray? get() = null
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -60,62 +52,47 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding>, EventCollector {
         windowParams.y = 70
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        binding.viewModel = viewModel
-        viewModel.collectEvent(mainScope, this)
+    override fun bindVariable(binding: ViewFloatingBinding) {
+        super.bindVariable(binding)
+        binding.state = state
+        binding.floatingView = this
     }
 
-    override suspend fun onEventCollected(action: String, data: Any?) {
-        Log.d(action)
-        when (action) {
-            FloatingViewModel.EVENT_HOME -> {
-                Intent(Intent.ACTION_MAIN)
-                    .apply {
-                        addCategory(Intent.CATEGORY_HOME)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    .also { context.startActivity(it) }
+    fun goHome() {
+        Intent(Intent.ACTION_MAIN)
+            .apply {
+                addCategory(Intent.CATEGORY_HOME)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+            .also { context.startActivity(it) }
+    }
 
-            FloatingViewModel.EVENT_BACK -> {
-                if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
-                    Toast.makeText(context, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
-                        .show()
-                    PermissionHelper.openAccessibilitySetting(context)
-                    return
-                }
-
-                context.sendBroadcast(Intent(FloatingAccessibilityService.ACTION_REQUEST_BACK))
-            }
-
-            FloatingViewModel.EVENT_VOLUME_DOWN -> {
-                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                audioManager.adjustStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_LOWER,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-
-            FloatingViewModel.EVENT_VOLUME_UP -> {
-                val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                audioManager.adjustStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_RAISE,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-
-            FloatingViewModel.EVENT_STATUS_BAR -> {
-                expandStatusBar(context)
-            }
+    fun goBack() {
+        if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
+            Toast.makeText(context, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
+                .show()
+            PermissionHelper.openAccessibilitySetting(context)
+            return
         }
+
+        context.sendBroadcast(FloatingAccessibilityService.createRequestBackIntent(context))
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        mainScope.cancel()
+    fun lowerVolume() {
+        adjustMusicVolume(AudioManager.ADJUST_LOWER)
+    }
+
+    fun raiseVolume() {
+        adjustMusicVolume(AudioManager.ADJUST_RAISE)
+    }
+
+    fun openStatusBar() {
+        expandStatusBar(context)
+    }
+
+    private fun adjustMusicVolume(direction: Int) {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI)
     }
 
     private fun expandStatusBar(context: Context) {
