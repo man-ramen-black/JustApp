@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.black.app.ui.main.MainFragment
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
+import com.black.app.ui.main.calculator.CalculatorScreen
 import com.black.app.ui.main.etc.BlackFragment
 import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.main.texteditor.TextEditorScreen
@@ -40,6 +41,9 @@ fun AppNavHost(
         composable<AppRoute.Black> { AndroidFragment<BlackFragment>(Modifier.fillMaxSize()) }
         composable<AppRoute.TextEditor> {
             TextEditorScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
+        composable<AppRoute.Calculator> {
+            CalculatorScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
         composable<AppRoute.StudyPopup> {
             StudyPopupSettingScreen(

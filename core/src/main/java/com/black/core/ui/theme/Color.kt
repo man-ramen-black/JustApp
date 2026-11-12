@@ -25,6 +25,8 @@ object AppColors {
     /** 꺼진 스위치 손잡이·테두리, 트랙(ContainerBackground) 대비 4.6:1로 UI 요소 권장 대비 3:1 이상 */
     val UncheckedControl = Color(0xFF7A7F88)
     val Divider = Color(0xFF1A1B1E)
+    /** 입력 칸 안에 보여 주는 계산값 색, 입력값(ItemName)과 구분되는 푸른 계열이며 검은 배경 대비 9:1 이상 */
+    val CalculatedValue = Color(0xFF7FB2FF)
     /** 밝은 상단바 미리보기 배경 */
     val LightPreviewBackground = Color(0xFFF2F2F4)
     /** 밝은 상단바 미리보기 아이콘 색 */

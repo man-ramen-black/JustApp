@@ -7,6 +7,7 @@ sealed interface AppRoute {
     @Serializable data object Main : AppRoute
     @Serializable data object Black : AppRoute
     @Serializable data object TextEditor : AppRoute
+    @Serializable data object Calculator : AppRoute
     @Serializable data object StudyPopup : AppRoute
     @Serializable data object UsageTimer : AppRoute
     @Serializable data object PokeRogue : AppRoute

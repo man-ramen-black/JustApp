@@ -74,4 +74,13 @@ object AppTypography {
         fontWeight = FontWeight.ExtraBold,
         letterSpacing = 1.5.sp,
     )
+
+    /** 계산 결과 중 가장 강조하는 값 */
+    val ResultValue = BaseTextStyle.copy(
+        color = AppColors.Title,
+        fontSize = 32.sp,
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.sp,
+    )
 }

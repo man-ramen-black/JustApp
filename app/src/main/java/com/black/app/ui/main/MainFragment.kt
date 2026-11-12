@@ -27,6 +27,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 getString(R.string.fragment_name_text_editor),
                 R.drawable.ic_editor,
             ) { navigateByActivity(AppRoute.TextEditor) },
+            MainItem(
+                getString(R.string.fragment_name_calculator),
+                R.drawable.ic_calculator,
+            ) { navigateByActivity(AppRoute.Calculator) },
             /** [PokeRogueFragment] */
             MainItem(
                 getString(PokeRogueR.string.poke_rogue),

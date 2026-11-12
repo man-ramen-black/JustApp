@@ -41,6 +41,7 @@ object ToolTopBarTestTags {
  * 상단 바는 고정하고 [content]만 스크롤. 콘텐츠가 스크롤되면 상단 바 아래에 구분선 표시
  *
  * @param titleModifier 상단 바 제목에 적용(화면마다 testTag 지정에 사용)
+ * @param actions 상단 바 오른쪽 동작 버튼
  */
 @Composable
 fun ToolScreenScaffold(
@@ -48,6 +49,7 @@ fun ToolScreenScaffold(
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     titleModifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scrollState = rememberScrollState()
@@ -61,6 +63,7 @@ fun ToolScreenScaffold(
             title = title,
             onNavigateUp = onNavigateUp,
             titleModifier = titleModifier,
+            actions = actions,
         )
         // 스크롤 중에 콘텐츠와 상단 바의 경계 표시(Material 3 상단 바가 스크롤 시 배경색을 바꾸는 것에 대응)
         if (scrollState.canScrollBackward) {
