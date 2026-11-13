@@ -21,6 +21,7 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(RobolectricTestRunner::class)
 open class BaseTest {
@@ -79,6 +80,18 @@ open class BaseTest {
      */
     protected fun waitCoroutine() {
         testDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * 가상 시간을 [delayTimeMillis]만큼 진행하고, 진행한 시각에 예약된 코루틴까지 실행
+     *
+     * 끝나지 않는 주기 작업처럼 [waitCoroutine]으로 대기열을 비울 수 없을 때 정해진 시간만큼만 진행하는 용도.
+     * advanceTimeBy는 진행한 시각과 같은 시각에 예약된 작업을 실행하지 않아 runCurrent를 함께 호출
+     */
+    protected fun advanceCoroutineTime(delayTimeMillis: Long) {
+        val scheduler = testDispatcherRule.testDispatcher.scheduler
+        scheduler.advanceTimeBy(delayTimeMillis.milliseconds)
+        scheduler.runCurrent()
     }
 
     /** Kotlin assert는 -ea 없이는 검사하지 않으므로 JUnit 단언 사용 */

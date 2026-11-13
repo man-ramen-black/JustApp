@@ -8,8 +8,6 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performTextInput
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -106,7 +104,7 @@ class TextEditorScreenTest : BaseUiTest() {
         hostTextEditorScreen()
 
         /** When **/
-        composeRule.onNodeWithTag(TextEditorTestTags.EDITOR_INPUT).performTextInput("hello")
+        inputTagText(TextEditorTestTags.EDITOR_INPUT, "hello")
 
         /** Then **/
         assertTagDisplayed(TextEditorTestTags.EDITOR_INPUT)

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -160,6 +161,17 @@ abstract class BaseUiTest {
     }
 
     /**
+     * testTag가 [tag]인 입력 칸의 커서 위치에 [text] 입력
+     *
+     * 칸의 기존 값을 지우지 않음(빈 칸이면 [text]만 남음). 기존 값까지 바꾸려면 [replaceTagText] 사용
+     */
+    protected fun inputTagText(tag: String, text: String): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithTag(tag)
+        node.performTextInput(text)
+        return node
+    }
+
+    /**
      * testTag가 [tag]인 노드가 [matcher]를 만족하는지 검증
      *
      * 스위치 켜짐(`isOn`)·클릭 가능 여부(`hasClickAction`)처럼 텍스트 밖의 의미 검증에 사용
@@ -201,6 +213,19 @@ abstract class BaseUiTest {
     }
 
     /**
+     * [text]를 가진 노드가 컴포지션에 있는지 검증
+     *
+     * 스크롤 밖이라 화면에 보이지 않아도 통과
+     */
+    protected fun assertTextExists(text: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithText(text).assertExists()
+
+    /** [text]를 가진 노드가 컴포지션에 없는지 검증 */
+    protected fun assertTextNotExists(text: String) {
+        composeRule.onNodeWithText(text).assertDoesNotExist()
+    }
+
+    /**
      * testTag가 [tag]인 노드 클릭
      *
      * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
@@ -213,9 +238,18 @@ abstract class BaseUiTest {
         return node.performClick()
     }
 
-    /** [text]를 가진 노드 클릭 */
-    protected fun clickText(text: String): SemanticsNodeInteraction =
-        composeRule.onNodeWithText(text).performClick()
+    /**
+     * [text]를 가진 노드 클릭
+     *
+     * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun clickText(text: String, scrollTo: Boolean = false): SemanticsNodeInteraction {
+        val node = composeRule.onNodeWithText(text)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        return node.performClick()
+    }
 
     /**
      * testTag가 [tag]인 노드가 생길 때까지 최대 [timeoutMillis] 대기

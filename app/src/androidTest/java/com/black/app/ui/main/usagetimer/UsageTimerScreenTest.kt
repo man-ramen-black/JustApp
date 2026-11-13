@@ -1,15 +1,11 @@
 package com.black.app.ui.main.usagetimer
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.onNodeWithText
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
+import com.black.app.testutil.assertDisplayed
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -126,9 +122,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         clickTag(UsageTimerTestTags.SELECT_APP_BUTTON, scrollTo = true)
 
         /** Then **/
-        onView(withId(R.id.title))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
+        assertDisplayed(R.id.title, rootMatcher = isDialog())
     }
 
     /**
@@ -151,7 +145,7 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         assertTagExists(UsageTimerTestTags.SELECTED_APPS_LIST)
-        composeRule.onNodeWithText("com.nonexistent.testapp").assertExists()
+        assertTextExists("com.nonexistent.testapp")
     }
 
     /**
@@ -197,13 +191,13 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 캡션은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithText("타이머 표시").assertExists()
-        composeRule.onNodeWithText("설정").assertExists()
-        composeRule.onNodeWithText("선택한 앱").assertExists()
-        composeRule.onNodeWithText("TOOL").assertDoesNotExist()
-        composeRule.onNodeWithText("OVERLAY").assertDoesNotExist()
-        composeRule.onNodeWithText("SETTINGS").assertDoesNotExist()
-        composeRule.onNodeWithText("SELECTED APPS").assertDoesNotExist()
+        assertTextExists("타이머 표시")
+        assertTextExists("설정")
+        assertTextExists("선택한 앱")
+        assertTextNotExists("TOOL")
+        assertTextNotExists("OVERLAY")
+        assertTextNotExists("SETTINGS")
+        assertTextNotExists("SELECTED APPS")
     }
 
     /** UsageTimerScreen을 HiltTestActivity에 setContent로 호스팅 */

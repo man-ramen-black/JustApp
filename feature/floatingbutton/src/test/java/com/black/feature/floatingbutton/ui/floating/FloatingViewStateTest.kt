@@ -39,12 +39,11 @@ class FloatingViewStateTest : BaseTest() {
         state.clock.observeForever(observer)
 
         /** When **/
-        testScheduler.advanceTimeBy(250)
-        testScheduler.runCurrent()
+        advanceCoroutineTime(250)
         val clockWhileObserved = state.clock.value
         state.clock.removeObserver(observer)
         // 갱신이 멈추지 않으면 무한 지연 반복이라 이 호출이 끝나지 않음
-        testScheduler.advanceUntilIdle()
+        waitCoroutine()
 
         /** Then **/
         assertTrue(!clockWhileObserved.isNullOrEmpty())

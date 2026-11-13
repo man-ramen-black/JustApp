@@ -3,9 +3,6 @@ package com.black.app.ui.main
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import com.black.app.R
 import com.black.app.testutil.BaseUiTest
@@ -144,9 +141,7 @@ class MainScreenTest : BaseUiTest() {
         hostMainScreen(defaultItemList { clickedNames.add(it) }, Modifier.height(240.dp))
 
         /** When **/
-        composeRule.onNodeWithText("Blackout")
-            .performScrollTo()
-            .performClick()
+        clickText("Blackout", scrollTo = true)
 
         /** Then **/
         assertEquals(listOf("Blackout"), clickedNames)

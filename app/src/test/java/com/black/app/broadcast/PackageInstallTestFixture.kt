@@ -35,8 +35,7 @@ object PackageInstallTestFixture {
 
     /** 런처 액티비티 없이 라벨·아이콘만 가진 앱 설치 */
     fun installApp(context: Context, packageName: String, label: String) {
-        val shadowPackageManager = shadowOf(context.packageManager)
-        shadowPackageManager.installPackage(
+        shadowOf(context.packageManager).installPackage(
             PackageInfo().apply {
                 this.packageName = packageName
                 applicationInfo = ApplicationInfo().apply {
@@ -45,8 +44,17 @@ object PackageInstallTestFixture {
                 }
             }
         )
+        setAppIcon(context, packageName)
+    }
+
+    /**
+     * 이미 있는 [packageName] 앱에 아이콘 지정
+     *
+     * 패키지 정보를 다시 설치하지 않으므로 자기 앱처럼 덮어쓰면 안 되는 패키지에도 사용
+     */
+    fun setAppIcon(context: Context, packageName: String) {
         // Robolectric은 아이콘 미지정 시 null 반환(실기기는 기본 아이콘 반환)
-        shadowPackageManager.setApplicationIcon(packageName, ColorDrawable(Color.RED))
+        shadowOf(context.packageManager).setApplicationIcon(packageName, ColorDrawable(Color.RED))
     }
 
     /**

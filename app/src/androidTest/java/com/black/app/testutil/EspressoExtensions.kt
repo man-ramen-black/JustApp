@@ -5,6 +5,7 @@ import androidx.annotation.IdRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Root
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.ViewAssertion
 import androidx.test.espresso.ViewInteraction
@@ -16,6 +17,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
+import org.hamcrest.Matcher
 
 /**
  * UI 테스트에서 반복되는 Espresso 검증·인터랙션을 함수화한다.
@@ -27,9 +29,13 @@ import androidx.test.platform.app.InstrumentationRegistry
  * 실패 로그만으로 원인을 바로 파악할 수 있다.
  */
 
-/** [viewId] 뷰가 화면에 표시(isDisplayed)되는지 검증한다. */
-fun assertDisplayed(@IdRes viewId: Int): ViewInteraction =
-    checkView(viewId, "화면에 표시되지 않았습니다(isDisplayed)", matches(isDisplayed()))
+/**
+ * [viewId] 뷰가 화면에 표시(isDisplayed)되는지 검증한다.
+ *
+ * [rootMatcher]로 뷰를 찾을 창을 지정(다이얼로그 창의 뷰는 `isDialog()`)
+ */
+fun assertDisplayed(@IdRes viewId: Int, rootMatcher: Matcher<Root>? = null): ViewInteraction =
+    checkView(viewId, "화면에 표시되지 않았습니다(isDisplayed)", matches(isDisplayed()), rootMatcher)
 
 /** [viewId] 뷰의 텍스트가 [text]와 일치하는지 검증한다. */
 fun assertText(@IdRes viewId: Int, text: String): ViewInteraction =
@@ -85,10 +91,21 @@ fun clickView(@IdRes viewId: Int, scrollTo: Boolean = false): ViewInteraction {
 fun typeText(@IdRes viewId: Int, text: String): ViewInteraction =
     performOnView(viewId, "\"$text\" 입력에 실패했습니다", ViewActions.typeText(text), ViewActions.closeSoftKeyboard())
 
-/** [viewId] 뷰에 [assertion]을 적용하고, 실패하면 뷰 이름과 [failureMessage]를 담아 다시 던진다. */
-private fun checkView(@IdRes viewId: Int, failureMessage: String, assertion: ViewAssertion): ViewInteraction =
+/**
+ * [viewId] 뷰에 [assertion]을 적용하고, 실패하면 뷰 이름과 [failureMessage]를 담아 다시 던진다.
+ *
+ * [rootMatcher]가 null이면 inRoot 없이 onView 기본 창 선택 사용
+ */
+private fun checkView(
+    @IdRes viewId: Int,
+    failureMessage: String,
+    assertion: ViewAssertion,
+    rootMatcher: Matcher<Root>? = null,
+): ViewInteraction =
     try {
-        onView(withId(viewId)).check(assertion)
+        val interaction = onView(withId(viewId))
+        rootMatcher?.let { interaction.inRoot(it) }
+        interaction.check(assertion)
     } catch (error: Throwable) {
         throw AssertionError("[${resourceName(viewId)}] $failureMessage", error)
     }

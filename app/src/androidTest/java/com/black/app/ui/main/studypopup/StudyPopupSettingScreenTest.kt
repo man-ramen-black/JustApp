@@ -8,10 +8,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isNotEnabled
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import com.black.app.R
 import com.black.app.model.datastore.StudyPopupDataStore
 import com.black.app.testutil.BaseUiTest
@@ -280,7 +278,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
         waitUntilTagExists(StudyPopupSettingTestTags.EDIT_DIALOG)
         assertTagMatches(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON, isNotEnabled())
 
-        composeRule.onNodeWithTag(StudyPopupSettingTestTags.EDIT_INPUT).performTextInput(ADDED_CONTENTS)
+        inputTagText(StudyPopupSettingTestTags.EDIT_INPUT, ADDED_CONTENTS)
         clickTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON)
 
         assertTagNotExists(StudyPopupSettingTestTags.EDIT_DIALOG)
@@ -303,7 +301,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
         hostStudyPopupSettingScreen()
         clickTag(StudyPopupSettingTestTags.ADD_BUTTON, scrollTo = true)
         waitUntilTagExists(StudyPopupSettingTestTags.EDIT_DIALOG)
-        composeRule.onNodeWithTag(StudyPopupSettingTestTags.EDIT_INPUT).performTextInput(ADDED_CONTENTS)
+        inputTagText(StudyPopupSettingTestTags.EDIT_INPUT, ADDED_CONTENTS)
         clickTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON)
 
         /** When **/
@@ -318,7 +316,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
 
         /** Then **/
         assertTagNotExists(StudyPopupSettingTestTags.DELETE_DIALOG)
-        composeRule.onNode(hasText(ADDED_CONTENTS)).assertDoesNotExist()
+        assertTextNotExists(ADDED_CONTENTS)
     }
 
     /**

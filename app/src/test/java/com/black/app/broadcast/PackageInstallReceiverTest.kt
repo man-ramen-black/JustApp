@@ -4,8 +4,6 @@ import android.app.Application
 import android.app.Notification
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
@@ -96,7 +94,7 @@ class PackageInstallReceiverTest : BaseTest() {
     fun test_03_ownPackageIgnored() = runTest {
         /** Given **/
         PackageInstallTestFixture.addLauncherActivity(context, context.packageName, MainActivity::class.java.name)
-        shadowOf(context.packageManager).setApplicationIcon(context.packageName, ColorDrawable(Color.RED))
+        PackageInstallTestFixture.setAppIcon(context, context.packageName)
         assertNotNull(context.packageManager.getLaunchIntentForPackage(context.packageName))
         PackageInstallReceiver.register(context)
 
