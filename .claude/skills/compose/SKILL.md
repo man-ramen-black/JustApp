@@ -60,7 +60,7 @@ private fun TextEditorContent(
 - ViewModel 함수는 처리하는 동작(`save`), Content 콜백 매개변수는 `on`+동사(`onClickSave`)로 짓고 Screen에서 연결한다(`.claude/rules/viewmodel.md`). 참고 구현 ViewModel의 `onClickXxx`·`onPause` 함수는 이 규칙 이전 이름이라 따르지 않는다.
 - 화면 생명주기 처리는 `LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshStatus() }`처럼 Screen에서 한다.
 - 메인 목록에서 들어가는 하위 화면은 Material 3 small top app bar처럼 뒤로 가기와 제목을 한 줄에 둔 상단 바를 쓰고, 그 아래에 큰 제목을 따로 두지 않는다. Screen은 `onNavigateUp`을 필수 매개변수로 받고, 화면 틀은 core의 `ToolScreenScaffold`(상단 바 + 스크롤 콘텐츠)를 쓴다. 스크롤하지 않는 화면은 `ToolTopBar`만 쓰고 화면 동작 버튼은 상단 바 `actions`에 `TopBarIconButton`으로 둔다(`TextEditorScreen`).
-- 다이얼로그는 표시 여부를 `uiState`(예: `showResetConfirm`)에 두고 Screen에서 Material3 `AlertDialog`로 그린다. 아직 전환되지 않은 `DialogFragment`는 Screen에서 `supportFragmentManager`로 띄운다(`UsageTimerScreen`의 `SelectAppDialogFragment`).
+- 다이얼로그는 표시 여부를 `uiState`(예: `showResetConfirm`)에 두고 Screen에서 core `ConfirmDialog`로 그린다. 제목·입력 칸 같은 본문이 필요하면 `content` 슬롯 오버로드를, 다른 앱 위에 표시 권한 안내는 `OverlayPermissionDialog`를 쓰고, Material3 `AlertDialog` 틀을 화면에서 다시 짜지 않는다. 아직 전환되지 않은 `DialogFragment`는 Screen에서 `supportFragmentManager`로 띄운다(`UsageTimerScreen`의 `SelectAppDialogFragment`).
 
 ## 네비게이션 등록
 
@@ -73,7 +73,7 @@ private fun TextEditorContent(
 ## 작성 규칙
 
 - 색·모서리·텍스트 스타일은 core 모듈 `ui/theme`(`com.black.core.ui.theme`)의 `AppColors`(`Color.kt`)·`AppShapes`(`Shape.kt`)·`AppTypography`(`Type.kt`)를 쓴다. 필요한 값이 없으면 `Color(0x...)`나 Text의 색·크기·글꼴·자간 인자를 화면마다 반복해 쓰지 말고 해당 객체에 의미 이름으로 추가한 뒤 참조한다. 한 번만 쓰는 변형은 가까운 스타일을 `copy`한다. 새 텍스트 스타일은 `Type.kt`의 `BaseTextStyle`에서 만든다(Text에 `style`을 넘기면 `LocalTextStyle`의 줄 높이가 빠진다). Material 컴포넌트 기본색은 `BlackTheme`이 정한다.
-- 여러 화면이 함께 쓰는 Composable(`ActionButton` 등)은 app·feature 모듈이 함께 쓰도록 core 모듈 `ui/component`(`com.black.core.ui.component`)에 public으로 둔다. app 모듈에 `internal`로 두지 않는다.
+- 여러 화면이 함께 쓰는 Composable(`ActionButton` 등)은 app·feature 모듈이 함께 쓰도록 core 모듈 `ui/component`(`com.black.core.ui.component`)에 public으로 둔다. app 모듈에 `internal`로 두지 않는다. 입력 칸의 색·글자 스타일은 `AppTextFieldDefaults`를 쓴다.
 - 검증 대상 요소에는 testTag를 달고, 태그 문자열은 Screen 파일의 `internal object XxxTestTags`에 `const val`로 둬 화면과 테스트가 같은 상수를 참조한다(`TextEditorTestTags`). `Modifier.testTag("save_button")`·`onNodeWithTag("save_button")`처럼 문자열을 직접 쓰지 않는다. 값은 snake_case이고, XML에서 전환한 화면이면 기존 `@+id` 이름을 이어 쓴다.
 
 ## XML Fragment → Compose 전환
@@ -130,7 +130,7 @@ class TextEditorScreenTest : BaseUiTest() {
 ```
 
 - `BaseUiTest`가 `hiltRule`·`composeRule`·`onHostActivity`를 제공한다. `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으므로 클래스마다 단다.
-- 검증·조작은 `BaseUiTest` 헬퍼(`assertTagDisplayed`·`assertTagExists`·`assertTagNotExists`·`assertTagText`·`assertTextDisplayed`·`clickTag`·`clickText`·`waitUntilTagExists`·`waitUntilTextExists`)로 쓴다. 헬퍼가 없는 `composeRule` 호출이 반복되면 테스트 클래스에 늘어놓지 말고 `BaseUiTest`에 헬퍼를 추가한다. `MainScreenTest`·`UsageTimerScreenTest`의 문자열 태그와 `composeRule.onNodeWithTag(...)` 직접 호출은 본보기로 삼지 않는다.
+- 검증·조작은 `BaseUiTest` 헬퍼(`assertTagDisplayed`·`assertTagExists`·`assertTagNotExists`·`assertTagText`·`assertTextDisplayed`·`assertTextExists`·`assertTextNotExists`·`clickTag`·`clickText`(가려질 수 있으면 `scrollTo = true`)·`replaceTagText`(칸 전체 교체)·`inputTagText`(커서 위치 입력)·`waitUntilTagExists`·`waitUntilTextExists`·`waitUntil`)로 쓴다. 헬퍼가 없는 `composeRule` 호출이 반복되면 테스트 클래스에 늘어놓지 말고 `BaseUiTest`에 헬퍼를 추가한다.
 - `HiltTestActivity`에 `setContent`로 Screen을 띄우면 `hiltViewModel()` 주입까지 실제 경로로 검증된다. Content는 private이므로 Screen을 통해 검증한다.
     - 예외: 표시가 권한·서비스 실행 같은 기기 상태로 갈려 Screen으로는 한 분기만 실행되면, Content를 `internal`(app androidTest와 다른 모듈이면 `public`)로 열고 테스트가 `uiState`를 주입해 분기마다 고정된 기대값으로 검증한다. 연 이유는 Content KDoc에 적는다(`AppInstallNotificationContent`·`FloatingSettingContent`). 기대값을 구현과 같은 함수(`PermissionHelper` 등)나 기기 상태로 계산하지 않는다.
 - 함수명 `test_{2자리순번}_{camelCase 동작}`, KDoc 요약 + `Given:`/`When:`/`Then:`, 본문 `/** Given **/` 구획, 기기 설정·앱 작업 변경 시 복원 헬퍼 사용은 `ui-test` 스킬과 같다.

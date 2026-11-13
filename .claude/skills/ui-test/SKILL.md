@@ -33,7 +33,7 @@ class XxxFragmentTest : BaseUiTest() { ... }
 
 `BaseUiTest`가 Hilt 룰·`onHostActivity`(HiltTestActivity 호스팅)·scenario 자동 close를 제공하므로 `@RunWith`/`@get:Rule`을 직접 쓰지 않는다. 공통 필드 `instrumentation`·`device`·`context`(applicationContext)도 제공하므로 하위 클래스에서 다시 선언하지 않고 그대로 쓴다. 셋업·정리는 `@Before`/`@After` 대신 `setup()`/`teardown()` 훅을 override 한다(`baseSetup`/`baseTeardown`이 호출). `@HiltAndroidTest`·`@FixMethodOrder`는 상속되지 않으니 클래스마다 직접 단다 — `NAME_ASCENDING`이 있어야 `test_01`, `test_02` 순번이 실행 순서가 된다. `@AndroidEntryPoint`가 아닌 Fragment도 동일 구조를 쓴다.
 
-기기 설정(`settings`)이나 이 앱의 앱 작업(appops)을 바꾸는 테스트는 `BaseUiTest`의 `putSetting`·`setAppOpMode`를 쓴다. 처음 바꿀 때 테스트 전 값을 보관해 `teardown` 뒤(하위 `teardown`이 실패해도) 되돌리므로 백업·복원 코드를 따로 두지 않는다. 테스트 기기가 사용자 실사용 기기라 바꾼 값이 남으면 안 되기 때문이다. shell로 줄 수 있는 권한(다른 앱 위에 표시 등)이 필요하면 `assumeTrue`로 건너뛰지 않고 `setAppOpMode`로 허용한다. (금지: `device.executeShellCommand("settings put system screen_off_timeout 10000")`, 허용: `putSetting("system", "screen_off_timeout", "10000")`)
+기기 설정(`settings`)이나 이 앱의 앱 작업(appops)을 바꾸는 테스트는 `BaseUiTest`의 `putSetting`·`setAppOpMode`를 쓴다. 처음 바꿀 때 테스트 전 값을 보관해 `teardown` 뒤(하위 `teardown`이 실패해도) 되돌리므로 백업·복원 코드를 따로 두지 않는다. 테스트 기기가 사용자 실사용 기기라 바꾼 값이 남으면 안 되기 때문이다. shell로 줄 수 있는 권한(다른 앱 위에 표시 등)이 필요하면 `assumeTrue`로 건너뛰지 않고 `setAppOpMode`로 허용한다. (금지: `device.executeShellCommand("settings put system screen_off_timeout 10000")`, 허용: `putSetting("system", "screen_off_timeout", "10000")`) 앱 저장값(DataStore 등)을 바꾸는 테스트도 setup·teardown에 백업·복원을 직접 쓰지 않고 `preserveValue(read, restore)`로 원래 값을 등록해 같은 단계에서 되돌린다. 잠긴 화면에서 의미가 없는 검증은 `assumeUnlocked()`로 화면을 켜고 잠금 해제를 확인한다.
 
 ## Espresso 헬퍼
 
@@ -41,12 +41,14 @@ class XxxFragmentTest : BaseUiTest() { ... }
 
 | 헬퍼 | 용도 |
 |---|---|
-| `assertDisplayed(id)` | 화면에 실제로 표시(isDisplayed)되는지 |
+| `assertDisplayed(id, rootMatcher = null)` | 화면에 실제로 표시(isDisplayed)되는지(다이얼로그 창 안이면 `rootMatcher = isDialog()`) |
 | `assertText(id, text)` | 텍스트 일치 |
 | `assertEffectiveVisible(id)` | effectiveVisibility VISIBLE(스크롤 무관) |
 | `assertEffectiveGone(id)` | effectiveVisibility GONE |
 | `clickView(id, scrollTo = false)` | 클릭(가려질 수 있으면 `scrollTo = true`) |
 | `typeText(id, text)` | 입력 후 키보드 닫기 |
+
+비동기 반영은 `BaseUiTest`의 `waitUntil`(조건)·`waitUntilFlowValue`(Flow 값)로 기다리고, `SystemClock.sleep`이나 테스트마다 만든 폴링 루프·제한 시간을 쓰지 않는다. 상단바 표시 여부는 testutil `isStatusBarVisible`, 현재 호스트 Activity는 `currentActivity()`로 얻는다.
 
 최상단 앵커 뷰(보통 타이틀)는 `assertDisplayed`로 실제 렌더링을 증명하고, 스크롤로 가려질 수 있는 뷰는 `assertEffectiveVisible`로 검증한다. 네비게이션 결과는 JUnit `assertEquals`로 `navController.currentDestination?.id`를 확인한다. 필요한 헬퍼가 없으면 raw `onView` 대신 `EspressoExtensions.kt`에 기존 `checkView`/`performOnView` 패턴(실패 시 뷰 이름+한국어 메시지)으로 추가한다.
 
@@ -73,7 +75,7 @@ class XxxFragmentTest : BaseUiTest() { ... }
  * - 콘텐츠 컨테이너 상단이 status bar 아래로 복원(겹침 없음)
  */
 @Test
-fun test_01_contentNotOverlappingStatusBarAfterExit() {
+fun test_01_contentNotOverlappingStatusBarAfterExit() = runBlocking<Unit> {
     /** Given **/
     val scenario = hostBlackFragment()
     waitUntilStatusBarVisibility(scenario, visible = false, failureMessage = "immersive 진입 후 status bar가 숨겨지지 않았습니다")

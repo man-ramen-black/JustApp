@@ -75,11 +75,10 @@ fun test_03_pauseSavesAndSendsEvents() = runTest {
     coEvery { repository.pause(any()) } just Runs
     val viewModel = createViewModel()
     viewModel.updatePauseDurationInput("5")
-    val receivedEvents = mutableListOf<ViewModelEvent>()
 
     /** When **/
     viewModel.pause()
-    viewModel.events.take(2).toList(receivedEvents)
+    val receivedEvents = viewModel.events.collectValues(2)
 
     /** Then **/
     coVerify { repository.savePauseDuration(5) }
@@ -90,7 +89,7 @@ fun test_03_pauseSavesAndSendsEvents() = runTest {
 
 ## 검증 패턴
 
-- **이벤트**: `sendEvent`는 구독자가 없으면 이벤트를 쌓아 두고 첫 구독자에게 순서대로 넘긴다. 그래서 동작을 호출한 뒤 `viewModel.events.take(n).toList(...)`로 수집해도 된다. 받을 개수(`n`)는 정확히 맞춘다. 많으면 테스트가 끝나지 않고 대기한다.
+- **이벤트**: `sendEvent`는 구독자가 없으면 이벤트를 쌓아 두고 첫 구독자에게 순서대로 넘긴다. 그래서 동작을 호출한 뒤 `:test` 모듈의 `viewModel.events.collectValues(n)`으로 수집해도 된다. 받을 개수(`n`)는 정확히 맞춘다. 많으면 테스트가 끝나지 않고 대기한다. 이벤트가 0개일 수 있으면 `collectDuring(viewModel.events) { 동작 }`으로 동작 전에 구독해 모두 받는다. 테스트 클래스마다 수집 헬퍼를 따로 만들지 않는다.
 - **결과값과 호출을 함께 검증한다.** 상태값만으로 분기 결과를 단정하지 말고, 그 결과가 의존성 호출 인자로 전달되면 `coVerify { repository.save(기대값) }`로 인자까지 확인한다.
 - **조기 반환 케이스**는 정상 흐름에서 호출됐어야 할 후속 호출이 없었음을 `coVerify(exactly = 0) { ... }`로 명시한다.
 - **같은 조건의 호출 검증은 한 블록으로 묶는다.** `verify`와 `verify(exactly = 0)`처럼 조건이 다를 때만 나눈다.
