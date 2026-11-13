@@ -1,13 +1,12 @@
 package com.black.app.ui.main.keepscreenon
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.view.View
 import android.view.WindowManager
 import androidx.annotation.MainThread
-import androidx.core.content.ContextCompat
+import com.black.core.broadcast.ReceiverRegistration
 import com.black.core.util.Log
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.PermissionHelper
@@ -29,7 +28,15 @@ object KeepScreenOnGlobal {
     val isActive: StateFlow<Boolean> = mutableIsActive.asStateFlow()
 
     private var overlayView: View? = null
-    private var screenOffReceiver: BroadcastReceiver? = null
+
+    /** 켜짐 유지 구간 동안 받는 화면 꺼짐 신호 */
+    private val screenOffReceiver = ReceiverRegistration(IntentFilter(Intent.ACTION_SCREEN_OFF)) { context, intent ->
+        // 화면 꺼짐 수신 시 해제
+        if (intent.action == Intent.ACTION_SCREEN_OFF) {
+            Log.d("screen off")
+            deactivate(context)
+        }
+    }
 
     /** 활성 상태 반전 후 반전된 활성 여부 반환 */
     @MainThread
@@ -77,7 +84,7 @@ object KeepScreenOnGlobal {
 
         // 해제 시 제거할 창·Receiver 보관 후 활성 상태 반영
         overlayView = view
-        screenOffReceiver = registerScreenOffReceiver(applicationContext)
+        screenOffReceiver.register(applicationContext)
         mutableIsActive.value = true
         return true
     }
@@ -94,28 +101,7 @@ object KeepScreenOnGlobal {
         overlayView?.let { OverlayViewUtil.detachView(it) }
         overlayView = null
         // 화면 꺼짐 수신 중단
-        screenOffReceiver?.let { context.applicationContext.unregisterReceiver(it) }
-        screenOffReceiver = null
+        screenOffReceiver.unregister(context)
         mutableIsActive.value = false
-    }
-
-    private fun registerScreenOffReceiver(context: Context): BroadcastReceiver {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                // 화면 꺼짐 수신 시 해제
-                if (intent.action == Intent.ACTION_SCREEN_OFF) {
-                    Log.d("screen off")
-                    deactivate(context)
-                }
-            }
-        }
-        // 시스템이 보내는 브로드캐스트라 NOT_EXPORTED여도 수신, 보호 브로드캐스트라 다른 앱은 송신 불가
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            IntentFilter(Intent.ACTION_SCREEN_OFF),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        return receiver
     }
 }

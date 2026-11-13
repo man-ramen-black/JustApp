@@ -1,8 +1,11 @@
 package com.black.feature.floatingbutton.service
 
+import android.app.Notification
 import android.provider.Settings
 import android.view.WindowManager
+import androidx.core.app.NotificationManagerCompat
 import com.black.core.service.BaseForegroundService
+import com.black.core.service.ServiceActivity
 import com.black.core.util.OverlayViewUtil
 import com.black.test.BaseTest
 import io.mockk.Runs
@@ -27,7 +30,7 @@ import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
 
 /**
- * [FloatingForegroundService]의 오버레이 부착 성공 시 보관, 부착 실패 시 권한 안내와 중지 검증
+ * [FloatingForegroundService]의 오버레이 부착 성공 시 보관, 부착 실패 시 권한 안내와 중지, 상시 알림 구성 검증
  *
  * 부착은 [OverlayViewUtil.attachView]만 대체해, 성공 시 실제 창 추가(시계 갱신이 끝없이 이어짐)를 피하고
  * 실패 시 권한 회수로 창 추가가 거부되는 상황을 실제 [OverlayViewUtil.tryAttachView] 경로로 재현
@@ -130,5 +133,32 @@ class FloatingForegroundServiceTest : BaseTest() {
         assertNull(shadowOf(application).nextStartedService)
         assertNull(shadowOf(application).nextStartedActivity)
         verify(exactly = 1) { OverlayViewUtil.attachView(any(), any()) }
+    }
+
+    /**
+     * 상시 알림이 중요도 낮음 채널의 지속 알림이고 터치 시 ServiceActivity를 거쳐 서비스를 중지하는지 검증
+     *
+     * Given: 다른 앱 위에 표시 권한 허용, 창 추가 성공
+     * When: 서비스 시작
+     * Then: 제목·문구, FloatingButton 채널 중요도 LOW, 지속 알림, contentIntent가 EXTRA_STOP을 담은 ServiceActivity 인텐트
+     */
+    @Test
+    fun test_04_foregroundNotificationStopsThroughServiceActivity() = runTest {
+        /** Given **/
+        every { OverlayViewUtil.attachView(any(), any()) } just Runs
+
+        /** When **/
+        val controller = startService()
+
+        /** Then **/
+        val notification = shadowOf(controller.get()).lastForegroundNotification
+        assertEquals("Floating Button", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        assertEquals("터치 시 종료", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val channel = NotificationManagerCompat.from(application).getNotificationChannelCompat(notification.channelId)
+        assertEquals(NotificationManagerCompat.IMPORTANCE_LOW, channel?.importance)
+        assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+        val contentIntent = shadowOf(notification.contentIntent).savedIntent
+        assertEquals(ServiceActivity::class.java.name, contentIntent.component?.className)
+        assertTrue(contentIntent.getBooleanExtra(BaseForegroundService.EXTRA_STOP, false))
     }
 }

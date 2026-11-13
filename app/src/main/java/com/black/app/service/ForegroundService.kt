@@ -2,10 +2,8 @@ package com.black.app.service
 
 import android.annotation.SuppressLint
 import android.app.Notification
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import androidx.core.app.NotificationManagerCompat
 import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
 import com.black.app.ui.MainActivity
@@ -14,9 +12,7 @@ import com.black.core.util.NotificationUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ForegroundService : BaseForegroundService() {
@@ -25,10 +21,8 @@ class ForegroundService : BaseForegroundService() {
         private const val NOTIFICATION_CHANNEL_ID = "ForegroundService"
         private const val NOTIFICATION_CHANNEL_NAME = "Foreground Service"
 
-        private val mutableRunning = MutableStateFlow(false)
-
         /** 서비스 실행 여부(매니페스트에 android:process가 없어 앱 프로세스 안에서 유효) */
-        val running: StateFlow<Boolean> = mutableRunning.asStateFlow()
+        val running: StateFlow<Boolean> = BaseForegroundService.running(ForegroundService::class.java)
 
         /** onDestroy 뒤에도 재시작 확인을 이어 가도록 서비스 수명과 분리한 범위 */
         private val restartScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -45,26 +39,19 @@ class ForegroundService : BaseForegroundService() {
     override val type: Int = ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
 
     override fun onCreateNotification(): Notification {
-        NotificationUtil.createNotificationChannel(applicationContext, NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManagerCompat.IMPORTANCE_LOW)
-        val notification = NotificationUtil.createNotification(
-            applicationContext,
+        return NotificationUtil.createOngoingNotification(
+            this,
             NOTIFICATION_CHANNEL_ID,
+            NOTIFICATION_CHANNEL_NAME,
             "Foreground Service",
             "Service is running",
-            null
-        ) {
-            it.setOngoing(true)
-            // One UI 8.5 "그 외 알림"(백그라운드 활동) 분류 조건은 액션 버튼·커스텀 뷰 없는 FGS 알림, 분류된 알림은 Samsung 강제 자동 묶음에서도 제외
-            // setColorized FGS 알림은 SystemUI가 상단 FGS 구역으로 먼저 분류하므로 액션·색 미지정
-            val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
-        }
-        return notification
+            Intent(this, MainActivity::class.java),
+            NOTIFICATION_ID,
+        )
     }
 
     override fun onCreate() {
         super.onCreate()
-        mutableRunning.value = true
 
         ScreenReceiver.register(this)
         PackageInstallReceiver.register(this)
@@ -73,7 +60,6 @@ class ForegroundService : BaseForegroundService() {
     override fun onDestroy() {
         ScreenReceiver.unregister(this)
         PackageInstallReceiver.unregister(this)
-        mutableRunning.value = false
 
         super.onDestroy()
     }

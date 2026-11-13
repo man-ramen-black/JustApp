@@ -1,7 +1,6 @@
 package com.black.feature.floatingbutton.service
 
 import android.content.Context
-import android.content.Intent
 import com.black.core.service.BaseForegroundService
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,7 +28,7 @@ class FloatingButtonController @Inject constructor(
         PermissionHelper.isAccessibilityServiceEnabled(appContext, FloatingAccessibilityService::class.java)
 
     fun start() {
-        appContext.startService(Intent(appContext, FloatingForegroundService::class.java))
+        BaseForegroundService.start(appContext, FloatingForegroundService::class.java)
     }
 
     /** 서비스 중지(stopService로 멈추면 onDestroy가 재시작하므로 중지 인텐트 사용) */

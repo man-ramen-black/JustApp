@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.core.content.ContextCompat
+import com.black.core.broadcast.ReceiverRegistration
 import com.black.core.util.Log
 
 /**
@@ -15,33 +15,20 @@ import com.black.core.util.Log
 class PackageInstallReceiver : BroadcastReceiver() {
     /** ForegroundService 수명에 맞춘 리시버 등록·해제 */
     companion object {
-        private var receiver: PackageInstallReceiver? = null
+        /** 해제 없이 재호출돼도 같은 설치에 알림 처리가 중복되지 않도록 등록 여부를 보관하는 홀더 */
+        private val registration = ReceiverRegistration(
+            // 패키지 브로드캐스트의 data가 package:<패키지명> 형식이라 scheme 지정 필수
+            IntentFilter(Intent.ACTION_PACKAGE_ADDED).apply { addDataScheme("package") },
+            PackageInstallReceiver(),
+        )
 
         /** 설치·업데이트 수신 등록 */
         fun register(context: Context) {
-            // 해제 없이 재호출 시 중복 등록으로 같은 설치에 알림 처리 중복
-            if (receiver != null) {
-                Log.w("already registered")
-                return
-            }
-
-            // 패키지 브로드캐스트의 data가 package:<패키지명> 형식이라 scheme 지정 필수
-            val filter = IntentFilter(Intent.ACTION_PACKAGE_ADDED).apply { addDataScheme("package") }
-            // 시스템이 보내는 브로드캐스트라 NOT_EXPORTED여도 수신, 보호 브로드캐스트라 다른 앱은 송신 불가
-            receiver = PackageInstallReceiver().also {
-                ContextCompat.registerReceiver(
-                    context.applicationContext,
-                    it,
-                    filter,
-                    ContextCompat.RECEIVER_NOT_EXPORTED
-                )
-            }
+            registration.register(context)
         }
 
         fun unregister(context: Context) {
-            // 등록 없이 호출되면 해제할 리시버 없음
-            receiver?.let { context.applicationContext.unregisterReceiver(it) }
-            receiver = null
+            registration.unregister(context)
         }
     }
 

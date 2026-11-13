@@ -2,14 +2,12 @@ package com.black.app.ui.main.usagetimer
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
-import androidx.core.content.ContextCompat
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.main.usagetimer.UsageTimerGlobal.TimerAction
+import com.black.core.broadcast.ReceiverRegistration
 import com.black.core.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,26 +26,16 @@ class UsageTimerAccessibility : AccessibilityService() {
     private var handleJob: Job? = null
 
     /** 화면을 껐다 켜면 타이머를 0부터 다시 세도록 서비스 수명 동안 받는 화면 켜짐 신호(앱 설치 알림 서비스와 무관) */
-    private val screenOnReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_ON) {
-                UsageTimerGlobal.resetTimer()
-            }
+    private val screenOnReceiver = ReceiverRegistration(IntentFilter(Intent.ACTION_SCREEN_ON)) { _, intent ->
+        if (intent.action == Intent.ACTION_SCREEN_ON) {
+            UsageTimerGlobal.resetTimer()
         }
     }
-    private var isScreenOnReceiverRegistered = false
 
     /** 서비스 시작 */
     override fun onServiceConnected() {
         super.onServiceConnected()
-        // 시스템 보호 브로드캐스트라 NOT_EXPORTED여도 수신하고 다른 앱은 보낼 수 없음
-        ContextCompat.registerReceiver(
-            this,
-            screenOnReceiver,
-            IntentFilter(Intent.ACTION_SCREEN_ON),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        isScreenOnReceiverRegistered = true
+        screenOnReceiver.register(this)
     }
 
     /** 포그라운드 앱 전환 이벤트 처리 */
@@ -92,10 +80,7 @@ class UsageTimerAccessibility : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         mainScope.cancel()
-        if (isScreenOnReceiverRegistered) {
-            unregisterReceiver(screenOnReceiver)
-            isScreenOnReceiverRegistered = false
-        }
+        screenOnReceiver.unregister(this)
         UsageTimerGlobal.reset()
     }
 }

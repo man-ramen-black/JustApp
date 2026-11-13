@@ -3,6 +3,7 @@ package com.black.app.service
 import android.content.Context
 import android.content.Intent
 import com.black.app.model.datastore.ForegroundServiceDataStore
+import com.black.core.service.BaseForegroundService
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -75,7 +76,7 @@ class ForegroundServiceController @Inject constructor(
             Log.d("BatteryOptimizations not ignored")
             return StartResult.BatteryOptimizationRequired
         }
-        appContext.startService(Intent(appContext, ForegroundService::class.java))
+        BaseForegroundService.start(appContext, ForegroundService::class.java)
         return StartResult.Started
     }
 }

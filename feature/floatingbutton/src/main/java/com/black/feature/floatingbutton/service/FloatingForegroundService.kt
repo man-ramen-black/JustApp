@@ -1,12 +1,10 @@
 package com.black.feature.floatingbutton.service
 
 import android.app.Notification
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.widget.Toast
-import androidx.core.app.NotificationManagerCompat
 import com.black.core.service.BaseForegroundService
 import com.black.core.service.ServiceActivity.Companion.toStartServiceActivityIntent
 import com.black.core.service.ServiceActivityTarget
@@ -15,9 +13,7 @@ import com.black.core.util.OverlayViewUtil
 import com.black.core.util.PermissionHelper
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.ui.floating.FloatingView
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /** 시작·중지 바로가기와 알림 터치가 ServiceActivity를 거쳐 시작하므로 [ServiceActivityTarget] 구현 */
 class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget {
@@ -27,10 +23,8 @@ class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget 
         private const val NOTIFICATION_CHANNEL_ID = "FloatingButton"
         private const val NOTIFICATION_CHANNEL_NAME = "플로팅 버튼"
 
-        private val mutableRunning = MutableStateFlow(false)
-
         /** 서비스 실행 여부(매니페스트에 android:process가 없어 앱 프로세스 안에서 유효) */
-        val running: StateFlow<Boolean> = mutableRunning.asStateFlow()
+        val running: StateFlow<Boolean> = BaseForegroundService.running(FloatingForegroundService::class.java)
     }
 
     private var view: FloatingView? = null
@@ -44,27 +38,17 @@ class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget 
     }
 
     override fun onCreateNotification(): Notification {
-        NotificationUtil.createNotificationChannel(applicationContext, NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManagerCompat.IMPORTANCE_LOW)
-        val notification = NotificationUtil.createNotification(
-            applicationContext,
+        val stopIntent = createStopIntent(this, FloatingForegroundService::class.java)
+            .toStartServiceActivityIntent()
+        return NotificationUtil.createOngoingNotification(
+            this,
             NOTIFICATION_CHANNEL_ID,
+            NOTIFICATION_CHANNEL_NAME,
             "Floating Button",
             "터치 시 종료",
-        ) {
-            // 작은 아이콘은 createNotification이 매니페스트 NOTIFICATION_ICON(없으면 앱 아이콘)으로 지정
-            it.setOngoing(true)
-            val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            val stopIntent = createStopIntent(this, FloatingForegroundService::class.java)
-                .toStartServiceActivityIntent()
-            val pendingIntent = PendingIntent.getActivity(this, NOTIFICATION_ID, stopIntent, flags)
-            it.setContentIntent(pendingIntent)
-        }
-        return notification
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        mutableRunning.value = true
+            stopIntent,
+            NOTIFICATION_ID,
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -106,7 +90,6 @@ class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget 
     }
 
     override fun onDestroy() {
-        mutableRunning.value = false
         super.onDestroy()
         view?.let {
             it.detachView()

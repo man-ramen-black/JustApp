@@ -2,7 +2,9 @@ package com.black.core.util
 
 import android.Manifest
 import android.app.Notification
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresPermission
@@ -49,6 +51,33 @@ object NotificationUtil {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .also { onCustomizeNotification?.invoke(it) }
         return notificationBuilder.build()
+    }
+
+    /**
+     * 포그라운드 서비스 상시 실행 알림 생성(중요도 낮음 채널 생성 포함)
+     *
+     * 작은 아이콘은 [createNotification]이 매니페스트 NOTIFICATION_ICON(없으면 앱 아이콘)으로 지정.
+     * One UI 8.5 "그 외 알림"(백그라운드 활동) 분류 조건은 액션 버튼·커스텀 뷰 없는 FGS 알림, 분류된 알림은 Samsung 강제 자동 묶음에서도 제외.
+     * setColorized FGS 알림은 SystemUI가 상단 FGS 구역으로 먼저 분류하므로 액션·색 미지정
+     *
+     * @param contentIntent 알림 터치 시 시작할 Activity 인텐트
+     * @param requestCode contentIntent PendingIntent 요청 코드, ex) 알림 ID
+     */
+    fun createOngoingNotification(
+        context: Context,
+        channelId: String,
+        channelName: String,
+        title: String,
+        message: String,
+        contentIntent: Intent,
+        requestCode: Int,
+    ): Notification {
+        createNotificationChannel(context, channelId, channelName, NotificationManagerCompat.IMPORTANCE_LOW)
+        return createNotification(context, channelId, title, message) {
+            it.setOngoing(true)
+            val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            it.setContentIntent(PendingIntent.getActivity(context, requestCode, contentIntent, flags))
+        }
     }
 
     /**

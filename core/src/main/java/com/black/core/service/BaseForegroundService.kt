@@ -9,6 +9,10 @@ import android.os.Build
 import android.os.IBinder
 import androidx.annotation.CallSuper
 import com.black.core.util.Log
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 사용자가 끄기 전까지 계속 실행하는 포그라운드 서비스의 기반
@@ -21,6 +25,25 @@ abstract class BaseForegroundService: Service() {
     companion object {
         /** 이미 만든 바로가기 인텐트가 이 키를 담고 있어 값은 바꾸지 않음 */
         const val EXTRA_STOP = "ForegroundService.EXTRA_STOP"
+
+        /** 서비스 클래스별 실행 여부(서비스 인스턴스가 없을 때도 구독할 수 있도록 companion에 보관) */
+        private val runningStates = ConcurrentHashMap<Class<out BaseForegroundService>, MutableStateFlow<Boolean>>()
+
+        /**
+         * [cls] 서비스 실행 여부(onCreate의 포그라운드 시작 뒤 true, onDestroy에서 false)
+         *
+         * 앱 프로세스 메모리 값이라 서비스가 앱과 같은 프로세스에서 실행될 때만 유효(서비스 매니페스트에 android:process를 두면 바뀌지 않음)
+         */
+        fun running(cls: Class<out BaseForegroundService>): StateFlow<Boolean> = mutableRunning(cls).asStateFlow()
+
+        private fun mutableRunning(cls: Class<out BaseForegroundService>): MutableStateFlow<Boolean> =
+            runningStates.getOrPut(cls) { MutableStateFlow(false) }
+
+        /** [cls] 서비스 시작(이미 실행 중이면 onStartCommand만 다시 호출) */
+        fun start(context: Context, cls: Class<out BaseForegroundService>) {
+            val appContext = context.applicationContext
+            appContext.startService(Intent(appContext, cls))
+        }
 
         fun stop(context: Context, cls: Class<out BaseForegroundService>) {
             val appContext = context.applicationContext
@@ -73,11 +96,13 @@ abstract class BaseForegroundService: Service() {
         } else {
             startForeground(notificationId, onCreateNotification())
         }
+        mutableRunning(this::class.java).value = true
     }
 
     @CallSuper
     override fun onDestroy() {
         Log.d()
+        mutableRunning(this::class.java).value = false
 
         super.onDestroy()
 
