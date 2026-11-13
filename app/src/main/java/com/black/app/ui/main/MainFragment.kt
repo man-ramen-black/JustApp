@@ -6,6 +6,7 @@ import com.black.app.databinding.FragmentMainBinding
 import com.black.app.deeplink.DeeplinkManager
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
+import com.black.app.ui.navigation.applyDefaultNavOptions
 import com.black.core.component.BaseFragment
 import com.black.core.ui.theme.BlackTheme
 import com.black.feature.pokerogue.R as PokeRogueR
@@ -77,9 +78,6 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
 
     /** 루트 Compose NavController를 통한 화면 이동 */
     private fun navigateByActivity(route: AppRoute) {
-        appNavigator.navigateSafely(route) {
-            launchSingleTop = true
-            restoreState = true
-        }
+        appNavigator.navigateSafely(route) { applyDefaultNavOptions() }
     }
 }

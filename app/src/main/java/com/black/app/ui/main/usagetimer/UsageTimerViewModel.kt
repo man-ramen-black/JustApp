@@ -43,7 +43,7 @@ class UsageTimerViewModel @Inject constructor(
 
     init {
         launch {
-            val pauseRemainTimeMillis = currentPauseRemainTimeMillis()
+            val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
             val pauseDurationInput = repository.getPauseDuration().toString()
             val selectedApps = repository.getSelectedApps().map(installedAppResolver::resolve)
             mutableUiState.update {
@@ -137,13 +137,7 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     private suspend fun updatePauseRemainTime() {
-        val pauseRemainTimeMillis = currentPauseRemainTimeMillis()
+        val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
         mutableUiState.update { it.copy(pauseRemainTimeMillis = pauseRemainTimeMillis) }
-    }
-
-    /** 일시정지 종료 시각까지 남은 시간(ms). 지났으면 0 */
-    private suspend fun currentPauseRemainTimeMillis(): Long {
-        val remain = repository.getPauseEndTime() - System.currentTimeMillis()
-        return remain.coerceAtLeast(0L)
     }
 }

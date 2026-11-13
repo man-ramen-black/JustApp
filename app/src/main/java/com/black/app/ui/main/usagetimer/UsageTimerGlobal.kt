@@ -322,12 +322,7 @@ object UsageTimerGlobal {
     }
 
     suspend fun isUsageTimerPaused(context: Context) : Boolean {
-        val endTime = usageTimerRepository(context).getPauseEndTime()
-        if (endTime == 0L) {
-            return false
-        }
-
-        return System.currentTimeMillis() < endTime
+        return usageTimerRepository(context).isPaused()
     }
 
     /** 접근성 서비스 context를 저장소가 붙잡지 않도록 applicationContext로 생성 */

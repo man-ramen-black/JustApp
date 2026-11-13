@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -44,7 +43,7 @@ class UsageTimerViewModelTest : BaseTest() {
     @Before
     fun setupViewModel() {
         coEvery { repository.getPauseDuration() } returns 3
-        coEvery { repository.getPauseEndTime() } returns 0L
+        coEvery { repository.getPauseRemainTimeMillis() } returns 0L
         coEvery { repository.getSelectedApps() } returns listOf("com.a", "com.b")
         every { installedAppResolver.resolve(any()) } answers { uiItem(firstArg()) }
     }
@@ -182,9 +181,9 @@ class UsageTimerViewModelTest : BaseTest() {
     /**
      * Pause 클릭 후 잔여 시간이 양수로 갱신되는지 검증
      *
-     * Given: pause 후 getPauseEndTime이 현재 시각+5분 반환
+     * Given: pause 후 getPauseRemainTimeMillis가 5분 반환
      * When: onClickPause 호출 후 코루틴 완료 대기
-     * Then: uiState.pauseRemainTimeMillis가 0 초과
+     * Then: uiState.pauseRemainTimeMillis 5분
      */
     @Test
     fun test_06_onClickPauseUpdatesRemainTime() = runTest {
@@ -192,14 +191,14 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.savePauseDuration(any()) } returns Result.success(Unit)
         coEvery { repository.pause(any()) } returns Result.success(Unit)
         val viewModel = createViewModel()
-        coEvery { repository.getPauseEndTime() } returns System.currentTimeMillis() + 5 * 60 * 1000L
+        coEvery { repository.getPauseRemainTimeMillis() } returns 5 * 60 * 1000L
 
         /** When **/
         viewModel.onClickPause()
         waitCoroutine()
 
         /** Then **/
-        assertTrue(viewModel.uiState.value.pauseRemainTimeMillis > 0L)
+        assertEquals(5 * 60 * 1000L, viewModel.uiState.value.pauseRemainTimeMillis)
     }
 
     /**
@@ -232,6 +231,25 @@ class UsageTimerViewModelTest : BaseTest() {
             ),
             receivedEvents,
         )
+    }
+
+    /**
+     * 생성 시 남은 일시정지 시간이 UiState로 로드되는지 검증
+     *
+     * Given: getPauseRemainTimeMillis가 1분 반환
+     * When: ViewModel 생성(초기 로드 완료 대기)
+     * Then: uiState.pauseRemainTimeMillis 1분
+     */
+    @Test
+    fun test_08_initLoadsPauseRemainTime() = runTest {
+        /** Given **/
+        coEvery { repository.getPauseRemainTimeMillis() } returns 60_000L
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertEquals(60_000L, viewModel.uiState.value.pauseRemainTimeMillis)
     }
 }
 

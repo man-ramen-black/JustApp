@@ -3,7 +3,6 @@ package com.black.app.ui.main.calculator
 import com.black.app.model.CalculatorRepository
 import com.black.app.model.CalculatorTab
 import com.black.app.ui.main.calculator.CalculatorScreen
-import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,32 +14,26 @@ import javax.inject.Inject
 /** [CalculatorScreen]의 탭 선택 상태 관리 ViewModel */
 @HiltViewModel
 class CalculatorViewModel @Inject constructor(
-    private val repository: CalculatorRepository,
+    repository: CalculatorRepository,
 ) : EventViewModel() {
 
     private val mutableUiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = mutableUiState.asStateFlow()
 
-    /**
-     * 저장값을 읽는 중에 사용자가 탭을 골랐는지 여부
-     *
-     * true면 읽은 값을 버림.
-     */
-    private var isTabSelectedByUser = false
+    /** 저장된 탭 복원과 사용자가 고른 탭 저장(복원 전에 고르면 고른 탭 우선) */
+    private val selectedTab = PersistedUserInput(
+        launcher = { block -> launch { block() } },
+        load = repository::getSelectedTab,
+        save = repository::saveSelectedTab,
+        saveLogName = "saveSelectedTab",
+        updateState = { tab -> mutableUiState.update { it.copy(selectedTab = tab) } },
+    )
 
     init {
-        launch {
-            val savedTab = repository.getSelectedTab()
-            if (isTabSelectedByUser) return@launch
-            mutableUiState.update { it.copy(selectedTab = savedTab) }
-        }
+        selectedTab.restore()
     }
 
     fun selectTab(tab: CalculatorTab) {
-        isTabSelectedByUser = true
-        mutableUiState.update { it.copy(selectedTab = tab) }
-        launch {
-            repository.saveSelectedTab(tab).onFailure { Log.w("saveSelectedTab failed: $it") }
-        }
+        selectedTab.change(tab)
     }
 }

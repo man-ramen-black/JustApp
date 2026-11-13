@@ -2,17 +2,19 @@ package com.black.app.model
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.model.datastore.UsageTimerDataStore
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [UsageTimerRepository]의 선택 앱 저장/조회와 일시정지 종료 시각 계산 검증 */
+/** [UsageTimerRepository]의 선택 앱 저장/조회와 일시정지 종료 시각 계산, 일시정지 판정 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerRepositoryTest : BaseTest() {
 
@@ -97,5 +99,69 @@ class UsageTimerRepositoryTest : BaseTest() {
 
         /** Then **/
         assertTrue(repository.getPauseEndTime() >= before + minutes * 60_000L)
+    }
+
+    /**
+     * 일시정지 중이면 일시정지로 판정하고 남은 시간을 돌려주는지 검증
+     *
+     * Given: 5분 일시정지
+     * When: 일시정지 여부, 남은 시간 조회
+     * Then: 일시정지 true, 남은 시간 0 초과 5분 이하
+     */
+    @Test
+    fun test_05_pausedWhileBeforeEndTime() = runTest {
+        /** Given **/
+        repository.pause(5)
+
+        /** When **/
+        val isPaused = repository.isPaused()
+        val remainTimeMillis = repository.getPauseRemainTimeMillis()
+
+        /** Then **/
+        assertTrue(isPaused)
+        assertTrue(remainTimeMillis in 1..5 * 60_000L)
+    }
+
+    /**
+     * 일시정지를 해제하면 일시정지가 아니고 남은 시간 0인지 검증
+     *
+     * Given: 5분 일시정지 후 해제(종료 시각 0)
+     * When: 일시정지 여부, 남은 시간 조회
+     * Then: 일시정지 false, 남은 시간 0
+     */
+    @Test
+    fun test_06_notPausedAfterCancel() = runTest {
+        /** Given **/
+        repository.pause(5)
+        repository.cancelPause()
+
+        /** When **/
+        val isPaused = repository.isPaused()
+        val remainTimeMillis = repository.getPauseRemainTimeMillis()
+
+        /** Then **/
+        assertFalse(isPaused)
+        assertEquals(0L, remainTimeMillis)
+    }
+
+    /**
+     * 종료 시각이 지나면 일시정지가 아니고 남은 시간 0인지 검증
+     *
+     * Given: 종료 시각을 1초 전으로 저장
+     * When: 일시정지 여부, 남은 시간 조회
+     * Then: 일시정지 false, 남은 시간 0(음수가 아님)
+     */
+    @Test
+    fun test_07_notPausedAfterEndTime() = runTest {
+        /** Given **/
+        UsageTimerDataStore(context).updatePauseEndTime(System.currentTimeMillis() - 1_000L)
+
+        /** When **/
+        val isPaused = repository.isPaused()
+        val remainTimeMillis = repository.getPauseRemainTimeMillis()
+
+        /** Then **/
+        assertFalse(isPaused)
+        assertEquals(0L, remainTimeMillis)
     }
 }

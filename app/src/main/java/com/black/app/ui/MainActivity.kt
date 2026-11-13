@@ -26,6 +26,7 @@ import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
+import com.black.app.ui.navigation.applyDefaultNavOptions
 import com.black.app.util.ComponentExtensions.launch
 import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
@@ -101,8 +102,7 @@ class MainActivity : AppCompatActivity() {
                         when (it) {
                             is Deeplink.Navigate -> {
                                 navController.navigate(it.route) {
-                                    launchSingleTop = true
-                                    restoreState = true
+                                    applyDefaultNavOptions()
                                     if (it.clearBackStack) {
                                         popUpTo<AppRoute.Main> { inclusive = false }
                                     }
