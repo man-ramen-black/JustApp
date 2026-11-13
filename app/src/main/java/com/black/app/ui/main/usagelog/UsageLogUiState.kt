@@ -14,11 +14,23 @@ data class UsageLogUiState(
     /** 정확한 위치 권한 허용 여부 */
     val fineLocationGranted: Boolean = false,
     /**
+     * 정확한 위치 없이 대략적인 위치만 허용됐는지 여부
+     *
+     * API 31 미만은 항상 false.
+     */
+    val approximateLocationOnly: Boolean = false,
+    /**
      * 백그라운드 위치 권한 허용 여부
      *
      * API 29 미만은 항상 true.
      */
     val backgroundLocationGranted: Boolean = false,
+    /**
+     * 기기 위치 설정 켜짐 여부
+     *
+     * 꺼져 있으면 위치 권한이 있어도 Wi-Fi 이름을 읽을 수 없음.
+     */
+    val locationEnabled: Boolean = false,
     /** 배터리 최적화 예외 여부 */
     val batteryOptimizationIgnored: Boolean = false,
     /**
@@ -27,7 +39,11 @@ data class UsageLogUiState(
      * 이름순.
      */
     val homeSsids: List<String> = emptyList(),
-    /** 지금 연결된 Wi-Fi 이름. 연결돼 있지 않거나 읽을 수 없으면 null */
+    /**
+     * 지금 연결된 Wi-Fi 이름
+     *
+     * 연결돼 있지 않거나 읽을 수 없으면 null.
+     */
     val currentSsid: String? = null,
     /** 저장된 디스코드 웹후크 주소 */
     val webhookUrl: String = "",
@@ -39,7 +55,11 @@ data class UsageLogUiState(
      * 아직 만들어지지 않았으면 빈 문자열.
      */
     val encryptionKey: String = "",
-    /** 마지막 전송 결과. 보낸 적 없으면 null */
+    /**
+     * 마지막 전송 결과
+     *
+     * 보낸 적 없으면 null.
+     */
     val lastSendResult: LastSendResult? = null,
     /** 아직 보내지 않은 기록 건수 */
     val pendingCount: Int = 0,

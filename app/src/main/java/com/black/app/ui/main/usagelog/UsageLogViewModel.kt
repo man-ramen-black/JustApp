@@ -54,18 +54,28 @@ class UsageLogViewModel @Inject constructor(
      *
      * 특정 권한 화면으로 바로 가는 공개 인텐트가 없어 앱 정보 화면을 엶.
      */
-    data object EventOpenLocationSettings : UsageLogEvent()
+    data object EventOpenLocationPermissionSettings : UsageLogEvent()
+    /** 기기 위치 설정 화면 이동 */
+    data object EventOpenLocationSourceSettings : UsageLogEvent()
     /** 배터리 최적화 설정 화면 이동 */
     data object EventOpenBatteryOptimizationSettings : UsageLogEvent()
     /** 문자열 리소스 토스트 표시 */
     data class EventShowToast(@StringRes val messageResId: Int) : UsageLogEvent()
 
-    /** 암호화 키 클립보드 복사 */
-    data class EventCopyEncryptionKey(val key: String) : UsageLogEvent()
+    /**
+     * 암호화 키 클립보드 복사
+     *
+     * 화면에 닿기 전까지 쌓여 있을 수 있는 이벤트에 키 원문을 담지 않도록 화면이 [uiState]에서 키를 읽음.
+     */
+    data object EventCopyEncryptionKey : UsageLogEvent()
 
     private var collectionToggleJob: Job? = null
 
-    /** 패키지별 앱 이름 캐시(변환이 IO 디스패처에서 차례로 실행돼 한 번에 하나만 접근) */
+    /**
+     * 패키지별 앱 이름 캐시
+     *
+     * 변환이 IO 디스패처에서 차례로 실행돼 한 번에 하나만 접근함.
+     */
     private val appLabelCache = HashMap<String, String>()
 
     private val mutableUiState = MutableStateFlow(UsageLogUiState())
@@ -74,7 +84,7 @@ class UsageLogViewModel @Inject constructor(
     init {
         refreshSystemStatus()
         // 화면 진입 때 사라진 주기 작업 예약 복구
-        launch { controller.ensureScheduled() }
+        launch { runLoggingFailure("작업 예약 복구") { controller.ensureScheduled() } }
         // 스위치·집 Wi-Fi·최근 기록은 저장된 값을 따름(저장 실패 시 이전 값으로 표시)
         launch {
             settings.collectionEnabled.collect { enabled ->
@@ -119,14 +129,16 @@ class UsageLogViewModel @Inject constructor(
         }
     }
 
-    /** 설정 앱에서 바뀔 수 있는 권한과 현재 Wi-Fi 이름 재조회 */
+    /** 설정 앱에서 바뀔 수 있는 권한·위치 설정과 현재 Wi-Fi 이름 재조회 */
     private fun refreshSystemStatus() {
         mutableUiState.update {
             it.copy(
                 usageAccessGranted = status.isUsageAccessGranted(),
                 notificationAccessGranted = status.isNotificationAccessGranted(),
                 fineLocationGranted = status.isFineLocationGranted(),
+                approximateLocationOnly = status.isApproximateLocationOnly(),
                 backgroundLocationGranted = status.isBackgroundLocationGranted(),
+                locationEnabled = status.isLocationEnabled(),
                 batteryOptimizationIgnored = status.isBatteryOptimizationIgnored(),
                 currentSsid = status.currentSsid(),
             )
@@ -140,15 +152,21 @@ class UsageLogViewModel @Inject constructor(
      */
     fun refreshStatus() {
         refreshSystemStatus()
-        launch {
-            // 조회·저장 실패로 앱이 종료되지 않도록 예외는 클래스 이름만 로그로 남김
-            try {
-                collector.collect()
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (failure: Exception) {
-                Log.w("[UsageLogViewModel] 수집 실패: ${failure.javaClass.simpleName}")
-            }
+        launch { runLoggingFailure("수집") { collector.collect() } }
+    }
+
+    /**
+     * [block] 실행
+     *
+     * 조회·저장 실패로 앱이 종료되지 않도록 취소 외 예외는 [action] 이름과 예외 클래스 이름만 로그로 남김.
+     */
+    private suspend fun runLoggingFailure(action: String, block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Log.w("[UsageLogViewModel] $action 실패: ${failure.javaClass.simpleName}")
         }
     }
 
@@ -164,10 +182,15 @@ class UsageLogViewModel @Inject constructor(
     /**
      * 지금 연결된 Wi-Fi를 집 Wi-Fi로 등록
      *
+     * 누를 때 읽은 이름이 버튼에 표시된 이름과 다르면 표시와 다른 Wi-Fi를 등록하지 않도록 표시만 갱신함.
      * 이름을 읽을 수 없으면 안내 토스트를 보냄.
      */
     fun registerCurrentWifi() {
         val ssid = status.currentSsid()
+        if (ssid != mutableUiState.value.currentSsid) {
+            mutableUiState.update { it.copy(currentSsid = ssid) }
+            return
+        }
         if (ssid == null) {
             sendEvent(EventShowToast(R.string.usage_log_wifi_unknown))
             return
@@ -195,7 +218,7 @@ class UsageLogViewModel @Inject constructor(
     }
 
     fun copyEncryptionKey() {
-        sendEvent(EventCopyEncryptionKey(mutableUiState.value.encryptionKey))
+        sendEvent(EventCopyEncryptionKey)
     }
 
     fun requestRegenerateKey() {
@@ -222,11 +245,19 @@ class UsageLogViewModel @Inject constructor(
     /**
      * 지금 보내기
      *
-     * 저장된 웹후크 주소가 올바르면 수동 전송을 예약하고, 아니면 안내 토스트를 보냄.
+     * 저장된 웹후크 주소와 암호화 키가 올바르고 대기 기록이 있으면 수동 전송을 예약함.
+     * 아니면 전송 작업이 아무것도 보내지 않고 끝나므로 그 이유를 안내 토스트로 보냄.
      */
     fun sendNow() {
-        if (!mutableUiState.value.webhookUrlValid) {
-            sendEvent(EventShowToast(R.string.usage_log_webhook_invalid))
+        val currentState = mutableUiState.value
+        val blockedMessageResId = when {
+            !currentState.webhookUrlValid -> R.string.usage_log_webhook_invalid
+            UsageLogCipher.decodeKey(currentState.encryptionKey) == null -> R.string.usage_log_key_missing
+            currentState.pendingCount == 0 -> R.string.usage_log_nothing_to_send
+            else -> null
+        }
+        if (blockedMessageResId != null) {
+            sendEvent(EventShowToast(blockedMessageResId))
             return
         }
         scheduler.enqueueSend(SendReason.MANUAL)
@@ -241,14 +272,18 @@ class UsageLogViewModel @Inject constructor(
     }
 
     /**
-     * 위치 항상 허용을 고를 설정 화면 이동
+     * 위치 항상 허용을 고를 설정 화면이나 기기 위치 설정 화면 이동
      *
      * 권한 창으로 요청하면 앱 사용 중 허용 창과 항상 허용 설정 이동을 두 번에 나눠 거쳐야 하므로,
-     * 처음부터 설정 화면에서 항상 허용을 고르게 함. 이미 항상 허용이면 이동하지 않음.
+     * 처음부터 설정 화면에서 항상 허용과 정확한 위치를 고르게 함.
+     * 권한이 모두 있으면 기기 위치 설정이 꺼져 있을 때만 위치 설정 화면으로 이동함.
      */
     fun openLocationSettings() {
-        if (!status.isFineLocationGranted() || !status.isBackgroundLocationGranted()) {
-            sendEvent(EventOpenLocationSettings)
+        when {
+            !status.isFineLocationGranted() || !status.isBackgroundLocationGranted() -> {
+                sendEvent(EventOpenLocationPermissionSettings)
+            }
+            !status.isLocationEnabled() -> sendEvent(EventOpenLocationSourceSettings)
         }
     }
 

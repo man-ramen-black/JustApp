@@ -1,5 +1,6 @@
 package com.black.app.ui.main.usagelog
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
@@ -8,21 +9,22 @@ import android.os.Build
 import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -123,13 +125,18 @@ fun UsageLogScreen(
             is UsageLogViewModel.EventOpenNotificationAccessSettings -> {
                 PermissionHelper.showNotificationListenerSettings(context, UsageLogListenerService::class.java)
             }
-            is UsageLogViewModel.EventOpenLocationSettings -> {
+            is UsageLogViewModel.EventOpenLocationPermissionSettings -> {
                 PermissionHelper.showAppDetailsSettings(context)
+            }
+            is UsageLogViewModel.EventOpenLocationSourceSettings -> {
+                PermissionHelper.showLocationSourceSettings(context)
             }
             is UsageLogViewModel.EventOpenBatteryOptimizationSettings -> {
                 PermissionHelper.showIgnoreBatteryOptimizationSettings(context, withToast = true)
             }
-            is UsageLogViewModel.EventCopyEncryptionKey -> copyEncryptionKey(context, event.key)
+            is UsageLogViewModel.EventCopyEncryptionKey -> {
+                copyEncryptionKey(context, viewModel.uiState.value.encryptionKey)
+            }
             is UsageLogViewModel.EventShowToast -> {
                 Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
             }
@@ -161,17 +168,18 @@ fun UsageLogScreen(
  * 암호화 키를 클립보드에 복사
  *
  * 클립보드 미리보기에 키가 보이지 않도록 민감 정보 표시를 붙임.
+ * API 33 이상은 시스템이 복사 확인을 직접 보여 주므로 API 32 이하에서만 복사 토스트를 띄움.
  */
+@SuppressLint("InlinedApi")
 private fun copyEncryptionKey(context: Context, key: String) {
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clipData = ClipData.newPlainText(null, key)
-    val sensitiveExtra = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ClipDescription.EXTRA_IS_SENSITIVE
-    } else {
-        SENSITIVE_CLIP_EXTRA
-    }
-    clipData.description.extras = PersistableBundle().apply { putBoolean(sensitiveExtra, true) }
+    // EXTRA_IS_SENSITIVE는 컴파일 때 문자열 값으로 들어가 API 33 미만에서도 버전 분기 없이 쓸 수 있음
+    clipData.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
     clipboardManager.setPrimaryClip(clipData)
+    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+        Toast.makeText(context, R.string.usage_log_key_copied, Toast.LENGTH_SHORT).show()
+    }
 }
 
 /**
@@ -198,7 +206,7 @@ internal fun UsageLogContent(
     onDismissRegenerateKey: () -> Unit,
     onClickSendNow: () -> Unit,
 ) {
-    val locationGranted = uiState.fineLocationGranted && uiState.backgroundLocationGranted
+    val locationRequiredResId = locationRequiredStatusResId(uiState)
     // 기록 시각 형식은 목록 전체가 하나를 공유
     val timeFormat = remember { SimpleDateFormat(RECORD_TIME_PATTERN, Locale.getDefault()) }
     ToolScreenScaffold(
@@ -232,9 +240,10 @@ internal fun UsageLogContent(
         )
         PermissionRow(
             labelResId = R.string.usage_log_permission_location,
-            granted = locationGranted,
+            granted = locationRequiredResId == null,
             onClick = onClickLocation,
             testTag = UsageLogTestTags.LOCATION_STATUS,
+            requiredValueResId = locationRequiredResId ?: R.string.usage_log_status_required,
         )
         PermissionRow(
             labelResId = R.string.usage_log_permission_battery,
@@ -266,6 +275,8 @@ internal fun UsageLogContent(
                 .padding(top = 8.dp)
                 .testTag(UsageLogTestTags.REGISTER_WIFI_BUTTON),
             letterSpacing = 0.sp,
+            // 이름을 읽지 못한 상태는 눌렀을 때 안내 토스트를 보여야 해서 활성 유지
+            enabled = uiState.currentSsid == null || uiState.currentSsid !in uiState.homeSsids,
         )
 
         // 전송 섹션
@@ -316,8 +327,9 @@ internal fun UsageLogContent(
 }
 
 /**
- * 전송 섹션(웹후크 주소, 암호화 키, 마지막 전송 상태, 지금 보내기)
+ * 전송 섹션
  *
+ * 웹후크 주소, 암호화 키, 마지막 전송 상태, 지금 보내기 버튼을 보여 줌.
  * 암호화 키는 앞뒤 일부만 남겨 보여 주며 전체 값은 복사로만 꺼냄.
  */
 @Composable
@@ -427,7 +439,8 @@ private fun WebhookUrlField(
         colors = OutlinedTextFieldDefaults.colors(
             unfocusedBorderColor = AppColors.ContainerBorder,
             focusedBorderColor = AppColors.Arrow,
-            errorBorderColor = AppColors.Caption,
+            // AppColors에 오류 색이 없어 오류 커서와 같은 테마 오류 색 사용
+            errorBorderColor = MaterialTheme.colorScheme.error,
             focusedTextColor = AppColors.ItemName,
             unfocusedTextColor = AppColors.ItemName,
             errorTextColor = AppColors.ItemName,
@@ -450,21 +463,37 @@ private fun maskKey(key: String): String =
 /**
  * 권한 상태 행
  *
- * 허용됨이면 누를 수 없고, 허용 필요면 눌러 조치 화면으로 이동.
+ * 허용됨이면 누를 수 없고, 아니면 [requiredValueResId] 상태값을 보여 주며 눌러 조치 화면으로 이동.
  */
 @Composable
 private fun PermissionRow(
-    labelResId: Int,
+    @StringRes labelResId: Int,
     granted: Boolean,
     onClick: () -> Unit,
     testTag: String,
+    @StringRes requiredValueResId: Int = R.string.usage_log_status_required,
 ) {
     StatusRow(
         label = stringResource(labelResId),
-        value = stringResource(if (granted) R.string.usage_log_status_allowed else R.string.usage_log_status_required),
+        value = stringResource(if (granted) R.string.usage_log_status_allowed else requiredValueResId),
         onClick = if (granted) null else onClick,
         modifier = Modifier.testTag(testTag),
     )
+}
+
+/**
+ * 위치 행에 보여 줄 조치 필요 상태값
+ *
+ * 권한과 기기 위치 설정이 모두 갖춰졌으면 null.
+ * 권한을 먼저 안내하고, 권한이 모두 있을 때만 기기 위치 설정 꺼짐을 안내함.
+ * API 31 이상에서 대략적인 위치만 허용했으면 앱 정보 화면에서 정확한 위치를 켜야 하므로 따로 표시함.
+ */
+@StringRes
+private fun locationRequiredStatusResId(uiState: UsageLogUiState): Int? = when {
+    !uiState.fineLocationGranted && uiState.approximateLocationOnly -> R.string.usage_log_status_precise_location_required
+    !uiState.fineLocationGranted || !uiState.backgroundLocationGranted -> R.string.usage_log_status_required
+    !uiState.locationEnabled -> R.string.usage_log_status_location_off
+    else -> null
 }
 
 /** 등록된 집 Wi-Fi 이름과 삭제 버튼 */
@@ -528,7 +557,7 @@ private fun RecordRow(
 /**
  * 기록 종류별 한 줄 설명
  *
- * 1단계에서는 사용자가 수집 결과를 폰 화면에서만 확인하므로 알림 제목·본문과 Wi-Fi 이름, 집 여부도 그대로 표시함.
+ * 최근 기록은 사용자가 수집 결과를 폰에서 바로 확인하는 용도라 알림 제목·본문과 Wi-Fi 이름, 집 여부도 그대로 표시함.
  */
 @Composable
 private fun recordDescription(
@@ -558,7 +587,11 @@ private fun recordDescription(
     )
 }
 
-/** Wi-Fi 이름(모르면 안내 문구), 집이면 (집), 추정이면 (추정)을 이어 붙인 설명 */
+/**
+ * Wi-Fi 기록 설명
+ *
+ * Wi-Fi 이름 뒤에 집이면 (집), 추정이면 (추정)을 이어 붙이며, 이름을 모르면 이름 대신 안내 문구를 씀.
+ */
 @Composable
 private fun wifiDescription(record: WifiRecord): String = listOfNotNull(
     record.ssid ?: stringResource(R.string.usage_log_wifi_name_unknown),
@@ -585,6 +618,3 @@ private const val RECORD_TIME_PATTERN = "MM-dd HH:mm"
 private const val RECORD_SEPARATOR = " · "
 private const val MASK_VISIBLE_HEAD = 4
 private const val MASK_VISIBLE_TAIL = 3
-
-/** API 33 미만에서 클립보드 미리보기를 가리는 민감 정보 표시(API 33 이상은 [ClipDescription.EXTRA_IS_SENSITIVE]) */
-private const val SENSITIVE_CLIP_EXTRA = "android.content.extra.IS_SENSITIVE"

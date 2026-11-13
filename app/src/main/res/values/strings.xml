@@ -152,6 +152,8 @@
     <string name="usage_log_permission_battery">배터리 사용량 제한 없음</string>
     <string name="usage_log_status_allowed">허용됨</string>
     <string name="usage_log_status_required">허용 필요</string>
+    <string name="usage_log_status_precise_location_required">정확한 위치 필요</string>
+    <string name="usage_log_status_location_off">위치 꺼짐</string>
     <string name="usage_log_register_wifi">지금 연결된 %1$s 등록</string>
     <string name="usage_log_register_wifi_unknown">지금 연결된 Wi-Fi 등록</string>
     <string name="usage_log_delete_wifi">%1$s 삭제</string>
@@ -179,6 +181,7 @@
     <string name="usage_log_encryption_key_label">암호화 키</string>
     <string name="usage_log_key_none">없음</string>
     <string name="usage_log_copy_key">복사</string>
+    <string name="usage_log_key_copied">암호화 키를 복사했습니다.</string>
     <string name="usage_log_regenerate_key">새로 만들기</string>
     <string name="usage_log_regenerate_key_message">새 키를 만들면 PC 쪽 키도 바꿔야 합니다.\n새로 만들까요?</string>
     <string name="usage_log_last_send_label">마지막 전송</string>
@@ -188,6 +191,8 @@
     <string name="usage_log_send_failure">실패</string>
     <string name="usage_log_send_now">지금 보내기</string>
     <string name="usage_log_webhook_invalid">웹후크 주소를 확인해 주세요.</string>
+    <string name="usage_log_key_missing">암호화 키를 새로 만들어 주세요.</string>
+    <string name="usage_log_nothing_to_send">보낼 기록이 없습니다.</string>
     <string name="usage_log_save_failed">저장하지 못했습니다.</string>
     <string name="usage_log_wifi_unknown">연결된 Wi-Fi 이름을 읽을 수 없습니다.\n위치 권한과 위치 설정을 확인해 주세요.</string>
 </resources>

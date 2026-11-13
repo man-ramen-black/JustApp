@@ -1,11 +1,7 @@
 package com.black.app.ui.main.usagelog
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
-import android.os.Build
-import androidx.core.content.ContextCompat
 import com.black.app.usagelog.collect.UsageLogListenerService
 import com.black.app.usagelog.collect.WifiStateTracker
 import com.black.core.util.PermissionHelper
@@ -15,7 +11,7 @@ import javax.inject.Inject
 /**
  * [UsageLogScreen]이 보여 주는 권한과 현재 Wi-Fi 이름 조회
  *
- * 사용 정보 접근·알림 접근·배터리 최적화 확인은 [PermissionHelper]에 위임하고, 위치 권한은 직접 확인함.
+ * 사용 정보 접근·알림 접근·위치 권한·위치 설정·배터리 최적화 확인은 [PermissionHelper]에 위임함.
  * ViewModel에 주입하기 위한 얇은 래퍼.
  */
 class UsageLogSystemStatus @Inject constructor(
@@ -26,11 +22,14 @@ class UsageLogSystemStatus @Inject constructor(
     fun isNotificationAccessGranted(): Boolean =
         PermissionHelper.isNotificationListenerEnabled(context, UsageLogListenerService::class.java)
 
-    fun isFineLocationGranted(): Boolean = isGranted(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun isFineLocationGranted(): Boolean = PermissionHelper.isFineLocationGranted(context)
+
+    fun isApproximateLocationOnly(): Boolean = PermissionHelper.isApproximateLocationOnly(context)
 
     /** API 29 미만에는 백그라운드 위치 권한이 따로 없어 항상 true */
-    fun isBackgroundLocationGranted(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    fun isBackgroundLocationGranted(): Boolean = PermissionHelper.isBackgroundLocationGranted(context)
+
+    fun isLocationEnabled(): Boolean = PermissionHelper.isLocationEnabled(context)
 
     fun isBatteryOptimizationIgnored(): Boolean = PermissionHelper.isIgnoringBatteryOptimizations(context)
 
@@ -49,7 +48,4 @@ class UsageLogSystemStatus @Inject constructor(
         }
         return WifiStateTracker.normalizeSsid(rawSsid)
     }
-
-    private fun isGranted(permission: String): Boolean =
-        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
