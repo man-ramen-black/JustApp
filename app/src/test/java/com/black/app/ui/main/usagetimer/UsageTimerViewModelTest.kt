@@ -5,6 +5,7 @@ import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.util.InstalledAppResolver
+import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
 import io.mockk.Runs
@@ -20,13 +21,15 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import java.io.IOException
 import org.junit.runners.MethodSorters
 
-/** [UsageTimerViewModel]의 상태 로드·저장·이벤트 발송 동작 검증 */
+/** [UsageTimerViewModel]의 상태 로드·저장·권한 안내·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerViewModelTest : BaseTest() {
@@ -37,6 +40,9 @@ class UsageTimerViewModelTest : BaseTest() {
     @MockK
     lateinit var installedAppResolver: InstalledAppResolver
 
+    @MockK
+    lateinit var overlayPermissionStatus: OverlayPermissionStatus
+
     private fun uiItem(packageName: String) =
         SelectedAppUiItem(packageName, packageName, mockk<Drawable>())
 
@@ -46,10 +52,11 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.getPauseRemainTimeMillis() } returns 0L
         coEvery { repository.getSelectedApps() } returns listOf("com.a", "com.b")
         every { installedAppResolver.resolve(any()) } answers { uiItem(firstArg()) }
+        every { overlayPermissionStatus.canDrawOverlays() } returns true
     }
 
     /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
-    private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver)
+    private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver, overlayPermissionStatus)
         .also { waitCoroutine() }
 
     /**
@@ -250,6 +257,99 @@ class UsageTimerViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(60_000L, viewModel.uiState.value.pauseRemainTimeMillis)
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한이 있으면 타이머 표시 클릭 시 안내 없이 ShowTimerView 이벤트가 발송되는지 검증
+     *
+     * Given: canDrawOverlays true
+     * When: onClickShow 호출
+     * Then: ShowTimerView 이벤트 수신, 권한 안내 다이얼로그 숨김
+     */
+    @Test
+    fun test_09_showWithPermissionSendsShowTimerView() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.onClickShow()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertEquals(UsageTimerViewModel.EventShowTimerView, receivedEvents[0])
+        assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한이 없으면 타이머 표시 클릭 시 타이머 대신 권한 안내 다이얼로그를 표시하는지 검증
+     *
+     * Given: canDrawOverlays false
+     * When: onClickShow 호출 뒤 구분용으로 onClickAccessibility 호출
+     * Then: 권한 안내 다이얼로그 표시, 첫 이벤트가 접근성 설정 이벤트(ShowTimerView 없음)
+     */
+    @Test
+    fun test_10_showWithoutPermissionShowsPermissionDialog() = runTest {
+        /** Given **/
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
+        val viewModel = createViewModel()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.onClickShow()
+        viewModel.onClickAccessibility()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertTrue(viewModel.uiState.value.showOverlayPermissionDialog)
+        assertEquals(UsageTimerViewModel.EventOpenAccessibilitySettings, receivedEvents[0])
+    }
+
+    /**
+     * 권한 안내 다이얼로그에서 설정으로 이동하면 다이얼로그를 닫고 권한 설정 이동 이벤트를 보내는지 검증
+     *
+     * Given: 권한 안내 다이얼로그 표시 상태
+     * When: openOverlaySettings 호출
+     * Then: 다이얼로그 숨김, OpenOverlaySettings 이벤트 수신
+     */
+    @Test
+    fun test_11_openOverlaySettingsDismissesDialogAndSendsEvent() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        viewModel.showOverlayPermissionDialog()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.openOverlaySettings()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
+        assertEquals(UsageTimerViewModel.EventOpenOverlaySettings, receivedEvents[0])
+    }
+
+    /**
+     * 권한 안내 다이얼로그를 취소하면 이동 없이 다이얼로그만 닫는지 검증
+     *
+     * Given: 권한 안내 다이얼로그 표시 상태
+     * When: dismissOverlayPermissionDialog 호출 뒤 구분용으로 onClickAccessibility 호출
+     * Then: 다이얼로그 숨김, 첫 이벤트가 접근성 설정 이벤트(OpenOverlaySettings 없음)
+     */
+    @Test
+    fun test_12_dismissOverlayPermissionDialog() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        viewModel.showOverlayPermissionDialog()
+        val receivedEvents = mutableListOf<ViewModelEvent>()
+
+        /** When **/
+        viewModel.dismissOverlayPermissionDialog()
+        viewModel.onClickAccessibility()
+        viewModel.events.collectEvents(receivedEvents, count = 1)
+
+        /** Then **/
+        assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
+        assertEquals(UsageTimerViewModel.EventOpenAccessibilitySettings, receivedEvents[0])
     }
 }
 

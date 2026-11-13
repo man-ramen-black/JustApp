@@ -1,7 +1,5 @@
 package com.black.core.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -9,11 +7,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import com.black.core.ui.theme.AppColors
-import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
 
 /**
@@ -29,12 +24,10 @@ fun ActionButton(
     modifier: Modifier = Modifier,
     letterSpacing: TextUnit = AppTypography.ButtonLabel.letterSpacing,
 ) {
-    val shape = AppShapes.Container
     Box(
         modifier = modifier
-            .clip(shape)
-            .background(AppColors.ContainerBackground)
-            .border(1.dp, AppColors.ContainerBorder, shape)
+            // 클릭 리플을 모서리 안에만 그리도록 clip
+            .containerBox(clip = true)
             .clickable(onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,13 +34,14 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ContainerIconButton
+import com.black.core.ui.component.OverlayPermissionDialog
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
 import com.black.core.ui.component.ToolScreenScaffold
-import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
@@ -69,8 +69,6 @@ internal object StudyPopupSettingTestTags {
     const val EDIT_CONFIRM_BUTTON = "edit_confirm_button"
     const val DELETE_DIALOG = "delete_dialog"
     const val DELETE_CONFIRM_BUTTON = "delete_confirm_button"
-    const val OVERLAY_PERMISSION_DIALOG = "overlay_permission_dialog"
-    const val OPEN_OVERLAY_SETTINGS_BUTTON = "open_overlay_settings_button"
 
     /** [index]번째 내용 행 */
     fun contentsItem(index: Int) = "contents_item_$index"
@@ -162,6 +160,7 @@ fun StudyPopupSettingScreen(
 
     if (uiState.showOverlayPermissionDialog) {
         OverlayPermissionDialog(
+            message = stringResource(R.string.study_popup_overlay_permission_guide),
             onConfirm = viewModel::openOverlaySettings,
             onDismiss = viewModel::dismissOverlayPermissionDialog,
         )
@@ -398,14 +397,9 @@ private fun ContentsEditDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(StudyPopupSettingTestTags.EDIT_INPUT),
+            textStyle = AppTextFieldDefaults.InputTextStyle,
             minLines = 3,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = AppColors.ContainerBorder,
-                focusedBorderColor = AppColors.Arrow,
-                focusedTextColor = AppColors.ItemName,
-                unfocusedTextColor = AppColors.ItemName,
-                cursorColor = AppColors.Title,
-            ),
+            colors = AppTextFieldDefaults.colors(),
         )
     }
 }
@@ -423,25 +417,5 @@ private fun DeleteConfirmDialog(
         onDismiss = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_DIALOG),
         confirmButtonModifier = Modifier.testTag(StudyPopupSettingTestTags.DELETE_CONFIRM_BUTTON),
-    )
-}
-
-/**
- * 다른 앱 위에 표시 권한 안내 다이얼로그
- *
- * 이 권한은 실행 중 허용 창이 없어, 확인을 누르면 이 앱의 권한 스위치가 있는 설정 화면을 바로 염
- */
-@Composable
-private fun OverlayPermissionDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ConfirmDialog(
-        message = stringResource(R.string.study_popup_overlay_permission_guide),
-        confirmText = stringResource(R.string.study_popup_open_overlay_settings),
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
-        modifier = Modifier.testTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_DIALOG),
-        confirmButtonModifier = Modifier.testTag(StudyPopupSettingTestTags.OPEN_OVERLAY_SETTINGS_BUTTON),
     )
 }

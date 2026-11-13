@@ -2,7 +2,6 @@ package com.black.app.ui.main.usagetimer
 
 import android.os.SystemClock
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -32,14 +30,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
+import com.black.app.ui.common.selectapp.AppIconImage
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.AppTextFieldDefaults
+import com.black.core.ui.component.OverlayPermissionDialog
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
@@ -93,12 +93,10 @@ fun UsageTimerScreen(
     viewModel.CollectEvents { event ->
         when (event) {
             is UsageTimerViewModel.EventShowTimerView -> {
-                // 다른 앱 위에 표시 권한 없이 오버레이 창을 추가하면 크래시하므로 권한 설정으로 안내
-                if (PermissionHelper.canDrawOverlays(context)) {
-                    UsageTimerGlobal.showPreview(context)
-                } else {
-                    PermissionHelper.showDrawOverlaysSetting(context)
-                }
+                UsageTimerGlobal.showPreview(context)
+            }
+            is UsageTimerViewModel.EventOpenOverlaySettings -> {
+                PermissionHelper.showDrawOverlaysSetting(context)
             }
             is UsageTimerViewModel.EventShowToast -> {
                 val message = context.getString(event.messageResId, *event.formatArgs.toTypedArray())
@@ -132,6 +130,14 @@ fun UsageTimerScreen(
         onClickSelectApp = viewModel::onClickSelectApp,
         onFinishTimer = viewModel::onFinishTimer,
     )
+
+    if (uiState.showOverlayPermissionDialog) {
+        OverlayPermissionDialog(
+            message = stringResource(R.string.usage_timer_overlay_permission_guide),
+            onConfirm = viewModel::openOverlaySettings,
+            onDismiss = viewModel::dismissOverlayPermissionDialog,
+        )
+    }
 }
 
 /** UsageTimer 화면 콘텐츠(상태 무관 렌더링 전용) */
@@ -180,16 +186,9 @@ private fun UsageTimerContent(
                         style = AppTypography.Caption,
                     )
                 },
+                textStyle = AppTextFieldDefaults.InputTextStyle,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = AppColors.ContainerBorder,
-                    focusedBorderColor = AppColors.Arrow,
-                    focusedTextColor = AppColors.ItemName,
-                    unfocusedTextColor = AppColors.ItemName,
-                    cursorColor = AppColors.Title,
-                    focusedLabelColor = AppColors.Caption,
-                    unfocusedLabelColor = AppColors.Caption,
-                ),
+                colors = AppTextFieldDefaults.colors(),
                 modifier = Modifier
                     .weight(1f)
                     .testTag(UsageTimerTestTags.PAUSE_DURATION_INPUT),
@@ -321,10 +320,9 @@ private fun PauseRemainCountDown(
 /** 선택된 앱 한 건(아이콘+라벨) 표시 */
 @Composable
 private fun SelectedAppItemContent(item: SelectedAppUiItem) {
-    val iconBitmap = remember(item.packageName) { item.icon.toBitmap().asImageBitmap() }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            bitmap = iconBitmap,
+        AppIconImage(
+            icon = item.icon,
             contentDescription = item.label,
             modifier = Modifier.size(40.dp),
         )

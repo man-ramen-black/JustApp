@@ -1,13 +1,10 @@
 package com.black.core.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -18,7 +15,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppShapes
 
 /**
@@ -37,7 +33,6 @@ fun ContainerIconButton(
     iconSize: Dp = 18.dp,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val shape = AppShapes.Container
     Box(
         modifier = modifier
             .size(48.dp)
@@ -49,21 +44,15 @@ fun ContainerIconButton(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
+        ContainerIconBox(
+            painter = painter,
+            contentDescription = contentDescription,
+            // 리플을 보이는 박스 모서리 안에만 그림(clip이 뒤의 리플·배경·아이콘을 함께 자름)
             modifier = Modifier
-                .size(boxSize)
-                .clip(shape)
-                .background(AppColors.ContainerBackground, shape)
-                .border(1.dp, AppColors.ContainerBorder, shape)
+                .clip(AppShapes.Container)
                 .indication(interactionSource, ripple()),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painter,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(iconSize),
-                tint = AppColors.Icon,
-            )
-        }
+            boxSize = boxSize,
+            iconSize = iconSize,
+        )
     }
 }

@@ -30,7 +30,6 @@
     <string name="study_popup_delete">삭제</string>
     <string name="study_popup_delete_confirm">이 내용을 삭제할까요?</string>
     <string name="study_popup_overlay_permission_guide">화면을 켤 때 팝업을 띄우려면 다른 앱 위에 표시 권한이 필요합니다.\n설정에서 JustApp을 허용해주세요.</string>
-    <string name="study_popup_open_overlay_settings">허용하러 가기</string>
     <string name="study_popup_loaded">불러왔습니다.</string>
     <string name="study_popup_load_failed">파일을 불러올 수 없습니다.</string>
     <string name="study_popup_load_failed_latest_file">최근 파일을 불러올 수 없습니다.\n파일을 다시 불러와주세요.</string>
@@ -91,6 +90,7 @@
     <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
     <string name="usage_timer_pause_duration_invalid">일시정지 시간은 1분 이상으로 입력해주세요.</string>
     <string name="usage_timer_save_failed">저장에 실패했습니다.</string>
+    <string name="usage_timer_overlay_permission_guide">타이머를 띄우려면 다른 앱 위에 표시 권한이 필요합니다.\n설정에서 JustApp을 허용해주세요.</string>
 
     <string name="text_editor_save">저장</string>
     <string name="text_editor_load">불러오기</string>

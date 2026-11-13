@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import com.black.app.testutil.BaseUiTest
+import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import com.black.feature.floatingbutton.R
@@ -26,7 +27,7 @@ import org.junit.runners.MethodSorters
  * 스위치·상태 행의 표시는 기기의 실행·권한 상태에 따라 한 분기만 실행되지 않도록 [FloatingSettingContent]에
  * 테스트가 고른 상태를 주입해 분기마다 고정된 기대값으로 검증.
  * 테스트 기기가 사용자 실사용 기기라 테스트 전 플로팅 버튼 실행 여부를 보관했다가 테스트 후 되돌림.
- * 권한 안내 다이얼로그·설정 화면 이동은 기기 권한 상태에 따라 갈려 ViewModel 유닛 테스트로 검증
+ * 권한 안내 다이얼로그 표시는 테스트가 권한을 거부해 검증하고, 설정 화면 이동은 테스트 앱을 벗어나므로 ViewModel 유닛 테스트로 검증
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -279,5 +280,32 @@ class FloatingSettingScreenTest : BaseUiTest() {
 
         /** Then **/
         assertEquals(1, navigateUpCount)
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한이 없을 때 권한 상태 행을 누르면 플로팅 버튼 안내 문장의 권한 안내 다이얼로그가 표시되는지 검증
+     *
+     * 권한 상태를 고정하도록 테스트가 권한을 직접 거부(테스트 후 BaseUiTest가 테스트 전 모드로 복원).
+     * 스위치는 실행 중이면 서비스를 멈추므로 누르지 않고 상태 행으로 다이얼로그를 띄움
+     *
+     * Given:
+     * - 다른 앱 위에 표시 권한 거부, FloatingSettingScreen 호스팅
+     * When:
+     * - overlay_permission_status 클릭
+     * Then:
+     * - overlay_permission_dialog에 플로팅 버튼 안내 문장 표시
+     */
+    @Test
+    fun test_07_clickOverlayPermissionStatusShowsGuideDialog() {
+        /** Given **/
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "deny")
+        hostFloatingSettingScreen()
+
+        /** When **/
+        clickTag(FloatingSettingTestTags.OVERLAY_PERMISSION_STATUS, scrollTo = true)
+
+        /** Then **/
+        assertTagDisplayed(OverlayPermissionDialogTestTags.DIALOG)
+        assertTextDisplayed(context.getString(R.string.floating_setting_overlay_permission_guide))
     }
 }

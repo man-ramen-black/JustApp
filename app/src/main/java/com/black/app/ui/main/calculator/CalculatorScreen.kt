@@ -19,7 +19,6 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
 import com.black.app.model.CalculatorTab
 import com.black.app.model.RatioTerm
+import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.component.TopBarIconButton
@@ -405,12 +405,12 @@ private fun DilutionInputField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
-        textStyle = AppTypography.BrightBody,
+        textStyle = AppTextFieldDefaults.InputTextStyle,
         label = { Text(text = label, style = AppTypography.Caption) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
         keyboardActions = KeyboardActions(onDone = { onDone() }),
-        colors = calculatorInputColors(),
+        colors = AppTextFieldDefaults.colors(),
     )
 }
 
@@ -437,8 +437,8 @@ private fun RatioInputField(
     onDone: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = calculatorInputColors()
-    val inputTextStyle = AppTypography.BrightBody.copy(
+    val colors = AppTextFieldDefaults.colors()
+    val inputTextStyle = AppTextFieldDefaults.InputTextStyle.copy(
         fontSize = RATIO_FIELD_FONT_SIZE,
         textAlign = TextAlign.Center,
     )
@@ -487,22 +487,6 @@ private fun RatioInputField(
         },
     )
 }
-
-/**
- * 입력 칸 색
- *
- * UsageTimerScreen의 입력 칸과 같은 지정.
- */
-@Composable
-private fun calculatorInputColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = AppColors.ContainerBorder,
-    focusedBorderColor = AppColors.Arrow,
-    focusedTextColor = AppColors.ItemName,
-    unfocusedTextColor = AppColors.ItemName,
-    cursorColor = AppColors.Title,
-    focusedLabelColor = AppColors.Caption,
-    unfocusedLabelColor = AppColors.Caption,
-)
 
 /** [CalculatorScreen] 요소의 testTag */
 internal object CalculatorTestTags {

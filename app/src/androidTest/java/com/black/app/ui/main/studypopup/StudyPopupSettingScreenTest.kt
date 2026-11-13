@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.black.app.R
 import com.black.app.model.datastore.StudyPopupDataStore
 import com.black.app.testutil.BaseUiTest
+import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -340,6 +341,32 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
 
         /** Then **/
         assertEquals(1, navigateUpCount)
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한이 없을 때 권한 상태 행을 누르면 스터디 팝업 안내 문장의 권한 안내 다이얼로그가 표시되는지 검증
+     *
+     * 권한 상태를 고정하도록 테스트가 권한을 직접 거부(테스트 후 BaseUiTest가 테스트 전 모드로 복원)
+     *
+     * Given:
+     * - 다른 앱 위에 표시 권한 거부, StudyPopupSettingScreen 호스팅
+     * When:
+     * - overlay_permission_status 클릭
+     * Then:
+     * - overlay_permission_dialog에 스터디 팝업 안내 문장 표시
+     */
+    @Test
+    fun test_08_clickOverlayPermissionStatusShowsGuideDialog() {
+        /** Given **/
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "deny")
+        hostStudyPopupSettingScreen()
+
+        /** When **/
+        clickTag(StudyPopupSettingTestTags.OVERLAY_PERMISSION_STATUS, scrollTo = true)
+
+        /** Then **/
+        assertTagDisplayed(OverlayPermissionDialogTestTags.DIALOG)
+        assertTextDisplayed(context.getString(R.string.study_popup_overlay_permission_guide))
     }
 
     companion object {

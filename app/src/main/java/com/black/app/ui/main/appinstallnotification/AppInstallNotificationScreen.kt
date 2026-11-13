@@ -2,8 +2,6 @@ package com.black.app.ui.main.appinstallnotification
 
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,16 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -32,18 +27,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
+import com.black.app.ui.common.selectapp.AppIconImage
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.ContainerIconBox
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
 import com.black.core.ui.component.ToolScreenScaffold
+import com.black.core.ui.component.containerBox
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
@@ -260,13 +257,10 @@ private fun NotificationPreviewCard(
     message: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = AppShapes.NotificationPreview
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(AppColors.ContainerBackground)
-            .border(1.dp, AppColors.ContainerBorder, shape)
+            .containerBox(shape = AppShapes.NotificationPreview, clip = true)
             // 앱 이름·메시지를 한 노드로 검증하도록 병합
             .semantics(mergeDescendants = true) {}
             .padding(16.dp),
@@ -309,9 +303,8 @@ private fun ConversationIcon(
 ) {
     Box(modifier = Modifier.size(40.dp)) {
         if (previewApp != null) {
-            val iconBitmap = remember(previewApp.packageName) { previewApp.icon.toBitmap().asImageBitmap() }
-            Image(
-                bitmap = iconBitmap,
+            AppIconImage(
+                icon = previewApp.icon,
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)
@@ -319,10 +312,9 @@ private fun ConversationIcon(
             )
         }
         if (notifierApp != null) {
-            val badgeBitmap = remember(notifierApp.packageName) { notifierApp.icon.toBitmap().asImageBitmap() }
             // 예시 앱 아이콘과 겹치는 경계가 보이도록 카드 배경색 테두리
-            Image(
-                bitmap = badgeBitmap,
+            AppIconImage(
+                icon = notifierApp.icon,
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -376,20 +368,14 @@ private fun StatusBarIconTile(
     iconSize: Dp,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(tileSize)
-                .background(background, AppShapes.Container)
-                .border(1.dp, AppColors.ContainerBorder, AppShapes.Container),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_app_install),
-                contentDescription = null,
-                modifier = Modifier.size(iconSize),
-                tint = tint,
-            )
-        }
+        ContainerIconBox(
+            painter = painterResource(R.drawable.ic_app_install),
+            contentDescription = null,
+            boxSize = tileSize,
+            iconSize = iconSize,
+            tint = tint,
+            background = background,
+        )
         Text(
             text = caption,
             modifier = Modifier.padding(top = 6.dp),

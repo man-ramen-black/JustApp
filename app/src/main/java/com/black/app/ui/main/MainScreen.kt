@@ -2,9 +2,7 @@ package com.black.app.ui.main
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,8 +27,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.black.app.R
+import com.black.core.ui.component.ContainerIconBox
 import com.black.core.ui.theme.AppColors
-import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
 import com.black.core.util.DataUtil
 import java.util.Locale
@@ -133,20 +131,12 @@ private fun MainItemRow(
             .padding(vertical = 21.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(AppColors.ContainerBackground, AppShapes.Container)
-                .border(1.dp, AppColors.ContainerBorder, AppShapes.Container),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(item.iconResId),
-                contentDescription = null,
-                modifier = Modifier.size(19.dp),
-                tint = AppColors.Icon,
-            )
-        }
+        ContainerIconBox(
+            painter = painterResource(item.iconResId),
+            contentDescription = null,
+            boxSize = 44.dp,
+            iconSize = 19.dp,
+        )
         Text(
             text = item.name,
             modifier = Modifier

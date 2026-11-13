@@ -5,6 +5,7 @@ import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.app.util.InstalledAppResolver
+import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class UsageTimerViewModel @Inject constructor(
     private val repository: UsageTimerRepository,
     private val installedAppResolver: InstalledAppResolver,
+    private val overlayPermissionStatus: OverlayPermissionStatus,
 ) : EventViewModel() {
 
     /** UsageTimer 화면 일회성 이벤트 */
@@ -35,6 +37,8 @@ class UsageTimerViewModel @Inject constructor(
     data object EventDetachTimerView : UsageTimerEvent()
     /** 접근성 설정 화면 이동 */
     data object EventOpenAccessibilitySettings : UsageTimerEvent()
+    /** 이 앱의 다른 앱 위에 표시 권한 설정 화면 이동 */
+    data object EventOpenOverlaySettings : UsageTimerEvent()
     /** 앱 선택 다이얼로그 표시(현재 선택 목록 전달) */
     data class EventOpenSelectApp(val checkedPackageNames: List<String>) : UsageTimerEvent()
 
@@ -61,7 +65,26 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     fun onClickShow() {
+        // 권한 없이 오버레이 창을 추가하면 붙지 않으므로 권한부터 안내
+        if (!overlayPermissionStatus.canDrawOverlays()) {
+            showOverlayPermissionDialog()
+            return
+        }
         sendEvent(EventShowTimerView)
+    }
+
+    fun showOverlayPermissionDialog() {
+        mutableUiState.update { it.copy(showOverlayPermissionDialog = true) }
+    }
+
+    fun dismissOverlayPermissionDialog() {
+        mutableUiState.update { it.copy(showOverlayPermissionDialog = false) }
+    }
+
+    /** 권한 안내 다이얼로그를 닫고 이 앱의 권한 스위치가 있는 설정 화면으로 이동 */
+    fun openOverlaySettings() {
+        dismissOverlayPermissionDialog()
+        sendEvent(EventOpenOverlaySettings)
     }
 
     fun onClickSave() {

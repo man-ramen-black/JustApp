@@ -6,6 +6,7 @@ import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
 import com.black.app.testutil.assertDisplayed
+import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -19,7 +20,8 @@ import org.junit.runners.MethodSorters
  * [UsageTimerScreen]이 계측 환경에서 정상 동작하는지 검증하는 Compose UI 테스트
  *
  * HiltTestActivity(@AndroidEntryPoint)에 setContent로 호스팅해 hiltViewModel() 주입 동작 확인.
- * 선택 앱은 실제 앱 저장소를 쓰므로 테스트 전 값을 보관했다가 테스트 후 되돌림
+ * 선택 앱은 실제 앱 저장소를 쓰므로 테스트 전 값을 보관했다가 테스트 후 되돌림.
+ * 권한 안내 다이얼로그는 테스트가 다른 앱 위에 표시 권한을 거부해 검증하고, 설정 화면 이동은 ViewModel 유닛 테스트로 검증
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -232,5 +234,57 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         assertEquals(1, navigateUpCount)
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한이 없으면 타이머 띄우기를 눌렀을 때 설정 화면 대신 권한 안내 다이얼로그가 표시되는지 검증
+     *
+     * 권한 상태를 고정하도록 테스트가 권한을 직접 거부(테스트 후 BaseUiTest가 테스트 전 모드로 복원)
+     *
+     * Given:
+     * - 다른 앱 위에 표시 권한 거부, UsageTimerScreen 호스팅
+     * When:
+     * - show_button 클릭
+     * Then:
+     * - overlay_permission_dialog에 타이머 안내 문장 표시
+     */
+    @Test
+    fun test_08_clickShowWithoutOverlayPermissionShowsGuideDialog() {
+        /** Given **/
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "deny")
+        hostUsageTimerScreen()
+
+        /** When **/
+        clickTag(UsageTimerTestTags.SHOW_BUTTON)
+
+        /** Then **/
+        assertTagDisplayed(OverlayPermissionDialogTestTags.DIALOG)
+        assertTextDisplayed(context.getString(R.string.usage_timer_overlay_permission_guide))
+    }
+
+    /**
+     * 권한 안내 다이얼로그에서 취소를 누르면 설정 화면으로 가지 않고 다이얼로그만 닫히는지 검증
+     *
+     * Given:
+     * - 다른 앱 위에 표시 권한 거부, UsageTimerScreen 호스팅, show_button 클릭으로 권한 안내 다이얼로그 표시
+     * When:
+     * - 취소 버튼 클릭
+     * Then:
+     * - overlay_permission_dialog 미존재, 화면 제목 표시(설정 화면으로 이동하지 않음)
+     */
+    @Test
+    fun test_09_cancelOverlayPermissionDialogClosesDialog() {
+        /** Given **/
+        setAppOpMode("SYSTEM_ALERT_WINDOW", "deny")
+        hostUsageTimerScreen()
+        clickTag(UsageTimerTestTags.SHOW_BUTTON)
+        assertTagDisplayed(OverlayPermissionDialogTestTags.DIALOG)
+
+        /** When **/
+        clickText(context.getString(R.string.cancel))
+
+        /** Then **/
+        assertTagNotExists(OverlayPermissionDialogTestTags.DIALOG)
+        assertTagDisplayed(UsageTimerTestTags.TITLE)
     }
 }

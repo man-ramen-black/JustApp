@@ -4,6 +4,7 @@ import android.net.Uri
 import com.black.app.R
 import com.black.app.model.StudyPopupRepository
 import com.black.app.service.ForegroundServiceController
+import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
 import io.mockk.Runs
@@ -35,7 +36,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     lateinit var repository: StudyPopupRepository
 
     @MockK
-    lateinit var status: StudyPopupStatus
+    lateinit var overlayPermissionStatus: OverlayPermissionStatus
 
     @MockK
     lateinit var foregroundServiceController: ForegroundServiceController
@@ -60,12 +61,12 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         coEvery { repository.removeLatestUri() } just Runs
         coEvery { repository.getFileName(any()) } returns "study_popup.xml"
         coEvery { repository.keepPermission(any()) } returns true
-        every { status.canDrawOverlays() } returns true
+        every { overlayPermissionStatus.canDrawOverlays() } returns true
         every { foregroundServiceController.running } returns serviceRunning
     }
 
     /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
-    private fun createViewModel() = StudyPopupSettingViewModel(repository, status, foregroundServiceController)
+    private fun createViewModel() = StudyPopupSettingViewModel(repository, overlayPermissionStatus, foregroundServiceController)
         .also { waitCoroutine() }
 
     /**
@@ -93,7 +94,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         /** Given **/
         savedEnabled.value = true
         serviceRunning.value = false
-        every { status.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         coEvery { repository.countContents() } returns 3
 
         /** When **/
@@ -117,7 +118,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     @Test
     fun test_02_enableWithoutPermissionShowsPermissionDialog() = runTest {
         /** Given **/
-        every { status.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
 
         /** When **/
@@ -185,7 +186,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     fun test_05_previewWithoutPermissionShowsPermissionDialog() = runTest {
         /** Given **/
         coEvery { repository.hasContents() } returns true
-        every { status.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
 
         /** When **/
@@ -443,7 +444,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     fun test_15_setEnabledFailureShowsToast() = runTest {
         /** Given **/
         coEvery { repository.setEnabled(any()) } returns Result.failure(IOException("disk full"))
-        every { status.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
 
         /** When **/

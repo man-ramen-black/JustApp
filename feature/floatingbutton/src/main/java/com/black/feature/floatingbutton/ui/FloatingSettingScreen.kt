@@ -13,7 +13,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.black.core.ui.component.ConfirmDialog
+import com.black.core.ui.component.OverlayPermissionDialog
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
@@ -35,8 +35,6 @@ object FloatingSettingTestTags {
     const val RUNNING_SWITCH = "floating_running_switch"
     const val OVERLAY_PERMISSION_STATUS = "overlay_permission_status"
     const val ACCESSIBILITY_STATUS = "accessibility_status"
-    const val OVERLAY_PERMISSION_DIALOG = "overlay_permission_dialog"
-    const val OPEN_OVERLAY_SETTINGS_BUTTON = "open_overlay_settings_button"
 }
 
 /** 플로팅 버튼 설정 화면 */
@@ -78,6 +76,7 @@ fun FloatingSettingScreen(
 
     if (uiState.showOverlayPermissionDialog) {
         OverlayPermissionDialog(
+            message = stringResource(R.string.floating_setting_overlay_permission_guide),
             onConfirm = viewModel::openOverlaySettings,
             onDismiss = viewModel::dismissOverlayPermissionDialog,
         )
@@ -147,24 +146,4 @@ fun FloatingSettingContent(
             style = AppTypography.ParagraphCaption,
         )
     }
-}
-
-/**
- * 다른 앱 위에 표시 권한 안내 다이얼로그
- *
- * 이 권한은 실행 중 허용 창이 없어, 확인을 누르면 이 앱의 권한 스위치가 있는 설정 화면을 바로 염
- */
-@Composable
-private fun OverlayPermissionDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ConfirmDialog(
-        message = stringResource(R.string.floating_setting_overlay_permission_guide),
-        confirmText = stringResource(R.string.floating_setting_open_overlay_settings),
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
-        modifier = Modifier.testTag(FloatingSettingTestTags.OVERLAY_PERMISSION_DIALOG),
-        confirmButtonModifier = Modifier.testTag(FloatingSettingTestTags.OPEN_OVERLAY_SETTINGS_BUTTON),
-    )
 }

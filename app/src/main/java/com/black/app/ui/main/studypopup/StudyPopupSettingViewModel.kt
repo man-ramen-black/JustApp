@@ -7,6 +7,7 @@ import com.black.app.model.StudyPopupRepository
 import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
 import com.black.core.util.Log
+import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StudyPopupSettingViewModel @Inject constructor(
     private val repository: StudyPopupRepository,
-    private val status: StudyPopupStatus,
+    private val overlayPermissionStatus: OverlayPermissionStatus,
     foregroundServiceController: ForegroundServiceController,
 ) : EventViewModel() {
 
@@ -62,7 +63,7 @@ class StudyPopupSettingViewModel @Inject constructor(
 
     /** 설정 앱에서 바뀔 수 있는 권한 상태와 팝업에 저장된 내용 개수 재조회 */
     fun refreshStatus() {
-        mutableUiState.update { it.copy(overlayPermissionGranted = status.canDrawOverlays()) }
+        mutableUiState.update { it.copy(overlayPermissionGranted = overlayPermissionStatus.canDrawOverlays()) }
         launch {
             val count = repository.countContents()
             mutableUiState.update { it.copy(savedContentsCount = count) }
@@ -77,7 +78,7 @@ class StudyPopupSettingViewModel @Inject constructor(
                 return@launch
             }
             // 권한이 없으면 화면이 켜져도 팝업을 띄우지 못하므로 켤 때 바로 허용하도록 안내
-            if (enabled && !status.canDrawOverlays()) {
+            if (enabled && !overlayPermissionStatus.canDrawOverlays()) {
                 showOverlayPermissionDialog()
             }
         }
@@ -90,8 +91,8 @@ class StudyPopupSettingViewModel @Inject constructor(
                 sendEvent(EventShowToast(R.string.study_popup_no_contents))
                 return@launch
             }
-            // 권한 없이 오버레이 창을 추가하면 크래시하므로 권한부터 안내
-            if (!status.canDrawOverlays()) {
+            // 권한 없이 오버레이 창을 추가하면 붙지 않으므로 권한부터 안내
+            if (!overlayPermissionStatus.canDrawOverlays()) {
                 showOverlayPermissionDialog()
                 return@launch
             }
