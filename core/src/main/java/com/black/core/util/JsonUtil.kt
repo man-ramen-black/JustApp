@@ -38,6 +38,20 @@ object JsonUtil {
         }
     }
 
+    /**
+     * 한 줄 출력용 Kotlin Serialization 객체
+     *
+     * [kotlinSerialization]에서 줄바꿈 없는 출력([Json.prettyPrint] false)과
+     * null 필드를 `null`로 기록([Json.explicitNulls] true)만 바꿈. JSON Lines 한 줄 기록에 사용.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    val kotlinSerializationCompact : Json by lazy {
+        Json(from = kotlinSerialization) {
+            prettyPrint = false
+            explicitNulls = true
+        }
+    }
+
     /** Gson 객체 */
     val gson : Gson by lazy {
         GsonBuilder()
@@ -91,13 +105,18 @@ object JsonUtil {
     }
 
     /** get data from Json */
-    inline fun <reified T> from(json: String, isKotlinSerialize: Boolean = false): T? {
+    inline fun <reified T> from(
+        json: String,
+        isKotlinSerialize: Boolean = false,
+        kotlinJson: Json = kotlinSerialization,
+        logInput: Boolean = true,
+    ): T? {
         return if (isKotlinSerialize) {
-            tryForKS<T> {
-                kotlinSerialization.decodeFromString(json)
+            tryForKS<T>(logInput) {
+                kotlinJson.decodeFromString(json)
             }.getOrNull()
         } else {
-            tryForGson<T> {
+            tryForGson<T>(logInput) {
                 gson.fromJson(json, object: TypeToken<T>(){}.type)
             }.getOrNull()
         }
@@ -120,10 +139,14 @@ object JsonUtil {
     }
 
     /** parse data to JsonString */
-    inline fun <reified T> to(data: T, isKotlinSerialize: Boolean = false): String? {
+    inline fun <reified T> to(
+        data: T,
+        isKotlinSerialize: Boolean = false,
+        kotlinJson: Json = kotlinSerialization,
+    ): String? {
         return if (isKotlinSerialize) {
             tryForKS {
-                kotlinSerialization.encodeToString(data)
+                kotlinJson.encodeToString(data)
             }.getOrNull()
         } else {
             tryForGson {
@@ -132,34 +155,53 @@ object JsonUtil {
         }
     }
 
-    fun <T> tryForGson(block: () -> T?): Result<T?> {
+    /**
+     * Gson 파싱 실패를 [Result]로 변환
+     *
+     * [logInput]이 false면 예외 메시지에 입력 JSON이 들어 있을 수 있어 스택 트레이스를 출력하지 않음.
+     */
+    fun <T> tryForGson(logInput: Boolean = true, block: () -> T?): Result<T?> {
         return try {
             return Result.success(block())
         } catch (e: JsonParseException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         } catch (e: ClassCastException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         }.let { Result.failure(JsonUtilParseException(it)) }
     }
 
-    fun <T> tryForKS(block: () -> T?): Result<T?> {
+    /**
+     * Kotlin Serialization 파싱 실패를 [Result]로 변환
+     *
+     * [logInput]이 false면 예외 메시지에 입력 JSON이 들어 있을 수 있어 스택 트레이스를 출력하지 않음.
+     */
+    fun <T> tryForKS(logInput: Boolean = true, block: () -> T?): Result<T?> {
         return try {
             return Result.success(block())
         } catch (e: SerializationException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         } catch (e: ClassCastException) {
-            e.printStackTrace()
+            reportFailure(e, logInput)
             e
         }.let { Result.failure(JsonUtilParseException(it)) }
+    }
+
+    /**
+     * 파싱 실패 출력
+     *
+     * [logInput]이 false면 입력이 노출되지 않도록 예외 클래스 이름만 core [Log]로 남김.
+     */
+    private fun reportFailure(e: Throwable, logInput: Boolean) {
+        if (logInput) e.printStackTrace() else Log.w("[JsonUtil] 파싱 실패: ${e.javaClass.simpleName}")
     }
 }
 

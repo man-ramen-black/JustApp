@@ -2,15 +2,18 @@ package com.black.core.util
 
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
+import android.app.AppOpsManager
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Process
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher
@@ -23,6 +26,104 @@ import androidx.core.net.toUri
 class PermissionHelper(private val activity: Activity, private val activityResultCaller: ActivityResultCaller) {
 
     companion object {
+        /**
+         * 사용 정보 접근 허용 여부
+         *
+         * 이 권한은 런타임 권한 API가 아니라 AppOps로만 확인됨.
+         */
+        fun isUsageAccessGranted(context: Context): Boolean {
+            val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appOpsManager.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                appOpsManager.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName,
+                )
+            }
+            return mode == AppOpsManager.MODE_ALLOWED
+        }
+
+        /**
+         * 사용 정보 접근 설정 화면 이동
+         *
+         * 이 앱의 항목 화면을 먼저 시도하고, 열 수 없으면 사용 정보 접근 목록 화면.
+         */
+        fun showUsageAccessSettings(context: Context) {
+            startFirstAvailable(
+                context,
+                listOf(
+                    Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS, "package:${context.packageName}".toUri()),
+                    Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS),
+                ),
+            )
+        }
+
+        /** 앱 정보 화면 이동 */
+        fun showAppDetailsSettings(context: Context) {
+            startFirstAvailable(
+                context,
+                listOf(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())),
+            )
+        }
+
+        /** [intents]를 앞에서부터 시도해 처음 열리는 화면을 시작하고, 모두 열 수 없으면 로그만 남김 */
+        private fun startFirstAvailable(context: Context, intents: List<Intent>) {
+            for (intent in intents) {
+                if (context !is Activity) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                try {
+                    context.startActivity(intent)
+                    return
+                } catch (e: ActivityNotFoundException) {
+                    Log.w("settings screen not found : ${intent.action} $e")
+                }
+            }
+        }
+
+        /**
+         * 알림 접근(알림 리스너) 허용 여부
+         *
+         * 패키지가 아니라 [service] 컴포넌트가 허용 목록에 있는지 확인함.
+         */
+        fun isNotificationListenerEnabled(context: Context, service: Class<out NotificationListenerService>): Boolean {
+            val expectedComponentName = ComponentName(context, service)
+
+            val enabledListeners = Settings.Secure.getString(
+                context.contentResolver,
+                ENABLED_NOTIFICATION_LISTENERS,
+            ) ?: return false
+
+            return enabledListeners
+                .split(":")
+                .mapNotNull { ComponentName.unflattenFromString(it) }
+                .any { it == expectedComponentName }
+        }
+
+        /**
+         * 알림 접근 설정 화면 이동
+         *
+         * API 30 이상은 [service]의 상세 화면, 그 미만이나 상세 화면이 없으면 알림 접근 목록 화면.
+         */
+        fun showNotificationListenerSettings(context: Context, service: Class<out NotificationListenerService>) {
+            val listIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+            val intents = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val detailIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                    .putExtra(
+                        Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                        ComponentName(context, service).flattenToString(),
+                    )
+                listOf(detailIntent, listIntent)
+            } else {
+                listOf(listIntent)
+            }
+
+            startFirstAvailable(context, intents)
+        }
+
         fun canDrawOverlays(context: Context) : Boolean {
             return Settings.canDrawOverlays(context)
         }
@@ -151,6 +252,9 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                 openAccessibilitySetting(context)
             }
         }
+
+        // 알림 접근을 허용한 리스너 컴포넌트 목록의 Settings.Secure 키(공개 상수가 없음)
+        private const val ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners"
 
         // 설정 앱이 특정 항목을 스크롤·하이라이트할 때 사용하는 비공개 extras 키
         private const val EXTRA_FRAGMENT_ARG_KEY = ":settings:fragment_args_key"

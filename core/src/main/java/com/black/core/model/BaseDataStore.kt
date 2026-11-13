@@ -41,7 +41,7 @@ abstract class BaseDataStore(private val context: Context) {
     protected abstract fun getDataStore(context: Context): DataStore<Preferences>
 
     /** https://github.com/android/codelab-android-datastore/blob/preferences_datastore/app/src/main/java/com/codelab/android/datastore/data/UserPreferencesRepository.kt#L138 */
-    protected suspend fun <T> get(key: Preferences.Key<T>, def: T): T {
+    protected suspend fun <T> get(key: Preferences.Key<T>, def: T, logValue: Boolean = true): T {
         val data = getDataStore(context).data
             .catch {
                 when (it) {
@@ -53,7 +53,7 @@ abstract class BaseDataStore(private val context: Context) {
             /** [DataStore.data] use data.first() to access a single snapshot. */
             .first()
             .toPreferences()[key] ?: def
-        Log.v("[${key.name}] $data")
+        Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
         return data
     }
 
@@ -73,12 +73,44 @@ abstract class BaseDataStore(private val context: Context) {
      * 값 저장 결과 반환(실패 시 원인 예외)
      *
      * 코루틴 취소는 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함
+     *
+     * [logValue]가 false면 개인 데이터가 로그에 남지 않도록 키 이름만 기록
      */
-    protected suspend fun <T> update(key: Preferences.Key<T>, data: T): Result<Unit> {
-        Log.v("[${key.name}] $data")
+    protected suspend fun <T> update(key: Preferences.Key<T>, data: T, logValue: Boolean = true): Result<Unit> {
+        Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
         return try {
             getDataStore(context).edit { it[key] = data }
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 저장된 값을 읽어 [transform]으로 바꿔 저장하는 일을 DataStore `edit` 한 번 안에서 처리
+     *
+     * 읽기와 쓰기 사이에 다른 저장이 끼어들 수 없어 추가·삭제·최초 생성이 원자적임.
+     * 저장된 값이 없으면 [def]가 [transform]에 전달됨. 성공이면 저장한 값을 돌려주고,
+     * 실패 처리는 [update]와 같음(코루틴 취소는 다시 던지고 그 밖의 예외는 실패 결과).
+     * [logValue]가 false면 값 없이 키 이름만 기록.
+     */
+    protected suspend fun <T> updateWith(
+        key: Preferences.Key<T>,
+        def: T,
+        logValue: Boolean = true,
+        transform: (T) -> T,
+    ): Result<T> {
+        return try {
+            var saved = def
+            getDataStore(context).edit {
+                saved = transform(it[key] ?: def)
+                it[key] = saved
+            }
+            Log.v(if (logValue) "[${key.name}] $saved" else "[${key.name}]")
+            Result.success(saved)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

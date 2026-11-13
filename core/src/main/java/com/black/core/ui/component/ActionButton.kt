@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,8 @@ import com.black.core.ui.theme.AppTypography
  *
  * 컨테이너 톤 박스 + ExtraBold 라벨 형태
  * 기본 자간은 영문 대문자 라벨용, 한글 라벨은 자간을 줄여 전달
+ *
+ * [enabled]가 false면 흐리게 보이고 눌리지 않음.
  */
 @Composable
 fun ActionButton(
@@ -28,6 +31,7 @@ fun ActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     letterSpacing: TextUnit = AppTypography.ButtonLabel.letterSpacing,
+    enabled: Boolean = true,
 ) {
     val shape = AppShapes.Container
     Box(
@@ -35,7 +39,8 @@ fun ActionButton(
             .clip(shape)
             .background(AppColors.ContainerBackground)
             .border(1.dp, AppColors.ContainerBorder, shape)
-            .clickable(onClick = onClick)
+            .alpha(if (enabled) 1f else DISABLED_ALPHA)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -46,3 +51,6 @@ fun ActionButton(
         )
     }
 }
+
+/** 비활성 버튼의 투명도 */
+private const val DISABLED_ALPHA = 0.4f

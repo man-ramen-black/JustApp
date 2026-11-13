@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.black.test.BaseTest
 import io.mockk.coEvery
@@ -112,6 +113,73 @@ class BaseDataStoreTest : BaseTest() {
         val thrown = runCatching { dataStore.updateText("saved") }.exceptionOrNull()
 
         /** Then **/
+        assertTrue(thrown is CancellationException)
+    }
+
+    /** 읽고 고쳐 쓰기 검증용 DataStore */
+    private class UpdateWithTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.updateWithTestDataStore by blackDataStore("updateWithTest")
+
+            private val KEY_SET = stringSetPreferencesKey("set")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.updateWithTestDataStore
+
+        suspend fun add(value: String): Result<Set<String>> = updateWith(KEY_SET, emptySet()) { it + value }
+
+        suspend fun getSet(): Set<String> = get(KEY_SET, emptySet())
+    }
+
+    /**
+     * 읽고 고쳐 쓰기가 저장된 값에 변환을 이어 적용하는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 값 두 개를 차례로 추가
+     * Then: 첫 결과는 기본값에서 시작한 집합, 둘째 결과와 저장값은 둘 다 포함
+     */
+    @Test
+    fun test_04_updateWithAppliesTransformToStoredValue() = runTest {
+        /** Given **/
+        val dataStore = UpdateWithTestDataStore(context)
+
+        /** When **/
+        val first = dataStore.add("a")
+        val second = dataStore.add("b")
+
+        /** Then **/
+        assertEquals(setOf("a"), first.getOrNull())
+        assertEquals(setOf("a", "b"), second.getOrNull())
+        assertEquals(setOf("a", "b"), dataStore.getSet())
+    }
+
+    /**
+     * 읽고 고쳐 쓰기의 저장 실패가 실패 결과로, 취소가 재던짐으로 처리되는지 검증
+     *
+     * Given: 저장 시 IOException, CancellationException을 던지는 DataStore
+     * When: updateWith 호출
+     * Then: 실패 결과(IOException), 취소는 전파
+     */
+    @Test
+    fun test_05_updateWithFailureAndCancellation() = runTest {
+        /** Given **/
+        class FailingWithDataStore(context: Context, error: Throwable) : BaseDataStore(context) {
+            private val dataStore: DataStore<Preferences> = mockk {
+                coEvery { updateData(any()) } throws error
+            }
+
+            override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+            suspend fun add(): Result<String> = updateWith(stringPreferencesKey("text"), "") { it + "x" }
+        }
+
+        /** When **/
+        val failure = FailingWithDataStore(context, IOException("disk full")).add()
+        val thrown = runCatching { FailingWithDataStore(context, CancellationException("cancelled")).add() }
+            .exceptionOrNull()
+
+        /** Then **/
+        assertTrue(failure.exceptionOrNull() is IOException)
         assertTrue(thrown is CancellationException)
     }
 }
