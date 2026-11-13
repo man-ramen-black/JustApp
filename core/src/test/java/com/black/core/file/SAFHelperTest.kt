@@ -8,12 +8,15 @@ import android.provider.OpenableColumns
 import android.content.Intent
 import com.black.core.file.SAFHelper.getFileName
 import com.black.core.file.SAFHelper.openInputStream
+import com.black.core.file.SAFHelper.readDocumentText
+import com.black.core.file.SAFHelper.writeDocumentText
 import com.black.test.BaseTest
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -23,8 +26,11 @@ import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.FileNotFoundException
 
-/** [SAFHelper]의 파일 이름 조회, 영구 권한 요청, 스트림 열기 동작 검증 */
+/** [SAFHelper]의 파일 이름 조회, 영구 권한 요청, 스트림 열기, 문서 텍스트 읽기와 쓰기 동작 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SAFHelperTest : BaseTest() {
 
@@ -140,5 +146,171 @@ class SAFHelperTest : BaseTest() {
 
         /** Then **/
         verify(exactly = 0) { contentResolver.takePersistableUriPermission(any(), any()) }
+    }
+
+    /**
+     * 문서 텍스트를 읽어 후속 처리 결과를 성공 결과로 반환하는지 검증
+     *
+     * Given: CRLF 줄 끝과 한글이 든 UTF-8 문서
+     * When: readDocumentText 호출(후속 처리는 읽은 텍스트에 표시를 덧붙임)
+     * Then: 줄 끝을 바꾸지 않은 텍스트로 후속 처리한 결과가 성공 결과
+     */
+    @Test
+    fun test_06_readDocumentTextReturnsOnReadResult() = runTest {
+        /** Given **/
+        every { contentResolver.openInputStream(documentUri) } returns
+            ByteArrayInputStream("가\r\nb\r\n".toByteArray(Charsets.UTF_8))
+
+        /** When **/
+        val result = documentUri.readDocumentText(context) { "$it!" }
+
+        /** Then **/
+        assertEquals("가\r\nb\r\n!", result.getOrNull())
+    }
+
+    /**
+     * 읽기 스트림을 열 수 없으면 후속 처리 없이 FileNotFoundException 실패 결과를 반환하는지 검증
+     *
+     * Given: openInputStream이 null을 돌려주는 contentResolver
+     * When: readDocumentText 호출
+     * Then: FileNotFoundException 실패 결과, 후속 처리 미실행
+     */
+    @Test
+    fun test_07_readDocumentTextFailsWhenStreamIsNull() = runTest {
+        /** Given **/
+        every { contentResolver.openInputStream(documentUri) } returns null
+        var onReadCalled = false
+
+        /** When **/
+        val result = documentUri.readDocumentText(context) { onReadCalled = true }
+
+        /** Then **/
+        assertTrue(result.exceptionOrNull() is FileNotFoundException)
+        assertFalse(onReadCalled)
+    }
+
+    /**
+     * 영구 권한이 없는 문서는 SecurityException을 그대로 실패 결과로 넘기는지 검증(호출부가 이 예외로 문서 재선택 안내)
+     *
+     * Given: openInputStream이 SecurityException을 던지는 contentResolver
+     * When: readDocumentText 호출
+     * Then: SecurityException 실패 결과
+     */
+    @Test
+    fun test_08_readDocumentTextKeepsSecurityException() = runTest {
+        /** Given **/
+        every { contentResolver.openInputStream(documentUri) } throws SecurityException("No persistable permission grants found")
+
+        /** When **/
+        val result = documentUri.readDocumentText(context) { it }
+
+        /** Then **/
+        assertTrue(result.exceptionOrNull() is SecurityException)
+    }
+
+    /**
+     * 읽은 뒤 후속 처리에서 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
+     *
+     * Given: 문서 내용, CancellationException을 던지는 후속 처리
+     * When: readDocumentText 호출
+     * Then: CancellationException 전파
+     */
+    @Test
+    fun test_09_readDocumentTextRethrowsCancellation() = runTest {
+        /** Given **/
+        every { contentResolver.openInputStream(documentUri) } returns ByteArrayInputStream(byteArrayOf())
+
+        /** When **/
+        val thrown = runCatching {
+            documentUri.readDocumentText(context) { throw CancellationException("cancelled") }
+        }.exceptionOrNull()
+
+        /** Then **/
+        assertTrue(thrown is CancellationException)
+    }
+
+    /**
+     * 기존 내용을 지우는 모드로 문서에 텍스트를 쓰고 후속 처리를 실행하는지 검증
+     *
+     * Given: "wt" 모드 쓰기 스트림을 돌려주는 contentResolver
+     * When: writeDocumentText 호출
+     * Then: 성공 결과, 스트림에 UTF-8 텍스트가 그대로 쓰임, 후속 처리 실행
+     */
+    @Test
+    fun test_10_writeDocumentTextWritesTextAndRunsOnWritten() = runTest {
+        /** Given **/
+        val outputStream = ByteArrayOutputStream()
+        every { contentResolver.openOutputStream(documentUri, "wt") } returns outputStream
+        var onWrittenCalled = false
+
+        /** When **/
+        val result = documentUri.writeDocumentText(context, createText = { "가\r\nb" }) { onWrittenCalled = true }
+
+        /** Then **/
+        assertTrue(result.isSuccess)
+        assertEquals("가\r\nb", outputStream.toString(Charsets.UTF_8.name()))
+        assertTrue(onWrittenCalled)
+    }
+
+    /**
+     * 쓰기 스트림을 열 수 없으면 후속 처리 없이 FileNotFoundException 실패 결과를 반환하는지 검증
+     *
+     * Given: openOutputStream이 null을 돌려주는 contentResolver
+     * When: writeDocumentText 호출
+     * Then: FileNotFoundException 실패 결과, 후속 처리 미실행
+     */
+    @Test
+    fun test_11_writeDocumentTextFailsWhenStreamIsNull() = runTest {
+        /** Given **/
+        every { contentResolver.openOutputStream(documentUri, "wt") } returns null
+        var onWrittenCalled = false
+
+        /** When **/
+        val result = documentUri.writeDocumentText(context, createText = { "text" }) { onWrittenCalled = true }
+
+        /** Then **/
+        assertTrue(result.exceptionOrNull() is FileNotFoundException)
+        assertFalse(onWrittenCalled)
+    }
+
+    /**
+     * 쓸 텍스트를 만들다 실패하면 기존 내용을 지우는 스트림을 열지 않고 실패 결과를 반환하는지 검증
+     *
+     * Given: IllegalArgumentException을 던지는 텍스트 생성(XML에 쓸 수 없는 문자 등)
+     * When: writeDocumentText 호출
+     * Then: IllegalArgumentException 실패 결과, openOutputStream 미호출
+     */
+    @Test
+    fun test_12_writeDocumentTextDoesNotOpenStreamWhenCreateTextFails() = runTest {
+        /** Given **/
+        val createText: () -> String = { throw IllegalArgumentException("Illegal character (U+1)") }
+
+        /** When **/
+        val result = documentUri.writeDocumentText(context, createText)
+
+        /** Then **/
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+        verify(exactly = 0) { contentResolver.openOutputStream(any(), any()) }
+    }
+
+    /**
+     * 쓴 뒤 후속 처리에서 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
+     *
+     * Given: 쓰기 스트림, CancellationException을 던지는 후속 처리
+     * When: writeDocumentText 호출
+     * Then: CancellationException 전파
+     */
+    @Test
+    fun test_13_writeDocumentTextRethrowsCancellation() = runTest {
+        /** Given **/
+        every { contentResolver.openOutputStream(documentUri, "wt") } returns ByteArrayOutputStream()
+
+        /** When **/
+        val thrown = runCatching {
+            documentUri.writeDocumentText(context, createText = { "text" }) { throw CancellationException("cancelled") }
+        }.exceptionOrNull()
+
+        /** Then **/
+        assertTrue(thrown is CancellationException)
     }
 }

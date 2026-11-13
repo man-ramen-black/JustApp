@@ -4,8 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.database.studypopup.StudyPopupData
+import com.black.app.model.database.studypopup.StudyPopupDatabase
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -23,10 +25,21 @@ class StudyPopupRepositoryTest : BaseTest() {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val repository = StudyPopupRepository(context)
 
-    /** 각 테스트 전 팝업 내용 초기화(DB가 프로세스 단일 인스턴스라 테스트 간 공유) */
+    /** 각 테스트 전 팝업 내용 초기화(이전 테스트가 저장한 내용에 기대지 않도록) */
     @Before
     fun clearContents() {
         runTest { repository.save(emptyList()) }
+    }
+
+    /**
+     * 각 테스트 후 DB 단일 인스턴스 닫기
+     *
+     * DB는 프로세스 단일 인스턴스라 남겨 두면 다음 테스트가 그대로 사용. Robolectric LEGACY SQLite 모드(Windows 기본)는
+     * 테스트가 끝날 때 연결을 정리해 그 인스턴스가 `Illegal connection pointer`로 실패하므로, 연결이 유효한 동안 닫아 새로 열게 함
+     */
+    @After
+    fun closeDatabase() {
+        StudyPopupDatabase.closeInstance()
     }
 
     /**
@@ -172,5 +185,27 @@ class StudyPopupRepositoryTest : BaseTest() {
         /** Then **/
         assertEquals(listOf("first", "second"), contents.map { it.contents })
         assertEquals(2, repository.countContents())
+    }
+
+    /**
+     * XML에 쓸 수 없는 문자가 든 내용은 저장에 실패하고 기존 파일 내용과 팝업 DB를 바꾸지 않는지 검증
+     *
+     * Given: 내용 "a"를 저장한 파일, 제어 문자(U+0001)가 든 내용 목록
+     * When: writeFile
+     * Then: 실패 결과, 파일을 다시 읽으면 "a" 그대로, 팝업 DB 내용도 "a" 그대로
+     */
+    @Test
+    fun test_08_writeFileWithInvalidCharacterKeepsFile() = runTest {
+        /** Given **/
+        val uri = Uri.fromFile(File(context.filesDir, "study_popup_invalid.xml").apply { writeText("") })
+        repository.writeFile(uri, listOf("a")).getOrThrow()
+
+        /** When **/
+        val result = repository.writeFile(uri, listOf("b\u0001"))
+
+        /** Then **/
+        assertTrue(result.isFailure)
+        assertEquals(listOf("a"), repository.readFile(uri).getOrNull())
+        assertEquals(listOf("a"), repository.load().map { it.contents })
     }
 }

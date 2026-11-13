@@ -5,14 +5,12 @@ import android.net.Uri
 import com.black.app.model.datastore.TextEditorDataStore
 import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.getFileName
-import com.black.core.file.SAFHelper.openInputStream
-import com.black.core.file.SAFHelper.openOutputStream
-import com.black.core.util.FileUtil
+import com.black.core.file.SAFHelper.readDocumentText
+import com.black.core.file.SAFHelper.writeDocumentText
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -52,43 +50,21 @@ class TextEditorRepository @Inject constructor(
         .flowOn(Dispatchers.IO)
 
     /** 선택창에서 고른 문서에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
-    suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {
-        SAFHelper.keepUriPermission(context, uri)
-    }
+    suspend fun keepPermission(uri: Uri): Boolean = SAFHelper.keepUriPermission(context, uri)
 
-    suspend fun saveTextFile(uri: Uri?, text: String): Result<Unit> {
-        return try {
-            val stream = uri?.openOutputStream(context, "wt")
-                ?: run {
-                    return Result.failure(IllegalStateException("openOutputStream failed, uri : $uri"))
-                }
-
-            val fileText = if (uri == crlfFileUri) text.replace(LF, CRLF) else text
-            FileUtil.writeText(stream) { it.write(fileText) }
-                .also { dataStore.updateLatestFileUri(uri) }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun saveTextFile(uri: Uri, text: String): Result<Unit> =
+        uri.writeDocumentText(context, createText = { if (uri == crlfFileUri) text.replace(LF, CRLF) else text }) {
+            dataStore.updateLatestFileUri(uri)
         }
-    }
 
-    suspend fun loadTextFile(uri: Uri?): Result<String> {
-        return try {
-            val stream = uri?.openInputStream(context)
-                ?: run {
-                    return Result.failure(IllegalStateException("openInputStream failed, uri : $uri"))
-                }
-
-            val fileText = FileUtil.readText(stream)
-                .also { dataStore.updateLatestFileUri(uri) }
+    suspend fun loadTextFile(uri: Uri): Result<String> =
+        uri.readDocumentText(context) { fileText ->
+            dataStore.updateLatestFileUri(uri)
             // LF와 CR이 섞인 문서는 저장 때 되돌릴 줄 끝을 정할 수 없어 그대로 편집
             val isCrlf = isAllCrlf(fileText)
             crlfFileUri = if (isCrlf) uri else null
-            Result.success(if (isCrlf) fileText.replace(CRLF, LF) else fileText)
-        } catch (e: Exception) {
-            Result.failure(e)
+            if (isCrlf) fileText.replace(CRLF, LF) else fileText
         }
-    }
 
     suspend fun reset() {
         crlfFileUri = null

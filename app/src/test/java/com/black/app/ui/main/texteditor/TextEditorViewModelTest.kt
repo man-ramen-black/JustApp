@@ -31,6 +31,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.FileNotFoundException
 
 /** [TextEditorViewModel]의 상태 관리·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -155,7 +156,7 @@ class TextEditorViewModelTest : BaseTest() {
 
         /** When **/
         viewModel.onDocumentOpened(uri)
-        // IO 스레드 작업 완료 및 Main 코루틴 재개 후 text 갱신 대기
+        // 불러오기 코루틴 완료 후 text 갱신 대기
         val loadedState = viewModel.uiState.filter { it.text == "loaded" }.first()
 
         /** Then **/
@@ -180,7 +181,7 @@ class TextEditorViewModelTest : BaseTest() {
         coEvery { repository.loadTextFile(uri) } returns Result.success("initial text")
         coEvery { repository.saveTextFile(uri, any()) } returns Result.failure(Exception("save error"))
         val viewModel = createViewModel()
-        // init IO 코루틴 완료(originText·uiState.text = "initial text") 후 텍스트 변경
+        // init 코루틴 완료(originText·uiState.text = "initial text") 후 텍스트 변경
         viewModel.uiState.filter { it.text == "initial text" }.first()
         viewModel.onTextChanged("changed text")
         val receivedEvents = mutableListOf<ViewModelEvent>()
@@ -235,7 +236,7 @@ class TextEditorViewModelTest : BaseTest() {
 
         /** When **/
         val viewModel = createViewModel()
-        // IO 스레드 로드 실패 후 상태 갱신 대기
+        // init 로드 실패 후 상태 갱신 대기
         val requestState = viewModel.uiState.filter { it.permissionRequiredUri != null }.first()
 
         /** Then **/
@@ -246,7 +247,7 @@ class TextEditorViewModelTest : BaseTest() {
     /**
      * 권한 외 사유(파일 삭제 등)로 init 로드가 실패하면 권한 요청 없이 최근 문서 로드 실패 토스트가 발송되는지 검증
      *
-     * Given: 마지막 문서 uri 저장, loadTextFile이 IllegalStateException 실패 반환
+     * Given: 마지막 문서 uri 저장, loadTextFile이 FileNotFoundException 실패 반환(스트림을 열 수 없음)
      * When: ViewModel 생성(init 로드)
      * Then: EventShowToast(text_editor_load_failed_latest_file) 수신 + permissionRequiredUri null
      */
@@ -255,7 +256,7 @@ class TextEditorViewModelTest : BaseTest() {
         /** Given **/
         val uri = mockk<Uri>()
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
-        coEvery { repository.loadTextFile(uri) } returns Result.failure(IllegalStateException("openInputStream failed"))
+        coEvery { repository.loadTextFile(uri) } returns Result.failure(FileNotFoundException("openInputStream failed"))
         coEvery { repository.reset() } just Runs
         val receivedEvents = mutableListOf<ViewModelEvent>()
 

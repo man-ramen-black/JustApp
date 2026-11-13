@@ -8,14 +8,12 @@ import com.black.app.model.datastore.StudyPopupDataStore
 import com.black.app.ui.main.studypopup.StudyPopupGlobal
 import com.black.core.file.SAFHelper
 import com.black.core.file.SAFHelper.getFileName
-import com.black.core.file.SAFHelper.openInputStream
-import com.black.core.file.SAFHelper.openOutputStream
-import com.black.core.util.FileUtil
+import com.black.core.file.SAFHelper.readDocumentText
+import com.black.core.file.SAFHelper.writeDocumentText
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import java.io.FileNotFoundException
 import javax.inject.Inject
 
 /**
@@ -92,41 +90,26 @@ class StudyPopupRepository @Inject constructor(@ApplicationContext context: Cont
      * 다음에 화면을 열 때 자동으로 다시 읽도록 마지막으로 연 파일로 기록(영구 권한은 선택 직후 [keepPermission]).
      * 재설치 등으로 영구 권한이 사라진 uri는 SecurityException으로 실패
      */
-    suspend fun readFile(uri: Uri) : Result<List<String>> = withContext(Dispatchers.IO) {
-        try {
-            val stream = uri.openInputStream(appContext)
-                ?: throw FileNotFoundException("openInputStream failed, uri : $uri")
-            val contents = StudyPopupXml.parse(FileUtil.readText(stream))
+    suspend fun readFile(uri: Uri) : Result<List<String>> =
+        uri.readDocumentText(appContext) { text ->
+            val contents = StudyPopupXml.parse(text)
             dataStore.updateLatestUri(uri)
-            Result.success(contents)
-        } catch (e: Exception) {
-            Result.failure(e)
+            contents
         }
-    }
 
     /**
      * [contents]를 [uri] 내용 파일과 팝업 DB에 저장
      *
      * 팝업은 DB를 읽으므로 파일 저장에 성공한 뒤 DB도 같은 내용으로 갱신
      */
-    suspend fun writeFile(uri: Uri, contents: List<String>) : Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            // wt : 스트림을 열면서 기존 파일 내용을 지움
-            val stream = uri.openOutputStream(appContext, "wt")
-                ?: throw FileNotFoundException("openOutputStream failed, uri : $uri")
-            FileUtil.writeText(stream) { it.write(StudyPopupXml.serialize(contents)) }
+    suspend fun writeFile(uri: Uri, contents: List<String>) : Result<Unit> =
+        uri.writeDocumentText(appContext, createText = { StudyPopupXml.serialize(contents) }) {
             dataStore.updateLatestUri(uri)
             save(contents.map { StudyPopupData.Contents(it) })
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
-    }
 
     /** 선택창에서 고른 내용 파일에 다음 실행에도 접근할 수 있도록 영구 권한 요청 */
-    suspend fun keepPermission(uri: Uri) = withContext(Dispatchers.IO) {
-        SAFHelper.keepUriPermission(appContext, uri)
-    }
+    suspend fun keepPermission(uri: Uri) : Boolean = SAFHelper.keepUriPermission(appContext, uri)
 
     /** 표시용 파일 이름, 조회할 수 없으면 빈 문자열 */
     suspend fun getFileName(uri: Uri) : String = withContext(Dispatchers.IO) {

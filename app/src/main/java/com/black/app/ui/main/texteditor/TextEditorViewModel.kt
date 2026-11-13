@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -53,7 +52,7 @@ class TextEditorViewModel @Inject constructor(
                 mutableUiState.update { it.copy(fileName = fileName) }
             }
         }
-        launch(Dispatchers.IO) {
+        launch {
             val uri = textEditorRepository.currentFileUriFlow.firstOrNull() ?: return@launch
             loadFile(uri).exceptionOrNull()?.let {
                 Log.w(it)
@@ -153,15 +152,15 @@ class TextEditorViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadFile(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+    private suspend fun loadFile(uri: Uri): Result<Unit> {
         val loadResult = textEditorRepository.loadTextFile(uri)
         if (loadResult.isFailure) {
-            return@withContext Result.failure(loadResult.exceptionOrNull()!!)
+            return Result.failure(loadResult.exceptionOrNull()!!)
         }
         val loadedText = loadResult.getOrNull()!!
         originText.value = loadedText
         mutableUiState.update { it.copy(text = loadedText) }
-        Result.success(Unit)
+        return Result.success(Unit)
     }
 
     /**
@@ -183,9 +182,9 @@ class TextEditorViewModel @Inject constructor(
         }
     }
 
-    private suspend fun saveFile(uri: Uri): Result<Unit> = withContext(Dispatchers.IO) {
+    private suspend fun saveFile(uri: Uri): Result<Unit> {
         val text = uiState.value.text
-        textEditorRepository.saveTextFile(uri, text)
+        return textEditorRepository.saveTextFile(uri, text)
             .also {
                 if (it.isSuccess) {
                     // 저장 성공 시 변경 감지 기준 갱신(중복 자동 저장 방지)
