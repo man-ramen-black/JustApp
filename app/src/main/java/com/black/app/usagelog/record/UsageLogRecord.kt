@@ -12,9 +12,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface UsageLogRecord {
     /**
-     * 기록 시각(epoch ms)
+     * 기록 시각
      *
-     * 구간 기록은 시작 시각이며 JSON 키는 t.
+     * epoch ms이며 구간 기록은 시작 시각, JSON 키는 t.
      */
     val time: Long
 }

@@ -27,7 +27,11 @@ fun interface WebhookSender {
     suspend fun send(webhookUrl: String, content: String, fileName: String, attachment: ByteArray): WebhookResult
 }
 
-/** 디스코드 웹후크 요청 본문 생성과 응답 해석 (네트워크 호출 없음) */
+/**
+ * 디스코드 웹후크 요청 본문 생성과 응답 해석
+ *
+ * 네트워크 호출은 하지 않음.
+ */
 object DiscordWebhookFormat {
 
     private val WEBHOOK_URL_PATTERN =

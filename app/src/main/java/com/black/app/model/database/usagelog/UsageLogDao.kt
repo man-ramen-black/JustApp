@@ -38,13 +38,14 @@ abstract class UsageLogDao {
     }
 
     /**
-     * [ids]를 [chunkSize]개씩 나눠 삭제하며 한 트랜잭션으로 처리
+     * [ids]를 [chunkSize]개씩 나눠 삭제하고 [gap]을 추가하며 한 트랜잭션으로 처리
      *
      * 중간에 실패하면 전부 되돌림.
      */
     @Transaction
-    open suspend fun deleteByIdsInChunks(ids: List<Long>, chunkSize: Int) {
+    open suspend fun deleteAndAddGap(ids: List<Long>, chunkSize: Int, gap: UsageLogEntity) {
         ids.chunked(chunkSize).forEach { deleteByIds(it) }
+        insertAll(listOf(gap))
     }
 
     @Query("SELECT * FROM usage_log ORDER BY time DESC, id DESC LIMIT :limit")

@@ -73,7 +73,11 @@ object WifiStateTracker {
         }
 }
 
-/** 집 Wi-Fi 연결(도착)·해제(출발) 알림 수신자 */
+/**
+ * 집 도착·출발 알림 수신자
+ *
+ * 집 Wi-Fi 연결이 도착, 해제가 출발.
+ */
 fun interface HomeTransitionListener {
     fun onHomeTransition(arrived: Boolean)
 }

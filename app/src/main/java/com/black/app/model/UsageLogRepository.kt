@@ -36,23 +36,29 @@ class UsageLogRepository(private val dao: UsageLogDao) {
     /**
      * 미전송 기록 조회
      *
-     * id 오름차순이며 복원할 수 없는 행은 결과에서 빼고 같은 호출에서 지움.
+     * id 오름차순이며 복원할 수 없는 행은 결과에서 빼고 같은 호출에서 지움. 지운 행의 time 범위는
+     * [GapCause.UNSENT_DELETED] 공백 기록으로 남기며 삭제와 공백 추가는 한 트랜잭션. [now]는 공백 기록의 저장 시각.
+     * 빈 목록이면 미전송 기록이 더 없다는 뜻이며, 조회한 행이 모두 손상이었으면 지운 뒤 다시 조회함.
      */
-    suspend fun getUnsent(limit: Int): List<StoredUsageLogRecord> {
-        val entities = dao.getUnsent(limit)
-        // 복원 가능한 행과 손상된 행 분리
-        val stored = ArrayList<StoredUsageLogRecord>(entities.size)
-        val corruptIds = ArrayList<Long>()
-        entities.forEach { entity ->
-            val record = UsageLogRecordCodec.decode(entity.json)
-            if (record == null) corruptIds.add(entity.id) else stored.add(StoredUsageLogRecord(entity.id, record))
+    suspend fun getUnsent(limit: Int, now: Long = System.currentTimeMillis()): List<StoredUsageLogRecord> {
+        while (true) {
+            val entities = dao.getUnsent(limit)
+            // 복원 가능한 행과 손상된 행 분리
+            val stored = ArrayList<StoredUsageLogRecord>(entities.size)
+            val corrupt = ArrayList<UsageLogEntity>()
+            entities.forEach { entity ->
+                val record = UsageLogRecordCodec.decode(entity.json)
+                if (record == null) corrupt.add(entity) else stored.add(StoredUsageLogRecord(entity.id, record))
+            }
+            if (corrupt.isEmpty()) return stored
+
+            // 손상된 행을 지우고 그 범위를 공백 기록으로 남김
+            Log.w("[UsageLogRepository] 손상된 기록 ${corrupt.size}건 삭제, 공백 기록으로 대체")
+            val gap = GapRecord(corrupt.minOf { it.time }, corrupt.maxOf { it.time }, GapCause.UNSENT_DELETED).toEntity(now)
+            dao.deleteAndAddGap(corrupt.map { it.id }, MAX_IDS_PER_STATEMENT, gap)
+            // 모두 손상이었으면 빈 목록이 "미전송 없음"으로 읽히지 않도록 뒤의 행과 공백 기록을 다시 조회
+            if (stored.isNotEmpty()) return stored
         }
-        // 손상된 행 삭제
-        if (corruptIds.isNotEmpty()) {
-            Log.w("[UsageLogRepository] 손상된 기록 ${corruptIds.size}건 삭제, id=$corruptIds")
-            dao.deleteByIdsInChunks(corruptIds, MAX_IDS_PER_STATEMENT)
-        }
-        return stored
     }
 
     /**

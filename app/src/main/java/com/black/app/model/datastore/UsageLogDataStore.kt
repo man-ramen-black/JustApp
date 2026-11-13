@@ -14,6 +14,7 @@ import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.upload.LastSendResult
 import com.black.app.usagelog.upload.UsageLogCipher
 import com.black.core.model.BaseDataStore
+import com.black.core.model.PreferenceUpdate
 import com.black.core.model.blackDataStore
 import com.black.core.util.JsonUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,7 +28,7 @@ import javax.inject.Inject
  * 기기 사용 기록의 수집 설정과 진행 상태 저장소
  *
  * SSID(집 SSID 목록, 마지막 Wi-Fi 상태)와 열린 구간은 개인 데이터라 로그에 값을 남기지 않음.
- * 웹후크 주소와 암호화 키도 비밀 값이라 로그에 값을 남기지 않음.
+ * 웹후크 주소, 암호화 키, 설치 식별자도 비밀 값이라 로그에 값을 남기지 않음.
  */
 class UsageLogDataStore @Inject constructor(
     @ApplicationContext private val context: Context
@@ -86,6 +87,23 @@ class UsageLogDataStore @Inject constructor(
     suspend fun updateUsageCursor(time: Long): Result<Unit> = update(KEY_USAGE_CURSOR, time)
 
     /**
+     * 열린 구간과 커서를 DataStore `edit` 한 번에 저장
+     *
+     * 하나만 저장된 채 끊기면 다음 수집이 이미 반영한 이벤트를 열린 구간에 다시 이어 붙이므로 함께 저장.
+     * [session]이 null이면 열린 구간 저장값을 삭제.
+     */
+    suspend fun updateUsageProgress(session: OpenUsageSession?, cursor: Long): Result<Unit> {
+        val json = session?.let {
+            JsonUtil.to(it, true) ?: return Result.failure(IllegalStateException("열린 구간 직렬화 실패"))
+        }
+        return updateAll(
+            PreferenceUpdate(KEY_OPEN_SESSION, json),
+            PreferenceUpdate(KEY_USAGE_CURSOR, cursor),
+            logValue = false,
+        )
+    }
+
+    /**
      * 열린 구간
      *
      * 저장값이 없거나 복원할 수 없으면 null.
@@ -140,7 +158,7 @@ class UsageLogDataStore @Inject constructor(
      */
     suspend fun getInstallId(): Result<String> {
         // 없을 때만 새 UUID 저장
-        return updateWith(KEY_INSTALL_ID, "") { saved -> saved.ifEmpty { UUID.randomUUID().toString() } }
+        return updateWith(KEY_INSTALL_ID, "", logValue = false) { saved -> saved.ifEmpty { UUID.randomUUID().toString() } }
     }
 
     fun getWebhookUrlFlow(): Flow<String> = flow(KEY_WEBHOOK_URL).map { it ?: "" }

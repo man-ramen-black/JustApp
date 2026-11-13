@@ -1,9 +1,12 @@
 package com.black.app.usagelog.collect
 
+import android.app.Notification
+import androidx.core.app.NotificationCompat
 import com.black.app.usagelog.record.NotificationPostedRecord
 import com.black.app.usagelog.record.NotificationRemovedRecord
 import com.black.app.usagelog.record.RemovalReason
 import com.black.app.usagelog.record.UsageLogRecord
+import com.black.core.util.Log
 
 /** 알림 기록 여부 판정에 필요한 알림 정보 */
 data class NotificationSnapshot(
@@ -19,7 +22,8 @@ data class NotificationSnapshot(
  *
  * 처리가 늦어져도 `StatusBarNotification`에 접근하지 않도록 기록에 필요한 값만 담음.
  *
- * @property removalReason null이면 게시, 아니면 제거(제거는 [title]·[text]·[category]를 읽지 않음)
+ * @property lastMessageTime 메시지 스타일 알림의 마지막 메시지 시각. 같은 문구로 새로 온 메시지를 중복으로 거르지 않기 위함
+ * @property removalReason null이면 게시, 아니면 제거(제거는 [title]·[text]·[category]·[lastMessageTime]을 읽지 않음)
  * @property eventTime 콜백이 도착한 시각(epoch ms)
  */
 data class NotificationEvent(
@@ -27,11 +31,12 @@ data class NotificationEvent(
     val title: String?,
     val text: String?,
     val category: String?,
+    val lastMessageTime: Long?,
     val removalReason: RemovalReason?,
     val eventTime: Long,
 )
 
-/** 알림 기록 대상 판정, 제거 이유 변환, 본문 선택 규칙 */
+/** 알림 기록 대상 판정, 제거 이유 변환, 본문 선택 규칙과 이벤트 처리 */
 object NotificationRecordRules {
     // NotificationListenerService.REASON_* 상수값(JVM 유닛 테스트에서 안드로이드 상수에 기대지 않으려고 복사)
     private const val REASON_CLICK = 1
@@ -52,6 +57,18 @@ object NotificationRecordRules {
         else -> RemovalReason.OTHER
     }
 
+    /**
+     * 메시지 스타일 알림의 마지막 메시지
+     *
+     * 다른 앱이 넣은 값이 형식에 맞지 않아 읽다가 예외가 나면, 알림 전체를 버리지 않도록 메시지 스타일이 아닌 알림처럼 null.
+     */
+    fun lastMessageOf(notification: Notification): NotificationCompat.MessagingStyle.Message? = try {
+        NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)?.messages?.lastOrNull()
+    } catch (failure: Exception) {
+        Log.w("[NotificationRecordRules] 메시지 스타일 읽기 실패: ${failure::class.java.simpleName}")
+        null
+    }
+
     /** 마지막 메시지, 긴 본문, 본문 순으로 비어 있지 않은 첫 값 */
     fun resolveText(lastMessageText: CharSequence?, bigText: CharSequence?, text: CharSequence?): String? =
         listOf(lastMessageText, bigText, text).firstOrNull { !it.isNullOrEmpty() }?.toString()
@@ -66,7 +83,7 @@ object NotificationRecordRules {
         event: NotificationEvent,
         ownPackageName: String,
         appNameOf: (String) -> String,
-        isDuplicate: (key: String, title: String?, text: String?) -> Boolean,
+        isDuplicate: (key: String, title: String?, text: String?, messageTime: Long?) -> Boolean,
     ): UsageLogRecord? {
         val snapshot = event.snapshot
         if (!shouldRecord(snapshot, ownPackageName)) return null
@@ -74,7 +91,7 @@ object NotificationRecordRules {
         if (removalReason != null) {
             return NotificationRemovedRecord(snapshot.key, snapshot.packageName, event.eventTime, removalReason)
         }
-        if (isDuplicate(snapshot.key, event.title, event.text)) return null
+        if (isDuplicate(snapshot.key, event.title, event.text, event.lastMessageTime)) return null
         return NotificationPostedRecord(
             key = snapshot.key,
             packageName = snapshot.packageName,
@@ -84,5 +101,33 @@ object NotificationRecordRules {
             text = event.text,
             category = event.category,
         )
+    }
+
+    /**
+     * 알림 이벤트 하나를 기록으로 바꿔 [save]로 저장
+     *
+     * 제거는 수집 여부와 관계없이 그 key의 중복 판정 기억을 지워 같은 내용의 재게시를 놓치지 않음.
+     * 수집 켜짐은 이벤트마다 [isCollectionEnabled]로 읽어, 끈 직후 도착한 알림도 끈 상태로 판정함.
+     * 저장하지 못한 게시는 기억을 지워 같은 내용이 다시 게시되면 기록하며, 예외는 호출부로 다시 던짐.
+     */
+    suspend fun process(
+        event: NotificationEvent,
+        ownPackageName: String,
+        appNameOf: (String) -> String,
+        duplicateFilter: NotificationDuplicateFilter,
+        isCollectionEnabled: suspend () -> Boolean,
+        save: suspend (UsageLogRecord) -> Unit,
+    ) {
+        val key = event.snapshot.key
+        if (event.removalReason != null) duplicateFilter.forget(key)
+        if (!isCollectionEnabled()) return
+        try {
+            val record = toRecord(event, ownPackageName, appNameOf, duplicateFilter::isDuplicate) ?: return
+            save(record)
+        } catch (failure: Exception) {
+            // 기록하지 못한 내용을 기억한 채 두면 같은 내용의 재게시가 중복으로 걸러져 빠짐
+            if (event.removalReason == null) duplicateFilter.forget(key)
+            throw failure
+        }
     }
 }

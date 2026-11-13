@@ -67,9 +67,10 @@ class UsageLogUploader(
     /**
      * 미전송 기록을 모두 보냄
      *
-     * 수집이 켜져 있으면 먼저 수집하며, 수집이 실패해도 이미 저장된 기록은 보냄.
+     * 수집이 켜져 있으면 먼저 수집하고 보관 기간 정리를 하며, 둘 중 무엇이 실패해도 이미 저장된 기록은 보냄.
      * 한 번에 [MAX_RECORDS_PER_ROUND]건씩 읽어 미전송 기록이 없어질 때까지 반복하고,
      * 묶음마다 전송 성공 직후 전송됨 표시와 순번 저장을 함.
+     * 암호화 키는 라운드마다 다시 읽어 화면에서 새로 만든 키를 다음 라운드부터 씀.
      * 일부 묶음을 보낸 뒤 실패해도 [UploadResult.Failed]이며, 이미 보낸 기록은 다시 보내지 않음.
      */
     suspend fun upload(reason: SendReason): UploadResult = mutex.withLock { uploadLocked(reason) }
@@ -85,18 +86,25 @@ class UsageLogUploader(
                 Log.w("[UsageLogUploader] 수집 실패, 저장된 기록만 전송: ${failure::class.java.simpleName}")
             }
         }
-        repository.purgeExpired(clock())
+        // 보관 기간 정리가 실패해도 전송은 계속
+        try {
+            repository.purgeExpired(clock())
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            Log.w("[UsageLogUploader] 보관 기간 정리 실패, 전송 계속: ${failure::class.java.simpleName}")
+        }
 
         // 전송 설정 확인
         val webhookUrl = settings.getWebhookUrl().trim()
-        val key = UsageLogCipher.decodeKey(settings.getEncryptionKey())
-        if (!DiscordWebhookFormat.isValidWebhookUrl(webhookUrl) || key == null) return UploadResult.NotConfigured
+        if (!DiscordWebhookFormat.isValidWebhookUrl(webhookUrl) || readKey() == null) return UploadResult.NotConfigured
 
         // 미전송 기록이 없어질 때까지 한 번에 읽어 묶음으로 전송
         var sentCount = 0
         while (true) {
-            val records = repository.getUnsent(MAX_RECORDS_PER_ROUND)
+            val records = repository.getUnsent(MAX_RECORDS_PER_ROUND, clock())
             if (records.isEmpty()) break
+            val key = readKey() ?: return UploadResult.NotConfigured
             val installId = settings.getInstallId().getOrElse { return failed(true) }
             val sentAt = clock()
             val batchContext = BatchContext(
@@ -125,11 +133,20 @@ class UsageLogUploader(
         return UploadResult.Sent(sentCount)
     }
 
-    /** 429이면 안내된 시간만큼 기다려 같은 묶음을 최대 [MAX_RATE_LIMIT_ATTEMPTS]번 다시 보냄 */
+    /** 저장된 암호화 키이며 없거나 유효하지 않으면 null */
+    private suspend fun readKey(): ByteArray? = UsageLogCipher.decodeKey(settings.getEncryptionKey())
+
+    /**
+     * 429이면 안내된 시간만큼 기다려 같은 묶음을 최대 [MAX_RATE_LIMIT_ATTEMPTS]번 다시 보냄
+     *
+     * 안내된 시간이 [MAX_RATE_LIMIT_WAIT_MILLIS]를 넘으면 기다리지 않고 429 결과를 그대로 돌려줌.
+     * 작업 실행 시간 제한 안에서 Mutex를 오래 붙잡아 즉시 전송까지 막지 않게 하고 WorkManager 재시도에 맡기기 위함.
+     */
     private suspend fun sendWithRateLimitRetry(webhookUrl: String, batch: EncodedBatch): WebhookResult {
         var result = sender.send(webhookUrl, batch.header, batch.fileName, batch.attachment)
         var retryCount = 0
         while (result is WebhookResult.RateLimited && retryCount < MAX_RATE_LIMIT_ATTEMPTS) {
+            if (result.retryAfterMillis > MAX_RATE_LIMIT_WAIT_MILLIS) break
             delay(result.retryAfterMillis)
             retryCount++
             result = sender.send(webhookUrl, batch.header, batch.fileName, batch.attachment)
@@ -177,6 +194,7 @@ class UsageLogUploader(
     companion object {
         const val MAX_RECORDS_PER_ROUND = 5000
         const val MAX_RATE_LIMIT_ATTEMPTS = 3
+        const val MAX_RATE_LIMIT_WAIT_MILLIS = 60_000L
         private val mutex = Mutex()
     }
 }

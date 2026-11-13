@@ -29,6 +29,8 @@ class DiscordWebhookClient @Inject constructor() : WebhookSender {
                     doOutput = true
                     setFixedLengthStreamingMode(body.size)
                     setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+                    // 기본 User-Agent(http.agent)에는 기기 모델과 빌드 정보가 담겨 디스코드로 나가므로 고정값으로 덮음
+                    setRequestProperty("User-Agent", USER_AGENT)
                 }
                 connection.outputStream.use { it.write(body) }
 
@@ -48,5 +50,6 @@ class DiscordWebhookClient @Inject constructor() : WebhookSender {
 
     private companion object {
         const val TIMEOUT_MILLIS = 30_000
+        const val USER_AGENT = "JustApp-UsageLog/1"
     }
 }

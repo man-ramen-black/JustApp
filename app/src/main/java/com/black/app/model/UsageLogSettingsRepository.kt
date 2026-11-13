@@ -45,6 +45,14 @@ class UsageLogSettingsRepository @Inject constructor(@ApplicationContext context
     suspend fun setOpenSession(session: OpenUsageSession?): Result<Unit> = dataStore.updateOpenSession(session)
 
     /**
+     * 열린 구간과 커서를 한 번에 저장
+     *
+     * 둘 다 저장되거나 하나도 저장되지 않음. [session]이 null이면 열린 구간을 지움.
+     */
+    suspend fun setUsageProgress(session: OpenUsageSession?, cursor: Long): Result<Unit> =
+        dataStore.updateUsageProgress(session, cursor)
+
+    /**
      * 마지막 Wi-Fi 상태
      *
      * 저장값이 없으면 `WifiState(false, null)`.

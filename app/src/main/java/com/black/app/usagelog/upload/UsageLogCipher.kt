@@ -1,6 +1,7 @@
 package com.black.app.usagelog.upload
 
 import android.util.Base64
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -40,7 +41,7 @@ object UsageLogCipher {
     /**
      * [encrypt]한 값의 복호화
      *
-     * 키가 다르거나 변조됐으면 [java.security.GeneralSecurityException]의 하위 예외.
+     * 키가 다르거나 변조됐으면 [GeneralSecurityException]의 하위 예외.
      */
     fun decrypt(payload: ByteArray, key: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)

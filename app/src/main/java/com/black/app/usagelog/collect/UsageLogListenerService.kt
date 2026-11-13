@@ -4,7 +4,6 @@ import android.app.Notification
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import androidx.core.app.NotificationCompat
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
@@ -17,14 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retry
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +28,7 @@ import kotlinx.coroutines.launch
 class UsageLogListenerService : NotificationListenerService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val settings by lazy { UsageLogSettingsRepository(applicationContext) }
     private val repository by lazy { UsageLogRepository(applicationContext) }
     private val appResolver by lazy { InstalledAppResolver(applicationContext) }
     private val duplicateFilter = NotificationDuplicateFilter()
@@ -43,34 +36,11 @@ class UsageLogListenerService : NotificationListenerService() {
     /**
      * Wi-Fi 연결·해제 감시
      *
+     * 알림 접근이 처음 연결될 때 만들어, 한 번도 연결되지 않고 끝나는 서비스는 감시기를 만들지 않음.
+     * 다시 연결돼도 같은 감시기를 써서 새 세션이 이전 세션의 저장이 끝나기를 기다릴 수 있음.
      * 집 도착·출발 알림은 [HomeTransitionListener]로 받아 [UsageLogScheduler.enqueueSend]로 즉시 전송을 예약함.
      */
-    private val wifiMonitor by lazy {
-        WifiMonitor(
-            context = applicationContext,
-            settings = UsageLogSettingsRepository(applicationContext),
-            repository = repository,
-            scope = scope,
-            listener = HomeTransitionListener { arrived -> enqueueHomeSend(arrived) },
-        )
-    }
-
-    /**
-     * 수집 설정 최신 값
-     *
-     * 첫 값이 오기 전에는 null.
-     */
-    private val collectionEnabled by lazy {
-        UsageLogSettingsRepository(applicationContext).collectionEnabled
-            // 읽기 예외로 흐름이 끝나면 대기가 영영 끝나지 않으므로 잠시 뒤 다시 구독
-            .retry { cause ->
-                Log.w("[UsageLogListenerService] 수집 설정 읽기 실패: ${cause::class.java.simpleName}")
-                delay(COLLECTION_RETRY_DELAY_MILLIS)
-                true
-            }
-            .map<Boolean, Boolean?> { it }
-            .stateIn(scope, SharingStarted.Eagerly, null)
-    }
+    private var wifiMonitor: WifiMonitor? = null
 
     /** 콜백 도착 순서대로 하나씩 처리하기 위한 알림 이벤트 대기열 */
     private val events = Channel<NotificationEvent>(Channel.UNLIMITED)
@@ -81,44 +51,61 @@ class UsageLogListenerService : NotificationListenerService() {
             // 단일 소비자라 같은 key의 게시와 제거가 도착 순서대로 판정되고 저장됨
             for (event in events) {
                 try {
-                    handle(event)
+                    NotificationRecordRules.process(
+                        event = event,
+                        ownPackageName = applicationContext.packageName,
+                        appNameOf = appResolver::resolveLabel,
+                        duplicateFilter = duplicateFilter,
+                        // 끈 직후 도착한 알림도 끈 상태로 판정하도록 이벤트마다 읽음
+                        isCollectionEnabled = { settings.isCollectionEnabled() },
+                        save = { repository.add(listOf(it)) },
+                    )
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (failure: Exception) {
                     // 한 건의 실패로 루프가 끝나 이후 알림이 모두 멈추지 않도록 다음 이벤트로 넘어감
+                    // 알림 내용이 섞일 수 있어 예외 메시지는 남기지 않고 클래스 이름만 기록
                     Log.w("[UsageLogListenerService] 알림 처리 실패: ${failure::class.java.simpleName}")
                 }
             }
         }
     }
 
-    /** 집 도착이면 [SendReason.HOME_ARRIVE], 출발이면 [SendReason.HOME_LEAVE]로 전송 예약 */
+    /**
+     * 집 도착이면 [SendReason.HOME_ARRIVE], 출발이면 [SendReason.HOME_LEAVE]로 전송 예약
+     *
+     * 예약 예외는 [WifiMonitor]가 잡아 클래스 이름만 기록함.
+     */
     private fun enqueueHomeSend(arrived: Boolean) {
-        try {
-            UsageLogScheduler(applicationContext).enqueueSend(if (arrived) SendReason.HOME_ARRIVE else SendReason.HOME_LEAVE)
-        } catch (failure: Exception) {
-            // 예외가 감시기로 번져 Wi-Fi 감시가 멈추지 않도록 클래스 이름만 기록
-            Log.w("[UsageLogListenerService] 전송 예약 실패: ${failure::class.java.simpleName}")
-        }
+        UsageLogScheduler(applicationContext).enqueueSend(if (arrived) SendReason.HOME_ARRIVE else SendReason.HOME_LEAVE)
     }
 
     /** 알림 접근이 연결되면 Wi-Fi 감시도 시작 */
     override fun onListenerConnected() {
         super.onListenerConnected()
-        wifiMonitor.start()
+        val monitor = wifiMonitor ?: createWifiMonitor().also { wifiMonitor = it }
+        monitor.start()
     }
 
     override fun onListenerDisconnected() {
-        wifiMonitor.stop()
+        wifiMonitor?.stop()
         super.onListenerDisconnected()
     }
 
     override fun onDestroy() {
-        wifiMonitor.stop()
+        wifiMonitor?.stop()
         events.close()
         scope.cancel()
         super.onDestroy()
     }
+
+    private fun createWifiMonitor() = WifiMonitor(
+        context = applicationContext,
+        settings = settings,
+        repository = repository,
+        scope = scope,
+        listener = HomeTransitionListener { arrived -> enqueueHomeSend(arrived) },
+    )
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         enqueue(sbn, null)
@@ -160,21 +147,20 @@ class UsageLogListenerService : NotificationListenerService() {
             )
             // 제거 기록에는 제목·본문·카테고리가 쓰이지 않아 읽지 않음
             val event = if (removalReason != null) {
-                NotificationEvent(snapshot, null, null, null, removalReason, eventTime)
+                NotificationEvent(snapshot, null, null, null, null, removalReason, eventTime)
             } else {
                 val extras = notification.extras
-                val lastMessageText = NotificationCompat.MessagingStyle
-                    .extractMessagingStyleFromNotification(notification)
-                    ?.messages?.lastOrNull()?.text
+                val lastMessage = NotificationRecordRules.lastMessageOf(notification)
                 NotificationEvent(
                     snapshot = snapshot,
                     title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
                     text = NotificationRecordRules.resolveText(
-                        lastMessageText,
+                        lastMessage?.text,
                         extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
                         extras.getCharSequence(Notification.EXTRA_TEXT),
                     ),
                     category = notification.category,
+                    lastMessageTime = lastMessage?.timestamp,
                     removalReason = null,
                     eventTime = eventTime,
                 )
@@ -183,31 +169,5 @@ class UsageLogListenerService : NotificationListenerService() {
         } catch (failure: Exception) {
             Log.w("[UsageLogListenerService] 알림 값 읽기 실패: ${failure::class.java.simpleName}")
         }
-    }
-
-    /** 수집 설정의 첫 값을 기다린 뒤 이벤트를 기록 */
-    private suspend fun handle(event: NotificationEvent) {
-        // 제거된 key는 수집 여부와 상관없이 잊어 같은 내용의 재게시를 놓치지 않음
-        if (event.removalReason != null) duplicateFilter.forget(event.snapshot.key)
-        if (!collectionEnabled.filterNotNull().first()) return
-
-        val record = NotificationRecordRules.toRecord(
-            event = event,
-            ownPackageName = applicationContext.packageName,
-            appNameOf = appResolver::resolveLabel,
-            isDuplicate = duplicateFilter::isDuplicate,
-        ) ?: return
-        try {
-            repository.add(listOf(record))
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (failure: Exception) {
-            // 알림 내용이 섞일 수 있어 예외 메시지는 남기지 않고 클래스 이름만 기록
-            Log.w("[UsageLogListenerService] 알림 기록 저장 실패: ${failure::class.java.simpleName}")
-        }
-    }
-
-    private companion object {
-        const val COLLECTION_RETRY_DELAY_MILLIS = 5_000L
     }
 }
