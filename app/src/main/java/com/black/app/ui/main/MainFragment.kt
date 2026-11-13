@@ -45,6 +45,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_app_install,
             ) { navigateByActivity(AppRoute.AppInstallNotification) },
             MainItem(
+                getString(R.string.fragment_name_usage_log),
+                R.drawable.ic_usage_log,
+            ) { navigateByActivity(AppRoute.UsageLog) },
+            MainItem(
                 getString(R.string.fragment_name_study_popup),
                 R.drawable.ic_quiz,
             ) { navigateByActivity(AppRoute.StudyPopup) },

@@ -13,4 +13,5 @@ sealed interface AppRoute {
     @Serializable data object PokeRogue : AppRoute
     @Serializable data object Floating : AppRoute
     @Serializable data object AppInstallNotification : AppRoute
+    @Serializable data object UsageLog : AppRoute
 }
