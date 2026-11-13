@@ -2,6 +2,7 @@ package com.black.app.broadcast
 
 import android.Manifest
 import android.app.Application
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
@@ -84,9 +85,27 @@ object PackageInstallTestFixture {
             .denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
     }
 
+    /** NotificationManager 조회 */
+    fun notificationManager(context: Context): NotificationManager =
+        context.getSystemService(NotificationManager::class.java)
+
     /** NotificationManager 섀도 조회 */
     fun shadowNotificationManager(context: Context): ShadowNotificationManager =
-        shadowOf(context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+        shadowOf(notificationManager(context))
+
+    /** [PackageInstallNotifier]의 패키지별 ID 규칙으로 [packageName] 앱의 설치 알림 조회, 없으면 실패 */
+    fun installNotification(context: Context, packageName: String = LAUNCHER_PACKAGE): Notification =
+        requireNotNull(shadowNotificationManager(context).getNotification(PackageInstallNotifier.notificationId(packageName))) {
+            "install notification not found : $packageName"
+        }
+
+    /** 알림 제목(EXTRA_TITLE) */
+    fun notificationTitle(notification: Notification): String =
+        notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString()
+
+    /** 알림 본문(EXTRA_TEXT) */
+    fun notificationText(notification: Notification): String =
+        notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString()
 
     /** JustApp이 게시한 동적 바로가기 목록 조회 */
     fun dynamicShortcuts(context: Context): List<ShortcutInfo> =

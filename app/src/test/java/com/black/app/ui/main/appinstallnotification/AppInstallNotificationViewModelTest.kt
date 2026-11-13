@@ -8,6 +8,7 @@ import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.app.R
 import com.black.test.BaseTest
+import com.black.test.collectDuring
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,10 +19,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -78,15 +75,6 @@ class AppInstallNotificationViewModelTest : BaseTest() {
     /** ViewModel 생성 후 init의 실행 설정·실행 상태 수집 시작까지 대기 */
     private fun createViewModel() = AppInstallNotificationViewModel(foregroundServiceController, notificationStatus, installedAppResolver)
         .also { waitCoroutine() }
-
-    /** 동작 전에 이벤트 구독을 시작해 발송된 이벤트 전부(없음 포함)를 수집 */
-    private fun TestScope.collectEvents(viewModel: AppInstallNotificationViewModel): List<ViewModelEvent> {
-        val receivedEvents = mutableListOf<ViewModelEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.events.toList(receivedEvents)
-        }
-        return receivedEvents
-    }
 
     /**
      * 생성 시 실행 설정·시스템 상태·실행 상태·예시 앱이 UiState로 로드되는지 검증
@@ -178,11 +166,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
     fun test_04_setEnabledTrueStartsWithoutEvent() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(true) }
 
         /** Then **/
         coVerify { foregroundServiceController.activate() }
@@ -205,11 +191,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
             StartResult.BatteryOptimizationRequired
         }
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(true) }
 
         /** Then **/
         assertTrue(viewModel.uiState.value.serviceActivated)
@@ -228,11 +212,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         /** Given **/
         every { notificationStatus.canShowNotification() } returns false
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(true) }
 
         /** Then **/
         assertTrue(viewModel.uiState.value.serviceActivated)
@@ -251,11 +233,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         /** Given **/
         coEvery { foregroundServiceController.activate() } returns StartResult.NotActivated
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(true) }
 
         /** Then **/
         assertFalse(viewModel.uiState.value.serviceActivated)
@@ -274,11 +254,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         /** Given **/
         activated.value = true
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(false)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(false) }
 
         /** Then **/
         coVerify { foregroundServiceController.deactivate() }
@@ -300,13 +278,11 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         every { foregroundServiceController.isBatteryOptimizationIgnored() } returns false
         every { notificationStatus.canShowNotification() } returns false
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
         every { foregroundServiceController.isBatteryOptimizationIgnored() } returns true
         every { notificationStatus.canShowNotification() } returns true
 
         /** When **/
-        viewModel.refreshStatus()
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.refreshStatus() }
 
         /** Then **/
         assertTrue(viewModel.uiState.value.batteryOptimizationIgnored)
@@ -326,11 +302,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
     fun test_10_sendTestNotificationShowsPreviewNotification() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.sendTestNotification(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.sendTestNotification(true) }
 
         /** Then **/
         verify { notificationStatus.showPreviewNotification(true) }
@@ -349,11 +323,9 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         /** Given **/
         every { notificationStatus.canShowNotification() } returns false
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.sendTestNotification(false)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.sendTestNotification(false) }
 
         /** Then **/
         verify(exactly = 0) { notificationStatus.showPreviewNotification(any()) }
@@ -371,12 +343,12 @@ class AppInstallNotificationViewModelTest : BaseTest() {
     fun test_12_openSettingsSendsSettingsEvents() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.openBatteryOptimizationSettings()
-        viewModel.openNotificationSettings()
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) {
+            viewModel.openBatteryOptimizationSettings()
+            viewModel.openNotificationSettings()
+        }
 
         /** Then **/
         assertEquals(
@@ -401,12 +373,12 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         coEvery { foregroundServiceController.deactivate() } returns Result.failure(IOException("disk full"))
         coEvery { foregroundServiceController.activate() } returns StartResult.SaveFailed
         val viewModel = createViewModel()
-        val receivedEvents = collectEvents(viewModel)
 
         /** When **/
-        viewModel.setEnabled(false)
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) {
+            viewModel.setEnabled(false)
+            viewModel.setEnabled(true)
+        }
 
         /** Then **/
         val failedToast = AppInstallNotificationViewModel.EventShowToast(R.string.app_install_notification_save_failed)

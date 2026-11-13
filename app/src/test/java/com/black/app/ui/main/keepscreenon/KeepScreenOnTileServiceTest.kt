@@ -3,6 +3,7 @@ package com.black.app.ui.main.keepscreenon
 import android.app.PendingIntent
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.ui.main.OverlayTestFixture
 import com.black.test.BaseTest
 import io.mockk.Runs
 import io.mockk.every
@@ -30,7 +31,7 @@ class KeepScreenOnTileServiceTest : BaseTest() {
     /** 싱글턴 상태 격리를 위해 켜짐 유지 해제 */
     @After
     fun deactivateKeepScreenOn() {
-        KeepScreenOnGlobal.deactivate(context)
+        OverlayTestFixture.deactivateKeepScreenOn(context)
     }
 
     /**

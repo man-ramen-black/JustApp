@@ -1,7 +1,6 @@
 package com.black.app.service
 
 import android.app.Application
-import android.os.PowerManager
 import com.black.app.model.datastore.ForegroundServiceDataStore
 import com.black.app.service.ForegroundServiceController.StartResult
 import com.black.test.BaseTest
@@ -34,13 +33,7 @@ class ForegroundServiceControllerTest : BaseTest() {
     /** 각 테스트 전 실행 설정 초기화(실제 DataStore가 프로세스 단일 인스턴스라 테스트 간 공유) */
     @Before
     fun clearActivated() {
-        runTest { dataStore.updateActivated(false) }
-    }
-
-    /** 배터리 최적화 예외 여부 지정 */
-    private fun setIgnoringBatteryOptimizations(ignored: Boolean) {
-        val powerManager = application.getSystemService(PowerManager::class.java)
-        shadowOf(powerManager).setIgnoringBatteryOptimizations(application.packageName, ignored)
+        ForegroundServiceTestFixture.resetActivated(application)
     }
 
     /**
@@ -53,7 +46,7 @@ class ForegroundServiceControllerTest : BaseTest() {
     @Test
     fun test_01_activateStartsServiceWhenBatteryOptimizationIgnored() = runTest {
         /** Given **/
-        setIgnoringBatteryOptimizations(true)
+        ForegroundServiceTestFixture.setIgnoringBatteryOptimizations(application, true)
 
         /** When **/
         val result = controller.activate()
@@ -75,7 +68,7 @@ class ForegroundServiceControllerTest : BaseTest() {
     @Test
     fun test_02_activateReturnsBatteryOptimizationRequired() = runTest {
         /** Given **/
-        setIgnoringBatteryOptimizations(false)
+        ForegroundServiceTestFixture.setIgnoringBatteryOptimizations(application, false)
 
         /** When **/
         val result = controller.activate()
@@ -118,7 +111,7 @@ class ForegroundServiceControllerTest : BaseTest() {
     @Test
     fun test_04_startIfActivatedSkipsWhenNotActivated() = runTest {
         /** Given **/
-        setIgnoringBatteryOptimizations(true)
+        ForegroundServiceTestFixture.setIgnoringBatteryOptimizations(application, true)
 
         /** When **/
         val result = controller.startIfActivated()
@@ -161,7 +154,7 @@ class ForegroundServiceControllerTest : BaseTest() {
     @Test
     fun test_06_activateReturnsSaveFailedWhenSaveFails() = runTest {
         /** Given **/
-        setIgnoringBatteryOptimizations(true)
+        ForegroundServiceTestFixture.setIgnoringBatteryOptimizations(application, true)
         mockkConstructor(ForegroundServiceDataStore::class)
         coEvery { anyConstructed<ForegroundServiceDataStore>().updateActivated(true) } returns
             Result.failure(IOException("disk full"))

@@ -6,8 +6,8 @@ import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.util.InstalledAppResolver
 import com.black.core.util.OverlayPermissionStatus
-import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
+import com.black.test.collectValues
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,9 +16,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -118,11 +115,10 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.pause(any()) } returns Result.success(Unit)
         val viewModel = createViewModel()
         viewModel.onPauseDurationInputChanged("5")
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickPause()
-        viewModel.events.collectEvents(receivedEvents, count = 2)
+        val receivedEvents = viewModel.events.collectValues(count = 2)
 
         /** Then **/
         coVerify { repository.savePauseDuration(5) }
@@ -142,11 +138,10 @@ class UsageTimerViewModelTest : BaseTest() {
     fun test_04_onClickSelectAppSendsCheckedPackages() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickSelectApp()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(
@@ -166,7 +161,6 @@ class UsageTimerViewModelTest : BaseTest() {
     fun test_05_invalidDurationInputIsRejected() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onPauseDurationInputChanged("abc")
@@ -174,7 +168,7 @@ class UsageTimerViewModelTest : BaseTest() {
         viewModel.onPauseDurationInputChanged("0")
         viewModel.onClickPause()
         waitCoroutine()
-        viewModel.events.collectEvents(receivedEvents, count = 2)
+        val receivedEvents = viewModel.events.collectValues(count = 2)
 
         /** Then **/
         coVerify(exactly = 0) {
@@ -222,13 +216,12 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.pause(any()) } returns Result.failure(IOException("disk full"))
         val viewModel = createViewModel()
         viewModel.onPauseDurationInputChanged("5")
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickPause()
         waitCoroutine()
         viewModel.onClickAccessibility()
-        viewModel.events.collectEvents(receivedEvents, count = 2)
+        val receivedEvents = viewModel.events.collectValues(count = 2)
 
         /** Then **/
         assertEquals(
@@ -270,11 +263,10 @@ class UsageTimerViewModelTest : BaseTest() {
     fun test_09_showWithPermissionSendsShowTimerView() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickShow()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(UsageTimerViewModel.EventShowTimerView, receivedEvents[0])
@@ -293,12 +285,11 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Given **/
         every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickShow()
         viewModel.onClickAccessibility()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertTrue(viewModel.uiState.value.showOverlayPermissionDialog)
@@ -317,11 +308,10 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Given **/
         val viewModel = createViewModel()
         viewModel.showOverlayPermissionDialog()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.openOverlaySettings()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
@@ -340,24 +330,14 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Given **/
         val viewModel = createViewModel()
         viewModel.showOverlayPermissionDialog()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.dismissOverlayPermissionDialog()
         viewModel.onClickAccessibility()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
         assertEquals(UsageTimerViewModel.EventOpenAccessibilitySettings, receivedEvents[0])
     }
-}
-
-/** Flow에서 [count]개 이벤트를 수집하는 테스트 헬퍼 */
-private suspend fun Flow<ViewModelEvent>.collectEvents(
-    into: MutableList<ViewModelEvent>,
-    count: Int,
-) {
-    take(count).toList(into)
-
 }

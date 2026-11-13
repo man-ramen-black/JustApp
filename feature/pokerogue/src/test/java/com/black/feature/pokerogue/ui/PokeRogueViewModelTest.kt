@@ -3,10 +3,9 @@ package com.black.feature.pokerogue.ui
 import android.webkit.WebView
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.test.BaseTest
+import com.black.test.collectValues
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -79,7 +78,7 @@ class PokeRogueViewModelTest : BaseTest() {
         /** When **/
         viewModel.requestReload()
         viewModel.rotate()
-        val events = viewModel.events.take(2).toList()
+        val events = viewModel.events.collectValues(count = 2)
 
         /** Then **/
         assertEquals(
@@ -104,7 +103,7 @@ class PokeRogueViewModelTest : BaseTest() {
         /** When **/
         viewModel.rotate()
         viewModel.requestReload()
-        val events = viewModel.events.take(2).toList()
+        val events = viewModel.events.collectValues(count = 2)
 
         /** Then **/
         assertEquals(

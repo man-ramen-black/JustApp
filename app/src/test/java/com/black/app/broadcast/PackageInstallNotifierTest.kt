@@ -54,11 +54,11 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals(LAUNCHER_LABEL, notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-        assertEquals("설치되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals(LAUNCHER_LABEL, PackageInstallTestFixture.notificationTitle(notification))
+        assertEquals("설치되었습니다.", PackageInstallTestFixture.notificationText(notification))
         assertEquals("PackageInstall", notification.channelId)
-        val channel = notificationManager().getNotificationChannel("PackageInstall")
+        val channel = PackageInstallTestFixture.notificationManager(context).getNotificationChannel("PackageInstall")
         assertEquals("앱 설치·업데이트", channel.name.toString())
         assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
         assertEquals(NotificationCompat.PRIORITY_LOW, notification.priority)
@@ -94,7 +94,7 @@ class PackageInstallNotifierTest : BaseTest() {
         PackageInstallNotifier.show(context, LAUNCHER_PACKAGE, isUpdate = false)
 
         /** Then **/
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
+        val notification = PackageInstallTestFixture.installNotification(context)
         val shadowContentIntent = shadowOf(notification.contentIntent)
         assertTrue(notification.contentIntent.isActivity)
         assertTrue(shadowContentIntent.isImmutable)
@@ -118,8 +118,8 @@ class PackageInstallNotifierTest : BaseTest() {
         PackageInstallNotifier.show(context, LAUNCHER_PACKAGE, isUpdate = true)
 
         /** Then **/
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals("업데이트되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals("업데이트되었습니다.", PackageInstallTestFixture.notificationText(notification))
         assertEquals(R.drawable.ic_app_install, notification.smallIcon.resId)
         val messagingStyle = requireNotNull(NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification))
         assertEquals("업데이트되었습니다.", messagingStyle.messages.single().text.toString())
@@ -205,8 +205,8 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals("업데이트되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals("업데이트되었습니다.", PackageInstallTestFixture.notificationText(notification))
         assertTrue(PackageInstallTestFixture.dynamicShortcuts(context).isEmpty())
     }
 
@@ -232,10 +232,10 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(2, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val firstNotification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        val secondNotification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(secondPackage.hashCode())
-        assertEquals(LAUNCHER_LABEL, firstNotification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-        assertEquals(secondLabel, secondNotification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        val firstNotification = PackageInstallTestFixture.installNotification(context)
+        val secondNotification = PackageInstallTestFixture.installNotification(context, secondPackage)
+        assertEquals(LAUNCHER_LABEL, PackageInstallTestFixture.notificationTitle(firstNotification))
+        assertEquals(secondLabel, PackageInstallTestFixture.notificationTitle(secondNotification))
         assertEquals("PackageInstall:$LAUNCHER_PACKAGE", firstNotification.shortcutId)
         assertEquals("PackageInstall:$secondPackage", secondNotification.shortcutId)
     }
@@ -279,9 +279,9 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals(LAUNCHER_LABEL, notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-        assertEquals("설치되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals(LAUNCHER_LABEL, PackageInstallTestFixture.notificationTitle(notification))
+        assertEquals("설치되었습니다.", PackageInstallTestFixture.notificationText(notification))
         assertNull(notification.shortcutId)
         assertNull(NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification))
         val largeIcon = (notification.getLargeIcon().loadDrawable(context) as BitmapDrawable).bitmap
@@ -310,7 +310,7 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
+        val notification = PackageInstallTestFixture.installNotification(context)
         assertEquals("PackageInstall:$LAUNCHER_PACKAGE", notification.shortcutId)
         val messagingStyle = requireNotNull(NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification))
         assertEquals("업데이트되었습니다.", messagingStyle.messages.single().text.toString())
@@ -336,8 +336,8 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals("설치되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals("설치되었습니다.", PackageInstallTestFixture.notificationText(notification))
         assertNull(notification.shortcutId)
         assertNull(NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification))
         assertNotNull(notification.getLargeIcon())
@@ -429,7 +429,7 @@ class PackageInstallNotifierTest : BaseTest() {
     fun test_16_cannotShowWhenChannelBlocked() = runTest {
         /** Given **/
         PackageInstallTestFixture.shadowNotificationManager(context).setNotificationsEnabled(true)
-        notificationManager().createNotificationChannel(
+        PackageInstallTestFixture.notificationManager(context).createNotificationChannel(
             NotificationChannel("PackageInstall", "앱 설치·업데이트", NotificationManager.IMPORTANCE_NONE)
         )
 
@@ -473,7 +473,7 @@ class PackageInstallNotifierTest : BaseTest() {
         /** Given **/
         PackageInstallTestFixture.grantNotificationPermission(context)
         PackageInstallTestFixture.installLauncherApp(context)
-        notificationManager().createNotificationChannel(
+        PackageInstallTestFixture.notificationManager(context).createNotificationChannel(
             NotificationChannel("PackageInstall", "앱 설치·업데이트", NotificationManager.IMPORTANCE_DEFAULT)
         )
 
@@ -481,7 +481,7 @@ class PackageInstallNotifierTest : BaseTest() {
         PackageInstallNotifier.show(context, LAUNCHER_PACKAGE, isUpdate = false)
 
         /** Then **/
-        assertEquals(NotificationManager.IMPORTANCE_LOW, notificationManager().getNotificationChannel("PackageInstall").importance)
+        assertEquals(NotificationManager.IMPORTANCE_LOW, PackageInstallTestFixture.notificationManager(context).getNotificationChannel("PackageInstall").importance)
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
     }
 
@@ -503,11 +503,7 @@ class PackageInstallNotifierTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
+        val notification = PackageInstallTestFixture.installNotification(context)
         assertEquals(NotificationCompat.PRIORITY_LOW, notification.priority)
     }
-
-    /** NotificationManager 조회 */
-    private fun notificationManager(): NotificationManager =
-        context.getSystemService(NotificationManager::class.java)
 }

@@ -1,12 +1,11 @@
 package com.black.app.ui.main.usagetimer
 
 import android.content.Context
-import android.os.Looper
 import android.view.ContextThemeWrapper
 import android.view.View
-import android.view.WindowManager
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.R
+import com.black.app.ui.main.OverlayTestFixture
 import com.black.app.ui.main.usagetimer.UsageTimerGlobal.TimerAction
 import com.black.app.ui.main.usagetimer.view.UsageTimerView
 import com.black.test.BaseTest
@@ -19,22 +18,18 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.shadow.api.Shadow
-import org.robolectric.shadows.ShadowWindowManagerImpl
 
 /** [UsageTimerGlobal] 타이머 동작·세션 시작·닫기 유지 판정과 타이머 오버레이 닫기 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerGlobalTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** 각 테스트 후 남은 타이머 오버레이와 세션·닫기·지연 숨김 상태 초기화(싱글턴 상태 격리) */
     @After
     fun resetTimerState() {
         UsageTimerGlobal.reset()
-        attachedTimerViews().forEach { it.detachView() }
+        OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).forEach { it.detachView() }
     }
 
     /**
@@ -280,7 +275,7 @@ class UsageTimerGlobalTest : BaseTest() {
         clickClose(previewView)
 
         /** Then **/
-        assertTrue(attachedTimerViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).isEmpty())
     }
 
     /**
@@ -294,17 +289,17 @@ class UsageTimerGlobalTest : BaseTest() {
     fun test_18_closingUntrackedTimerKeepsTrackedTimer() = runTest {
         /** Given **/
         UsageTimerGlobal.showForApp(context, "com.example.app")
-        val trackedView = attachedTimerViews().single()
+        val trackedView = OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).single()
         val previewView = attachPreviewView()
 
         /** When **/
         clickClose(previewView)
-        val remainingViews = attachedTimerViews()
+        val remainingViews = OverlayTestFixture.attachedViewsOf<UsageTimerView>(context)
         UsageTimerGlobal.detachView()
 
         /** Then **/
         assertEquals(listOf(trackedView), remainingViews)
-        assertTrue(attachedTimerViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).isEmpty())
     }
 
     /**
@@ -322,13 +317,13 @@ class UsageTimerGlobalTest : BaseTest() {
         /** When **/
         UsageTimerGlobal.showPreview(context)
         UsageTimerGlobal.showPreview(context)
-        shadowOf(Looper.getMainLooper()).idle()
-        val previewViews = attachedTimerViews()
+        idleMainLooper()
+        val previewViews = OverlayTestFixture.attachedViewsOf<UsageTimerView>(context)
         UsageTimerGlobal.detachAllViews()
 
         /** Then **/
         assertEquals(1, previewViews.size)
-        assertTrue(attachedTimerViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).isEmpty())
     }
 
     /**
@@ -343,18 +338,18 @@ class UsageTimerGlobalTest : BaseTest() {
         /** Given **/
         UsageTimerGlobal.showForApp(context, "com.example.app")
         // 대기 중인 바인딩을 실행해 닫기 버튼 클릭 리스너 연결
-        shadowOf(Looper.getMainLooper()).idle()
-        clickClose(attachedTimerViews().single())
+        idleMainLooper()
+        clickClose(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).single())
 
         /** When **/
         UsageTimerGlobal.reset()
-        val afterReset = attachedTimerViews()
+        val afterReset = OverlayTestFixture.attachedViewsOf<UsageTimerView>(context)
         UsageTimerGlobal.showForApp(context, "com.example.app")
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
         assertTrue(afterReset.isEmpty())
-        assertEquals(1, attachedTimerViews().size)
+        assertEquals(1, OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).size)
     }
 
     /**
@@ -389,33 +384,29 @@ class UsageTimerGlobalTest : BaseTest() {
         /** Given **/
         UsageTimerGlobal.showForApp(context, "com.example.app")
         // 대기 중인 바인딩을 실행해 닫기 버튼 클릭 리스너 연결
-        shadowOf(Looper.getMainLooper()).idle()
-        clickClose(attachedTimerViews().single())
+        idleMainLooper()
+        clickClose(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).single())
 
         /** When **/
         UsageTimerGlobal.scheduleHide("com.android.systemui")
         waitCoroutine()
         UsageTimerGlobal.showForApp(context, "com.example.app")
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
-        assertTrue(attachedTimerViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViewsOf<UsageTimerView>(context).isEmpty())
     }
 
     /** 앱 화면 SHOW 경로처럼 UsageTimerGlobal을 거치지 않고 타이머 오버레이 표시 */
     private fun attachPreviewView(): UsageTimerView =
         UsageTimerView(ContextThemeWrapper(context, R.style.Theme_Black)).also {
             it.attachView()
-            shadowOf(Looper.getMainLooper()).idle()
+            idleMainLooper()
         }
 
     /** 타이머 오버레이의 닫기 버튼 클릭 */
     private fun clickClose(view: UsageTimerView) {
         view.findViewById<View>(R.id.close).performClick()
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
     }
-
-    /** WindowManager에 추가된 타이머 오버레이 목록 조회 */
-    private fun attachedTimerViews(): List<UsageTimerView> =
-        Shadow.extract<ShadowWindowManagerImpl>(windowManager).views.filterIsInstance<UsageTimerView>()
 }

@@ -27,6 +27,9 @@ import com.black.core.util.PermissionHelper
 object PackageInstallNotifier {
     private const val NOTIFICATION_CHANNEL_ID = "PackageInstall"
 
+    /** 패키지별 알림 ID, 같은 앱은 앞선 알림 대체·다른 앱끼리는 따로 표시 */
+    fun notificationId(packageName: String): Int = packageName.hashCode()
+
     /**
      * 설치 알림 표시 가능 여부
      *
@@ -87,7 +90,7 @@ object PackageInstallNotifier {
         )
 
         // 패키지별 ID로 같은 앱은 앞선 알림 대체, 다른 앱끼리는 따로 표시
-        val notificationId = packageName.hashCode()
+        val notificationId = notificationId(packageName)
         val messageResId = if (isUpdate) {
             R.string.package_install_notification_updated
         } else {

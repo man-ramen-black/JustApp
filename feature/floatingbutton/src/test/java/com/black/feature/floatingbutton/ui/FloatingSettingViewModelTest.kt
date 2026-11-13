@@ -1,16 +1,14 @@
 package com.black.feature.floatingbutton.ui
 
-import com.black.core.viewmodel.ViewModelEvent
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.test.BaseTest
+import com.black.test.collectValues
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -163,11 +161,10 @@ class FloatingSettingViewModelTest : BaseTest() {
         every { controller.canDrawOverlays() } returns false
         val viewModel = createViewModel()
         viewModel.setRunning(true)
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.openOverlaySettings()
-        viewModel.events.take(1).toList(receivedEvents)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
@@ -206,11 +203,10 @@ class FloatingSettingViewModelTest : BaseTest() {
         /** Given **/
         every { controller.isAccessibilityServiceEnabled() } returns false
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.openAccessibilitySettings()
-        viewModel.events.take(1).toList(receivedEvents)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(FloatingSettingViewModel.EventOpenAccessibilitySettings, receivedEvents[0])

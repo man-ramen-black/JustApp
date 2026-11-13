@@ -2,15 +2,10 @@ package com.black.app.service
 
 import android.app.Notification
 import android.content.pm.ServiceInfo
-import android.os.PowerManager
 import com.black.app.R
 import com.black.app.model.datastore.ForegroundServiceDataStore
 import com.black.test.BaseTest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,7 +33,7 @@ class ForegroundServiceTest : BaseTest() {
     @After
     fun destroyService() {
         serviceController?.destroy()
-        runTest { dataStore.updateActivated(false) }
+        ForegroundServiceTestFixture.resetActivated(application)
     }
 
     /**
@@ -110,8 +105,7 @@ class ForegroundServiceTest : BaseTest() {
     fun test_04_destroyRestartsWhenActivated() = runTest {
         /** Given **/
         dataStore.updateActivated(true)
-        shadowOf(application.getSystemService(PowerManager::class.java))
-            .setIgnoringBatteryOptimizations(application.packageName, true)
+        ForegroundServiceTestFixture.setIgnoringBatteryOptimizations(application, true)
         val controller = Robolectric.buildService(ForegroundService::class.java).create()
 
         /** When **/
@@ -119,16 +113,7 @@ class ForegroundServiceTest : BaseTest() {
 
         /** Then **/
         // 재시작 확인은 서비스 수명과 분리된 Dispatchers.Default 범위에서 DataStore를 읽으므로 실제 시간으로 대기
-        val startedService = withContext(Dispatchers.Default) {
-            withTimeout(5_000) {
-                var intent = shadowOf(application).peekNextStartedService()
-                while (intent == null) {
-                    delay(50)
-                    intent = shadowOf(application).peekNextStartedService()
-                }
-                intent
-            }
-        }
+        val startedService = ForegroundServiceTestFixture.awaitNextStartedService(application)
         assertEquals(ForegroundService::class.java.name, startedService.component?.className)
     }
 

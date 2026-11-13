@@ -5,8 +5,8 @@ import com.black.app.R
 import com.black.app.model.StudyPopupRepository
 import com.black.app.service.ForegroundServiceController
 import com.black.core.util.OverlayPermissionStatus
-import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
+import com.black.test.collectDuring
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -15,8 +15,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -68,19 +66,6 @@ class StudyPopupSettingViewModelTest : BaseTest() {
     /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
     private fun createViewModel() = StudyPopupSettingViewModel(repository, overlayPermissionStatus, foregroundServiceController)
         .also { waitCoroutine() }
-
-    /**
-     * 지금까지 쌓인 일회성 이벤트를 모두 수집(구독 전 누적분은 첫 구독자에게 전달)
-     *
-     * backgroundScope 작업은 waitCoroutine(advanceUntilIdle)이 실행하지 않으므로 일반 작업으로 구독한 뒤 취소
-     */
-    private fun TestScope.collectPendingEvents(viewModel: StudyPopupSettingViewModel): List<ViewModelEvent> {
-        val receivedEvents = mutableListOf<ViewModelEvent>()
-        val job = launch { viewModel.events.collect { receivedEvents.add(it) } }
-        waitCoroutine()
-        job.cancel()
-        return receivedEvents
-    }
 
     /**
      * 생성 시 표시 설정·서비스 실행·권한·팝업에 저장된 내용 개수를 상태에 반영하는지 검증
@@ -165,13 +150,12 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         val viewModel = createViewModel()
 
         /** When **/
-        viewModel.showPopupPreview()
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.showPopupPreview() }
 
         /** Then **/
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_no_contents)),
-            collectPendingEvents(viewModel),
+            receivedEvents,
         )
     }
 
@@ -190,12 +174,11 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         val viewModel = createViewModel()
 
         /** When **/
-        viewModel.showPopupPreview()
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.showPopupPreview() }
 
         /** Then **/
         assertTrue(viewModel.uiState.value.showOverlayPermissionDialog)
-        assertTrue(collectPendingEvents(viewModel).isEmpty())
+        assertTrue(receivedEvents.isEmpty())
     }
 
     /**
@@ -256,13 +239,14 @@ class StudyPopupSettingViewModelTest : BaseTest() {
 
         /** When **/
         val viewModel = createViewModel()
+        val receivedEvents = collectDuring(viewModel.events)
 
         /** Then **/
         val uiState = viewModel.uiState.value
         assertEquals(listOf("a", "b"), uiState.contents)
         assertEquals("study_popup.xml", uiState.fileName)
         assertFalse(uiState.modified)
-        assertTrue(collectPendingEvents(viewModel).isEmpty())
+        assertTrue(receivedEvents.isEmpty())
     }
 
     /**
@@ -280,12 +264,13 @@ class StudyPopupSettingViewModelTest : BaseTest() {
 
         /** When **/
         val viewModel = createViewModel()
+        val receivedEvents = collectDuring(viewModel.events)
 
         /** Then **/
         coVerify { repository.removeLatestUri() }
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_load_failed_latest_file)),
-            collectPendingEvents(viewModel),
+            receivedEvents,
         )
     }
 
@@ -327,10 +312,11 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         coEvery { repository.countContents() } returns 1
 
         /** When **/
-        viewModel.saveFileTo(fileUri)
-        waitCoroutine()
-        viewModel.saveFile()
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) {
+            viewModel.saveFileTo(fileUri)
+            waitCoroutine()
+            viewModel.saveFile()
+        }
 
         /** Then **/
         coVerify(exactly = 2) { repository.writeFile(fileUri, listOf("a")) }
@@ -339,7 +325,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         assertEquals(1, uiState.savedContentsCount)
         assertEquals("study_popup.xml", uiState.fileName)
         val savedToast = StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_saved)
-        assertEquals(listOf(savedToast, savedToast), collectPendingEvents(viewModel))
+        assertEquals(listOf(savedToast, savedToast), receivedEvents)
     }
 
     /**
@@ -393,8 +379,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         viewModel.applyEdit("x")
 
         /** When **/
-        viewModel.loadFile(fileUri)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.loadFile(fileUri) }
 
         /** Then **/
         coVerify { repository.keepPermission(fileUri) }
@@ -402,7 +387,7 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         assertFalse(viewModel.uiState.value.modified)
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_loaded)),
-            collectPendingEvents(viewModel),
+            receivedEvents,
         )
     }
 
@@ -422,14 +407,13 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         viewModel.applyEdit("x")
 
         /** When **/
-        viewModel.loadFile(fileUri)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.loadFile(fileUri) }
 
         /** Then **/
         assertEquals(listOf("x"), viewModel.uiState.value.contents)
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_load_failed)),
-            collectPendingEvents(viewModel),
+            receivedEvents,
         )
     }
 
@@ -448,13 +432,12 @@ class StudyPopupSettingViewModelTest : BaseTest() {
         val viewModel = createViewModel()
 
         /** When **/
-        viewModel.setEnabled(true)
-        waitCoroutine()
+        val receivedEvents = collectDuring(viewModel.events) { viewModel.setEnabled(true) }
 
         /** Then **/
         assertEquals(
             listOf(StudyPopupSettingViewModel.EventShowToast(R.string.study_popup_save_failed)),
-            collectPendingEvents(viewModel),
+            receivedEvents,
         )
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
     }

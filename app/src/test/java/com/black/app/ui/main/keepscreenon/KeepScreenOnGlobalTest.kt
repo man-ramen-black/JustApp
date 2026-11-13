@@ -2,10 +2,9 @@ package com.black.app.ui.main.keepscreenon
 
 import android.content.Context
 import android.content.Intent
-import android.os.Looper
-import android.view.View
 import android.view.WindowManager
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.ui.main.OverlayTestFixture
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -15,11 +14,8 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowSettings
-import org.robolectric.shadows.ShadowWindowManagerImpl
 
 /** [KeepScreenOnGlobal] 오버레이 창 추가·제거와 화면 꺼짐 자동 해제 검증 */
 @Config(sdk = [34])
@@ -27,12 +23,11 @@ import org.robolectric.shadows.ShadowWindowManagerImpl
 class KeepScreenOnGlobalTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** 각 테스트 후 활성 상태 해제(싱글턴 상태 격리) */
     @After
     fun deactivateKeepScreenOn() {
-        KeepScreenOnGlobal.deactivate(context)
+        OverlayTestFixture.deactivateKeepScreenOn(context)
     }
 
     /**
@@ -53,7 +48,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
         /** Then **/
         assertTrue(result)
         assertTrue(KeepScreenOnGlobal.isActive.value)
-        val windowParams = attachedViews().single().layoutParams as WindowManager.LayoutParams
+        val windowParams = OverlayTestFixture.attachedViews(context).single().layoutParams as WindowManager.LayoutParams
         assertTrue(windowParams.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0)
         assertEquals(KeepScreenOnGlobal.WINDOW_TITLE, windowParams.title.toString())
     }
@@ -73,11 +68,11 @@ class KeepScreenOnGlobalTest : BaseTest() {
 
         /** When **/
         context.sendBroadcast(Intent(Intent.ACTION_SCREEN_OFF))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
         assertFalse(KeepScreenOnGlobal.isActive.value)
-        assertTrue(attachedViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViews(context).isEmpty())
     }
 
     /**
@@ -98,7 +93,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
         /** Then **/
         assertFalse(result)
         assertFalse(KeepScreenOnGlobal.isActive.value)
-        assertTrue(attachedViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViews(context).isEmpty())
     }
 
     /**
@@ -121,7 +116,7 @@ class KeepScreenOnGlobalTest : BaseTest() {
         assertTrue(firstResult)
         assertFalse(secondResult)
         assertFalse(KeepScreenOnGlobal.isActive.value)
-        assertTrue(attachedViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViews(context).isEmpty())
     }
 
     /**
@@ -142,10 +137,6 @@ class KeepScreenOnGlobalTest : BaseTest() {
 
         /** Then **/
         assertTrue(secondResult)
-        assertEquals(1, attachedViews().size)
+        assertEquals(1, OverlayTestFixture.attachedViews(context).size)
     }
-
-    /** WindowManager에 추가된 뷰 목록 조회 */
-    private fun attachedViews(): List<View> =
-        Shadow.extract<ShadowWindowManagerImpl>(windowManager).views
 }

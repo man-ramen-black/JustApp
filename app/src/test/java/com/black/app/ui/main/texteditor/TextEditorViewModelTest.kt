@@ -7,8 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.black.app.R
 import com.black.app.model.TextEditorRepository
-import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
+import com.black.test.collectValues
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,13 +16,10 @@ import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -64,11 +61,10 @@ class TextEditorViewModelTest : BaseTest() {
     fun test_01_onClickLoadSendsOpenDocumentEvent() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickLoad()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(TextEditorViewModel.EventOpenDocument, receivedEvents[0])
@@ -86,11 +82,10 @@ class TextEditorViewModelTest : BaseTest() {
         /** Given **/
         val viewModel = createViewModel()
         viewModel.onTextChanged("changed text")
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickSave()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(TextEditorViewModel.EventCreateDocument, receivedEvents[0])
@@ -184,11 +179,10 @@ class TextEditorViewModelTest : BaseTest() {
         // init 코루틴 완료(originText·uiState.text = "initial text") 후 텍스트 변경
         viewModel.uiState.filter { it.text == "initial text" }.first()
         viewModel.onTextChanged("changed text")
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickSave()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         val event = receivedEvents[0] as TextEditorViewModel.EventShowToast
@@ -206,11 +200,10 @@ class TextEditorViewModelTest : BaseTest() {
     fun test_07_onClickSaveWithoutChangesSendsSaveCompletedToastEvent() = runTest {
         /** Given **/
         val viewModel = createViewModel()
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onClickSave()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         val event = receivedEvents[0] as TextEditorViewModel.EventShowToast
@@ -258,11 +251,10 @@ class TextEditorViewModelTest : BaseTest() {
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
         coEvery { repository.loadTextFile(uri) } returns Result.failure(FileNotFoundException("openInputStream failed"))
         coEvery { repository.reset() } just Runs
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         val viewModel = createViewModel()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(
@@ -284,11 +276,10 @@ class TextEditorViewModelTest : BaseTest() {
         /** Given **/
         val uri = mockk<Uri>()
         val viewModel = createPermissionRequestedViewModel(uri)
-        val receivedEvents = mutableListOf<ViewModelEvent>()
 
         /** When **/
         viewModel.onConfirmPermissionRequest()
-        viewModel.events.collectEvents(receivedEvents, count = 1)
+        val receivedEvents = viewModel.events.collectValues(count = 1)
 
         /** Then **/
         assertEquals(TextEditorViewModel.EventReopenDocument(uri), receivedEvents[0])
@@ -410,12 +401,4 @@ class TextEditorViewModelTest : BaseTest() {
             viewModel.uiState.filter { it.permissionRequiredUri != null }.first()
         }
     }
-}
-
-/** Flow에서 [count]개 이벤트를 수집하는 테스트 헬퍼 */
-private suspend fun Flow<ViewModelEvent>.collectEvents(
-    into: MutableList<ViewModelEvent>,
-    count: Int,
-) {
-    take(count).toList(into)
 }

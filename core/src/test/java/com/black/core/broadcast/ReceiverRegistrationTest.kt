@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Looper
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -179,7 +178,7 @@ class ReceiverRegistrationTest : BaseTest() {
     /** 앱 자신에게 테스트 action 브로드캐스트 전송 후 메인 루퍼 처리 */
     private fun sendTestBroadcast() {
         application.sendBroadcast(Intent(TEST_ACTION).setPackage(application.packageName))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
     }
 
     /** 테스트 action으로 런타임 등록된 리시버 목록 */

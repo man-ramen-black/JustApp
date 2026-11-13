@@ -6,10 +6,8 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Looper
-import android.view.View
-import android.view.WindowManager
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.ui.main.OverlayTestFixture
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -19,11 +17,8 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowSettings
-import org.robolectric.shadows.ShadowWindowManagerImpl
 
 /** [KeepScreenOnReceiver] 액션별 켜기·끄기와 am broadcast 결과 반환 검증 */
 @Config(sdk = [34])
@@ -31,13 +26,12 @@ import org.robolectric.shadows.ShadowWindowManagerImpl
 class KeepScreenOnReceiverTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val receiver = KeepScreenOnReceiver()
 
     /** 각 테스트 후 활성 상태 해제(싱글턴 상태 격리) */
     @After
     fun deactivateKeepScreenOn() {
-        KeepScreenOnGlobal.deactivate(context)
+        OverlayTestFixture.deactivateKeepScreenOn(context)
     }
 
     /**
@@ -57,7 +51,7 @@ class KeepScreenOnReceiverTest : BaseTest() {
 
         /** Then **/
         assertTrue(KeepScreenOnGlobal.isActive.value)
-        assertEquals(1, attachedViews().size)
+        assertEquals(1, OverlayTestFixture.attachedViews(context).size)
     }
 
     /**
@@ -78,7 +72,7 @@ class KeepScreenOnReceiverTest : BaseTest() {
 
         /** Then **/
         assertTrue(KeepScreenOnGlobal.isActive.value)
-        assertEquals(1, attachedViews().size)
+        assertEquals(1, OverlayTestFixture.attachedViews(context).size)
     }
 
     /**
@@ -99,7 +93,7 @@ class KeepScreenOnReceiverTest : BaseTest() {
 
         /** Then **/
         assertFalse(KeepScreenOnGlobal.isActive.value)
-        assertTrue(attachedViews().isEmpty())
+        assertTrue(OverlayTestFixture.attachedViews(context).isEmpty())
     }
 
     /**
@@ -132,7 +126,7 @@ class KeepScreenOnReceiverTest : BaseTest() {
             null,
             null,
         )
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
         assertTrue(KeepScreenOnGlobal.isActive.value)
@@ -161,8 +155,4 @@ class KeepScreenOnReceiverTest : BaseTest() {
         assertTrue(receiverInfo.exported)
         assertEquals(Manifest.permission.DUMP, receiverInfo.permission)
     }
-
-    /** WindowManager에 추가된 뷰 목록 조회 */
-    private fun attachedViews(): List<View> =
-        Shadow.extract<ShadowWindowManagerImpl>(windowManager).views
 }

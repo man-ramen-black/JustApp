@@ -1,11 +1,9 @@
 package com.black.app.broadcast
 
 import android.app.Application
-import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.broadcast.PackageInstallTestFixture.LAUNCHER_PACKAGE
 import com.black.app.ui.MainActivity
@@ -55,11 +53,11 @@ class PackageInstallReceiverTest : BaseTest() {
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = false))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals("설치되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals("설치되었습니다.", PackageInstallTestFixture.notificationText(notification))
     }
 
     /**
@@ -76,11 +74,11 @@ class PackageInstallReceiverTest : BaseTest() {
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = true))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
-        val notification = PackageInstallTestFixture.shadowNotificationManager(context).getNotification(LAUNCHER_PACKAGE.hashCode())
-        assertEquals("업데이트되었습니다.", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        val notification = PackageInstallTestFixture.installNotification(context)
+        assertEquals("업데이트되었습니다.", PackageInstallTestFixture.notificationText(notification))
     }
 
     /**
@@ -100,7 +98,7 @@ class PackageInstallReceiverTest : BaseTest() {
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(context.packageName, isReplacing = true))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
         assertEquals(0, PackageInstallTestFixture.shadowNotificationManager(context).size())
@@ -156,7 +154,7 @@ class PackageInstallReceiverTest : BaseTest() {
 
         /** When **/
         context.sendBroadcast(packageAddedIntent(LAUNCHER_PACKAGE, isReplacing = false))
-        shadowOf(Looper.getMainLooper()).idle()
+        idleMainLooper()
 
         /** Then **/
         assertEquals(0, PackageInstallTestFixture.shadowNotificationManager(context).size())
