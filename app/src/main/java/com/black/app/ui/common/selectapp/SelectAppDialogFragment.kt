@@ -57,7 +57,6 @@ class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>() {
     override fun onBindVariable(binding: DialogSelectAppBinding) {
         binding.viewModel = viewModel
         binding.adapter = adapter
-        viewModel.itemList.observe(viewLifecycleOwner) { adapter.submitList(it) }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { handleEvent(it) }

@@ -128,10 +128,19 @@ object ViewPagerBindingAdapter {
 }
 
 object RecyclerViewBindingAdapter {
+    /**
+     * [adapter]를 연결하고 [list]를 제출
+     *
+     * 목록이 바뀔 때마다 두 속성을 함께 받으므로 이미 연결된 어댑터는 다시 지정하지 않음.
+     * 같은 어댑터라도 [RecyclerView.setAdapter]는 모든 항목 뷰를 버리고 다시 그려 스크롤이 맨 위로 돌아감
+     */
     @BindingAdapter(value = ["adapter", "itemList"], requireAll = false)
     @JvmStatic
     fun <T> setItemList(view: RecyclerView, adapter: ListAdapter<T, *>?, list: List<T>?) {
-        view.adapter = adapter ?: return
+        adapter ?: return
+        if (view.adapter !== adapter) {
+            view.adapter = adapter
+        }
         adapter.submitList(list ?: return)
     }
 

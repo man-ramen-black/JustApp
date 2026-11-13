@@ -19,6 +19,15 @@
         <variable
             name="defenceListAdapter"
             type="com.black.feature.pokerogue.ui.DefenceListAdapter" />
+        <variable
+            name="selectedTypes"
+            type="java.util.List&lt;com.black.feature.pokerogue.ui.TypeUIState&gt;" />
+        <variable
+            name="attackItemList"
+            type="java.util.List&lt;com.black.feature.pokerogue.ui.DamageUiState&gt;" />
+        <variable
+            name="defenceListItemList"
+            type="java.util.List&lt;com.black.feature.pokerogue.ui.DamageListUiState&gt;" />
     </data>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -49,7 +58,8 @@
             flexDirection="@{FlexDirection.COLUMN}"
             justifyContent="@{JustifyContent.CENTER}"
             flexWrap="@{FlexWrap.NOWRAP}"
-            android:adapter="@{defenceListAdapter}"
+            adapter="@{defenceListAdapter}"
+            itemList="@{defenceListItemList}"
             />
 
         <ImageView
@@ -75,7 +85,8 @@
             android:orientation="vertical"
             android:nestedScrollingEnabled="false"
             android:overScrollMode="never"
-            android:adapter="@{selectedTypeAdapter}"
+            adapter="@{selectedTypeAdapter}"
+            itemList="@{selectedTypes}"
             />
 
         <ImageView
@@ -100,7 +111,8 @@
             app:layout_constraintRight_toRightOf="@id/match_up_background"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:orientation="vertical"
-            android:adapter="@{attackAdapter}"
+            adapter="@{attackAdapter}"
+            itemList="@{attackItemList}"
             />
 
         <androidx.recyclerview.widget.RecyclerView

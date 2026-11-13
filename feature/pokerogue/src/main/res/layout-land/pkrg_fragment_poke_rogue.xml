@@ -84,6 +84,9 @@
                 app:typeSelectAdapter="@{typeSelectAdapter}"
                 app:attackAdapter="@{attackAdapter}"
                 app:defenceListAdapter="@{defenceListAdapter}"
+                app:selectedTypes="@{viewModel.selectedTypes}"
+                app:attackItemList="@{viewModel.attackItemList}"
+                app:defenceListItemList="@{viewModel.defenceListItemList}"
                 />
         </FrameLayout>
 

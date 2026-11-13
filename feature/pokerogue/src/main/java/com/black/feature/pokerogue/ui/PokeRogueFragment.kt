@@ -35,10 +35,6 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     }
 
     private val viewModel: PokeRogueViewModel by viewModels()
-    private lateinit var selectedTypeAdapter: TypeAdapter
-    private lateinit var attackAdapter: AttackAdapter
-    private lateinit var defenceListAdapter: DefenceListAdapter
-    private lateinit var typeAdapter: TypeAdapter
 
     /**
      * Fragment 수명 동안 보관하는 게임 WebView
@@ -106,18 +102,12 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
         // 레이아웃을 교체하면 같은 WebView를 이전 컨테이너에서 떼어 새 컨테이너에 붙임(webView 바인딩 어댑터)
         binding.webView = webView
 
-        // 관찰자는 다음 변경 때만 전달하므로 새 어댑터를 현재 목록으로 미리 채움
-        selectedTypeAdapter = TypeAdapter().also { it.submitList(viewModel.selectedTypes.value) }
-        binding.selectedTypeAdapter = selectedTypeAdapter
-
-        attackAdapter = AttackAdapter().also { it.submitList(viewModel.attackItemList.value) }
-        binding.attackAdapter = attackAdapter
-
-        defenceListAdapter = DefenceListAdapter().also { it.submitList(viewModel.defenceListItemList.value) }
-        binding.defenceListAdapter = defenceListAdapter
-
-        typeAdapter = TypeAdapter().also { it.submitList(typeList) }
-        binding.typeSelectAdapter = typeAdapter
+        // 어댑터는 연결한 RecyclerView를 붙잡으므로 교체한 이전 레이아웃과 나눠 쓰지 않도록 바인딩마다 새로 만듦.
+        // 상성 목록은 레이아웃의 itemList 바인딩이 바인딩 실행 때 현재 값으로 채우고 이후 변경도 전달(교체 시 붙이기 전에 실행)
+        binding.selectedTypeAdapter = TypeAdapter()
+        binding.attackAdapter = AttackAdapter()
+        binding.defenceListAdapter = DefenceListAdapter()
+        binding.typeSelectAdapter = TypeAdapter().also { it.submitList(typeList) }
     }
 
     /**
@@ -168,17 +158,6 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // 어댑터는 바인딩마다 새로 만들므로 관찰자는 뷰마다 한 번 등록하고 그때의 어댑터에 전달
-        viewModel.selectedTypes.observe(viewLifecycleOwner) {
-            selectedTypeAdapter.submitList(it)
-        }
-        viewModel.attackItemList.observe(viewLifecycleOwner) {
-            attackAdapter.submitList(it)
-        }
-        viewModel.defenceListItemList.observe(viewLifecycleOwner) {
-            defenceListAdapter.submitList(it)
-        }
 
         viewLifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
