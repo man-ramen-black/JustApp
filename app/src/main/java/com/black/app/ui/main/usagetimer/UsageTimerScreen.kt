@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -42,6 +41,7 @@ import com.black.app.R
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
@@ -137,16 +137,7 @@ private fun UsageTimerContent(
         titleModifier = Modifier.testTag("usage_timer_title"),
     ) {
         // 타이머 표시 섹션
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 24.dp),
-            thickness = 1.dp,
-            color = AppColors.Divider,
-        )
-        Text(
-            text = stringResource(R.string.usage_timer_section_overlay),
-            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = AppTypography.Caption,
-        )
+        SectionHeader(stringResource(R.string.usage_timer_section_overlay))
         ActionButton(
             text = stringResource(R.string.usage_timer_show),
             onClick = onClickShow,
@@ -157,16 +148,7 @@ private fun UsageTimerContent(
         )
 
         // 일시정지 섹션
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 24.dp),
-            thickness = 1.dp,
-            color = AppColors.Divider,
-        )
-        Text(
-            text = stringResource(R.string.usage_timer_section_pause),
-            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = AppTypography.Caption,
-        )
+        SectionHeader(stringResource(R.string.usage_timer_section_pause))
         Row(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -197,8 +179,9 @@ private fun UsageTimerContent(
             ActionButton(
                 text = stringResource(R.string.usage_timer_save),
                 onClick = onClickSave,
+                // 옆 입력 칸과 같은 높이
                 modifier = Modifier
-                    .height(56.dp)
+                    .height(OutlinedTextFieldDefaults.MinHeight)
                     .testTag("save_button"),
                 letterSpacing = 0.sp,
             )
@@ -234,16 +217,7 @@ private fun UsageTimerContent(
         }
 
         // 설정 섹션
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 24.dp),
-            thickness = 1.dp,
-            color = AppColors.Divider,
-        )
-        Text(
-            text = stringResource(R.string.usage_timer_section_settings),
-            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = AppTypography.Caption,
-        )
+        SectionHeader(stringResource(R.string.usage_timer_section_settings))
         ActionButton(
             text = stringResource(R.string.usage_timer_accessibility),
             onClick = onClickAccessibility,
@@ -263,16 +237,7 @@ private fun UsageTimerContent(
         )
 
         // 선택한 앱 섹션
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 24.dp),
-            thickness = 1.dp,
-            color = AppColors.Divider,
-        )
-        Text(
-            text = stringResource(R.string.usage_timer_section_selected_apps),
-            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-            style = AppTypography.Caption,
-        )
+        SectionHeader(stringResource(R.string.usage_timer_section_selected_apps))
 
         if (uiState.selectedApps.isEmpty()) {
             Text(

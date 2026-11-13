@@ -15,10 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -27,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,10 +33,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import com.black.app.R
+import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ToolTopBar
 import com.black.core.ui.component.TopBarIconButton
 import com.black.core.ui.theme.AppColors
-import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
 import com.black.core.viewmodel.CollectEvents
 
@@ -222,7 +219,7 @@ private fun TextEditorContent(
                 .weight(1f)
                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
                 .testTag(TextEditorTestTags.EDITOR_INPUT),
-            textStyle = TextStyle(
+            textStyle = AppTypography.Body.copy(
                 color = AppColors.ItemName,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
@@ -239,30 +236,13 @@ private fun PermissionRequestDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ConfirmDialog(
+        message = stringResource(R.string.text_editor_permission_required),
+        confirmText = stringResource(R.string.text_editor_select_document),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.PERMISSION_REQUEST_DIALOG),
-        shape = AppShapes.Container,
-        containerColor = AppColors.ContainerBackground,
-        text = {
-            Text(
-                text = stringResource(R.string.text_editor_permission_required),
-                color = AppColors.ItemName,
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                modifier = Modifier.testTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON),
-            ) {
-                Text(stringResource(R.string.text_editor_select_document), color = AppColors.Title)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = AppColors.Caption)
-            }
-        },
+        confirmButtonModifier = Modifier.testTag(TextEditorTestTags.SELECT_DOCUMENT_BUTTON),
     )
 }
 
@@ -272,26 +252,11 @@ private fun ResetConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ConfirmDialog(
+        message = stringResource(R.string.text_editor_new_file),
+        confirmText = stringResource(R.string.ok),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
         modifier = Modifier.testTag(TextEditorTestTags.RESET_CONFIRM_DIALOG),
-        shape = AppShapes.Container,
-        containerColor = AppColors.ContainerBackground,
-        text = {
-            Text(
-                text = stringResource(R.string.text_editor_new_file),
-                color = AppColors.ItemName,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.ok), color = AppColors.Title)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = AppColors.Caption)
-            }
-        },
     )
 }
