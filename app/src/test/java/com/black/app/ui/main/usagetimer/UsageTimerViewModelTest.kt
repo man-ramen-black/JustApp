@@ -1,10 +1,9 @@
 package com.black.app.ui.main.usagetimer
 
-import android.graphics.drawable.Drawable
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
-import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.util.InstalledAppResolver
+import com.black.app.util.mockInstalledApps
 import com.black.core.util.OverlayPermissionStatus
 import com.black.test.BaseTest
 import com.black.test.collectValues
@@ -14,7 +13,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -40,15 +38,12 @@ class UsageTimerViewModelTest : BaseTest() {
     @MockK
     lateinit var overlayPermissionStatus: OverlayPermissionStatus
 
-    private fun uiItem(packageName: String) =
-        SelectedAppUiItem(packageName, packageName, mockk<Drawable>())
-
     @Before
     fun setupViewModel() {
         coEvery { repository.getPauseDuration() } returns 3
         coEvery { repository.getPauseRemainTimeMillis() } returns 0L
         coEvery { repository.getSelectedApps() } returns listOf("com.a", "com.b")
-        every { installedAppResolver.resolve(any()) } answers { uiItem(firstArg()) }
+        installedAppResolver.mockInstalledApps()
         every { overlayPermissionStatus.canDrawOverlays() } returns true
     }
 

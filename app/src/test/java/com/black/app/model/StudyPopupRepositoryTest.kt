@@ -1,7 +1,6 @@
 package com.black.app.model
 
 import android.content.Context
-import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.database.studypopup.StudyPopupData
 import com.black.app.model.database.studypopup.StudyPopupDatabase
@@ -16,7 +15,6 @@ import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import java.io.File
 
 /** [StudyPopupRepository]의 팝업 내용 저장·조회와 내용 존재 여부 판단 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -125,7 +123,7 @@ class StudyPopupRepositoryTest : BaseTest() {
     @Test
     fun test_05_writeFileUpdatesFileAndPopupDatabase() = runTest {
         /** Given **/
-        val uri = Uri.fromFile(File(context.filesDir, "study_popup_test.xml").apply { writeText("") })
+        val uri = context.testFileUri("study_popup_test.xml", content = "")
         val contents = listOf("a", " ", "b")
 
         /** When **/
@@ -150,7 +148,7 @@ class StudyPopupRepositoryTest : BaseTest() {
     fun test_06_readMissingFileFails() = runTest {
         /** Given **/
         repository.removeLatestUri()
-        val uri = Uri.fromFile(File(context.filesDir, "missing_study_popup.xml"))
+        val uri = context.testFileUri("missing_study_popup.xml")
 
         /** When **/
         val result = repository.readFile(uri)
@@ -197,7 +195,7 @@ class StudyPopupRepositoryTest : BaseTest() {
     @Test
     fun test_08_writeFileWithInvalidCharacterKeepsFile() = runTest {
         /** Given **/
-        val uri = Uri.fromFile(File(context.filesDir, "study_popup_invalid.xml").apply { writeText("") })
+        val uri = context.testFileUri("study_popup_invalid.xml", content = "")
         repository.writeFile(uri, listOf("a")).getOrThrow()
 
         /** When **/

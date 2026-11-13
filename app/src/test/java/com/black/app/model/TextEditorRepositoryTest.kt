@@ -26,10 +26,6 @@ class TextEditorRepositoryTest : BaseTest() {
         runTest { repository.reset() }
     }
 
-    /** filesDir에 [content]를 쓴 테스트 파일의 Uri */
-    private fun createFileUri(name: String, content: String): Uri =
-        Uri.fromFile(File(context.filesDir, name).apply { writeText(content) })
-
     /** [uri] 파일의 실제 내용 */
     private fun readFile(uri: Uri): String = File(requireNotNull(uri.path)).readText()
 
@@ -43,7 +39,7 @@ class TextEditorRepositoryTest : BaseTest() {
     @Test
     fun test_01_crlfFileEditsWithLfAndSavesWithCrlf() = runTest {
         /** Given **/
-        val uri = createFileUri("crlf.txt", "line1\r\nline2\r\n")
+        val uri = context.testFileUri("crlf.txt", "line1\r\nline2\r\n")
 
         /** When **/
         val loadedText = repository.loadTextFile(uri).getOrThrow()
@@ -65,7 +61,7 @@ class TextEditorRepositoryTest : BaseTest() {
     fun test_02_lfFileRoundTripsUnchanged() = runTest {
         /** Given **/
         val content = "line1\nline2"
-        val uri = createFileUri("lf.txt", content)
+        val uri = context.testFileUri("lf.txt", content)
 
         /** When **/
         val loadedText = repository.loadTextFile(uri).getOrThrow()
@@ -87,7 +83,7 @@ class TextEditorRepositoryTest : BaseTest() {
     fun test_03_mixedLineEndingsRoundTripUnchanged() = runTest {
         /** Given **/
         val content = "line1\r\nline2\nline3\r\n"
-        val uri = createFileUri("mixed.txt", content)
+        val uri = context.testFileUri("mixed.txt", content)
 
         /** When **/
         val loadedText = repository.loadTextFile(uri).getOrThrow()
@@ -108,9 +104,9 @@ class TextEditorRepositoryTest : BaseTest() {
     @Test
     fun test_04_saveToOtherFileKeepsLf() = runTest {
         /** Given **/
-        val crlfUri = createFileUri("crlf_source.txt", "line1\r\nline2\r\n")
+        val crlfUri = context.testFileUri("crlf_source.txt", "line1\r\nline2\r\n")
         repository.loadTextFile(crlfUri).getOrThrow()
-        val newUri = createFileUri("new.txt", "")
+        val newUri = context.testFileUri("new.txt", "")
 
         /** When **/
         repository.saveTextFile(newUri, "new1\nnew2\n").getOrThrow()

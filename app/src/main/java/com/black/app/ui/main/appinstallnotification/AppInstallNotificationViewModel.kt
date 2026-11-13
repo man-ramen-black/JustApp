@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.service.ForegroundServiceController
 import com.black.app.service.ForegroundServiceController.StartResult
+import com.black.app.ui.common.selectapp.selectedAppUiItem
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
 import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.EventViewModel
@@ -35,8 +36,8 @@ class AppInstallNotificationViewModel @Inject constructor(
 
     private val mutableUiState = MutableStateFlow(
         AppInstallNotificationUiState(
-            previewApp = installedAppResolver.resolve(notificationStatus.previewPackageName),
-            notifierApp = installedAppResolver.resolve(notificationStatus.notifierPackageName),
+            previewApp = installedAppResolver.selectedAppUiItem(notificationStatus.previewPackageName),
+            notifierApp = installedAppResolver.selectedAppUiItem(notificationStatus.notifierPackageName),
         )
     )
     val uiState: StateFlow<AppInstallNotificationUiState> = mutableUiState.asStateFlow()

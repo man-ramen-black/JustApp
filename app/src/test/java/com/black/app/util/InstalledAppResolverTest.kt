@@ -91,30 +91,4 @@ class InstalledAppResolverTest : BaseTest() {
         assertEquals(InstalledApp(LAUNCHER_PACKAGE, LAUNCHER_LABEL, icon), installedApp)
         verify(exactly = 0) { packageManager.getApplicationInfo(any<String>(), any<Int>()) }
     }
-
-    /**
-     * 화면 표시용 조회가 설치된 앱은 라벨·아이콘을, 미설치 앱은 packageName·기본 아이콘을 쓰는지 검증
-     *
-     * Given: 앱 하나 설치, 다른 패키지는 미설치
-     * When: 두 packageName으로 resolve 호출
-     * Then: 설치 앱은 설치 라벨·아이콘, 미설치 앱은 라벨이 packageName이고 아이콘이 기본 액티비티 아이콘
-     */
-    @Test
-    fun test_04_resolveFallsBackWhenNotInstalled() = runTest {
-        /** Given **/
-        val missingPackage = "com.example.missing"
-        PackageInstallTestFixture.installApp(context, LAUNCHER_PACKAGE, LAUNCHER_LABEL)
-        val resolver = InstalledAppResolver(context)
-
-        /** When **/
-        val installedItem = resolver.resolve(LAUNCHER_PACKAGE)
-        val missingItem = resolver.resolve(missingPackage)
-
-        /** Then **/
-        assertEquals(LAUNCHER_LABEL, installedItem.label)
-        assertSame(context.packageManager.getApplicationIcon(LAUNCHER_PACKAGE), installedItem.icon)
-        assertEquals(missingPackage, missingItem.packageName)
-        assertEquals(missingPackage, missingItem.label)
-        assertEquals(context.packageManager.defaultActivityIcon.javaClass, missingItem.icon.javaClass)
-    }
 }

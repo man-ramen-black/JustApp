@@ -3,6 +3,7 @@ package com.black.app.ui.main.usagetimer
 import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
+import com.black.app.ui.common.selectapp.selectedAppUiItem
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.app.util.InstalledAppResolver
 import com.black.core.util.OverlayPermissionStatus
@@ -49,7 +50,7 @@ class UsageTimerViewModel @Inject constructor(
         launch {
             val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
             val pauseDurationInput = repository.getPauseDuration().toString()
-            val selectedApps = repository.getSelectedApps().map(installedAppResolver::resolve)
+            val selectedApps = repository.getSelectedApps().map(installedAppResolver::selectedAppUiItem)
             mutableUiState.update {
                 it.copy(
                     pauseRemainTimeMillis = pauseRemainTimeMillis,
@@ -138,7 +139,7 @@ class UsageTimerViewModel @Inject constructor(
                 return@launch
             }
             mutableUiState.update {
-                it.copy(selectedApps = packageNames.map(installedAppResolver::resolve))
+                it.copy(selectedApps = packageNames.map(installedAppResolver::selectedAppUiItem))
             }
         }
     }

@@ -1,10 +1,9 @@
 package com.black.app.ui.main.appinstallnotification
 
-import android.graphics.drawable.Drawable
 import com.black.app.service.ForegroundServiceController
 import com.black.app.service.ForegroundServiceController.StartResult
-import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.app.util.InstalledAppResolver
+import com.black.app.util.mockInstalledApps
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.app.R
 import com.black.test.BaseTest
@@ -15,7 +14,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
-import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,9 +65,7 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         every { notificationStatus.notifierPackageName } returns "com.black.notifier"
         every { notificationStatus.canShowNotification() } returns true
         every { notificationStatus.showPreviewNotification(any()) } just Runs
-        every { installedAppResolver.resolve(any()) } answers {
-            SelectedAppUiItem(firstArg(), "JustApp", mockk<Drawable>())
-        }
+        installedAppResolver.mockInstalledApps(label = { "JustApp" })
     }
 
     /** ViewModel 생성 후 init의 실행 설정·실행 상태 수집 시작까지 대기 */
@@ -103,8 +99,8 @@ class AppInstallNotificationViewModelTest : BaseTest() {
         assertEquals("com.black.app", uiState.previewApp?.packageName)
         assertEquals("com.black.notifier", uiState.notifierApp?.packageName)
         verify {
-            installedAppResolver.resolve("com.black.app")
-            installedAppResolver.resolve("com.black.notifier")
+            installedAppResolver.find("com.black.app")
+            installedAppResolver.find("com.black.notifier")
         }
     }
 
