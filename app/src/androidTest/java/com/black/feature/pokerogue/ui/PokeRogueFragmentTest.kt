@@ -37,8 +37,6 @@ class PokeRogueFragmentTest : BaseUiTest() {
     /** PokeRogueFragment를 컴포지션에 둘지 여부 */
     private val isPokeRogueShowing = mutableStateOf(true)
 
-    private lateinit var hostActivity: HiltTestActivity
-
     /** [hostPokeRogueInNavHost]로 호스팅한 NavHost의 NavController */
     private lateinit var navController: NavHostController
 
@@ -60,7 +58,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
         assertEquals(
             "PokeRogueFragment 진입 후 가로 고정이 요청되지 않았습니다",
             ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
-            hostActivity.requestedOrientation,
+            currentActivity().requestedOrientation,
         )
 
         /** When **/
@@ -71,7 +69,7 @@ class PokeRogueFragmentTest : BaseUiTest() {
         assertEquals(
             "PokeRogueFragment 이탈 후 가로 고정이 해제되지 않았습니다",
             ActivityInfo.SCREEN_ORIENTATION_USER,
-            hostActivity.requestedOrientation,
+            currentActivity().requestedOrientation,
         )
     }
 
@@ -147,7 +145,6 @@ class PokeRogueFragmentTest : BaseUiTest() {
     /** 앱의 AppNavHost와 같이 AndroidFragment로 PokeRogueFragment를 HiltTestActivity에 호스팅 */
     private fun hostPokeRogueFragment() {
         onHostActivity { activity ->
-            hostActivity = activity
             activity.setContent {
                 if (isPokeRogueShowing.value) {
                     AndroidFragment<PokeRogueFragment>(Modifier.fillMaxSize())

@@ -13,10 +13,9 @@ import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.feature.floatingbutton.service.FloatingForegroundService
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -35,20 +34,20 @@ class FloatingSettingScreenTest : BaseUiTest() {
 
     private val controller = FloatingButtonController(context)
 
-    /** 테스트 전 사용자의 플로팅 버튼 실행 여부, setup에서 읽기 전에는 null */
-    private var originalRunning: Boolean? = null
+    /** setup에서 읽은 테스트 전 사용자의 플로팅 버튼 실행 여부 */
+    private var originalRunning = false
 
-    /** 사용자의 플로팅 버튼 실행 여부 보관 */
+    /** 사용자의 플로팅 버튼 실행 여부를 보관하고, 테스트 중 바뀌었으면 테스트 후 복원하도록 등록 */
     override fun setup() {
-        originalRunning = FloatingForegroundService.running.value
-    }
-
-    /** 테스트 중 바뀐 플로팅 버튼 실행 여부 복원, setup이 읽기 전에 실패했으면 바꾸지 않음 */
-    override fun teardown() {
-        val running = originalRunning ?: return
-        if (FloatingForegroundService.running.value == running) return
-        if (running) controller.start() else controller.stop()
-        waitUntilRunning(running)
+        originalRunning = preserveValue(
+            read = { FloatingForegroundService.running.value },
+            restore = { running ->
+                if (FloatingForegroundService.running.value != running) {
+                    if (running) controller.start() else controller.stop()
+                    waitUntilRunning(running)
+                }
+            },
+        )
     }
 
     /** FloatingSettingScreen을 HiltTestActivity에 setContent로 호스팅 */
@@ -235,10 +234,10 @@ class FloatingSettingScreenTest : BaseUiTest() {
      * - 다시 클릭 후 처음 상태로 돌아옴
      */
     @Test
-    fun test_05_switchStartsAndStopsService() {
+    fun test_05_switchStartsAndStopsService() = runBlocking<Unit> {
         /** Given **/
         setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
-        val initialRunning = requireNotNull(originalRunning)
+        val initialRunning = originalRunning
         hostFloatingSettingScreen()
         waitUntilTagMatches(FloatingSettingTestTags.RUNNING_SWITCH) { if (initialRunning) isOn() else isOff() }
 
@@ -253,10 +252,11 @@ class FloatingSettingScreenTest : BaseUiTest() {
     }
 
     /** 플로팅 버튼 서비스 실행 여부가 [running]이 될 때까지 대기, 시간 안에 바뀌지 않으면 실패 */
-    private fun waitUntilRunning(running: Boolean) {
-        runBlocking {
-            withTimeout(DEFAULT_TIMEOUT_MILLIS) { FloatingForegroundService.running.first { it == running } }
-        }
+    private suspend fun waitUntilRunning(running: Boolean) {
+        assertTrue(
+            "플로팅 버튼 서비스 실행 여부가 ${DEFAULT_TIMEOUT_MILLIS}ms 안에 ${running}(으)로 바뀌지 않았습니다",
+            waitUntilFlowValue(FloatingForegroundService.running) { it == running },
+        )
     }
 
     /**

@@ -1,14 +1,12 @@
 package com.black.app.ui.main.usagetimer.view
 
-import android.app.KeyguardManager
 import android.graphics.Rect
 import android.view.ContextThemeWrapper
 import android.view.Surface
 import android.view.WindowInsets
-import androidx.test.core.app.ActivityScenario
 import com.black.app.R
 import com.black.app.testutil.BaseUiTest
-import com.black.app.testutil.HiltTestActivity
+import com.black.app.testutil.isStatusBarVisible
 import com.black.core.util.Cutout
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.UiUtil
@@ -17,7 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -29,15 +26,13 @@ import org.junit.runners.MethodSorters
  * 이동 가능 영역은 화면에서 보이는 시스템 바만 뺀 영역(컷아웃 영역 포함)
  * 회전은 자동 회전을 끈 상태의 user_rotation으로 고정하고 테스트 후 원복
  * 몰입 모드는 유튜브 전체화면처럼 상단바·내비게이션 바를 숨기고 컷아웃 영역까지 그리는 테스트 액티비티로 재현
- * 잠금 중에는 오버레이 창이 표시되지 않아 잠겨 있으면 건너뜀
+ * 잠금 중에는 오버레이 창이 표시되지 않아 화면을 켜고 잠금 해제를 시도한 뒤 그래도 잠겨 있으면 건너뜀
  *
  * 실제 창 배치 대기가 필요하므로 가상 시간으로 delay를 건너뛰는 runTest 대신 runBlocking 사용
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageTimerViewUiTest : BaseUiTest() {
-
-    private val keyguardManager = context.getSystemService(KeyguardManager::class.java)
 
     private var timerView: UsageTimerView? = null
 
@@ -153,7 +148,7 @@ class UsageTimerViewUiTest : BaseUiTest() {
         }
 
         // 몰입 모드 상단바 숨김 반영 대기
-        assertTrue("몰입 모드 상단바 숨김이 반영되지 않았습니다", waitUntil { isStatusBarVisible(scenario.activity()) != isImmersive })
+        assertTrue("몰입 모드 상단바 숨김이 반영되지 않았습니다", waitUntil { isHostStatusBarVisible() == !isImmersive })
         delay(SETTLE_DELAY)
 
         // 화면 전체 영역에서 현재 보이는 시스템 바 인셋만 뺀 영역
@@ -201,46 +196,18 @@ class UsageTimerViewUiTest : BaseUiTest() {
         return rect
     }
 
-    /** 액티비티 창 기준 상단바 표시 여부 */
-    private fun isStatusBarVisible(activity: HiltTestActivity): Boolean {
-        var isVisible = true
-        instrumentation.runOnMainSync {
-            isVisible = activity.window.decorView.rootWindowInsets?.isVisible(WindowInsets.Type.statusBars()) ?: true
-        }
+    /** 호스트 액티비티 창 기준 상단바 표시 여부, 창에 붙기 전이라 판정할 수 없으면 null */
+    private fun isHostStatusBarVisible(): Boolean? {
+        val activity = currentActivity()
+        var isVisible: Boolean? = null
+        instrumentation.runOnMainSync { isVisible = isStatusBarVisible(activity.window.decorView) }
         return isVisible
-    }
-
-    /** scenario의 현재 액티비티 인스턴스 */
-    private fun ActivityScenario<HiltTestActivity>.activity(): HiltTestActivity {
-        var activity: HiltTestActivity? = null
-        onActivity { activity = it }
-        return requireNotNull(activity)
-    }
-
-    /** 잠겨 있으면 오버레이 창이 표시되지 않아 검증 대상 상태가 아니므로 테스트 건너뜀 */
-    private fun assumeUnlocked() {
-        assumeTrue("기기가 잠겨 있어 건너뜀(잠금 해제 상태에서 실행 필요)", !keyguardManager.isKeyguardLocked)
-    }
-
-    /** [condition] 충족까지 [STATE_TIMEOUT] 동안 폴링 후 충족 여부 반환 */
-    private suspend fun waitUntil(condition: () -> Boolean): Boolean {
-        val deadline = System.currentTimeMillis() + STATE_TIMEOUT
-        while (System.currentTimeMillis() < deadline) {
-            if (condition()) {
-                return true
-            }
-            delay(POLL_INTERVAL)
-        }
-        return condition()
     }
 
     companion object {
         /** 화면 밖 좌표(화면 크기보다 충분히 큰 값) */
         private const val OUTSIDE_POSITION = 100_000f
-        /** 회전·몰입 모드·창 배치 반영 대기 시간 */
-        private const val STATE_TIMEOUT = 5_000L
         /** 창 이동 후 재배치 완료 대기 시간 */
         private const val SETTLE_DELAY = 700L
-        private const val POLL_INTERVAL = 200L
     }
 }

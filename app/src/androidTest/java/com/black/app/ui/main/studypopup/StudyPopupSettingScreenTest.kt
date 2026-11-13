@@ -17,10 +17,9 @@ import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -40,20 +39,10 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
 
     private val dataStore = StudyPopupDataStore(context)
 
-    /** 테스트 전 사용자의 화면 켜짐 팝업 표시 설정, setup에서 읽기 전에는 null */
-    private var originalEnabled: Boolean? = null
-
-    /** 사용자 설정 보관 후 표시 설정을 꺼짐으로 초기화 */
+    /** 사용자 설정을 테스트 후 복원하도록 보관한 뒤 표시 설정을 꺼짐으로 초기화 */
     override fun setup() {
-        runBlocking {
-            originalEnabled = dataStore.getEnabled()
-            dataStore.updateEnabled(false)
-        }
-    }
-
-    /** 사용자 설정 복원, setup이 읽기 전에 실패했으면 덮어쓰지 않음 */
-    override fun teardown() {
-        originalEnabled?.let { runBlocking { dataStore.updateEnabled(it) } }
+        preserveValue(read = { dataStore.getEnabled() }, restore = { dataStore.updateEnabled(it) })
+        runBlocking { dataStore.updateEnabled(false) }
     }
 
     /** StudyPopupSettingScreen을 HiltTestActivity에 setContent로 호스팅 */
@@ -253,9 +242,8 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
         /** Then **/
         waitUntilTagMatches(StudyPopupSettingTestTags.ENABLED_SWITCH) { isOff() }
         // 저장은 코루틴에서 끝나므로 꺼짐이 저장될 때까지 대기, 시간 안에 저장되지 않으면 실패
-        runBlocking {
-            withTimeout(DEFAULT_TIMEOUT_MILLIS) { dataStore.getEnabledFlow().first { !it } }
-        }
+        val saved = runBlocking { waitUntilFlowValue(dataStore.getEnabledFlow()) { !it } }
+        assertTrue("스위치를 끈 뒤 ${DEFAULT_TIMEOUT_MILLIS}ms 안에 표시 설정 꺼짐이 저장되지 않았습니다", saved)
     }
 
     /**

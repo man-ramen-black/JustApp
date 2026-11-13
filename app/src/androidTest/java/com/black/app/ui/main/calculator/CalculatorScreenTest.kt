@@ -31,37 +31,19 @@ class CalculatorScreenTest : BaseUiTest() {
 
     private val repository = CalculatorRepository(context)
 
-    /** 테스트 전 사용자가 보던 탭, setup에서 읽기 전에는 null */
-    private var originalTab: CalculatorTab? = null
-
-    /** 테스트 전 사용자가 입력해 둔 희석 입력값, setup에서 읽기 전에는 null */
-    private var originalDilutionInputs: DilutionInputs? = null
-
-    /** 테스트 전 사용자가 입력해 둔 비율 입력값, setup에서 읽기 전에는 null */
-    private var originalRatioInputs: RatioInputs? = null
-
-    /** 사용자 탭·입력값을 보관한 뒤 희석 탭·빈 입력값으로 초기화 */
+    /**
+     * 사용자 탭·입력값을 테스트 후 복원하도록 보관한 뒤 희석 탭·빈 입력값으로 초기화
+     *
+     * 실사용 기기의 값을 유지하며, 읽기 전에 실패한 값은 BaseUiTest가 덮어쓰지 않음.
+     */
     override fun setup() {
+        preserveValue(read = { repository.getSelectedTab() }, restore = { repository.saveSelectedTab(it) })
+        preserveValue(read = { repository.getDilutionInputs() }, restore = { repository.saveDilutionInputs(it) })
+        preserveValue(read = { repository.getRatioInputs() }, restore = { repository.saveRatioInputs(it) })
         runBlocking {
-            originalTab = repository.getSelectedTab()
-            originalDilutionInputs = repository.getDilutionInputs()
-            originalRatioInputs = repository.getRatioInputs()
             repository.saveSelectedTab(CalculatorTab.DILUTION)
             repository.saveDilutionInputs(DilutionInputs())
             repository.saveRatioInputs(RatioInputs())
-        }
-    }
-
-    /**
-     * 사용자 탭·입력값 복원
-     *
-     * 실사용 기기의 값을 유지하며, setup이 읽기 전에 실패했으면 덮어쓰지 않음.
-     */
-    override fun teardown() {
-        runBlocking {
-            originalTab?.let { repository.saveSelectedTab(it) }
-            originalDilutionInputs?.let { repository.saveDilutionInputs(it) }
-            originalRatioInputs?.let { repository.saveRatioInputs(it) }
         }
     }
 

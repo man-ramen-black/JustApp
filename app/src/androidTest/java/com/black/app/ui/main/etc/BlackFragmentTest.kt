@@ -1,15 +1,15 @@
 package com.black.app.ui.main.etc
 
-import android.os.SystemClock
 import android.view.View
 import android.widget.FrameLayout
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import com.black.app.testutil.BaseUiTest
 import com.black.app.testutil.HiltTestActivity
 import com.black.app.testutil.assertBelowStatusBar
+import com.black.app.testutil.isStatusBarVisible
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -20,6 +20,8 @@ import org.junit.runners.MethodSorters
  * 네비게이션을 사용하지 않으므로 NavController 없이 컨테이너에만 추가(패턴 B).
  * 레이아웃(fragment_black.xml)에 id 있는 View가 없어 View 노출 검증 대신,
  * 이탈 후 콘텐츠가 status bar와 겹치는 회귀(setDecorFitsSystemWindows 복원 누락) 검증
+ *
+ * 창 배치 반영을 실제 시간으로 기다려야 하므로 가상 시간으로 delay를 건너뛰는 runTest 대신 runBlocking 사용
  */
 @HiltAndroidTest
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -27,8 +29,6 @@ class BlackFragmentTest : BaseUiTest() {
 
     companion object {
         private const val TAG_BLACK_FRAGMENT = "black"
-        private const val TIMEOUT_WINDOW_LAYOUT_MS = 5_000L
-        private const val POLLING_INTERVAL_MS = 100L
     }
 
     private var containerId = 0
@@ -44,7 +44,7 @@ class BlackFragmentTest : BaseUiTest() {
      * - 콘텐츠 컨테이너 상단이 status bar 아래로 복원(겹침 없음)
      */
     @Test
-    fun test_01_contentNotOverlappingStatusBarAfterExit() {
+    fun test_01_contentNotOverlappingStatusBarAfterExit() = runBlocking<Unit> {
         /** Given **/
         val scenario = hostBlackFragment()
         waitUntilStatusBarVisibility(
@@ -105,26 +105,19 @@ class BlackFragmentTest : BaseUiTest() {
      * status bar 표시 여부가 [visible]과 일치할 때까지 폴링 대기
      *
      * windowInsetsController의 hide/show가 비동기로 적용되므로,
-     * 제한 시간 내 일치하지 않으면 [failureMessage]로 실패 처리
+     * 제한 시간 내 일치하지 않으면 [failureMessage]로 실패 처리(창 인셋이 없어 판정할 수 없는 동안은 계속 대기)
      */
-    private fun waitUntilStatusBarVisibility(
+    private suspend fun waitUntilStatusBarVisibility(
         scenario: ActivityScenario<HiltTestActivity>,
         visible: Boolean,
         failureMessage: String,
     ) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_WINDOW_LAYOUT_MS
         var lastVisible: Boolean? = null
-        while (SystemClock.uptimeMillis() < deadline) {
-            scenario.onActivity { activity ->
-                lastVisible = ViewCompat.getRootWindowInsets(activity.window.decorView)
-                    ?.isVisible(WindowInsetsCompat.Type.statusBars())
-            }
-            if (lastVisible == visible) {
-                return
-            }
-            SystemClock.sleep(POLLING_INTERVAL_MS)
+        val matched = waitUntil {
+            scenario.onActivity { activity -> lastVisible = isStatusBarVisible(activity.window.decorView) }
+            lastVisible == visible
         }
-        throw AssertionError("$failureMessage (마지막 status bar 표시 여부=$lastVisible)")
+        assertTrue("$failureMessage (마지막 status bar 표시 여부=$lastVisible)", matched)
     }
 
     /**
@@ -133,24 +126,20 @@ class BlackFragmentTest : BaseUiTest() {
      * immersive 모드 전환에 따른 Window 재배치가 비동기로 일어나므로,
      * 제한 시간 내 충족되지 않으면 [failureMessage]로 실패 처리
      */
-    private fun waitUntilContainerTop(
+    private suspend fun waitUntilContainerTop(
         scenario: ActivityScenario<HiltTestActivity>,
         failureMessage: String,
         condition: (Int) -> Boolean,
     ) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_WINDOW_LAYOUT_MS
         var lastTop = Int.MIN_VALUE
-        while (SystemClock.uptimeMillis() < deadline) {
+        val matched = waitUntil {
             scenario.onActivity { activity ->
                 val location = IntArray(2)
                 activity.findViewById<View>(containerId).getLocationOnScreen(location)
                 lastTop = location[1]
             }
-            if (condition(lastTop)) {
-                return
-            }
-            SystemClock.sleep(POLLING_INTERVAL_MS)
+            condition(lastTop)
         }
-        throw AssertionError("$failureMessage (마지막 컨테이너 상단 y=$lastTop)")
+        assertTrue("$failureMessage (마지막 컨테이너 상단 y=$lastTop)", matched)
     }
 }

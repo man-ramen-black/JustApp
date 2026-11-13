@@ -1,6 +1,7 @@
 package com.black.app.testutil
 
 import android.content.res.Resources
+import android.view.View
 import androidx.annotation.IdRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -61,12 +62,14 @@ fun assertBelowStatusBar(@IdRes viewId: Int): ViewInteraction =
     checkView(viewId, "뷰 상단이 status bar 영역과 겹칩니다", ViewAssertion { view, notFound ->
         view ?: throw (notFound ?: AssertionError("뷰를 찾을 수 없습니다"))
 
-        val insets = ViewCompat.getRootWindowInsets(view)
+        val isStatusBarVisible = isStatusBarVisible(view)
             ?: throw AssertionError("창의 WindowInsets를 가져올 수 없어 겹침 검증 불가")
         // status bar가 숨겨져 있으면 겹칠 대상이 없어 검증이 무의미하므로 실패 처리
-        if (!insets.isVisible(WindowInsetsCompat.Type.statusBars())) {
+        if (!isStatusBarVisible) {
             throw AssertionError("status bar가 표시되지 않아 겹침 검증 불가")
         }
+        // 바로 위에서 인셋이 있음을 확인한 같은 메인 스레드 호출이라 null 아님
+        val insets = requireNotNull(ViewCompat.getRootWindowInsets(view))
         val location = IntArray(2)
         view.getLocationInWindow(location)
         val viewTop = location[1]
@@ -76,6 +79,16 @@ fun assertBelowStatusBar(@IdRes viewId: Int): ViewInteraction =
             throw AssertionError("뷰 상단(창 기준 y=$viewTop)이 status bar 높이($statusBarHeight)보다 위에 있어 겹칩니다")
         }
     })
+
+/**
+ * [view]가 붙은 창 기준 status bar 표시 여부, 판정할 수 없으면 null
+ *
+ * 인셋 null 규칙: 창에 붙기 전(첫 배치 전)이라 루트 창 인셋이 없으면 표시·숨김 어느 쪽으로도 보지 않고 null 반환.
+ * 상태 대기는 `== 기대값` 비교로 null이면 판정될 때까지 계속 기다리고, 검증([assertBelowStatusBar])은 null이면 실패 처리.
+ * 뷰 상태를 읽으므로 메인 스레드에서 호출
+ */
+fun isStatusBarVisible(view: View): Boolean? =
+    ViewCompat.getRootWindowInsets(view)?.isVisible(WindowInsetsCompat.Type.statusBars())
 
 /** [viewId] 뷰를 클릭한다. [scrollTo]가 true면 먼저 화면에 보이도록 스크롤한다. */
 fun clickView(@IdRes viewId: Int, scrollTo: Boolean = false): ViewInteraction {

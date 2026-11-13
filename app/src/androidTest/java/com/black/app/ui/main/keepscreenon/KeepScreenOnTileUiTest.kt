@@ -1,6 +1,5 @@
 package com.black.app.ui.main.keepscreenon
 
-import android.app.KeyguardManager
 import android.content.ComponentName
 import android.view.WindowManager
 import com.black.app.testutil.BaseUiTest
@@ -9,7 +8,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -23,7 +21,7 @@ import org.junit.runners.MethodSorters
  * 화면 꺼짐 시 자동 해제는 기기를 잠가 사용 중인 기기와 이후 테스트를 방해하므로 `KeepScreenOnGlobalTest`가 단위 테스트로 검증
  * 사용자가 테스트 전에 추가해 둔 타일과 이 앱의 화면 켜짐 유지 활성 여부는 테스트 후 그 상태로 되돌림
  *
- * 잠금 해제 상태에서 쓰는 기능이라 잠겨 있으면 각 테스트를 건너뜀
+ * 잠금 해제 상태에서 쓰는 기능이라 각 테스트가 화면을 켜고 잠금 해제를 시도한 뒤 그래도 잠겨 있으면 건너뜀
  * (잠금 중에는 시스템이 오버레이 창을 숨겨 FLAG_KEEP_SCREEN_ON 미적용, 보안 잠금은 테스트에서 해제 불가)
  *
  * 실제 시간 대기가 필요하므로 가상 시간으로 delay를 건너뛰는 runTest 대신 runBlocking 사용
@@ -34,47 +32,44 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
 
     private val tileComponentName = ComponentName(context, KeepScreenOnTileService::class.java)
     private val tileComponent = tileComponentName.flattenToString()
-    private val keyguardManager = context.getSystemService(KeyguardManager::class.java)
 
     /** dumpsys window 창 정보에서 이 앱 패키지의 창을 고르는 패턴(실사용 앱 패키지는 이 앱 패키지의 접두어라 경계까지 일치) */
     private val ownPackagePattern = Regex("""package=${Regex.escape(context.packageName)}(\s|$)""")
 
-    /** 테스트 전 사용자가 빠른 설정창에 이 타일을 추가해 뒀는지 여부, setup에서 확인하기 전에는 null */
-    private var wasTileAdded: Boolean? = null
-
-    /** 테스트 전 화면 켜짐 유지 활성 여부, setup에서 확인하기 전에는 null */
-    private var wasKeepScreenOnActive: Boolean? = null
-
+    /**
+     * 오버레이 표시 권한·타일·활성 여부를 테스트 후 복원하도록 BaseUiTest에 등록하며 변경
+     *
+     * BaseUiTest는 등록 역순으로 복원하므로 활성 여부 → 타일 → 오버레이 표시 권한 순으로 되돌림
+     */
     override fun setup() {
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
         setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
-        // 사용자가 추가해 둔 타일은 teardown에서 지우지 않도록 추가 여부 보관 후 빠른 설정창에 타일 추가
-        wasTileAdded = isTileAdded()
-        device.executeShellCommand("cmd statusbar add-tile $tileComponent")
-        wakeUpAndUnlock()
-        // 테스트 전 활성 여부 보관 후 같은 프로세스 싱글톤 비활성 상태로 시작
-        instrumentation.runOnMainSync {
-            wasKeepScreenOnActive = KeepScreenOnGlobal.isActive.value
-            KeepScreenOnGlobal.deactivate(context)
-        }
-    }
-
-    /** 타일·활성 여부를 테스트 전 상태로 복원, 오버레이 표시 권한은 이 함수가 실패해도 BaseUiTest가 이후에 복원 */
-    override fun teardown() {
-        // 테스트 전에 없던 타일만 제거
-        if (wasTileAdded == false) {
-            device.executeShellCommand("cmd statusbar remove-tile $tileComponent")
-        }
-        // 오버레이 창 추가에 쓰는 권한이 BaseUiTest 복원 전이라 여기서 활성 여부 복원
-        wasKeepScreenOnActive?.let { wasActive ->
-            instrumentation.runOnMainSync {
-                if (wasActive) {
-                    KeepScreenOnGlobal.activate(context)
-                } else {
-                    KeepScreenOnGlobal.deactivate(context)
+        // 사용자가 추가해 둔 타일은 테스트 후 지우지 않도록 추가 여부 보관 후 빠른 설정창에 타일 추가
+        preserveValue(
+            read = { isTileAdded() },
+            restore = { wasTileAdded ->
+                // 테스트 전에 없던 타일만 제거
+                if (!wasTileAdded) {
+                    device.executeShellCommand("cmd statusbar remove-tile $tileComponent")
                 }
-            }
-        }
+            },
+        )
+        device.executeShellCommand("cmd statusbar add-tile $tileComponent")
+        // 테스트 전 활성 여부 보관 후 같은 프로세스 싱글톤 비활성 상태로 시작
+        // 활성 여부는 권한 등록 뒤에 등록해, 오버레이 창 추가에 쓰는 권한을 되돌리기 전에 복원
+        preserveValue(
+            read = { KeepScreenOnGlobal.isActive.value },
+            restore = { wasActive ->
+                instrumentation.runOnMainSync {
+                    if (wasActive) {
+                        KeepScreenOnGlobal.activate(context)
+                    } else {
+                        KeepScreenOnGlobal.deactivate(context)
+                    }
+                }
+            },
+        )
+        instrumentation.runOnMainSync { KeepScreenOnGlobal.deactivate(context) }
     }
 
     /**
@@ -106,8 +101,8 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         clickTile()
 
         /** Then **/
-        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil(STATE_TIMEOUT) { KeepScreenOnGlobal.isActive.value })
-        val isWindowAdded = waitUntil(STATE_TIMEOUT) { ownKeepScreenOnWindow() != null }
+        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil { KeepScreenOnGlobal.isActive.value })
+        val isWindowAdded = waitUntil { ownKeepScreenOnWindow() != null }
         assertTrue("타일 클릭 후 이 앱의 KeepScreenOn 창이 없습니다", isWindowAdded)
         val window = ownKeepScreenOnWindow().orEmpty()
         assertTrue("KeepScreenOn 창에 FLAG_KEEP_SCREEN_ON이 없습니다: $window", hasKeepScreenOnFlag(window))
@@ -125,19 +120,19 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         /** Given **/
         assumeUnlocked()
         clickTile()
-        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil(STATE_TIMEOUT) { KeepScreenOnGlobal.isActive.value })
+        assertTrue("타일 클릭 후 활성화되지 않았습니다", waitUntil { KeepScreenOnGlobal.isActive.value })
         // 해제 판정이 의미 있도록 해제 전에는 이 앱의 창이 붙어 있는지 확인
         assertTrue(
             "타일 클릭 후 이 앱의 KeepScreenOn 창이 없습니다",
-            waitUntil(STATE_TIMEOUT) { ownKeepScreenOnWindow() != null },
+            waitUntil { ownKeepScreenOnWindow() != null },
         )
 
         /** When **/
         clickTile()
 
         /** Then **/
-        assertTrue("타일 재클릭 후 해제되지 않았습니다", waitUntil(STATE_TIMEOUT) { !KeepScreenOnGlobal.isActive.value })
-        val isWindowRemoved = waitUntil(STATE_TIMEOUT) { ownKeepScreenOnWindow() == null }
+        assertTrue("타일 재클릭 후 해제되지 않았습니다", waitUntil { !KeepScreenOnGlobal.isActive.value })
+        val isWindowRemoved = waitUntil { ownKeepScreenOnWindow() == null }
         assertTrue("해제 후에도 이 앱의 KeepScreenOn 창이 남아 있습니다: ${ownKeepScreenOnWindow()}", isWindowRemoved)
     }
 
@@ -152,21 +147,6 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         device.executeShellCommand("cmd statusbar click-tile $tileComponent")
         delay(PANEL_ANIMATION_DELAY)
         device.executeShellCommand("cmd statusbar collapse")
-    }
-
-    /** 화면 켜기 후 비보안 키가드 해제 */
-    private fun wakeUpAndUnlock() {
-        device.wakeUp()
-        // 보안 잠금(PIN 등)은 해제되지 않고 PIN 입력 화면만 뜨므로 요청 생략
-        if (!keyguardManager.isDeviceSecure) {
-            device.executeShellCommand("wm dismiss-keyguard")
-        }
-    }
-
-    /** 잠겨 있으면 검증 대상 상태가 아니므로 테스트 건너뜀, 비보안 키가드의 비동기 해제는 기다린 뒤 판정 */
-    private suspend fun assumeUnlocked() {
-        val unlocked = waitUntil(STATE_TIMEOUT) { !keyguardManager.isKeyguardLocked }
-        assumeTrue("기기가 잠겨 있어 건너뜀(잠금 해제 상태에서 실행 필요)", unlocked)
     }
 
     /**
@@ -195,22 +175,7 @@ class KeepScreenOnTileUiTest : BaseUiTest() {
         return flags.split(" ").contains(KEEP_SCREEN_ON_FLAG_NAME)
     }
 
-    /** [condition] 충족까지 [timeout] 동안 폴링 후 충족 여부 반환 */
-    private suspend fun waitUntil(timeout: Long, condition: () -> Boolean): Boolean {
-        val deadline = System.currentTimeMillis() + timeout
-        while (System.currentTimeMillis() < deadline) {
-            if (condition()) {
-                return true
-            }
-            delay(POLL_INTERVAL)
-        }
-        return condition()
-    }
-
     companion object {
-        /** 활성 상태 전환 대기 시간 */
-        private const val STATE_TIMEOUT = 5_000L
-        private const val POLL_INTERVAL = 200L
         /** 빠른 설정창 펼침·접힘 및 타일 서비스 바인딩 대기 시간 */
         private const val PANEL_ANIMATION_DELAY = 1_500L
         /** 빠른 설정창에 추가된 타일 목록 설정 키(secure) */
