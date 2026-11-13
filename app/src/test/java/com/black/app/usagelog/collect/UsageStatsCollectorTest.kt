@@ -11,9 +11,13 @@ import com.black.app.usagelog.record.AppUsageRecord
 import com.black.app.usagelog.record.GapCause
 import com.black.app.usagelog.record.GapRecord
 import com.black.app.usagelog.record.OpenUsageSession
+import com.black.app.usagelog.record.ScreenOnRecord
 import com.black.test.BaseTest
 import io.mockk.coEvery
+import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -22,6 +26,7 @@ import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.IOException
 
 /** [UsageStatsCollector]의 수집 시점 판정, 커서·열린 구간 저장, 만료 공백 기록 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -42,14 +47,17 @@ class UsageStatsCollectorTest : BaseTest() {
 
     private val collector by lazy { createCollector(settings) }
 
-    private fun createCollector(settingsRepository: UsageLogSettingsRepository) =
+    private fun createCollector(
+        settingsRepository: UsageLogSettingsRepository,
+        usageLogRepository: UsageLogRepository = repository,
+    ) =
         UsageStatsCollector(
             source = { begin, end ->
                 queries.add(begin to end)
                 events
             },
             settings = settingsRepository,
-            repository = repository,
+            repository = usageLogRepository,
             appNameOf = { "${it}앱" },
             clock = { now },
         )
@@ -293,25 +301,32 @@ class UsageStatsCollectorTest : BaseTest() {
     }
 
     /**
-     * 열린 구간 저장이 실패하면 커서를 옮기지 않는지 검증
+     * 열린 구간과 커서 저장이 실패하면 둘 다 이전 값으로 남는지 검증
      *
-     * Given: 열린 구간 저장이 실패하는 설정 저장소
+     * Given: 커서 now-1시간, 저장된 열린 구간 a(now-2시간), 이벤트 a 일시정지 now-50분과 b 실행 now-40분, 진행 상태 저장이 실패하는 설정 저장소
      * When: collect
-     * Then: 커서 그대로
+     * Then: 커서 now-1시간과 열린 구간 a(now-2시간) 그대로
      */
     @Test
-    fun test_11_cursorKeptWhenOpenSessionSaveFails() = runTest {
+    fun test_11_progressKeptWhenSaveFails() = runTest {
         /** Given **/
+        val open = OpenUsageSession("a", now - 2 * hour, null)
         settings.setCollectionEnabled(true)
         settings.setUsageCursor(now - hour)
+        settings.setOpenSession(open)
+        events = listOf(
+            RawUsageEvent(RawUsageEventKind.PAUSED, "a", now - 50 * minute),
+            RawUsageEvent(RawUsageEventKind.RESUMED, "b", now - 40 * minute),
+        )
         val failing = spyk(settings)
-        coEvery { failing.setOpenSession(any()) } returns Result.failure(IllegalStateException())
+        coEvery { failing.setUsageProgress(any(), any()) } returns Result.failure(IOException("save failed"))
 
         /** When **/
         createCollector(failing).collect()
 
         /** Then **/
         assertEquals(now - hour, settings.getUsageCursor())
+        assertEquals(open, settings.getOpenSession())
     }
 
     /**
@@ -337,5 +352,37 @@ class UsageStatsCollectorTest : BaseTest() {
         assertEquals(now - hour, settings.getUsageCursor())
         assertEquals(open, settings.getOpenSession())
         assertEquals(emptyList<Any>(), savedRecords())
+    }
+
+    /**
+     * 기록 저장 직후 취소돼도 진행 상태까지 저장해 다음 수집이 같은 기록을 다시 넣지 않는지 검증
+     *
+     * Given: 수집 켜짐, 커서 now-1시간, 화면 켜짐 이벤트 now-30분, 기록 추가 직후 수집 작업을 취소하는 저장소
+     * When: 취소되는 수집 뒤 같은 이벤트로 다시 collect
+     * Then: 저장된 기록은 ScreenOnRecord(now-30분) 하나, 커서 now-10분
+     */
+    @Test
+    fun test_13_cancelDuringSaveDoesNotDuplicate() = runTest {
+        /** Given **/
+        settings.setCollectionEnabled(true)
+        settings.setUsageCursor(now - hour)
+        events = listOf(RawUsageEvent(RawUsageEventKind.SCREEN_ON, null, now - 30 * minute))
+        lateinit var collectJob: Job
+        // callOriginal은 실제로 중단되는 함수에서 호출부를 두 번 재개하므로 실제 저장소를 직접 호출
+        val cancellingRepository = mockk<UsageLogRepository>()
+        coEvery { cancellingRepository.add(any(), any()) } coAnswers {
+            repository.add(firstArg(), secondArg())
+            collectJob.cancel()
+        }
+        val cancellingCollector = createCollector(settings, cancellingRepository)
+
+        /** When **/
+        collectJob = launch { cancellingCollector.collect() }
+        collectJob.join()
+        collector.collect()
+
+        /** Then **/
+        assertEquals(listOf(ScreenOnRecord(now - 30 * minute)), savedRecords())
+        assertEquals(now - 10 * minute, settings.getUsageCursor())
     }
 }

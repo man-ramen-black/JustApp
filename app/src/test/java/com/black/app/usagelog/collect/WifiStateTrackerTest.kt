@@ -4,6 +4,7 @@ import com.black.app.usagelog.record.WifiConnectedRecord
 import com.black.app.usagelog.record.WifiDisconnectedRecord
 import com.black.app.usagelog.record.WifiState
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -27,7 +28,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 따옴표만 제거되고 알 수 없는 값은 null
      */
     @Test
-    fun test_01_normalizeSsid() {
+    fun test_01_normalizeSsid() = runTest {
         /** When / Then **/
         assertEquals("MyHome_5G", WifiStateTracker.normalizeSsid("\"MyHome_5G\""))
         assertNull(WifiStateTracker.normalizeSsid("<unknown ssid>"))
@@ -44,7 +45,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: true, false, null
      */
     @Test
-    fun test_02_isHome() {
+    fun test_02_isHome() = runTest {
         /** When / Then **/
         assertEquals(true, WifiStateTracker.isHome("MyHome_5G", homes))
         assertEquals(false, WifiStateTracker.isHome("Cafe", homes))
@@ -59,7 +60,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 집 연결 기록 하나
      */
     @Test
-    fun test_03_connectFromDisconnectedRecordsOne() {
+    fun test_03_connectFromDisconnectedRecordsOne() = runTest {
         /** When **/
         val records = WifiStateTracker.onConnected(disconnected, "MyHome_5G", homes, 100)
 
@@ -75,7 +76,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 빈 목록
      */
     @Test
-    fun test_04_connectSameSsidAgainRecordsNothing() {
+    fun test_04_connectSameSsidAgainRecordsNothing() = runTest {
         /** When / Then **/
         assertTrue(WifiStateTracker.onConnected(atHome, "MyHome_5G", homes, 100).isEmpty())
     }
@@ -88,7 +89,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 집 해제, Cafe 연결 순서
      */
     @Test
-    fun test_05_connectDifferentSsidRecordsDisconnectThenConnect() {
+    fun test_05_connectDifferentSsidRecordsDisconnectThenConnect() = runTest {
         /** When **/
         val records = WifiStateTracker.onConnected(atHome, "Cafe", homes, 100)
 
@@ -110,7 +111,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 집 해제 기록 하나
      */
     @Test
-    fun test_06_disconnectRecordsPreviousSsidAndHome() {
+    fun test_06_disconnectRecordsPreviousSsidAndHome() = runTest {
         /** When **/
         val records = WifiStateTracker.onDisconnected(atHome, homes, 100)
 
@@ -126,7 +127,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 빈 목록
      */
     @Test
-    fun test_07_disconnectWhenAlreadyDisconnectedRecordsNothing() {
+    fun test_07_disconnectWhenAlreadyDisconnectedRecordsNothing() = runTest {
         /** When / Then **/
         assertTrue(WifiStateTracker.onDisconnected(disconnected, homes, 100).isEmpty())
     }
@@ -139,7 +140,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: inferred 해제 기록 하나
      */
     @Test
-    fun test_08_reconcileMarksInferred() {
+    fun test_08_reconcileMarksInferred() = runTest {
         /** When **/
         val records = WifiStateTracker.reconcile(atHome, disconnected, homes, 100)
 
@@ -155,7 +156,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: 빈 목록
      */
     @Test
-    fun test_09_reconcileSameStateRecordsNothing() {
+    fun test_09_reconcileSameStateRecordsNothing() = runTest {
         /** When / Then **/
         assertTrue(WifiStateTracker.reconcile(atHome, atHome, homes, 100).isEmpty())
         assertTrue(WifiStateTracker.reconcile(disconnected, disconnected, homes, 100).isEmpty())
@@ -169,7 +170,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: ssid, home이 null인 연결 기록
      */
     @Test
-    fun test_10_unknownSsidRecordsNullHome() {
+    fun test_10_unknownSsidRecordsNullHome() = runTest {
         /** When **/
         val records = WifiStateTracker.onConnected(disconnected, null, homes, 100)
 
@@ -185,7 +186,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: inferred 연결 기록 하나
      */
     @Test
-    fun test_11_reconcileDisconnectedToConnected() {
+    fun test_11_reconcileDisconnectedToConnected() = runTest {
         /** When **/
         val records = WifiStateTracker.reconcile(disconnected, atHome, homes, 100)
 
@@ -201,7 +202,7 @@ class WifiStateTrackerTest : BaseTest() {
      * Then: inferred 집 해제, inferred Cafe 연결 순서
      */
     @Test
-    fun test_12_reconcileDifferentSsidRecordsTwo() {
+    fun test_12_reconcileDifferentSsidRecordsTwo() = runTest {
         /** When **/
         val records = WifiStateTracker.reconcile(atHome, WifiState(true, "Cafe"), homes, 100)
 

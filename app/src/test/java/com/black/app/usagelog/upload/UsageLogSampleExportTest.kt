@@ -14,25 +14,30 @@ import com.black.app.usagelog.record.UsageLogRecord
 import com.black.app.usagelog.record.WifiConnectedRecord
 import com.black.app.usagelog.record.WifiDisconnectedRecord
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.zip.GZIPInputStream
 
 /**
- * PC 쪽 스크립트(docs/usage-log-pc)의 복호화 확인에 쓰는 전송 묶음 표본 생성
+ * PC 참고 스크립트의 복호화 확인에 쓰는 전송 묶음 표본 생성
  *
- * 고정 키(바이트 0..31)와 고정 nonce(바이트 0..11)로 가짜 기록만 암호화해 `app/build/usage-log-sample/`에 쓴다.
- * 기록 내용은 실제 기기와 무관한 가짜 값이다.
+ * 고정 키(바이트 0..31)와 고정 nonce(바이트 0..11)로 가짜 기록만 암호화해 `app/build/usage-log-sample/`에 씀.
+ * `tools/usage-log/test_usage_log.py`가 이 표본을 풀어 쌓고 조회 결과를 확인.
+ * 기록 내용은 실제 기기와 무관한 가짜 값.
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageLogSampleExportTest : BaseTest() {
 
     private val key = ByteArray(32) { it.toByte() }
     private val nonce = ByteArray(12) { it.toByte() }
 
-    /** 2025-11-12 00:00(UTC+9)의 epoch ms */
+    /** UTC+9 기준 2025-11-12 00:00의 epoch ms */
     private val dayStart = 1762873200000L
     private val minute = 60_000L
 
@@ -75,7 +80,7 @@ class UsageLogSampleExportTest : BaseTest() {
      * Then: 파일이 존재하고 sample.bin을 복호화·gunzip한 바이트가 plain.jsonl과 같음
      */
     @Test
-    fun test_01_exportSampleFiles() {
+    fun test_01_exportSampleFiles() = runTest {
         /** Given **/
         val context = BatchContext(at(23, 0), SendReason.PERIODIC, "SM-FAKE", "com.black.app", 540, "install-sample")
         val records = fakeRecords()

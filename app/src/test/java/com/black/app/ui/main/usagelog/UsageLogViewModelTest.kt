@@ -7,45 +7,46 @@ import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.usagelog.UsageLogCollectionController
 import com.black.app.usagelog.collect.UsageStatsCollector
-import com.black.app.usagelog.upload.LastSendResult
-import com.black.app.usagelog.upload.SendReason
-import com.black.app.usagelog.upload.UsageLogCipher
-import com.black.app.usagelog.work.UsageLogScheduler
 import com.black.app.usagelog.record.NotificationPostedRecord
 import com.black.app.usagelog.record.NotificationRemovedRecord
 import com.black.app.usagelog.record.RemovalReason
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.upload.LastSendResult
+import com.black.app.usagelog.upload.SendReason
+import com.black.app.usagelog.upload.UsageLogCipher
+import com.black.app.usagelog.work.UsageLogScheduler
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.just
-import io.mockk.Runs
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.IOException
 
-/** [UsageLogViewModel]의 상태 구성, 수집 켜기·끄기, 집 Wi-Fi 등록·삭제, 권한 요청 분기와 이벤트 발송 검증 */
+/** [UsageLogViewModel]의 상태 구성, 수집 켜기·끄기, 집 Wi-Fi 등록·삭제, 전송 설정·지금 보내기, 권한·위치 설정 이동 분기와 이벤트 발송 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageLogViewModelTest : BaseTest() {
@@ -113,7 +114,9 @@ class UsageLogViewModelTest : BaseTest() {
         every { status.isUsageAccessGranted() } returns false
         every { status.isNotificationAccessGranted() } returns false
         every { status.isFineLocationGranted() } returns false
+        every { status.isApproximateLocationOnly() } returns false
         every { status.isBackgroundLocationGranted() } returns false
+        every { status.isLocationEnabled() } returns false
         every { status.isBatteryOptimizationIgnored() } returns false
         every { status.currentSsid() } returns null
         every { installedAppResolver.resolveLabel(any()) } answers { "라벨_" + firstArg<String>() }
@@ -123,13 +126,18 @@ class UsageLogViewModelTest : BaseTest() {
     private fun createViewModel() = UsageLogViewModel(settings, repository, controller, collector, status, installedAppResolver, scheduler)
         .also { waitCoroutine() }
 
-    /** IO 디스패처 변환이 끝나 [expected]가 UiState에 반영될 때까지 대기 */
+    /**
+     * IO 디스패처 변환이 끝나 [expected]가 UiState에 반영될 때까지 대기
+     *
+     * 2초 안에 반영되지 않으면 그 자리에서 실패시켜, 뒤 단계가 반영 전 상태로 진행하지 않게 함.
+     */
     private suspend fun awaitRecentRecords(viewModel: UsageLogViewModel, expected: List<UsageLogRecordItem>) {
         repeat(200) {
             waitCoroutine()
             if (viewModel.uiState.value.recentRecords == expected) return
             withContext(Dispatchers.Default) { delay(10) }
         }
+        fail("recentRecords not updated: expected=$expected actual=${viewModel.uiState.value.recentRecords}")
     }
 
     /** 동작 전에 이벤트 구독을 시작해 발송된 이벤트 전부(없음 포함)를 수집 */
@@ -144,9 +152,9 @@ class UsageLogViewModelTest : BaseTest() {
     /**
      * 설정과 시스템 상태가 UiState에 반영되고 집 Wi-Fi가 이름순으로 정렬되는지 검증
      *
-     * Given: 수집 켜짐, 집 SSID "B", "A", 사용 정보 접근과 현재 SSID가 있는 상태
+     * Given: 수집 켜짐, 집 SSID "B", "A", 사용 정보 접근, 위치 권한, 위치 설정, 현재 SSID가 있는 상태
      * When: ViewModel 생성
-     * Then: collectionEnabled true, homeSsids ["A", "B"], 사용 정보·위치(정확한·백그라운드)·배터리 권한 값과 currentSsid 반영, 주기 작업 예약 확인
+     * Then: collectionEnabled true, homeSsids ["A", "B"], 사용 정보·위치(정확한·대략적인 위치만·백그라운드·위치 설정)·배터리 값과 currentSsid 반영, 주기 작업 예약 확인
      */
     @Test
     fun test_01_initialStateReflectsSettingsAndStatus() = runTest {
@@ -156,6 +164,7 @@ class UsageLogViewModelTest : BaseTest() {
         every { status.isUsageAccessGranted() } returns true
         every { status.isFineLocationGranted() } returns true
         every { status.isBackgroundLocationGranted() } returns true
+        every { status.isLocationEnabled() } returns true
         every { status.isBatteryOptimizationIgnored() } returns true
         every { status.currentSsid() } returns "MyHome_2G"
 
@@ -169,7 +178,9 @@ class UsageLogViewModelTest : BaseTest() {
         assertTrue(uiState.usageAccessGranted)
         assertFalse(uiState.notificationAccessGranted)
         assertTrue(uiState.fineLocationGranted)
+        assertFalse(uiState.approximateLocationOnly)
         assertTrue(uiState.backgroundLocationGranted)
+        assertTrue(uiState.locationEnabled)
         assertTrue(uiState.batteryOptimizationIgnored)
         assertEquals("MyHome_2G", uiState.currentSsid)
         coVerify { controller.ensureScheduled() }
@@ -271,13 +282,14 @@ class UsageLogViewModelTest : BaseTest() {
     /**
      * 위치 항상 허용이 아니면 권한 창 없이 설정 화면으로 이동하는지 검증
      *
-     * Given: 정확한 위치 없음
+     * Given: 정확한 위치 없음, 기기 위치 설정 켜짐
      * When: openLocationSettings 호출, 정확한 위치만 있는 상태로 다시 호출, 항상 허용 상태로 다시 호출
-     * Then: EventOpenLocationSettings 두 번, 항상 허용 상태에서는 이벤트 없음
+     * Then: EventOpenLocationPermissionSettings 두 번, 항상 허용 상태에서는 이벤트 없음
      */
     @Test
     fun test_06_openLocationSettingsUntilAlwaysAllowed() = runTest {
         /** Given **/
+        every { status.isLocationEnabled() } returns true
         val viewModel = createViewModel()
         val receivedEvents = collectEvents(viewModel)
 
@@ -291,8 +303,8 @@ class UsageLogViewModelTest : BaseTest() {
         /** Then **/
         assertEquals(
             listOf<ViewModelEvent>(
-                UsageLogViewModel.EventOpenLocationSettings,
-                UsageLogViewModel.EventOpenLocationSettings,
+                UsageLogViewModel.EventOpenLocationPermissionSettings,
+                UsageLogViewModel.EventOpenLocationPermissionSettings,
             ),
             receivedEvents,
         )
@@ -446,7 +458,7 @@ class UsageLogViewModelTest : BaseTest() {
      *
      * Given: 같은 패키지의 알림 제거 기록 두 건(key는 게시 기록 없음)
      * When: 저장소가 기록을 내보내고, 이어서 목록이 갱신됨
-     * Then: appLabel이 "라벨_com.fake", resolveLabel은 패키지당 1회
+     * Then: 갱신된 목록의 appLabel이 "라벨_com.fake", resolveLabel은 패키지당 1회
      */
     @Test
     fun test_13_removedRecordResolvesLabelOncePerPackage() = runTest {
@@ -454,18 +466,20 @@ class UsageLogViewModelTest : BaseTest() {
         val viewModel = createViewModel()
         val first = NotificationRemovedRecord(key = "a", packageName = "com.fake", time = 1_000L, reason = RemovalReason.DISMISS)
         val second = NotificationRemovedRecord(key = "b", packageName = "com.fake", time = 2_000L, reason = RemovalReason.OTHER)
-        val expected = listOf(
+        val firstExpected = listOf(
             UsageLogRecordItem(2L, second, "라벨_com.fake"),
             UsageLogRecordItem(1L, first, "라벨_com.fake"),
         )
+        val updatedExpected = listOf(UsageLogRecordItem(3L, first, "라벨_com.fake"))
 
         /** When **/
         recentRecords.value = listOf(StoredUsageLogRecord(2L, second), StoredUsageLogRecord(1L, first))
-        awaitRecentRecords(viewModel, expected)
+        awaitRecentRecords(viewModel, firstExpected)
         recentRecords.value = listOf(StoredUsageLogRecord(3L, first))
-        awaitRecentRecords(viewModel, listOf(UsageLogRecordItem(3L, first, "라벨_com.fake")))
+        awaitRecentRecords(viewModel, updatedExpected)
 
         /** Then **/
+        assertEquals(updatedExpected, viewModel.uiState.value.recentRecords)
         verify(exactly = 1) { installedAppResolver.resolveLabel("com.fake") }
     }
 
@@ -494,22 +508,22 @@ class UsageLogViewModelTest : BaseTest() {
     /**
      * 지금 보내기가 주소 유효 여부에 따라 수동 전송 예약 또는 토스트로 갈리는지 검증
      *
-     * Given: 저장된 주소가 올바르지 않은 상태
+     * Given: 암호화 키와 대기 기록 3건이 있고 저장된 주소가 올바르지 않은 상태
      * When: sendNow 호출, 이어서 올바른 주소가 저장된 뒤 다시 호출
-     * Then: 처음엔 EventShowToast(usage_log_webhook_invalid)와 예약 없음, 다음엔 enqueueSend(MANUAL) 1회
+     * Then: EventShowToast(usage_log_webhook_invalid) 하나, 예약은 올바른 주소 저장 뒤의 enqueueSend(MANUAL) 1회
      */
     @Test
     fun test_15_sendNowEnqueuesManual() = runTest {
         /** Given **/
         webhookUrl.value = "not a url"
+        encryptionKey.value = UsageLogCipher.encodeKey(UsageLogCipher.generateKey())
+        unsentCount.value = 3
         val viewModel = createViewModel()
         val receivedEvents = collectEvents(viewModel)
 
         /** When **/
         viewModel.sendNow()
         waitCoroutine()
-        val toastOnly = receivedEvents.toList()
-        verify(exactly = 0) { scheduler.enqueueSend(any()) }
         webhookUrl.value = "https://discord.com/api/webhooks/1/abc"
         waitCoroutine()
         viewModel.sendNow()
@@ -518,7 +532,7 @@ class UsageLogViewModelTest : BaseTest() {
         /** Then **/
         assertEquals(
             listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_webhook_invalid)),
-            toastOnly,
+            receivedEvents,
         )
         verify(exactly = 1) { scheduler.enqueueSend(SendReason.MANUAL) }
     }
@@ -528,7 +542,7 @@ class UsageLogViewModelTest : BaseTest() {
      *
      * Given: 기존 키가 저장된 상태
      * When: requestRegenerateKey, 이어서 confirmRegenerateKey 호출
-     * Then: 요청 뒤 확인 대화상자 표시, 저장 전 setEncryptionKey 미호출, 확인 뒤 기존과 다른 32바이트 키 저장과 대화상자 닫힘
+     * Then: 요청 뒤 확인 대화상자 표시, 요청만으로는 저장하지 않음, 확인 뒤 기존과 다른 32바이트 키 1회 저장과 대화상자 닫힘
      */
     @Test
     fun test_16_regenerateKeyAfterConfirm() = runTest {
@@ -539,13 +553,15 @@ class UsageLogViewModelTest : BaseTest() {
 
         /** When **/
         viewModel.requestRegenerateKey()
+        waitCoroutine()
         val shownAfterRequest = viewModel.uiState.value.showRegenerateKeyConfirm
-        coVerify(exactly = 0) { settings.setEncryptionKey(any()) }
+        val keyAfterRequest = viewModel.uiState.value.encryptionKey
         viewModel.confirmRegenerateKey()
         waitCoroutine()
 
         /** Then **/
         assertTrue(shownAfterRequest)
+        assertEquals(oldKey, keyAfterRequest)
         assertFalse(viewModel.uiState.value.showRegenerateKeyConfirm)
         val newKey = viewModel.uiState.value.encryptionKey
         assertNotEquals(oldKey, newKey)
@@ -554,11 +570,11 @@ class UsageLogViewModelTest : BaseTest() {
     }
 
     /**
-     * 키 복사가 키를 담은 복사 이벤트를 보내는지 검증
+     * 키 복사가 키 원문 없는 복사 이벤트를 보내고 화면이 읽을 키는 UiState에 있는지 검증
      *
      * Given: 저장된 키가 있는 상태
      * When: copyEncryptionKey 호출
-     * Then: EventCopyEncryptionKey(저장된 키)
+     * Then: EventCopyEncryptionKey 하나, uiState.encryptionKey가 저장된 키
      */
     @Test
     fun test_17_copyEncryptionKeySendsEvent() = runTest {
@@ -571,10 +587,8 @@ class UsageLogViewModelTest : BaseTest() {
         viewModel.copyEncryptionKey()
 
         /** Then **/
-        assertEquals(
-            listOf<ViewModelEvent>(UsageLogViewModel.EventCopyEncryptionKey("fakeKey=")),
-            receivedEvents,
-        )
+        assertEquals(listOf<ViewModelEvent>(UsageLogViewModel.EventCopyEncryptionKey), receivedEvents)
+        assertEquals("fakeKey=", viewModel.uiState.value.encryptionKey)
     }
 
     /**
@@ -597,5 +611,310 @@ class UsageLogViewModelTest : BaseTest() {
         /** Then **/
         assertEquals(23, viewModel.uiState.value.pendingCount)
         assertEquals(LastSendResult(1_000L, true), viewModel.uiState.value.lastSendResult)
+    }
+
+    /**
+     * 위치 권한이 모두 있고 기기 위치 설정이 꺼져 있으면 위치 설정 화면으로 이동하는지 검증
+     *
+     * Given: 정확한 위치와 백그라운드 위치 허용, 기기 위치 설정 꺼짐
+     * When: openLocationSettings 호출
+     * Then: EventOpenLocationSourceSettings 하나
+     */
+    @Test
+    fun test_19_openLocationSourceSettingsWhenLocationOff() = runTest {
+        /** Given **/
+        every { status.isFineLocationGranted() } returns true
+        every { status.isBackgroundLocationGranted() } returns true
+        every { status.isLocationEnabled() } returns false
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.openLocationSettings()
+
+        /** Then **/
+        assertEquals(listOf<ViewModelEvent>(UsageLogViewModel.EventOpenLocationSourceSettings), receivedEvents)
+    }
+
+    /**
+     * 상태 갱신이 위치 권한, 위치 설정, 배터리 최적화, 현재 SSID를 다시 읽는지 검증
+     *
+     * Given: 생성 때 위치 권한·위치 설정·배터리 최적화 예외·SSID 없음
+     * When: 대략적인 위치만 허용, 백그라운드 위치 허용, 위치 설정 켜짐, 배터리 최적화 예외, SSID "Cafe"로 바뀐 뒤 refreshStatus 호출
+     * Then: approximateLocationOnly, backgroundLocationGranted, locationEnabled, batteryOptimizationIgnored true, currentSsid "Cafe"
+     */
+    @Test
+    fun test_20_refreshStatusRereadsLocationBatteryAndSsid() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+
+        /** When **/
+        every { status.isApproximateLocationOnly() } returns true
+        every { status.isBackgroundLocationGranted() } returns true
+        every { status.isLocationEnabled() } returns true
+        every { status.isBatteryOptimizationIgnored() } returns true
+        every { status.currentSsid() } returns "Cafe"
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        val uiState = viewModel.uiState.value
+        assertFalse(uiState.fineLocationGranted)
+        assertTrue(uiState.approximateLocationOnly)
+        assertTrue(uiState.backgroundLocationGranted)
+        assertTrue(uiState.locationEnabled)
+        assertTrue(uiState.batteryOptimizationIgnored)
+        assertEquals("Cafe", uiState.currentSsid)
+    }
+
+    /**
+     * 누를 때 읽은 SSID가 표시된 SSID와 다르면 등록하지 않고 표시만 갱신하는지 검증
+     *
+     * Given: 생성 때 현재 SSID "MyHome_2G"로 표시, 그 뒤 연결이 "Cafe"로 바뀜
+     * When: registerCurrentWifi 호출
+     * Then: addHomeSsid 미호출, currentSsid "Cafe", 이벤트 없음
+     */
+    @Test
+    fun test_21_registerWithChangedSsidOnlyRefreshesDisplay() = runTest {
+        /** Given **/
+        every { status.currentSsid() } returns "MyHome_2G"
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+        every { status.currentSsid() } returns "Cafe"
+
+        /** When **/
+        viewModel.registerCurrentWifi()
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 0) { settings.addHomeSsid(any()) }
+        assertEquals("Cafe", viewModel.uiState.value.currentSsid)
+        assertEquals(emptyList<ViewModelEvent>(), receivedEvents)
+    }
+
+    /**
+     * 표시된 SSID가 있는데 누를 때 읽을 수 없으면 토스트 없이 표시만 비우는지 검증
+     *
+     * Given: 생성 때 현재 SSID "MyHome_2G"로 표시, 그 뒤 연결이 끊겨 읽을 수 없음
+     * When: registerCurrentWifi 호출
+     * Then: addHomeSsid 미호출, currentSsid null, 이벤트 없음
+     */
+    @Test
+    fun test_22_registerAfterDisconnectOnlyClearsDisplay() = runTest {
+        /** Given **/
+        every { status.currentSsid() } returns "MyHome_2G"
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+        every { status.currentSsid() } returns null
+
+        /** When **/
+        viewModel.registerCurrentWifi()
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 0) { settings.addHomeSsid(any()) }
+        assertEquals(null, viewModel.uiState.value.currentSsid)
+        assertEquals(emptyList<ViewModelEvent>(), receivedEvents)
+    }
+
+    /**
+     * 암호화 키가 없으면 지금 보내기가 예약하지 않고 키 안내 토스트를 보내는지 검증
+     *
+     * Given: 올바른 웹후크 주소, 대기 기록 3건, 암호화 키 없음
+     * When: sendNow 호출
+     * Then: EventShowToast(usage_log_key_missing), enqueueSend 미호출
+     */
+    @Test
+    fun test_23_sendNowWithoutKeyShowsToast() = runTest {
+        /** Given **/
+        webhookUrl.value = "https://discord.com/api/webhooks/1/abc"
+        unsentCount.value = 3
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.sendNow()
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_key_missing)),
+            receivedEvents,
+        )
+        verify(exactly = 0) { scheduler.enqueueSend(any()) }
+    }
+
+    /**
+     * 대기 기록이 없으면 지금 보내기가 예약하지 않고 안내 토스트를 보내는지 검증
+     *
+     * Given: 올바른 웹후크 주소와 암호화 키, 대기 기록 0건
+     * When: sendNow 호출
+     * Then: EventShowToast(usage_log_nothing_to_send), enqueueSend 미호출
+     */
+    @Test
+    fun test_24_sendNowWithoutPendingShowsToast() = runTest {
+        /** Given **/
+        webhookUrl.value = "https://discord.com/api/webhooks/1/abc"
+        encryptionKey.value = UsageLogCipher.encodeKey(UsageLogCipher.generateKey())
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.sendNow()
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_nothing_to_send)),
+            receivedEvents,
+        )
+        verify(exactly = 0) { scheduler.enqueueSend(any()) }
+    }
+
+    /**
+     * 화면 진입 때 작업 예약 복구가 예외를 던져도 앱이 종료되지 않고 나머지 상태를 반영하는지 검증
+     *
+     * Given: ensureScheduled가 IOException을 던짐, 수집 켜짐
+     * When: ViewModel 생성
+     * Then: 처리되지 않은 예외 없이 ensureScheduled 1회 호출, collectionEnabled true
+     */
+    @Test
+    fun test_25_ensureScheduledFailureDoesNotCrash() = runTest {
+        /** Given **/
+        coEvery { controller.ensureScheduled() } throws IOException("disk")
+        collectionEnabled.value = true
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        coVerify(exactly = 1) { controller.ensureScheduled() }
+        assertTrue(viewModel.uiState.value.collectionEnabled)
+    }
+
+    /**
+     * 키 새로 만들기 저장이 실패하면 저장 실패 토스트를 보내고 대화상자는 닫는지 검증
+     *
+     * Given: setEncryptionKey가 실패 결과 반환, 확인 대화상자 표시 상태
+     * When: confirmRegenerateKey 호출
+     * Then: EventShowToast(usage_log_save_failed), showRegenerateKeyConfirm false
+     */
+    @Test
+    fun test_26_regenerateKeyFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { settings.setEncryptionKey(any()) } returns Result.failure(IOException("disk"))
+        val viewModel = createViewModel()
+        viewModel.requestRegenerateKey()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.confirmRegenerateKey()
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_save_failed)),
+            receivedEvents,
+        )
+        assertFalse(viewModel.uiState.value.showRegenerateKeyConfirm)
+    }
+
+    /**
+     * 웹후크 주소 저장이 실패하면 저장 실패 토스트를 보내는지 검증
+     *
+     * Given: setWebhookUrl이 실패 결과 반환
+     * When: updateWebhookUrl 호출
+     * Then: EventShowToast(usage_log_save_failed)
+     */
+    @Test
+    fun test_27_updateWebhookUrlFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { settings.setWebhookUrl(any()) } returns Result.failure(IOException("disk"))
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.updateWebhookUrl("https://discord.com/api/webhooks/1/abc")
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_save_failed)),
+            receivedEvents,
+        )
+    }
+
+    /**
+     * 집 Wi-Fi 추가 저장이 실패하면 저장 실패 토스트를 보내는지 검증
+     *
+     * Given: 현재 SSID "MyHome_2G", addHomeSsid가 실패 결과 반환
+     * When: registerCurrentWifi 호출
+     * Then: addHomeSsid("MyHome_2G") 호출, EventShowToast(usage_log_save_failed)
+     */
+    @Test
+    fun test_28_addHomeSsidFailureShowsToast() = runTest {
+        /** Given **/
+        every { status.currentSsid() } returns "MyHome_2G"
+        coEvery { settings.addHomeSsid(any()) } returns Result.failure(IOException("disk"))
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.registerCurrentWifi()
+        waitCoroutine()
+
+        /** Then **/
+        coVerify { settings.addHomeSsid("MyHome_2G") }
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_save_failed)),
+            receivedEvents,
+        )
+    }
+
+    /**
+     * 집 Wi-Fi 삭제 저장이 실패하면 저장 실패 토스트를 보내는지 검증
+     *
+     * Given: removeHomeSsid가 실패 결과 반환
+     * When: removeHomeWifi("MyHome_5G") 호출
+     * Then: EventShowToast(usage_log_save_failed)
+     */
+    @Test
+    fun test_29_removeHomeSsidFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { settings.removeHomeSsid(any()) } returns Result.failure(IOException("disk"))
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.removeHomeWifi("MyHome_5G")
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventShowToast(R.string.usage_log_save_failed)),
+            receivedEvents,
+        )
+    }
+
+    /**
+     * 키 새로 만들기를 취소하면 대화상자만 닫고 키를 저장하지 않는지 검증
+     *
+     * Given: 확인 대화상자 표시 상태
+     * When: dismissRegenerateKey 호출
+     * Then: showRegenerateKeyConfirm false, setEncryptionKey 미호출
+     */
+    @Test
+    fun test_30_dismissRegenerateKeyClosesDialogOnly() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        viewModel.requestRegenerateKey()
+
+        /** When **/
+        viewModel.dismissRegenerateKey()
+        waitCoroutine()
+
+        /** Then **/
+        assertFalse(viewModel.uiState.value.showRegenerateKeyConfirm)
+        coVerify(exactly = 0) { settings.setEncryptionKey(any()) }
     }
 }

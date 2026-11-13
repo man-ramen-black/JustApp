@@ -1,15 +1,18 @@
 package com.black.app.usagelog
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.model.database.usagelog.UsageLogDatabase
 import com.black.app.model.datastore.UsageLogDataStore
+import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.GapCause
 import com.black.app.usagelog.record.GapRecord
 import com.black.app.usagelog.record.OpenUsageSession
+import com.black.app.usagelog.record.ScreenOnRecord
 import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.work.UsageLogScheduler
 import com.black.test.BaseTest
@@ -18,11 +21,17 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.spyk
 import io.mockk.verify
-import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -30,6 +39,7 @@ import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.IOException
 
 /** [UsageLogCollectionController]의 수집 켜기·끄기 상태 전환과 주기 작업 예약 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -116,9 +126,9 @@ class UsageLogCollectionControllerTest : BaseTest() {
     /**
      * 끄면 열린 구간이 지워지고 꺼진 시각이 저장되며 주기 작업이 취소되는지 검증
      *
-     * Given: 켜진 상태와 저장된 열린 구간
+     * Given: 켜진 상태와 저장된 열린 구간(시작 100)
      * When: 시각 7000에 disable
-     * Then: 열린 구간 null, 꺼진 시각 7000, 꺼짐, 주기 작업 취소
+     * Then: 열린 구간 null, 꺼진 시각은 열린 구간 시작 100, 꺼짐, 주기 작업 취소
      */
     @Test
     fun test_03_disableClearsOpenSessionAndCancels() = runTest {
@@ -134,7 +144,7 @@ class UsageLogCollectionControllerTest : BaseTest() {
         /** Then **/
         assertTrue(result.isSuccess)
         assertNull(settings.getOpenSession())
-        assertEquals(7000L, settings.getCollectionOffSince())
+        assertEquals(100L, settings.getCollectionOffSince())
         assertEquals(false, settings.isCollectionEnabled())
         verify { scheduler.cancelPeriodicCollect() }
     }
@@ -249,5 +259,184 @@ class UsageLogCollectionControllerTest : BaseTest() {
         /** Then **/
         assertEquals("", keyWhenDisabled)
         assertTrue(settings.getEncryptionKey().isNotEmpty())
+    }
+
+    /**
+     * 끈 시각보다 앞선 커서와 열린 구간 시작부터 공백 기록이 시작되는지 검증
+     *
+     * Given: 켜진 상태, 커서 5000, 시작 4000인 열린 구간
+     * When: 시각 7000에 disable, 시각 9000에 enable
+     * Then: GapRecord(4000, 9000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_09_disableGapStartsAtUnreadRange() = runTest {
+        /** Given **/
+        val controller = createController()
+        controller.enable()
+        settings.setUsageCursor(5000L)
+        settings.setOpenSession(OpenUsageSession("com.example.app", 4000L))
+
+        /** When **/
+        now = 7000L
+        controller.disable()
+        now = 9000L
+        controller.enable()
+
+        /** Then **/
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(4000L, 9000L, GapCause.COLLECTION_OFF)), records)
+    }
+
+    /**
+     * 켤 때 켜짐 저장이 실패하면 꺼진 시각이 남아 다음 켜기에서 공백 기록을 잃지 않는지 검증
+     *
+     * Given: 꺼진 시각 1000, 켜짐 저장이 실패하는 설정 저장소
+     * When: 시각 5000에 enable
+     * Then: Result.failure, 꺼짐 그대로, 꺼진 시각 1000 유지, 예약 호출 없음
+     */
+    @Test
+    fun test_10_enableKeepsOffSinceWhenEnabledSaveFails() = runTest {
+        /** Given **/
+        settings.setCollectionOffSince(1000L)
+        val failingSettings = spyk(settings)
+        coEvery { failingSettings.setCollectionEnabled(true) } returns Result.failure(IOException("save failed"))
+        val controller = UsageLogCollectionController(failingSettings, repository, scheduler) { now }
+        now = 5000L
+
+        /** When **/
+        val result = controller.enable()
+
+        /** Then **/
+        assertTrue(result.isFailure)
+        assertEquals(false, settings.isCollectionEnabled())
+        assertEquals(1000L, settings.getCollectionOffSince())
+        verify(exactly = 0) { scheduler.schedulePeriodicCollect() }
+    }
+
+    /**
+     * 끌 때 꺼진 시각 저장이 실패하면 꺼짐을 저장하지 않아 공백 기록 없이 꺼지지 않는지 검증
+     *
+     * Given: 켜진 상태, 꺼진 시각 저장이 실패하는 설정 저장소
+     * When: 시각 7000에 disable
+     * Then: Result.failure, 켜짐 그대로, 꺼진 시각 0, 주기 작업 취소 없음
+     */
+    @Test
+    fun test_11_disableKeepsEnabledWhenOffSinceSaveFails() = runTest {
+        /** Given **/
+        createController().enable()
+        val failingSettings = spyk(settings)
+        coEvery { failingSettings.setCollectionOffSince(any()) } returns Result.failure(IOException("save failed"))
+        val controller = UsageLogCollectionController(failingSettings, repository, scheduler) { now }
+        now = 7000L
+
+        /** When **/
+        val result = controller.disable()
+
+        /** Then **/
+        assertTrue(result.isFailure)
+        assertTrue(settings.isCollectionEnabled())
+        assertEquals(0L, settings.getCollectionOffSince())
+        verify(exactly = 0) { scheduler.cancelPeriodicCollect() }
+    }
+
+    /**
+     * 수집 도중 끄고 켜도 수집이 끝난 뒤에 실행돼 커서가 켠 시각으로 남는지 검증
+     *
+     * Given: 켜진 상태, 커서 1000, 열린 구간을 읽는 시점에 멈추는 수집기(읽는 범위 끝 5000)
+     * When: 수집이 멈춘 동안 시각 6000에 disable, 시각 9000에 enable을 시작한 뒤 수집 재개
+     * Then: 수집이 멈춘 동안 켜기·끄기가 끝나지 않음, 커서 9000, GapRecord(5000, 9000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_12_toggleDuringCollectKeepsEnableCursor() = runTest {
+        /** Given **/
+        settings.setCollectionEnabled(true)
+        settings.setUsageCursor(1000L)
+        val collectPaused = CompletableDeferred<Unit>()
+        val resumeCollect = CompletableDeferred<Unit>()
+        val pausingSettings = spyk(settings)
+        // callOriginal은 실제로 중단되는 함수에서 호출부를 두 번 재개하므로 실제 설정 저장소를 직접 호출
+        coEvery { pausingSettings.getOpenSession() } coAnswers {
+            collectPaused.complete(Unit)
+            resumeCollect.await()
+            settings.getOpenSession()
+        }
+        val collector = UsageStatsCollector(
+            source = { _, _ -> emptyList() },
+            settings = pausingSettings,
+            repository = repository,
+            appNameOf = { it },
+            clock = { UsageStatsCollector.SETTLE_DELAY_MILLIS + 5000L },
+        )
+        val controller = createController()
+
+        /** When **/
+        val collectJob = launch(Dispatchers.Default) { collector.collect() }
+        collectPaused.await()
+        val toggleJob = launch(Dispatchers.Default) {
+            now = 6000L
+            controller.disable()
+            now = 9000L
+            controller.enable()
+        }
+        // 수집이 멈춘 동안 켜기·끄기가 끝나는지 실제 시간으로 잠시 대기
+        val finishedDuringCollect = withContext(Dispatchers.Default) {
+            withTimeoutOrNull(500L) { toggleJob.join() } != null
+        }
+        resumeCollect.complete(Unit)
+        collectJob.join()
+        toggleJob.join()
+
+        /** Then **/
+        assertFalse(finishedDuringCollect)
+        assertEquals(9000L, settings.getUsageCursor())
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(5000L, 9000L, GapCause.COLLECTION_OFF)), records)
+    }
+
+    /**
+     * 수집이 꺼져 있어도 ensureScheduled가 보관 기간이 지난 기록을 정리하는지 검증
+     *
+     * Given: 꺼진 상태, 시각 0에 저장한 미전송 ScreenOnRecord(500)
+     * When: 보관 기간보다 1초 뒤에 ensureScheduled 호출
+     * Then: 기록이 GapRecord(500, 500, UNSENT_DELETED)로 바뀜, 예약 호출 없음
+     */
+    @Test
+    fun test_13_ensureScheduledPurgesExpiredWhenDisabled() = runTest {
+        /** Given **/
+        repository.add(listOf(ScreenOnRecord(500L)), now = 0L)
+        val controller = createController()
+        now = UsageLogRepository.RETENTION_MILLIS + 1000L
+
+        /** When **/
+        controller.ensureScheduled()
+
+        /** Then **/
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(500L, 500L, GapCause.UNSENT_DELETED)), records)
+        verify(exactly = 0) { scheduler.schedulePeriodicCollect() }
+    }
+
+    /**
+     * 보관 기간 정리가 실패해도 예약은 진행하고 로그에는 예외 클래스 이름만 남기는지 검증
+     *
+     * Given: 켜진 상태, purgeExpired가 메시지를 담은 IOException을 던지는 저장소
+     * When: ensureScheduled 호출
+     * Then: 예외 없이 예약 한 번, 경고 로그에 IOException은 있고 예외 메시지는 없음
+     */
+    @Test
+    fun test_14_ensureScheduledContinuesWhenPurgeFails() = runTest {
+        /** Given **/
+        settings.setCollectionEnabled(true)
+        val failingRepository = mockk<UsageLogRepository>()
+        coEvery { failingRepository.purgeExpired(any()) } throws IOException("purge-detail")
+        val controller = UsageLogCollectionController(settings, failingRepository, scheduler) { now }
+
+        /** When **/
+        controller.ensureScheduled()
+
+        /** Then **/
+        verify(exactly = 1) { scheduler.schedulePeriodicCollect() }
+        verify { Log.w(any<String>(), match<String> { it.contains("IOException") }) }
+        verify(exactly = 0) { Log.w(any<String>(), match<String> { it.contains("purge-detail") }) }
     }
 }

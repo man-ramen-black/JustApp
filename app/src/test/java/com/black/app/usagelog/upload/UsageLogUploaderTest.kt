@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.model.database.usagelog.UsageLogDatabase
+import com.black.app.model.database.usagelog.UsageLogEntity
 import com.black.app.model.datastore.UsageLogDataStore
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.ScreenOnRecord
@@ -14,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
@@ -29,6 +31,7 @@ import java.io.IOException
 import java.util.zip.GZIPInputStream
 
 /** [UsageLogUploader]의 묶음 전송, 전송됨 표시, 재시도 분류 검증 */
+@OptIn(ExperimentalCoroutinesApi::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageLogUploaderTest : BaseTest() {
 
@@ -47,8 +50,12 @@ class UsageLogUploaderTest : BaseTest() {
         val calls = ArrayList<Call>()
         val results = ArrayDeque<WebhookResult>()
 
+        /** 호출을 기록한 뒤 응답 전에 실행할 동작 */
+        var onSend: suspend () -> Unit = {}
+
         override suspend fun send(webhookUrl: String, content: String, fileName: String, attachment: ByteArray): WebhookResult {
             calls.add(Call(webhookUrl, content, fileName, attachment))
+            onSend()
             return results.removeFirstOrNull() ?: WebhookResult.Success
         }
     }
@@ -84,10 +91,11 @@ class UsageLogUploaderTest : BaseTest() {
         repository.add(List(count) { ScreenOnRecord(now - 1000 + it) }, now)
     }
 
-    private suspend fun decryptToText(attachment: ByteArray): String {
-        val key = checkNotNull(UsageLogCipher.decodeKey(settings.getEncryptionKey()))
-        return GZIPInputStream(ByteArrayInputStream(UsageLogCipher.decrypt(attachment, key))).readBytes().toString(Charsets.UTF_8)
-    }
+    private suspend fun decryptToText(attachment: ByteArray): String =
+        decryptToText(attachment, checkNotNull(UsageLogCipher.decodeKey(settings.getEncryptionKey())))
+
+    private fun decryptToText(attachment: ByteArray, key: ByteArray): String =
+        GZIPInputStream(ByteArrayInputStream(UsageLogCipher.decrypt(attachment, key))).readBytes().toString(Charsets.UTF_8)
 
     /**
      * 주소나 키가 없으면 보내지 않는지 검증
@@ -327,6 +335,134 @@ class UsageLogUploaderTest : BaseTest() {
         /** Then **/
         assertEquals(UploadResult.Failed(true), result)
         assertEquals(0, sender.calls.size)
+    }
+
+    /**
+     * 보관 기간 정리가 실패해도 저장된 기록을 보내는지 검증
+     *
+     * Given: 기록 3건, 설정 완료, purgeExpired가 예외
+     * When: upload 호출
+     * Then: Sent(3), sender 호출 1회
+     */
+    @Test
+    fun test_12_purgeFailureStillSends() = runTest {
+        /** Given **/
+        configure()
+        addRecords(3)
+        val failingRepository = spyk(repository)
+        coEvery { failingRepository.purgeExpired(any()) } throws IOException("purge failed")
+
+        /** When **/
+        val result = UsageLogUploader(failingRepository, settings, collector, sender, deviceInfo) { now }.upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Sent(3), result)
+        assertEquals(1, sender.calls.size)
+    }
+
+    /**
+     * 429의 대기 시간이 상한을 넘으면 기다리지 않고 재시도 대상으로 실패하는지 검증
+     *
+     * Given: 기록 3건, sender가 RateLimited(상한 + 1ms)
+     * When: upload 호출
+     * Then: Failed(true), sender 호출 1회, 가상 시간 경과 없음, 미전송 3
+     */
+    @Test
+    fun test_13_rateLimitOverMaxWaitFailsWithoutWaiting() = runTest {
+        /** Given **/
+        configure()
+        addRecords(3)
+        sender.results.add(WebhookResult.RateLimited(UsageLogUploader.MAX_RATE_LIMIT_WAIT_MILLIS + 1))
+
+        /** When **/
+        val start = currentTime
+        val result = createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Failed(true), result)
+        assertEquals(1, sender.calls.size)
+        assertEquals(0L, currentTime - start)
+        assertEquals(3, repository.getUnsent(10).size)
+    }
+
+    /**
+     * 429의 대기 시간이 상한과 같으면 기다려 다시 보내는지 검증
+     *
+     * Given: 기록 3건, sender가 RateLimited(상한) 다음 Success
+     * When: upload 호출
+     * Then: Sent(3), sender 호출 2회, 가상 시간이 상한만큼 경과
+     */
+    @Test
+    fun test_14_rateLimitAtMaxWaitStillWaits() = runTest {
+        /** Given **/
+        configure()
+        addRecords(3)
+        sender.results.add(WebhookResult.RateLimited(UsageLogUploader.MAX_RATE_LIMIT_WAIT_MILLIS))
+
+        /** When **/
+        val start = currentTime
+        val result = createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Sent(3), result)
+        assertEquals(2, sender.calls.size)
+        assertEquals(UsageLogUploader.MAX_RATE_LIMIT_WAIT_MILLIS, currentTime - start)
+    }
+
+    /**
+     * 전송 도중 키를 새로 만들면 다음 라운드부터 새 키로 암호화하는지 검증
+     *
+     * Given: 한 라운드 분량보다 1건 많은 기록, 첫 전송 때 키를 새로 만들어 저장
+     * When: upload 호출
+     * Then: Sent(전체 건수), 첫 첨부는 이전 키로 풀려 기록 줄이 한 라운드 분량, 둘째 첨부는 새 키로 풀려 기록 줄이 1개
+     */
+    @Test
+    fun test_15_regeneratedKeyIsUsedFromNextRound() = runTest {
+        /** Given **/
+        configure()
+        val roundSize = UsageLogUploader.MAX_RECORDS_PER_ROUND
+        addRecords(roundSize + 1)
+        val oldKey = checkNotNull(UsageLogCipher.decodeKey(settings.getEncryptionKey()))
+        val newKey = UsageLogCipher.generateKey()
+        sender.onSend = {
+            if (sender.calls.size == 1) settings.setEncryptionKey(UsageLogCipher.encodeKey(newKey))
+        }
+
+        /** When **/
+        val result = createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Sent(roundSize + 1), result)
+        assertEquals(2, sender.calls.size)
+        // 줄 수는 meta 줄 포함
+        assertEquals(roundSize + 1, decryptToText(sender.calls[0].attachment, oldKey).trimEnd('\n').lines().size)
+        assertEquals(2, decryptToText(sender.calls[1].attachment, newKey).trimEnd('\n').lines().size)
+    }
+
+    /**
+     * 한 라운드 분량이 모두 손상 행이어도 멈추지 않고 뒤의 기록과 손상 범위의 공백 기록을 보내는지 검증
+     *
+     * Given: 설정 완료, json이 깨진 미전송 행이 한 라운드 분량(time 0부터), 그 뒤 정상 기록 1건
+     * When: upload 호출
+     * Then: Sent(2), 첨부에 정상 기록과 gap(0, 마지막 손상 행 time, unsent_deleted) 줄, 미전송 0
+     */
+    @Test
+    fun test_16_allCorruptRoundContinuesWithGap() = runTest {
+        /** Given **/
+        configure()
+        val corruptCount = UsageLogUploader.MAX_RECORDS_PER_ROUND
+        database.dao().insertAll(List(corruptCount) { UsageLogEntity(json = "{broken", time = it.toLong(), createdAt = now) })
+        addRecords(1)
+
+        /** When **/
+        val result = createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Sent(2), result)
+        val lines = decryptToText(sender.calls.single().attachment).trimEnd('\n').lines()
+        assertTrue(lines[1].contains("\"type\":\"screen_on\""))
+        assertTrue(lines[2].contains("\"type\":\"gap\",\"start\":0,\"end\":${corruptCount - 1},\"cause\":\"unsent_deleted\""))
+        assertEquals(0, repository.getUnsent(10).size)
     }
 
     private companion object {

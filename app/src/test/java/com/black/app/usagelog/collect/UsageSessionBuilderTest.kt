@@ -6,6 +6,7 @@ import com.black.app.usagelog.record.ScreenOffRecord
 import com.black.app.usagelog.record.ScreenOnRecord
 import com.black.app.usagelog.record.UnlockRecord
 import com.black.test.BaseTest
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.FixMethodOrder
@@ -37,7 +38,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~2000, b 구간은 열림
      */
     @Test
-    fun test_01_switchToOtherAppClosesAtPause() {
+    fun test_01_switchToOtherAppClosesAtPause() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), paused("a", 2000), resumed("b", 2100)))
 
@@ -54,7 +55,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~3000 하나와 화면 꺼짐 기록, 열린 구간 없음
      */
     @Test
-    fun test_02_activityChangeInsideSameAppKeepsOneSession() {
+    fun test_02_activityChangeInsideSameAppKeepsOneSession() = runTest {
         /** Given / When **/
         val result = build(
             listOf(
@@ -76,7 +77,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~2000과 화면 꺼짐 기록
      */
     @Test
-    fun test_03_screenOffWithoutPauseClosesAtScreenOff() {
+    fun test_03_screenOffWithoutPauseClosesAtScreenOff() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), screen(RawUsageEventKind.SCREEN_OFF, 2000)))
 
@@ -92,7 +93,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: 첫 변환은 기록 없이 열린 구간, 둘째는 a 구간 1000~5000과 열린 b
      */
     @Test
-    fun test_04_openSessionCarriesToNextBuild() {
+    fun test_04_openSessionCarriesToNextBuild() = runTest {
         /** Given / When **/
         val first = build(listOf(resumed("a", 1000)))
         val second = build(listOf(paused("a", 5000), resumed("b", 5100)), first.openSession)
@@ -112,7 +113,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~4000
      */
     @Test
-    fun test_05_resumeOtherAppWithoutPauseClosesAtResume() {
+    fun test_05_resumeOtherAppWithoutPauseClosesAtResume() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), resumed("b", 4000)))
 
@@ -128,7 +129,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: 화면 켜짐, 잠금 해제 기록과 열린 a
      */
     @Test
-    fun test_06_screenEventsKeepOrder() {
+    fun test_06_screenEventsKeepOrder() = runTest {
         /** Given / When **/
         val result = build(
             listOf(
@@ -151,7 +152,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~2000
      */
     @Test
-    fun test_07_pauseOfOtherPackageIgnored() {
+    fun test_07_pauseOfOtherPackageIgnored() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), paused("b", 1500), resumed("c", 2000)))
 
@@ -167,7 +168,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: 기록 없음
      */
     @Test
-    fun test_08_zeroLengthSessionDropped() {
+    fun test_08_zeroLengthSessionDropped() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), resumed("b", 1000)))
 
@@ -183,7 +184,7 @@ class UsageSessionBuilderTest : BaseTest() {
      * Then: a 구간 1000~2000
      */
     @Test
-    fun test_09_pauseAndResumeAtSameTime() {
+    fun test_09_pauseAndResumeAtSameTime() = runTest {
         /** Given / When **/
         val result = build(listOf(resumed("a", 1000), paused("a", 2000), resumed("b", 2000)))
 
@@ -192,16 +193,14 @@ class UsageSessionBuilderTest : BaseTest() {
     }
 
     /**
-     * 1초 미만 구간이 버려지는지 검증
-     *
-     * 최근 앱 화면·자동화 앱의 중간 화면처럼 다른 앱으로 넘어가는 길에 잠깐 뜨는 화면은 사용으로 보지 않음.
+     * 사용으로 보지 않는 1초 미만 구간이 버려지는지 검증
      *
      * Given: a 999ms 실행, b 1001ms 실행, c 실행
      * When: 변환
      * Then: b 구간만 남음
      */
     @Test
-    fun test_10_sessionShorterThanOneSecondDropped() {
+    fun test_10_sessionShorterThanOneSecondDropped() = runTest {
         /** Given / When **/
         val result = build(
             listOf(
@@ -213,5 +212,64 @@ class UsageSessionBuilderTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(AppUsageRecord("b", "b앱", 1999, 3000)), result.records)
+    }
+
+    /**
+     * 최소 길이와 정확히 같은 구간은 남고 1ms 짧은 구간은 버려지는지 검증
+     *
+     * Given: a 1000ms 실행, b 999ms 실행, c 실행
+     * When: 변환
+     * Then: a 구간 1000~2000만 남음
+     */
+    @Test
+    fun test_11_sessionOfExactlyMinimumLengthKept() = runTest {
+        /** Given / When **/
+        val minimum = UsageSessionBuilder.MIN_SESSION_MILLIS
+        val result = build(
+            listOf(
+                resumed("a", 1000), paused("a", 1000 + minimum),
+                resumed("b", 1000 + minimum), paused("b", 1000 + 2 * minimum - 1),
+                resumed("c", 1000 + 2 * minimum - 1),
+            ),
+        )
+
+        /** Then **/
+        assertEquals(listOf(AppUsageRecord("a", "a앱", 1000, 2000)), result.records)
+    }
+
+    /**
+     * 다음 변환으로 넘어간 구간도 합친 길이가 1초 미만이면 버려지는지 검증
+     *
+     * Given: 첫 변환에서 a 실행 1000만 있음
+     * When: 그 열린 구간으로 a 일시정지 1999, b 실행 2100을 변환
+     * Then: 첫 변환은 열린 a, 둘째는 기록 없이 열린 b
+     */
+    @Test
+    fun test_12_carriedSessionShorterThanOneSecondDropped() = runTest {
+        /** Given / When **/
+        val first = build(listOf(resumed("a", 1000)))
+        val second = build(listOf(paused("a", 1999), resumed("b", 2100)), first.openSession)
+
+        /** Then **/
+        assertEquals(OpenUsageSession("a", 1000, null), first.openSession)
+        assertEquals(emptyList<Any>(), second.records)
+        assertEquals(OpenUsageSession("b", 2100, null), second.openSession)
+    }
+
+    /**
+     * 화면 꺼짐으로 닫히는 1초 미만 구간은 버리고 화면 꺼짐 기록만 남는지 검증
+     *
+     * Given: a 실행 1000, 화면 꺼짐 1500
+     * When: 변환
+     * Then: 화면 꺼짐 기록 하나, 열린 구간 없음
+     */
+    @Test
+    fun test_13_shortSessionClosedByScreenOffDropped() = runTest {
+        /** Given / When **/
+        val result = build(listOf(resumed("a", 1000), screen(RawUsageEventKind.SCREEN_OFF, 1500)))
+
+        /** Then **/
+        assertEquals(listOf(ScreenOffRecord(1500)), result.records)
+        assertNull(result.openSession)
     }
 }

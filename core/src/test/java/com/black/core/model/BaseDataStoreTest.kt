@@ -3,6 +3,7 @@ package com.black.core.model
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
@@ -19,7 +20,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 
-/** [BaseDataStore] 하위 DataStore의 손상 파일 복구와 저장 실패 전달 검증 */
+/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 읽고 고쳐 쓰기, 여러 키 함께 저장 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BaseDataStoreTest : BaseTest() {
 
@@ -176,6 +177,85 @@ class BaseDataStoreTest : BaseTest() {
         /** When **/
         val failure = FailingWithDataStore(context, IOException("disk full")).add()
         val thrown = runCatching { FailingWithDataStore(context, CancellationException("cancelled")).add() }
+            .exceptionOrNull()
+
+        /** Then **/
+        assertTrue(failure.exceptionOrNull() is IOException)
+        assertTrue(thrown is CancellationException)
+    }
+
+    /** 여러 키 함께 저장 검증용 DataStore */
+    private class UpdateAllTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.updateAllTestDataStore by blackDataStore("updateAllTest")
+
+            private val KEY_TEXT = stringPreferencesKey("text")
+            private val KEY_NUMBER = longPreferencesKey("number")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.updateAllTestDataStore
+
+        suspend fun updateBoth(text: String?, number: Long): Result<Unit> =
+            updateAll(PreferenceUpdate(KEY_TEXT, text), PreferenceUpdate(KEY_NUMBER, number))
+
+        suspend fun getText(): String = get(KEY_TEXT, "")
+
+        suspend fun getNumber(): Long = get(KEY_NUMBER, 0L)
+    }
+
+    /**
+     * 여러 키를 한 번에 저장하고 null 값의 키는 지우는지 검증
+     *
+     * Given: 저장값 없음
+     * When: ("a", 1) 저장 후 (null, 2) 저장
+     * Then: 첫 저장 뒤 "a"와 1, 둘째 저장 뒤 text는 지워져 기본값 ""이고 number는 2
+     */
+    @Test
+    fun test_06_updateAllSavesTogetherAndRemovesNull() = runTest {
+        /** Given **/
+        val dataStore = UpdateAllTestDataStore(context)
+
+        /** When **/
+        val first = dataStore.updateBoth("a", 1L)
+        val firstText = dataStore.getText()
+        val firstNumber = dataStore.getNumber()
+        val second = dataStore.updateBoth(null, 2L)
+
+        /** Then **/
+        assertTrue(first.isSuccess)
+        assertEquals("a", firstText)
+        assertEquals(1L, firstNumber)
+        assertTrue(second.isSuccess)
+        assertEquals("", dataStore.getText())
+        assertEquals(2L, dataStore.getNumber())
+    }
+
+    /**
+     * 여러 키 저장의 실패가 실패 결과로, 취소가 재던짐으로 처리되는지 검증
+     *
+     * Given: 저장 시 IOException, CancellationException을 던지는 DataStore
+     * When: updateAll 호출
+     * Then: 실패 결과(IOException), 취소는 전파
+     */
+    @Test
+    fun test_07_updateAllFailureAndCancellation() = runTest {
+        /** Given **/
+        class FailingAllDataStore(context: Context, error: Throwable) : BaseDataStore(context) {
+            private val dataStore: DataStore<Preferences> = mockk {
+                coEvery { updateData(any()) } throws error
+            }
+
+            override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+            suspend fun updateBoth(): Result<Unit> = updateAll(
+                PreferenceUpdate(stringPreferencesKey("text"), "a"),
+                PreferenceUpdate(longPreferencesKey("number"), 1L),
+            )
+        }
+
+        /** When **/
+        val failure = FailingAllDataStore(context, IOException("disk full")).updateBoth()
+        val thrown = runCatching { FailingAllDataStore(context, CancellationException("cancelled")).updateBoth() }
             .exceptionOrNull()
 
         /** Then **/

@@ -168,8 +168,8 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
      * 개인 데이터 저장·조회가 로그에 값을 남기지 않는지 검증
      *
      * Given: 저장값 없음
-     * When: 집 SSID, 마지막 Wi-Fi 상태, 열린 구간 저장 후 조회
-     * Then: Log.v 메시지에 SSID 문자열이 없음
+     * When: 집 SSID, 마지막 Wi-Fi 상태, 열린 구간 저장 후 조회, 설치 식별자 생성 후 재조회
+     * Then: Log.v 메시지에 SSID 문자열과 설치 식별자가 없음
      */
     @Test
     fun test_08_personalValuesAreNotLogged() = runTest {
@@ -180,9 +180,11 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
         repository.getLastWifiState()
         repository.setOpenSession(OpenUsageSession("com.a", 1000, null))
         repository.getOpenSession()
+        val installId = repository.getInstallId().getOrThrow()
+        repository.getInstallId()
 
         /** Then **/
-        verify(exactly = 0) { Log.v(any(), match { it.contains("MyHome_5G") }) }
+        verify(exactly = 0) { Log.v(any(), match { it.contains("MyHome_5G") || it.contains(installId) }) }
     }
 
     /**
@@ -236,5 +238,32 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
         assertEquals(1, keys.toSet().size)
         assertEquals(keys.first(), repository.getEncryptionKey())
         assertEquals(32, UsageLogCipher.decodeKey(keys.first())?.size)
+    }
+
+    /**
+     * 열린 구간과 커서가 함께 저장되고 null 구간은 지워지는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 구간과 커서 5000 저장 후 조회, null 구간과 커서 6000 저장 후 조회
+     * Then: 첫 조회는 저장한 구간과 5000, 둘째 조회는 null과 6000
+     */
+    @Test
+    fun test_12_usageProgressSavedTogether() = runTest {
+        /** Given **/
+        val session = OpenUsageSession("com.a", 1000, 2000)
+
+        /** When **/
+        val first = repository.setUsageProgress(session, 5000L)
+        val firstSession = repository.getOpenSession()
+        val firstCursor = repository.getUsageCursor()
+        val second = repository.setUsageProgress(null, 6000L)
+
+        /** Then **/
+        assertTrue(first.isSuccess)
+        assertEquals(session, firstSession)
+        assertEquals(5000L, firstCursor)
+        assertTrue(second.isSuccess)
+        assertNull(repository.getOpenSession())
+        assertEquals(6000L, repository.getUsageCursor())
     }
 }

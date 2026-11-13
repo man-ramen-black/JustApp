@@ -2,12 +2,14 @@ package com.black.app.testutil
 
 import android.app.Activity
 import android.content.Context
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -213,9 +215,31 @@ abstract class BaseUiTest {
         return node.performClick()
     }
 
+    /**
+     * [text]를 가진 노드가 컴포지션에 없는지 검증
+     *
+     * 스크롤 밖 노드까지 확인해 화면 어디에도 표시되지 않아야 하는 값(키 원문 등) 검증에 사용. [substring]이 true면 부분 일치
+     */
+    protected fun assertTextNotExists(text: String, substring: Boolean = false) {
+        composeRule.onNodeWithText(text, substring = substring).assertDoesNotExist()
+    }
+
     /** [text]를 가진 노드 클릭 */
     protected fun clickText(text: String): SemanticsNodeInteraction =
         composeRule.onNodeWithText(text).performClick()
+
+    /**
+     * testTag가 [tag]인 노드를 그린 이미지
+     *
+     * 투명도·색처럼 의미 트리에 드러나지 않는 표시를 픽셀로 비교할 때 사용. [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
+     */
+    protected fun captureTag(tag: String, scrollTo: Boolean = false): ImageBitmap {
+        val node = composeRule.onNodeWithTag(tag)
+        if (scrollTo) {
+            node.performScrollTo()
+        }
+        return node.captureToImage()
+    }
 
     /**
      * testTag가 [tag]인 노드가 생길 때까지 최대 [timeoutMillis] 대기

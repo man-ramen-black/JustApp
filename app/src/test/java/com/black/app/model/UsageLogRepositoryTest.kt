@@ -181,14 +181,14 @@ class UsageLogRepositoryTest : BaseTest() {
     }
 
     /**
-     * 복원할 수 없는 행이 있어도 나머지 기록을 돌려주고 미전송 조회가 손상 행을 지우는지 검증
+     * 복원할 수 없는 행이 있어도 나머지 기록을 돌려주고 미전송 조회가 손상 행을 공백 기록으로 바꾸는지 검증
      *
-     * Given: 정상 기록 2건 사이에 json이 깨진 미전송 행 1건
+     * Given: 정상 기록 2건 사이에 json이 깨진 미전송 행 1건(time 2)
      * When: recentRecords와 getUnsent 조회
-     * Then: 둘 다 정상 2건만 반환하고, getUnsent 이후 행 자체가 지워짐
+     * Then: 둘 다 정상 2건만 반환하고, getUnsent 이후 손상 행 대신 저장 시각이 now인 GapRecord(2, 2, UNSENT_DELETED)가 미전송으로 남음
      */
     @Test
-    fun test_07_corruptRowIsSkippedAndDeletedOnGetUnsent() = runTest {
+    fun test_07_corruptRowIsSkippedAndReplacedWithGapOnGetUnsent() = runTest {
         /** Given **/
         repository.add(listOf(screen(1)), now = 1000)
         dao.insertAll(listOf(UsageLogEntity(json = "{broken", time = 2, createdAt = 1000)))
@@ -196,12 +196,16 @@ class UsageLogRepositoryTest : BaseTest() {
 
         /** When **/
         val recent = repository.recentRecords(10).first()
-        val unsent = repository.getUnsent(10)
+        val unsent = repository.getUnsent(10, now = 5000)
 
         /** Then **/
         assertEquals(listOf(3L, 1L), recent.map { it.record.time })
         assertEquals(listOf(1L, 3L), unsent.map { it.record.time })
-        assertEquals(2, dao.getUnsent(10).size)
+        assertEquals(
+            listOf(screen(1), screen(3), GapRecord(2, 2, GapCause.UNSENT_DELETED)),
+            repository.getUnsent(10).map { it.record },
+        )
+        assertEquals(5000L, dao.getUnsent(10).last().createdAt)
     }
 
     /**
@@ -228,9 +232,9 @@ class UsageLogRepositoryTest : BaseTest() {
     /**
      * 한 문장의 id 상한보다 많은 손상 행도 한 번의 조회로 모두 지워지는지 검증
      *
-     * Given: json이 깨진 미전송 행 2000건과 정상 1건
+     * Given: json이 깨진 미전송 행 2000건(time 0에서 1999)과 정상 1건
      * When: getUnsent 호출
-     * Then: 정상 1건만 반환하고 손상 행은 모두 지워짐
+     * Then: 정상 1건만 반환하고, 손상 행은 모두 지워져 정상 기록과 GapRecord(0, 1999, UNSENT_DELETED)만 미전송으로 남음
      */
     @Test
     fun test_09_corruptRowsMoreThanStatementLimitAreAllDeleted() = runTest {
@@ -242,7 +246,35 @@ class UsageLogRepositoryTest : BaseTest() {
         val unsent = repository.getUnsent(5000)
 
         /** Then **/
-        assertEquals(1, unsent.size)
-        assertEquals(1, dao.getUnsent(5000).size)
+        assertEquals(listOf(screen(5000)), unsent.map { it.record })
+        assertEquals(
+            listOf(screen(5000), GapRecord(0, 1999, GapCause.UNSENT_DELETED)),
+            repository.getUnsent(5000).map { it.record },
+        )
+    }
+
+    /**
+     * 조회한 행이 모두 손상이면 지운 뒤 다시 조회해 빈 목록을 돌려주지 않는지 검증
+     *
+     * Given: json이 깨진 미전송 행 2건(time 10, 20) 뒤에 정상 기록 1건
+     * When: getUnsent(2) 호출
+     * Then: 정상 기록과 GapRecord(10, 20, UNSENT_DELETED) 반환
+     */
+    @Test
+    fun test_10_allCorruptPageRequeriesInsteadOfReturningEmpty() = runTest {
+        /** Given **/
+        dao.insertAll(
+            listOf(
+                UsageLogEntity(json = "{broken", time = 10, createdAt = 1000),
+                UsageLogEntity(json = "{broken", time = 20, createdAt = 1000),
+            )
+        )
+        repository.add(listOf(screen(30)), now = 1000)
+
+        /** When **/
+        val unsent = repository.getUnsent(2)
+
+        /** Then **/
+        assertEquals(listOf(screen(30), GapRecord(10, 20, GapCause.UNSENT_DELETED)), unsent.map { it.record })
     }
 }
