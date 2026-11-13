@@ -59,7 +59,7 @@
             android:id="@+id/prev"
             android:layout_width="0dp"
             android:layout_height="30dp"
-            android:src="@drawable/ic_back"
+            android:src="@drawable/ic_arrow_back"
             android:background="@drawable/bt_dark"
             android:padding="3dp"
             app:layout_constraintLeft_toLeftOf="@id/background"

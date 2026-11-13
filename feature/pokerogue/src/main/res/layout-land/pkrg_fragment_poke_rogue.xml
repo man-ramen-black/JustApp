@@ -96,7 +96,7 @@
             app:layout_constraintRight_toLeftOf="@id/rotate_button"
             android:layout_margin="15dp"
             android:padding="5dp"
-            android:src="@{viewModel.isMatchUpOpen ? @drawable/ic_close : @drawable/ic_menu}"
+            android:src="@{viewModel.isMatchUpOpen ? @drawable/pkrg_ic_close : @drawable/ic_menu}"
             android:onClick="@{_-> viewModel.toggleMatchUp()}"
             />
 
