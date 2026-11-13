@@ -2,7 +2,6 @@ package com.black.app.ui.common.selectapp
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import androidx.core.os.bundleOf
@@ -14,11 +13,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
+import com.black.app.util.InstalledAppResolver
 import com.black.core.component.BaseDialogFragment
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -48,6 +49,9 @@ class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>() {
             }
         }
     }
+
+    @Inject
+    lateinit var installedAppResolver: InstalledAppResolver
 
     private val viewModel: SelectAppViewModel by viewModels()
     private val adapter by lazy { SelectAppAdapter(viewModel) }
@@ -94,18 +98,15 @@ class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>() {
 
     @SuppressLint("QueryPermissionsNeeded")
     private fun generateSelectAppItemList() : List<SelectAppItem> {
-        val pm = requireContext().packageManager
+        val packageManager = requireContext().packageManager
         // 런처에서 실행 가능한 앱만 조회 (사전 설치된 YouTube, Instagram 등도 포함되도록 FLAG_SYSTEM 필터 대신 사용)
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        return pm.queryIntentActivities(intent, 0)
+        return packageManager.queryIntentActivities(intent, 0)
             .distinctBy { it.activityInfo.packageName }
             .map {
-                val applicationInfo = it.activityInfo.applicationInfo
-                SelectAppItem(
-                    applicationInfo.packageName,
-                    pm.getApplicationLabel(applicationInfo),
-                    pm.getApplicationIcon(applicationInfo)
-                )
+                // 조회 결과의 ApplicationInfo를 그대로 넘겨 앱마다 패키지 정보를 다시 조회하지 않음
+                val installedApp = installedAppResolver.find(it.activityInfo.applicationInfo)
+                SelectAppItem(installedApp.packageName, installedApp.label, installedApp.icon)
             }
     }
 }

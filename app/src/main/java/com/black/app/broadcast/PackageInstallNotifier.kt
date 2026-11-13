@@ -2,7 +2,6 @@ package com.black.app.broadcast
 
 import android.app.PendingIntent
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -11,6 +10,7 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.black.app.R
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationStatus
+import com.black.app.util.InstalledAppResolver
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
 import com.black.core.util.PermissionHelper
@@ -56,16 +56,15 @@ object PackageInstallNotifier {
         }
 
         // 수신 직후 삭제 등으로 앱 정보 조회 실패 시 종료
-        val packageManager = context.packageManager
-        val applicationInfo = try {
-            packageManager.getApplicationInfo(packageName, 0)
-        } catch (notFound: PackageManager.NameNotFoundException) {
-            Log.w("application not found : $packageName")
-            return
-        }
+        // 앱 설치 알림 화면의 미리보기와 같은 조회를 쓰도록 InstalledAppResolver 사용
+        val installedApp = InstalledAppResolver(context.applicationContext).find(packageName)
+            ?: run {
+                Log.w("application not found : $packageName")
+                return
+            }
 
         // 런처 액티비티 없는 앱은 터치로 실행할 수 없어 알림 제외, 반환 인텐트에 FLAG_ACTIVITY_NEW_TASK 포함
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
             ?: run {
                 Log.d("launch intent not found : $packageName")
                 return
@@ -73,7 +72,7 @@ object PackageInstallNotifier {
 
         // 원본 크기 아이콘은 알림·바로가기 전달 데이터가 커지므로 large icon 규격으로 축소
         val resources = context.resources
-        val appIcon = packageManager.getApplicationIcon(applicationInfo).toBitmap(
+        val appIcon = installedApp.icon.toBitmap(
             resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
             resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_height),
         )
@@ -94,7 +93,7 @@ object PackageInstallNotifier {
         } else {
             R.string.package_install_notification_installed
         }
-        val label = packageManager.getApplicationLabel(applicationInfo).toString()
+        val label = installedApp.label
         val message = context.getString(messageResId)
 
         // 대화 알림은 Android 11 이상만 적용, 바로가기 게시 실패 시 large icon 알림으로 대체

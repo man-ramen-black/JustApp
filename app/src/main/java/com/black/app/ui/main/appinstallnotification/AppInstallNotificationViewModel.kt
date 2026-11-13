@@ -4,8 +4,8 @@ import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.service.ForegroundServiceController
 import com.black.app.service.ForegroundServiceController.StartResult
-import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
+import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel

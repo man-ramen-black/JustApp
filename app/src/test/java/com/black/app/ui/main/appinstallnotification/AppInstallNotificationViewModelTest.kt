@@ -3,8 +3,8 @@ package com.black.app.ui.main.appinstallnotification
 import android.graphics.drawable.Drawable
 import com.black.app.service.ForegroundServiceController
 import com.black.app.service.ForegroundServiceController.StartResult
-import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
+import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.app.R
 import com.black.test.BaseTest

@@ -3,8 +3,8 @@ package com.black.app.ui.main.usagetimer
 import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
-import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
+import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel

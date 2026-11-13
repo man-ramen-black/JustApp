@@ -3,8 +3,8 @@ package com.black.app.ui.main.usagetimer
 import android.graphics.drawable.Drawable
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
-import com.black.app.ui.common.selectapp.InstalledAppResolver
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
+import com.black.app.util.InstalledAppResolver
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.test.BaseTest
 import io.mockk.Runs
