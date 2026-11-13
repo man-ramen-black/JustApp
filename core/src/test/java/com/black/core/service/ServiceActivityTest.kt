@@ -26,7 +26,7 @@ class ServiceActivityTest : BaseTest() {
     private val context: Context = RuntimeEnvironment.getApplication()
 
     /**
-     * BaseForegroundService 하위 클래스 중지 인텐트는 대상과 EXTRA_STOP만 담아 전달하는지 검증
+     * ServiceActivityTarget을 구현한 BaseForegroundService 하위 클래스 중지 인텐트는 대상과 EXTRA_STOP만 담아 전달하는지 검증
      *
      * Given: 다른 extras가 섞인 중지 인텐트를 ServiceActivity 인텐트로 변환
      * When: createServiceIntent 호출
@@ -114,9 +114,39 @@ class ServiceActivityTest : BaseTest() {
         assertNull(unknownClassResult)
     }
 
-    class TestForegroundService : BaseForegroundService() {
+    /**
+     * [ServiceActivityTarget]을 구현하지 않은 BaseForegroundService 하위 클래스는 시작하지 않는지 검증
+     *
+     * Given: ServiceActivityTarget 미구현 BaseForegroundService 하위 클래스를 가리키는 시작 인텐트, 중지 인텐트
+     * When: 각각 createServiceIntent 호출
+     * Then: 모두 null 반환
+     */
+    @Test
+    fun test_05_foregroundServiceWithoutTargetIsRejected() = runTest {
+        /** Given **/
+        val startSource = Intent(context, TestUntargetedForegroundService::class.java)
+            .toStartServiceActivityIntent()
+        val stopSource = BaseForegroundService.createStopIntent(context, TestUntargetedForegroundService::class.java)
+            .toStartServiceActivityIntent()
+
+        /** When **/
+        val startResult = ServiceActivity.createServiceIntent(context, startSource)
+        val stopResult = ServiceActivity.createServiceIntent(context, stopSource)
+
+        /** Then **/
+        assertNull(startResult)
+        assertNull(stopResult)
+    }
+
+    class TestForegroundService : BaseForegroundService(), ServiceActivityTarget {
         override val type: Int = 0
         override val notificationId: Int = 1
+        override fun onCreateNotification(): Notification = Notification()
+    }
+
+    class TestUntargetedForegroundService : BaseForegroundService() {
+        override val type: Int = 0
+        override val notificationId: Int = 2
         override fun onCreateNotification(): Notification = Notification()
     }
 

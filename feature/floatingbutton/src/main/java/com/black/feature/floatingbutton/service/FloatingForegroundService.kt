@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.black.core.service.BaseForegroundService
 import com.black.core.service.ServiceActivity.Companion.toStartServiceActivityIntent
+import com.black.core.service.ServiceActivityTarget
 import com.black.core.util.NotificationUtil
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.PermissionHelper
@@ -17,7 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class FloatingForegroundService: BaseForegroundService() {
+/** 시작·중지 바로가기와 알림 터치가 ServiceActivity를 거쳐 시작하므로 [ServiceActivityTarget] 구현 */
+class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget {
     companion object {
         private const val NOTIFICATION_ID = 1225
         // 앱 설치 알림 서비스와 채널을 나눠 사용자가 한쪽 알림만 끌 수 있게 함

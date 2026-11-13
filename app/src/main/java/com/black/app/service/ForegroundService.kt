@@ -1,14 +1,15 @@
 package com.black.app.service
 
+import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Intent
-import android.os.IBinder
+import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationManagerCompat
 import com.black.app.broadcast.PackageInstallReceiver
 import com.black.app.broadcast.ScreenReceiver
 import com.black.app.ui.MainActivity
-import com.black.core.util.Log
+import com.black.core.service.BaseForegroundService
 import com.black.core.util.NotificationUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ForegroundService : Service() {
+class ForegroundService : BaseForegroundService() {
     companion object {
         private const val NOTIFICATION_ID = 428
         private const val NOTIFICATION_CHANNEL_ID = "ForegroundService"
@@ -33,22 +34,17 @@ class ForegroundService : Service() {
         private val restartScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("intent=$intent, flags=$flags, startId=$startId")
+    override val notificationId: Int = NOTIFICATION_ID
 
-        // onStartCommand default return : START_STICKY
-        // https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)
-        return super.onStartCommand(intent, flags, startId)
-    }
+    /**
+     * 매니페스트에 선언한 타입(specialUse)으로 시작
+     *
+     * 타입 인자 없는 startForeground가 내부에서 넘기는 값과 같음. 기반 클래스가 Android 10 이상에서만 읽어 그 미만은 상수 인라인만 일어남
+     */
+    @SuppressLint("InlinedApi")
+    override val type: Int = ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
 
-    override fun onBind(p0: Intent?): IBinder? {
-        return null
-    }
-
-    override fun onCreate() {
-        Log.d()
-        super.onCreate()
-
+    override fun onCreateNotification(): Notification {
         NotificationUtil.createNotificationChannel(applicationContext, NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManagerCompat.IMPORTANCE_LOW)
         val notification = NotificationUtil.createNotification(
             applicationContext,
@@ -63,7 +59,11 @@ class ForegroundService : Service() {
             val flags = PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             it.setContentIntent(PendingIntent.getActivity(this, NOTIFICATION_ID, Intent(this, MainActivity::class.java), flags))
         }
-        startForeground(NOTIFICATION_ID, notification)
+        return notification
+    }
+
+    override fun onCreate() {
+        super.onCreate()
         mutableRunning.value = true
 
         ScreenReceiver.register(this)
@@ -71,17 +71,19 @@ class ForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        Log.d()
         ScreenReceiver.unregister(this)
         PackageInstallReceiver.unregister(this)
         mutableRunning.value = false
 
         super.onDestroy()
+    }
 
-        // android 12 포그라운드 서비스 예외사항 : 배터리 최적화 예외 시 포그라운드 서비스 내에서 재시작 가능
-        // https://developer.android.com/about/versions/12/foreground-services?hl=ko#cases-fgs-background-starts-allowed
-        // 무한 재실행
-        // https://medium.com/@Lakshya_Punhani/background-services-running-forever-in-android-part-2-6e3a667d36fd
+    /**
+     * 실행 설정이 켜져 있고 배터리 최적화 예외일 때만 재시작
+     *
+     * 중지 인텐트([EXTRA_STOP]) 여부는 보지 않고 실행 설정으로만 판단(앱의 끄기는 실행 설정 저장 뒤 stopService)
+     */
+    override fun restartIfNeeded() {
         // 사용자가 끈 경우는 실행 설정을 false로 저장한 뒤 중지하므로 재시작하지 않음
         val controller = ForegroundServiceController(applicationContext)
         restartScope.launch { controller.startIfActivated() }

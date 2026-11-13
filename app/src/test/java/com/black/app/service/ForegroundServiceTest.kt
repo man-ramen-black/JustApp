@@ -1,6 +1,7 @@
 package com.black.app.service
 
 import android.app.Notification
+import android.content.pm.ServiceInfo
 import android.os.PowerManager
 import com.black.app.R
 import com.black.app.model.datastore.ForegroundServiceDataStore
@@ -24,7 +25,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ServiceController
 import org.robolectric.annotation.Config
 
-/** [ForegroundService] 상시 알림의 아이콘, 색·액션 미지정과 실행 상태 노출, 종료 후 재시작 검증 */
+/** [ForegroundService] 상시 알림의 아이콘, 색·액션 미지정과 실행 상태 노출, 종료 후 재시작, 포그라운드 시작 타입 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class ForegroundServiceTest : BaseTest() {
@@ -129,5 +130,21 @@ class ForegroundServiceTest : BaseTest() {
             }
         }
         assertEquals(ForegroundService::class.java.name, startedService.component?.className)
+    }
+
+    /**
+     * 포그라운드 시작 타입이 타입 인자 없는 startForeground와 같은 매니페스트 선언 타입인지 검증
+     *
+     * Given / When: ForegroundService 생성(Android 14)
+     * Then: foregroundServiceType이 FOREGROUND_SERVICE_TYPE_MANIFEST
+     */
+    @Test
+    fun test_05_startForegroundUsesManifestType() = runTest {
+        /** Given / When **/
+        val controller = Robolectric.buildService(ForegroundService::class.java).create()
+        serviceController = controller
+
+        /** Then **/
+        assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST, controller.get().foregroundServiceType)
     }
 }

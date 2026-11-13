@@ -11,7 +11,7 @@ import com.black.core.util.Log
  * 바로가기·알림 인텐트로 [BaseForegroundService]를 시작하는 투명 Activity
  *
  * 바로가기 인텐트가 이 Activity를 직접 가리키고 API 24·25에서는 런처가 그 인텐트를 자기 권한으로 시작하므로 exported 유지.
- * 외부 앱도 부를 수 있어 시작 대상은 같은 패키지의 [BaseForegroundService] 하위 클래스로 한정하고,
+ * 외부 앱도 부를 수 있어 시작 대상은 같은 패키지에서 [ServiceActivityTarget]을 구현한 [BaseForegroundService] 하위 클래스로 한정하고,
  * 서비스에는 [BaseForegroundService.EXTRA_STOP]만 전달
  */
 class ServiceActivity: Activity() {
@@ -37,7 +37,7 @@ class ServiceActivity: Activity() {
                     return null
                 }
 
-            if (!isForegroundServiceClass(context, className)) {
+            if (!isAllowedServiceClass(context, className)) {
                 Log.w("not allowed service : $className")
                 return null
             }
@@ -51,14 +51,19 @@ class ServiceActivity: Activity() {
                 }
         }
 
-        /** 외부에서 받은 이름이라 클래스 초기화(static 블록 실행) 없이 타입만 확인 */
-        private fun isForegroundServiceClass(context: Context, className: String): Boolean {
+        /**
+         * [ServiceActivityTarget]을 구현한 [BaseForegroundService] 하위 클래스인지 확인
+         *
+         * 외부에서 받은 이름이라 클래스 초기화(static 블록 실행) 없이 타입만 확인
+         */
+        private fun isAllowedServiceClass(context: Context, className: String): Boolean {
             val serviceClass = try {
                 Class.forName(className, false, context.classLoader)
             } catch (e: ClassNotFoundException) {
                 return false
             }
             return BaseForegroundService::class.java.isAssignableFrom(serviceClass)
+                && ServiceActivityTarget::class.java.isAssignableFrom(serviceClass)
         }
     }
 
