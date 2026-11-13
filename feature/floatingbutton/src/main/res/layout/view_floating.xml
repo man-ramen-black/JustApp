@@ -14,7 +14,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        backgroundColor="@{0xFF000000}"
+        backgroundColor="@{@color/black}"
         backgroundOpacity="@{state.opacity}"
         backgroundRadius="@{state.radius}"
         paddingDp="@{state.padding}"
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:text="@{state.clock}"
             android:textSize="13dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             tools:ignore="SpUsage" />
 
         <LinearLayout

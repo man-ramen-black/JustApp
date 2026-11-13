@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <color name="ic_launcher_background">#000000</color>
+    <color name="ic_launcher_background">@color/black</color>
 
-    <color name="color_accent">#DDDDDD</color>
+    <color name="color_accent">@color/grey_dd</color>
     <color name="color_primary">#121212</color>
-    <color name="window_background">#000000</color>
+    <color name="window_background">@color/black</color>
     <color name="usage_timer_background">#4C000000</color>
     <color name="ripple_color">#60A0A0A0</color>
 
     <color name="text_color">@color/color_accent</color>
     <color name="text_color_sub">#BBBBBB</color>
-    <color name="text_color_hint">#888888</color>
-    <color name="color_control_normal">#888888</color>
-    <color name="edit_text_under_line">#DDDDDD</color>
+    <color name="text_color_hint">@color/grey_88</color>
+    <color name="color_control_normal">@color/grey_88</color>
+    <color name="edit_text_under_line">@color/grey_dd</color>
 
     <color name="disabled_color">#606060</color>
     <color name="border">#555555</color>
