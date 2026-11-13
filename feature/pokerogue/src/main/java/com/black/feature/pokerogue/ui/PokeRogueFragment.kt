@@ -14,6 +14,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.repeatOnLifecycle
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialogBuilder
+import com.black.core.dialog.DialogManager.Companion.showByDialogManager
+import com.black.core.dialog.DialogManager.ShowType
 import com.black.core.util.BackPressHelper
 import com.black.core.util.Cutout
 import com.black.core.util.FragmentExtension.viewLifecycleScope
@@ -28,6 +30,10 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
+    companion object {
+        /** 새로고침 확인 다이얼로그 tag */
+        private const val RELOAD_CONFIRM_DIALOG_TAG = "PokeRogueReloadConfirm"
+    }
 
     private val typeList by lazy {
         PokeType.entries
@@ -128,6 +134,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     private fun handleEvent(event: ViewModelEvent) {
         when (event) {
             is PokeRogueViewModel.EventShowReloadConfirm -> {
+                // 새로고침 버튼을 빠르게 두 번 눌러도 다이얼로그가 겹치지 않도록 떠 있으면 미표시
                 BKAlertDialogBuilder(requireActivity())
                     .setMessage(R.string.reload_confirm_message)
                     .setPositiveButton(R.string.ok) { dialog, _ ->
@@ -137,7 +144,11 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
                     .setNegativeButton(R.string.cancel) { dialog, _ ->
                         dialog.cancel()
                     }
-                    .show()
+                    .showByDialogManager(
+                        requireActivity(),
+                        tag = RELOAD_CONFIRM_DIALOG_TAG,
+                        showType = ShowType.CANCEL,
+                    )
             }
 
             is PokeRogueViewModel.EventRotate -> {
