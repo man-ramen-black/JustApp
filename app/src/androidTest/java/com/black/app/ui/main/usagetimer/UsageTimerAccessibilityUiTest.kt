@@ -153,11 +153,19 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
     /**
      * dumpsys accessibility의 "Bound services" 항목에 이 서비스 라벨이 있는지 여부
      *
-     * 라벨은 이 앱의 리소스에서 읽어 개발 앱 라벨((Dev)…)로 실사용 앱의 같은 서비스와 구분
+     * 라벨은 이 앱의 리소스에서 읽어 개발 앱 라벨((Dev)…)로 실사용 앱의 같은 서비스와 구분.
+     * 항목 이름의 대소문자와 다음 항목이 OS 버전마다 달라(Android 12 `bound services:` 뒤 `crashed services:`, API 36 `Bound services:` 뒤 `Enabled services:`)
+     * 대소문자를 무시하고 다음 `… services:` 항목 앞까지만 확인
      */
     private fun isServiceBound(): Boolean {
         val dump = device.executeShellCommand("dumpsys accessibility")
-        val boundSection = dump.substringAfter("Bound services:", "").substringBefore("Enabled services:")
+        val start = dump.indexOf(BOUND_SERVICES_HEADER, ignoreCase = true)
+        if (start < 0) {
+            return false
+        }
+        val afterHeader = dump.substring(start + BOUND_SERVICES_HEADER.length)
+        val end = NEXT_SERVICES_HEADER.find(afterHeader)?.range?.first ?: afterHeader.length
+        val boundSection = afterHeader.substring(0, end)
         return boundSection.contains(context.getString(R.string.accessibility_service_label_usage_timer))
     }
 
@@ -165,5 +173,10 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         /** 타이머가 노출된 뒤 사라지지 않는지 확인하는 시간(일시적 창 이벤트가 발생할 시간) */
         private const val KEEP_DURATION = 3000L
         private const val KEEP_POLL_INTERVAL = 500L
+
+        private const val BOUND_SERVICES_HEADER = "bound services:"
+
+        /** 바인딩된 서비스 항목 다음에 오는 항목 머리(OS 버전마다 다름) */
+        private val NEXT_SERVICES_HEADER = Regex("(?i)(installed|enabled|binding|crashed) services:")
     }
 }
