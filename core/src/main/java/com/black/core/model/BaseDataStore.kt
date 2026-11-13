@@ -5,6 +5,7 @@ import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -35,6 +36,17 @@ fun blackDataStore(
         corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
         produceMigrations = produceMigrations,
     )
+
+/**
+ * [BaseDataStore.updateAll]로 함께 저장할 키 하나의 새 값
+ *
+ * [value]가 null이면 키를 삭제.
+ */
+class PreferenceUpdate<T : Any>(val key: Preferences.Key<T>, val value: T?) {
+    internal fun applyTo(preferences: MutablePreferences) {
+        if (value == null) preferences.remove(key) else preferences[key] = value
+    }
+}
 
 /** https://developer.android.com/topic/libraries/architecture/datastore?hl=ko */
 abstract class BaseDataStore(private val context: Context) {
@@ -70,11 +82,11 @@ abstract class BaseDataStore(private val context: Context) {
     }
 
     /**
-     * 값 저장 결과 반환(실패 시 원인 예외)
+     * 값 저장
      *
-     * 코루틴 취소는 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함
-     *
-     * [logValue]가 false면 개인 데이터가 로그에 남지 않도록 키 이름만 기록
+     * 결과를 돌려주며 실패면 원인 예외를 담음.
+     * 코루틴 취소는 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함.
+     * [logValue]가 false면 개인 데이터가 로그에 남지 않도록 키 이름만 기록.
      */
     protected suspend fun <T> update(key: Preferences.Key<T>, data: T, logValue: Boolean = true): Result<Unit> {
         Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
@@ -119,7 +131,31 @@ abstract class BaseDataStore(private val context: Context) {
         }
     }
 
-    /** 값 삭제 결과 반환(실패 시 원인 예외, 코루틴 취소는 다시 던짐) */
+    /**
+     * 여러 키를 DataStore `edit` 한 번에 저장
+     *
+     * 모두 저장되거나 하나도 저장되지 않아, 함께 맞아야 하는 값이 나눠 저장되다 중간에 끊기지 않음.
+     * 실패 처리는 [update]와 같음. [logValue]가 false면 값 없이 키 이름만 기록.
+     */
+    protected suspend fun updateAll(vararg updates: PreferenceUpdate<*>, logValue: Boolean = true): Result<Unit> {
+        val names = updates.joinToString { it.key.name }
+        Log.v(if (logValue) "[$names] ${updates.joinToString { "${it.value}" }}" else "[$names]")
+        return try {
+            getDataStore(context).edit { preferences -> updates.forEach { it.applyTo(preferences) } }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 값 삭제
+     *
+     * 실패 처리는 [update]와 같음.
+     */
     protected suspend fun <T> remove(key: Preferences.Key<T>): Result<Unit> {
         Log.v("[${key.name}]")
         return try {

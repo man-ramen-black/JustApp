@@ -35,11 +35,12 @@ fun ActionButton(
 ) {
     val shape = AppShapes.Container
     Box(
+        // 투명도가 배경·테두리까지 흐리게 하도록 그리기 Modifier보다 앞에 둠
         modifier = modifier
+            .alpha(if (enabled) 1f else DISABLED_ALPHA)
             .clip(shape)
             .background(AppColors.ContainerBackground)
             .border(1.dp, AppColors.ContainerBorder, shape)
-            .alpha(if (enabled) 1f else DISABLED_ALPHA)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,

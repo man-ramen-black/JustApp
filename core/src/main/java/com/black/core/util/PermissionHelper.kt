@@ -1,5 +1,6 @@
 package com.black.core.util
 
+import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.app.AppOpsManager
@@ -8,10 +9,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
-import android.os.Process
 import android.os.Bundle
 import android.os.PowerManager
+import android.os.Process
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.widget.Toast
@@ -21,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.core.net.toUri
 
 class PermissionHelper(private val activity: Activity, private val activityResultCaller: ActivityResultCaller) {
@@ -29,7 +32,9 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         /**
          * 사용 정보 접근 허용 여부
          *
-         * 이 권한은 런타임 권한 API가 아니라 AppOps로만 확인됨.
+         * 이 권한은 런타임 권한 API가 아니라 AppOps로 확인함.
+         * 설정 앱에서 한 번도 바꾸지 않은 기본 모드(`MODE_DEFAULT`)는 시스템 UsageStatsService처럼
+         * `PACKAGE_USAGE_STATS` 권한 부여 여부로 판정(adb `pm grant`, 사전 설치 앱 등).
          */
         fun isUsageAccessGranted(context: Context): Boolean {
             val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -43,8 +48,54 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                     AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName,
                 )
             }
+            if (mode == AppOpsManager.MODE_DEFAULT) {
+                return isGranted(context, Manifest.permission.PACKAGE_USAGE_STATS)
+            }
             return mode == AppOpsManager.MODE_ALLOWED
         }
+
+        /** 정확한 위치 권한(`ACCESS_FINE_LOCATION`) 허용 여부 */
+        fun isFineLocationGranted(context: Context): Boolean =
+            isGranted(context, Manifest.permission.ACCESS_FINE_LOCATION)
+
+        /**
+         * 대략적인 위치만 허용됐는지 여부
+         *
+         * API 31 이상은 권한 창과 앱 정보 화면에서 정확한 위치를 끄고 대략적인 위치만 고를 수 있어,
+         * 정확한 위치가 필요한 기능은 이 상태를 따로 안내함. API 31 미만은 항상 false.
+         */
+        fun isApproximateLocationOnly(context: Context): Boolean =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                isGranted(context, Manifest.permission.ACCESS_COARSE_LOCATION) &&
+                !isGranted(context, Manifest.permission.ACCESS_FINE_LOCATION)
+
+        /**
+         * 백그라운드 위치 권한(위치 항상 허용) 허용 여부
+         *
+         * API 29 미만에는 백그라운드 위치 권한이 따로 없어 항상 true.
+         */
+        fun isBackgroundLocationGranted(context: Context): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+                isGranted(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+        /**
+         * 기기 위치 설정 켜짐 여부
+         *
+         * 위치 권한이 있어도 이 설정이 꺼져 있으면 Wi-Fi 이름(SSID) 같은 위치 기반 정보를 읽을 수 없음.
+         */
+        fun isLocationEnabled(context: Context): Boolean {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
+            return LocationManagerCompat.isLocationEnabled(locationManager)
+        }
+
+        /** 기기 위치 설정 화면 이동 */
+        fun showLocationSourceSettings(context: Context) {
+            startFirstAvailable(context, listOf(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
+        }
+
+        /** [context]에 [permission] 권한이 허용됐는지 여부 */
+        private fun isGranted(context: Context, permission: String): Boolean =
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
         /**
          * 사용 정보 접근 설정 화면 이동
@@ -78,8 +129,8 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                 try {
                     context.startActivity(intent)
                     return
-                } catch (e: ActivityNotFoundException) {
-                    Log.w("settings screen not found : ${intent.action} $e")
+                } catch (notFound: ActivityNotFoundException) {
+                    Log.w("settings screen not found : ${intent.action} $notFound")
                 }
             }
         }
