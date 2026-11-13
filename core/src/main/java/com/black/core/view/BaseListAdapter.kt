@@ -22,9 +22,15 @@ abstract class BaseListAdapter<DATA>(itemCallback: DiffUtil.ItemCallback<DATA> =
 
     constructor(areItemTheSame:(old:DATA, new:DATA) -> Boolean) : this(SimpleItemCallback(areItemTheSame))
 
-    /** prefetch 뒤 목록이 바뀌어도 옛 위치를 읽지 않도록 받은 위치로 즉시 바인딩 */
+    /**
+     * prefetch 뒤 목록이 바뀌어도 옛 위치를 읽지 않도록 받은 위치로 즉시 바인딩
+     *
+     * 바인딩 식도 바로 실행해 LayoutManager가 바인딩 전 내용으로 항목 크기를 재지 않게 함.
+     * FlexboxLayoutManager는 항목을 붙이기 전에 크기를 재므로, 미루면 레이아웃을 새로 만든 직후 중첩 목록 항목이 빈 크기로 남음
+     */
     override fun onBindViewHolder(holder: BaseViewHolder<ViewDataBinding, DATA>, position: Int) {
         holder.bind(getItem(position))
+        holder.binding.executePendingBindings()
     }
 
     /** LiveData 바인딩용 lifecycleOwner는 뷰 트리에 붙은 뒤에만 찾을 수 있어 부착 시점에 한 번 지정 */
