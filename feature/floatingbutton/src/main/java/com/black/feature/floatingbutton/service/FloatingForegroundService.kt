@@ -71,21 +71,35 @@ class FloatingForegroundService: BaseForegroundService() {
         }
 
         if (!PermissionHelper.canDrawOverlays(this)) {
-            Toast.makeText(this, "다른 앱 위에 그리기 권한 허용이 필요합니다.", Toast.LENGTH_SHORT)
-                .show()
-            PermissionHelper.showDrawOverlaysSetting(this)
-            // 버튼 없이 알림만 남은 채 실행되지 않도록 중지, 권한을 허용한 뒤 다시 켜면 버튼 표시
-            // stopSelf로 멈추면 onDestroy가 재시작하므로 중지 인텐트 사용
-            BaseForegroundService.stop(this, FloatingForegroundService::class.java)
+            stopWithOverlayPermissionGuide()
             return result
         }
 
         if (view == null) {
-            view = FloatingView(this)
-                .also { it.attachView() }
+            val floatingView = FloatingView(this)
+            // 권한 확인 뒤 부착 전에 권한이 회수되면 부착 실패, 붙지 않은 뷰는 보관하지 않음
+            if (!floatingView.tryAttachView()) {
+                stopWithOverlayPermissionGuide()
+                return result
+            }
+            view = floatingView
         }
 
         return result
+    }
+
+    /**
+     * 다른 앱 위에 표시 권한을 안내하고 서비스 중지
+     *
+     * 권한이 없을 때와, 권한 확인 뒤 회수돼 오버레이 부착이 실패했을 때 함께 사용
+     */
+    private fun stopWithOverlayPermissionGuide() {
+        Toast.makeText(this, "다른 앱 위에 그리기 권한 허용이 필요합니다.", Toast.LENGTH_SHORT)
+            .show()
+        PermissionHelper.showDrawOverlaysSetting(this)
+        // 버튼 없이 알림만 남은 채 실행되지 않도록 중지, 권한을 허용한 뒤 다시 켜면 버튼 표시
+        // stopSelf로 멈추면 onDestroy가 재시작하므로 중지 인텐트 사용
+        BaseForegroundService.stop(this, FloatingForegroundService::class.java)
     }
 
     override fun onDestroy() {

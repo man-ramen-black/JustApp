@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
+import com.black.core.util.Util
 import com.black.core.view.MovableOverlayView
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
@@ -59,19 +60,17 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
     }
 
     fun goHome() {
-        Intent(Intent.ACTION_MAIN)
-            .apply {
-                addCategory(Intent.CATEGORY_HOME)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            .also { context.startActivity(it) }
+        // 서비스 컨텍스트라 FLAG_ACTIVITY_NEW_TASK는 startActivitySafely가 추가
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_HOME)
+        Util.startActivitySafely(context, intent)
     }
 
     fun goBack() {
         if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
             Toast.makeText(context, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
                 .show()
-            PermissionHelper.openAccessibilitySetting(context)
+            PermissionHelper.openAccessibilityServiceDetailSetting(context, FloatingAccessibilityService::class.java)
             return
         }
 

@@ -47,6 +47,22 @@ android {
         dataBinding = true
         compose = true
     }
+
+    dataBinding {
+        // 유닛 테스트에서 데이터 바인딩 오버레이 뷰(FloatingView) 생성용
+        // androidx.databinding.DataBinderMapperImpl은 앱 모듈 빌드에서만 생성되므로 이 모듈의 테스트 변형에서도 생성
+        enableForTests = true
+    }
+
+    testOptions {
+        // 리소스를 포함한 Robolectric 테스트는 매니페스트 targetSdk(기본은 compileSdk 36)를 쓰는데
+        // 현재 Robolectric은 34까지 지원하므로 app의 targetSdk와 같게 지정
+        targetSdk = 34
+        unitTests {
+            // FloatingView 레이아웃을 Robolectric 유닛 테스트에서 inflate하도록 포함
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
