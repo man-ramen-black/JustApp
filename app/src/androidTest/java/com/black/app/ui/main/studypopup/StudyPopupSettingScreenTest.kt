@@ -1,11 +1,11 @@
 package com.black.app.ui.main.studypopup
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasParent
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isNotEnabled
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.onNodeWithTag
@@ -278,7 +278,7 @@ class StudyPopupSettingScreenTest : BaseUiTest() {
         /** When / Then **/
         clickTag(StudyPopupSettingTestTags.ADD_BUTTON, scrollTo = true)
         waitUntilTagExists(StudyPopupSettingTestTags.EDIT_DIALOG)
-        composeRule.onNodeWithTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON).assertIsNotEnabled()
+        assertTagMatches(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON, isNotEnabled())
 
         composeRule.onNodeWithTag(StudyPopupSettingTestTags.EDIT_INPUT).performTextInput(ADDED_CONTENTS)
         clickTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON)

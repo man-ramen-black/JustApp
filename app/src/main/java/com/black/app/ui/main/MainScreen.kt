@@ -38,6 +38,15 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * [MainScreen] 요소의 testTag
+ *
+ * 화면과 계측 테스트가 같은 값을 쓰도록 상수로 공유
+ */
+internal object MainTestTags {
+    const val DATE = "main_date"
+}
+
 /** 메인 리스트 항목 */
 data class MainItem(
     val name: String,
@@ -88,7 +97,7 @@ private fun MainHeader(modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(top = 26.dp)) {
         Text(
             text = date,
-            modifier = Modifier.testTag("main_date"),
+            modifier = Modifier.testTag(MainTestTags.DATE),
             style = AppTypography.MonoHeaderCaption,
         )
         Text(

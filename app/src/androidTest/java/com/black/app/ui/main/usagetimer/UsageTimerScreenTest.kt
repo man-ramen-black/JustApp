@@ -1,12 +1,7 @@
 package com.black.app.ui.main.usagetimer
 
 import androidx.activity.compose.setContent
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
@@ -73,16 +68,16 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
 
         /** Then **/
-        composeRule.onNodeWithTag("usage_timer_title").assertIsDisplayed()
-        composeRule.onNodeWithTag("usage_timer_title").assertTextEquals("앱 사용 타이머")
-        composeRule.onNodeWithTag("show_button").assertExists()
-        composeRule.onNodeWithTag("pause_duration_input").assertExists()
-        composeRule.onNodeWithTag("save_button").assertExists()
-        composeRule.onNodeWithTag("pause_button").assertExists()
-        composeRule.onNodeWithTag("cancel_button").assertExists()
-        composeRule.onNodeWithTag("accessibility_button").assertExists()
-        composeRule.onNodeWithTag("select_app_button").assertExists()
-        composeRule.onNodeWithTag("pause_info").assertDoesNotExist()
+        assertTagDisplayed(UsageTimerTestTags.TITLE)
+        assertTagText(UsageTimerTestTags.TITLE, "앱 사용 타이머")
+        assertTagExists(UsageTimerTestTags.SHOW_BUTTON)
+        assertTagExists(UsageTimerTestTags.PAUSE_DURATION_INPUT)
+        assertTagExists(UsageTimerTestTags.SAVE_BUTTON)
+        assertTagExists(UsageTimerTestTags.PAUSE_BUTTON)
+        assertTagExists(UsageTimerTestTags.CANCEL_BUTTON)
+        assertTagExists(UsageTimerTestTags.ACCESSIBILITY_BUTTON)
+        assertTagExists(UsageTimerTestTags.SELECT_APP_BUTTON)
+        assertTagNotExists(UsageTimerTestTags.PAUSE_INFO)
     }
 
     /**
@@ -104,12 +99,12 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 버튼 라벨은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithTag("show_button").assertTextEquals("타이머 띄우기")
-        composeRule.onNodeWithTag("save_button").assertTextEquals("저장")
-        composeRule.onNodeWithTag("pause_button").assertTextEquals("일시정지")
-        composeRule.onNodeWithTag("cancel_button").assertTextEquals("일시정지 해제")
-        composeRule.onNodeWithTag("accessibility_button").assertTextEquals("접근성 서비스 설정")
-        composeRule.onNodeWithTag("select_app_button").assertTextEquals("앱 선택")
+        assertTagText(UsageTimerTestTags.SHOW_BUTTON, "타이머 띄우기")
+        assertTagText(UsageTimerTestTags.SAVE_BUTTON, "저장")
+        assertTagText(UsageTimerTestTags.PAUSE_BUTTON, "일시정지")
+        assertTagText(UsageTimerTestTags.CANCEL_BUTTON, "일시정지 해제")
+        assertTagText(UsageTimerTestTags.ACCESSIBILITY_BUTTON, "접근성 서비스 설정")
+        assertTagText(UsageTimerTestTags.SELECT_APP_BUTTON, "앱 선택")
     }
 
     /**
@@ -128,7 +123,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         hostUsageTimerScreen()
 
         /** When **/
-        composeRule.onNodeWithTag("select_app_button").performScrollTo().performClick()
+        clickTag(UsageTimerTestTags.SELECT_APP_BUTTON, scrollTo = true)
 
         /** Then **/
         onView(withId(R.id.title))
@@ -155,7 +150,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         hostUsageTimerScreen()
 
         /** Then **/
-        composeRule.onNodeWithTag("selected_apps_list").assertExists()
+        assertTagExists(UsageTimerTestTags.SELECTED_APPS_LIST)
         composeRule.onNodeWithText("com.nonexistent.testapp").assertExists()
     }
 
@@ -178,8 +173,8 @@ class UsageTimerScreenTest : BaseUiTest() {
         hostUsageTimerScreen()
 
         /** Then **/
-        composeRule.onNodeWithTag("selected_apps_empty").assertTextEquals("선택한 앱이 없습니다.")
-        composeRule.onNodeWithTag("selected_apps_list").assertDoesNotExist()
+        assertTagText(UsageTimerTestTags.SELECTED_APPS_EMPTY, "선택한 앱이 없습니다.")
+        assertTagNotExists(UsageTimerTestTags.SELECTED_APPS_LIST)
     }
 
     /**

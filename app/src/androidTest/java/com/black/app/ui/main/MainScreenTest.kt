@@ -3,8 +3,6 @@ package com.black.app.ui.main
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -49,8 +47,8 @@ class MainScreenTest : BaseUiTest() {
         // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
 
         /** Then **/
-        composeRule.onNodeWithTag("main_date").assertIsDisplayed()
-        composeRule.onNodeWithText("JustApp").assertIsDisplayed()
+        assertTagDisplayed(MainTestTags.DATE)
+        assertTextDisplayed("JustApp")
         assertTextDisplayed("8 TOOLS · DARK ALWAYS", scrollTo = true)
     }
 
@@ -101,7 +99,7 @@ class MainScreenTest : BaseUiTest() {
         hostMainScreen(itemList)
 
         /** When **/
-        composeRule.onNodeWithText("앱 사용 타이머").performClick()
+        clickText("앱 사용 타이머")
 
         /** Then **/
         assertEquals(listOf("앱 사용 타이머"), clickedNames)
@@ -126,7 +124,7 @@ class MainScreenTest : BaseUiTest() {
         // 푸터는 정적이므로 별도 조작 없이 검증
 
         /** Then **/
-        composeRule.onNodeWithText("3 TOOLS · DARK ALWAYS").assertIsDisplayed()
+        assertTextDisplayed("3 TOOLS · DARK ALWAYS")
     }
 
     /**

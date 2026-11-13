@@ -1,6 +1,5 @@
 package com.black.app.broadcast
 
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
@@ -21,7 +20,6 @@ import org.robolectric.annotation.Config
 class BootReceiverTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val notificationManager = context.getSystemService(NotificationManager::class.java)
 
     /** 알림 권한 허용 */
     @Before
@@ -46,7 +44,7 @@ class BootReceiverTest : BaseTest() {
         shadowOf(Looper.getMainLooper()).idle()
 
         /** Then **/
-        assertEquals(0, shadowOf(notificationManager).allNotifications.size)
+        assertEquals(0, PackageInstallTestFixture.shadowNotificationManager(context).size())
     }
 
     /**
@@ -66,6 +64,6 @@ class BootReceiverTest : BaseTest() {
         shadowOf(Looper.getMainLooper()).idle()
 
         /** Then **/
-        assertEquals(1, shadowOf(notificationManager).allNotifications.size)
+        assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
     }
 }

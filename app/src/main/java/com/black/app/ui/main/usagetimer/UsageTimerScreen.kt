@@ -50,6 +50,25 @@ import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 import kotlinx.coroutines.delay
 
+/**
+ * [UsageTimerScreen] 요소의 testTag
+ *
+ * 화면과 계측 테스트가 같은 값을 쓰도록 상수로 공유
+ */
+internal object UsageTimerTestTags {
+    const val TITLE = "usage_timer_title"
+    const val SHOW_BUTTON = "show_button"
+    const val PAUSE_DURATION_INPUT = "pause_duration_input"
+    const val SAVE_BUTTON = "save_button"
+    const val PAUSE_BUTTON = "pause_button"
+    const val CANCEL_BUTTON = "cancel_button"
+    const val ACCESSIBILITY_BUTTON = "accessibility_button"
+    const val SELECT_APP_BUTTON = "select_app_button"
+    const val SELECTED_APPS_EMPTY = "selected_apps_empty"
+    const val SELECTED_APPS_LIST = "selected_apps_list"
+    const val PAUSE_INFO = "pause_info"
+}
+
 /** UsageTimer 화면 */
 @Composable
 fun UsageTimerScreen(
@@ -134,7 +153,7 @@ private fun UsageTimerContent(
         title = stringResource(R.string.fragment_name_usage_timer),
         onNavigateUp = onNavigateUp,
         modifier = modifier,
-        titleModifier = Modifier.testTag("usage_timer_title"),
+        titleModifier = Modifier.testTag(UsageTimerTestTags.TITLE),
     ) {
         // 타이머 표시 섹션
         SectionHeader(stringResource(R.string.usage_timer_section_overlay))
@@ -143,7 +162,7 @@ private fun UsageTimerContent(
             onClick = onClickShow,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("show_button"),
+                .testTag(UsageTimerTestTags.SHOW_BUTTON),
             letterSpacing = 0.sp,
         )
 
@@ -174,7 +193,7 @@ private fun UsageTimerContent(
                 ),
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("pause_duration_input"),
+                    .testTag(UsageTimerTestTags.PAUSE_DURATION_INPUT),
             )
             ActionButton(
                 text = stringResource(R.string.usage_timer_save),
@@ -182,7 +201,7 @@ private fun UsageTimerContent(
                 // 옆 입력 칸과 같은 높이
                 modifier = Modifier
                     .height(OutlinedTextFieldDefaults.MinHeight)
-                    .testTag("save_button"),
+                    .testTag(UsageTimerTestTags.SAVE_BUTTON),
                 letterSpacing = 0.sp,
             )
         }
@@ -203,7 +222,7 @@ private fun UsageTimerContent(
                 onClick = onClickPause,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("pause_button"),
+                    .testTag(UsageTimerTestTags.PAUSE_BUTTON),
                 letterSpacing = 0.sp,
             )
             ActionButton(
@@ -211,7 +230,7 @@ private fun UsageTimerContent(
                 onClick = onClickCancelPause,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("cancel_button"),
+                    .testTag(UsageTimerTestTags.CANCEL_BUTTON),
                 letterSpacing = 0.sp,
             )
         }
@@ -223,7 +242,7 @@ private fun UsageTimerContent(
             onClick = onClickAccessibility,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("accessibility_button"),
+                .testTag(UsageTimerTestTags.ACCESSIBILITY_BUTTON),
             letterSpacing = 0.sp,
         )
         ActionButton(
@@ -232,7 +251,7 @@ private fun UsageTimerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
-                .testTag("select_app_button"),
+                .testTag(UsageTimerTestTags.SELECT_APP_BUTTON),
             letterSpacing = 0.sp,
         )
 
@@ -244,7 +263,7 @@ private fun UsageTimerContent(
                 text = stringResource(R.string.usage_timer_selected_apps_empty),
                 modifier = Modifier
                     .padding(bottom = 24.dp)
-                    .testTag("selected_apps_empty"),
+                    .testTag(UsageTimerTestTags.SELECTED_APPS_EMPTY),
                 style = AppTypography.Body.copy(color = AppColors.Caption),
             )
         } else {
@@ -252,7 +271,7 @@ private fun UsageTimerContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .padding(bottom = 24.dp)
-                    .testTag("selected_apps_list"),
+                    .testTag(UsageTimerTestTags.SELECTED_APPS_LIST),
             ) {
                 items(uiState.selectedApps, key = { it.packageName }) { item ->
                     SelectedAppItemContent(item)
@@ -288,7 +307,7 @@ private fun PauseRemainCountDown(
     Column(
         modifier = Modifier
             .padding(vertical = 12.dp)
-            .testTag("pause_info"),
+            .testTag(UsageTimerTestTags.PAUSE_INFO),
     ) {
         Text(
             text = stringResource(R.string.usage_timer_pause_remain),
