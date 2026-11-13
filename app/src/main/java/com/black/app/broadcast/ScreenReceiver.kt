@@ -49,7 +49,7 @@ class ScreenReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        Log.d("ScreenReceiver: context = $context, intent = $intent")
+        Log.d("context = $context, intent = $intent")
         context ?: return
         intent ?: return
 

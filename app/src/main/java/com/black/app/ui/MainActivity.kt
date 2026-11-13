@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -27,11 +26,11 @@ import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
+import com.black.app.util.ComponentExtensions.launch
 import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -47,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // 앱 디버깅 시에 서비스가 실행되도록 설정
-        lifecycleScope.launch { foregroundServiceController.startIfActivated() }
+        launch { foregroundServiceController.startIfActivated() }
         permissionHelper.init()
 
         setContent {
@@ -66,14 +65,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            intent?.let { receivedIntent -> lifecycleScope.launch { deeplinkManager.receiveDeeplink(receivedIntent.data) } }
+            intent?.let { receivedIntent -> launch { deeplinkManager.receiveDeeplink(receivedIntent.data) } }
             requestPermission()
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        lifecycleScope.launch { deeplinkManager.receiveDeeplink(intent.data) }
+        launch { deeplinkManager.receiveDeeplink(intent.data) }
     }
 
     /** Android 12 Splash 대응, 첫 화면이 그려지면 페이드아웃으로 사라짐 */

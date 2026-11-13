@@ -21,7 +21,7 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        Log.d("BootReceiver: context = $context, intent = $intent")
+        Log.d("context = $context, intent = $intent")
 
         context ?: return
         // exported라 다른 앱의 명시적 브로드캐스트도 받으므로 action 확인
