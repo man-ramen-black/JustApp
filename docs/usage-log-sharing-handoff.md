@@ -19,11 +19,10 @@
 ## 다른 환경에서 이어받는 법
 
 1. 저장소를 받아 `feature/usage-log-sharing`을 체크아웃합니다. 워크트리 생성과 새 세션 인계는 `.claude/references/orca-environment.md`를 따릅니다.
-2. 설계 문서, 계획 문서, 진행 장부는 커밋하지 않는 폴더에 있어 회사 Mac에만 있습니다.
-    - 설계: `docs/superpowers/specs/2026-11-13-usage-log-sharing-design.md`
-    - 계획: `docs/superpowers/plans/2026-11-13-usage-log-sharing.md`
-    - 진행 장부: `.superpowers/sdd/2026-11-13-usage-log-sharing/progress.md`
-    - 이 문서에는 이어서 작업하는 데 필요한 내용을 옮겨 두었습니다. 설계 원문이 필요하면 회사 Mac에서 가져옵니다.
+2. 설계 문서와 계획 문서는 다른 환경에서 이어받을 수 있게 이 브랜치에 커밋해 두었습니다.
+    - 설계: `docs/superpowers/specs/2026-11-13-usage-log-sharing-design.md`. 브랜치 전체 검토의 기준입니다.
+    - 계획: `docs/superpowers/plans/2026-11-13-usage-log-sharing.md`. 태스크 원문입니다. 계획 작성 뒤 바뀐 결정은 이 문서의 "계획과 달라진 결정"이 우선합니다.
+    - 진행 장부(`.superpowers/sdd/2026-11-13-usage-log-sharing/progress.md`)는 git이 무시하는 폴더라 회사 Mac에만 있습니다. 판정과 미룬 항목은 이 문서에 옮겨 두었습니다.
 3. 아래 "남은 작업"을 위에서부터 진행합니다.
 
 ## 커밋 구성
@@ -93,7 +92,7 @@
     - 아래 "미룬 항목" 목록을 검토자에게 넘겨 머지 전에 고칠 것을 고르게 합니다.
     - 태스크 검토를 따로 거치지 않은 변경 두 가지(위치 권한 바로 설정 이동, 1초 미만 구간 제외)와 `tools/usage-log/` 이동을 반드시 포함합니다.
 - [ ] 검토 결과를 한 번에 고치고 관련 테스트를 다시 실행합니다(유닛 테스트, S24 계측 테스트 `UsageLogScreenTest`).
-- [ ] 스쿼시: `squash` 스킬로 `f35bd06` 이후를 성격별로 묶습니다. 지금의 구성을 기준으로 삼되 `tools/usage-log/`는 별도 묶음으로 둡니다. 이 인계 문서는 다른 환경으로 옮기려고 커밋했으므로, release에 들어가지 않게 스쿼시 전에 지웁니다.
+- [ ] 스쿼시: `squash` 스킬로 `f35bd06` 이후를 성격별로 묶습니다. 지금의 구성을 기준으로 삼되 `tools/usage-log/`는 별도 묶음으로 둡니다. 이 인계 문서와 설계·계획 문서는 다른 환경으로 옮기려고 커밋했으므로, release에 들어가지 않게 스쿼시 전에 `git rm --cached`로 추적에서 빼고 커밋합니다(파일은 로컬에 남김).
 - [ ] 실사용 앱 설치: 모든 확인이 끝난 빌드로 `ANDROID_SERIAL=R3CX1015TQT ./gradlew :app:installStable`
 - [ ] release 머지는 사용자가 지시할 때 `merge` 스킬로 합니다. push도 명시적으로 지시받았을 때만 합니다.
 
