@@ -2,7 +2,6 @@ package com.black.core.util
 
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -32,17 +31,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         }
 
         fun showDrawOverlaysSetting(context: Context) {
-            val intent = getDrawOverlaysSettingIntent(context)
-
-            if (context !is Activity) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            try {
-                context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
-                e.printStackTrace()
-            }
+            Util.startActivitySafely(context, getDrawOverlaysSettingIntent(context))
         }
 
         // https://blog.kmshack.kr/ignore_battery_optimizations/
@@ -55,19 +44,10 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             }
 
             val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                .apply {
-                    if (context !is Activity) {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                    // 동작하지 않음
-                    // data = Uri.parse("package:" + context.packageName)
-                }
+            // 동작하지 않음
+            // intent.data = Uri.parse("package:" + context.packageName)
 
-            try {
-                context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
-                e.printStackTrace()
-            }
+            Util.startActivitySafely(context, intent)
         }
 
         fun isIgnoringBatteryOptimizations(context: Context) : Boolean {
@@ -85,15 +65,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
             }
 
-            if (context !is Activity) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            try {
-                context.startActivity(intent)
-            } catch (e: ActivityNotFoundException) {
-                Log.w("app notification settings not found : $e")
-            }
+            Util.startActivitySafely(context, intent)
         }
 
         /** 접근성 권한 있는지 체크 */
@@ -114,7 +86,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         fun openAccessibilitySetting(context: Context) {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
-            context.startActivity(intent)
+            Util.startActivitySafely(context, intent)
         }
 
         /** 특정 접근성 서비스 상세 설정 화면 표시(차단·미지원 시 접근성 설정 목록에서 해당 서비스 하이라이트) */
@@ -127,11 +99,8 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                     putExtra(Intent.EXTRA_COMPONENT_NAME, componentName)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
-            try {
-                context.startActivity(detailIntent)
+            if (Util.startActivitySafely(context, detailIntent)) {
                 return
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
 
             // 폴백: 접근성 설정 목록을 열고 해당 서비스 항목 하이라이트(미지원 설정 앱은 단순 목록 표시)
@@ -144,12 +113,12 @@ class PermissionHelper(private val activity: Activity, private val activityResul
                     )
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
-            try {
-                context.startActivity(highlightIntent)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                openAccessibilitySetting(context)
+            if (Util.startActivitySafely(context, highlightIntent)) {
+                return
             }
+
+            // 마지막 폴백: extras 없는 접근성 설정 목록
+            openAccessibilitySetting(context)
         }
 
         // 설정 앱이 특정 항목을 스크롤·하이라이트할 때 사용하는 비공개 extras 키

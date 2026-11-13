@@ -1,8 +1,6 @@
 package com.black.core.webkit
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -20,6 +18,7 @@ import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.dialog.DialogManager.Companion.showByDialogManager
 import com.black.core.util.Extensions.activity
 import com.black.core.util.Log
+import com.black.core.util.Util.startActivitySafely
 import com.black.core.util.Util.startDeepLink
 import java.net.URISyntaxException
 
@@ -164,31 +163,22 @@ open class BKWebViewClient : WebViewClient() {
 
     /** intent:// 딥링크 처리 */
     private fun startIntentDeepLink(context: Context, uri: Uri, webView: WebView?){
-        val intent = parseIntentDeepLink(uri)
-            ?.apply {
-                if (context !is Activity) {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-            }
-            ?: return
+        val intent = parseIntentDeepLink(uri) ?: return
 
-        try {
-            context.startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            val fallbackUrl = intent.getStringExtra("browser_fallback_url")
-            if (!fallbackUrl.isNullOrEmpty()) {
-                webView?.loadUrl(fallbackUrl)
-                return
-            }
+        if (startActivitySafely(context, intent)) {
+            return
+        }
 
-            val packageName = intent.getPackage()
-            if (!packageName.isNullOrEmpty()) {
-                startDeepLink(context, "market://details?id=$packageName")
-                return
-            }
-        } catch (e: Exception) {
-            // 대상 Activity가 권한을 요구하는 경우(SecurityException) 등 실행 실패 무시
-            Log.w(e)
+        // 대상 앱이 없거나 대상 Activity가 권한을 요구해(SecurityException) 실패하면 대체 URL, 스토어 순으로 이동
+        val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+        if (!fallbackUrl.isNullOrEmpty()) {
+            webView?.loadUrl(fallbackUrl)
+            return
+        }
+
+        val packageName = intent.getPackage()
+        if (!packageName.isNullOrEmpty()) {
+            startDeepLink(context, "market://details?id=$packageName")
         }
     }
 
