@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +29,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -45,7 +42,6 @@ import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
-import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
@@ -210,7 +206,7 @@ internal fun StudyPopupSettingContent(
         Text(
             text = stringResource(R.string.study_popup_enabled_description),
             modifier = Modifier.padding(top = 8.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.ParagraphCaption,
         )
         ActionButton(
             text = stringResource(R.string.study_popup_preview),
@@ -219,7 +215,6 @@ internal fun StudyPopupSettingContent(
                 .fillMaxWidth()
                 .padding(top = 16.dp)
                 .testTag(StudyPopupSettingTestTags.PREVIEW_BUTTON),
-            letterSpacing = 0.sp,
         )
 
         // 상태 섹션
@@ -256,14 +251,14 @@ internal fun StudyPopupSettingContent(
         Text(
             text = uiState.fileName.ifEmpty { stringResource(R.string.study_popup_file_none) },
             modifier = Modifier.testTag(StudyPopupSettingTestTags.FILE_NAME),
-            style = AppTypography.Body.copy(color = AppColors.ItemName),
+            style = AppTypography.BrightBody,
         )
         // 저장하지 않은 변경이 있을 때만 표시
         if (uiState.modified) {
             Text(
                 text = stringResource(R.string.study_popup_file_modified),
                 modifier = Modifier.padding(top = 4.dp),
-                style = AppTypography.Caption.copy(lineHeight = 18.sp),
+                style = AppTypography.ParagraphCaption,
             )
         }
         Row(
@@ -276,7 +271,6 @@ internal fun StudyPopupSettingContent(
                 modifier = Modifier
                     .weight(1f)
                     .testTag(StudyPopupSettingTestTags.LOAD_BUTTON),
-                letterSpacing = 0.sp,
             )
             // 다시 불러올 파일이 있을 때만 표시
             if (uiState.fileName.isNotEmpty()) {
@@ -286,7 +280,6 @@ internal fun StudyPopupSettingContent(
                     modifier = Modifier
                         .weight(1f)
                         .testTag(StudyPopupSettingTestTags.RELOAD_BUTTON),
-                    letterSpacing = 0.sp,
                 )
             }
             ActionButton(
@@ -295,7 +288,6 @@ internal fun StudyPopupSettingContent(
                 modifier = Modifier
                     .weight(1f)
                     .testTag(StudyPopupSettingTestTags.SAVE_BUTTON),
-                letterSpacing = 0.sp,
             )
         }
 
@@ -307,12 +299,12 @@ internal fun StudyPopupSettingContent(
             Text(
                 text = stringResource(R.string.study_popup_contents_empty),
                 modifier = Modifier.testTag(StudyPopupSettingTestTags.CONTENTS_EMPTY),
-                style = AppTypography.Body.copy(color = AppColors.Caption),
+                style = AppTypography.DimBody,
             )
         } else {
             uiState.contents.forEachIndexed { index, contents ->
                 if (index > 0) {
-                    HorizontalDivider(thickness = 1.dp, color = AppColors.Divider)
+                    HorizontalDivider()
                 }
                 ContentsRow(
                     contents = contents,
@@ -330,7 +322,6 @@ internal fun StudyPopupSettingContent(
                 .fillMaxWidth()
                 .padding(top = 12.dp, bottom = 24.dp)
                 .testTag(StudyPopupSettingTestTags.ADD_BUTTON),
-            letterSpacing = 0.sp,
         )
     }
 }
@@ -365,7 +356,7 @@ private fun ContentsRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(vertical = 6.dp),
-            style = AppTypography.Body.copy(color = AppColors.ItemName),
+            style = AppTypography.BrightBody,
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
@@ -392,52 +383,31 @@ private fun ContentsEditDialog(
     onDismiss: () -> Unit,
 ) {
     var text by rememberSaveable { mutableStateOf(initialText) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
+    ConfirmDialog(
+        confirmText = stringResource(R.string.ok),
+        onConfirm = { onConfirm(text) },
+        onDismiss = onDismiss,
         modifier = Modifier.testTag(StudyPopupSettingTestTags.EDIT_DIALOG),
-        shape = AppShapes.Container,
-        containerColor = AppColors.ContainerBackground,
-        title = {
-            Text(
-                text = stringResource(R.string.study_popup_edit_title),
-                color = AppColors.Title,
-            )
-        },
-        text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(StudyPopupSettingTestTags.EDIT_INPUT),
-                minLines = 3,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = AppColors.ContainerBorder,
-                    focusedBorderColor = AppColors.Arrow,
-                    focusedTextColor = AppColors.ItemName,
-                    unfocusedTextColor = AppColors.ItemName,
-                    cursorColor = AppColors.Title,
-                ),
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(text) },
-                enabled = text.isNotBlank(),
-                modifier = Modifier.testTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON),
-            ) {
-                Text(
-                    text = stringResource(R.string.ok),
-                    color = if (text.isNotBlank()) AppColors.Title else AppColors.Arrow,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel), color = AppColors.Caption)
-            }
-        },
-    )
+        confirmButtonModifier = Modifier.testTag(StudyPopupSettingTestTags.EDIT_CONFIRM_BUTTON),
+        title = stringResource(R.string.study_popup_edit_title),
+        confirmEnabled = text.isNotBlank(),
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(StudyPopupSettingTestTags.EDIT_INPUT),
+            minLines = 3,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = AppColors.ContainerBorder,
+                focusedBorderColor = AppColors.Arrow,
+                focusedTextColor = AppColors.ItemName,
+                unfocusedTextColor = AppColors.ItemName,
+                cursorColor = AppColors.Title,
+            ),
+        )
+    }
 }
 
 /** 내용 삭제 확인 다이얼로그 */

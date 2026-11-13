@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -144,7 +143,7 @@ internal fun AppInstallNotificationContent(
         Text(
             text = stringResource(R.string.app_install_notification_switch_description),
             modifier = Modifier.padding(top = 8.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.ParagraphCaption,
         )
 
         // 상태 섹션
@@ -244,7 +243,6 @@ private fun NotificationPreviewBlock(
                 .fillMaxWidth()
                 .padding(top = 8.dp)
                 .testTag(buttonTestTag),
-            letterSpacing = 0.sp,
         )
     }
 }
@@ -283,10 +281,7 @@ private fun NotificationPreviewCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = previewApp?.label.orEmpty(),
-                    color = AppColors.ItemName,
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.Bold,
+                    style = AppTypography.BrightBody.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
                 )
                 Text(
                     text = " · " + stringResource(R.string.app_install_notification_preview_time),

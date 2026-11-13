@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -117,7 +116,7 @@ fun FloatingSettingContent(
         Text(
             text = stringResource(R.string.floating_setting_running_description),
             modifier = Modifier.padding(top = 8.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.ParagraphCaption,
         )
 
         // 상태 섹션
@@ -145,7 +144,7 @@ fun FloatingSettingContent(
         Text(
             text = stringResource(R.string.floating_setting_accessibility_description),
             modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-            style = AppTypography.Caption.copy(lineHeight = 18.sp),
+            style = AppTypography.ParagraphCaption,
         )
     }
 }

@@ -200,15 +200,12 @@ private fun TextEditorContent(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .testTag(TextEditorTestTags.FILE_NAME),
-                style = AppTypography.MonoCaption.copy(letterSpacing = 1.5.sp),
+                // 한글 파일 이름이 있어 영문 대문자용 캡션이 아닌 스터디 팝업 파일 이름과 같은 한글 본문 스타일
+                style = AppTypography.BrightBody,
             )
         }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
-            thickness = 1.dp,
-            color = AppColors.Divider,
-        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp))
 
         // 본문 에디터
         BasicTextField(
@@ -219,8 +216,7 @@ private fun TextEditorContent(
                 .weight(1f)
                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
                 .testTag(TextEditorTestTags.EDITOR_INPUT),
-            textStyle = AppTypography.Body.copy(
-                color = AppColors.ItemName,
+            textStyle = AppTypography.BrightBody.copy(
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
             ),

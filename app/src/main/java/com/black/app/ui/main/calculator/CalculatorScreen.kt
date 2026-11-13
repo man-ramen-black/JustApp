@@ -405,7 +405,7 @@ private fun DilutionInputField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
-        textStyle = AppTypography.Body.copy(color = AppColors.ItemName),
+        textStyle = AppTypography.BrightBody,
         label = { Text(text = label, style = AppTypography.Caption) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
@@ -438,8 +438,7 @@ private fun RatioInputField(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val colors = calculatorInputColors()
-    val inputTextStyle = AppTypography.Body.copy(
-        color = AppColors.ItemName,
+    val inputTextStyle = AppTypography.BrightBody.copy(
         fontSize = RATIO_FIELD_FONT_SIZE,
         textAlign = TextAlign.Center,
     )

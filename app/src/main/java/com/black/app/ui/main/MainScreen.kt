@@ -26,8 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.black.app.R
@@ -115,10 +113,10 @@ private fun MainItemList(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        HorizontalDivider(thickness = 1.dp, color = AppColors.Divider)
+        HorizontalDivider()
         itemList.forEach { item ->
             MainItemRow(item = item)
-            HorizontalDivider(thickness = 1.dp, color = AppColors.Divider)
+            HorizontalDivider()
         }
     }
 }
@@ -155,11 +153,7 @@ private fun MainItemRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 18.dp),
-            color = AppColors.ItemName,
-            fontSize = 23.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = (-0.8).sp,
+            style = AppTypography.ItemName.copy(fontSize = 23.sp, letterSpacing = (-0.8).sp),
         )
         Icon(
             painter = painterResource(R.drawable.ic_chevron_right),

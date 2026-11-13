@@ -16,21 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 
 /** 도구 화면 섹션 위 디바이더 + 한글 캡션 */
 @Composable
 fun SectionHeader(title: String) {
-    HorizontalDivider(
-        modifier = Modifier.padding(top = 24.dp),
-        thickness = 1.dp,
-        color = AppColors.Divider,
-    )
+    HorizontalDivider(modifier = Modifier.padding(top = 24.dp))
     Text(
         text = title,
         modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
@@ -60,11 +54,7 @@ fun SwitchRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = AppColors.ItemName,
-            fontSize = 16.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.sp,
+            style = AppTypography.ItemName,
         )
         Switch(
             checked = checked,

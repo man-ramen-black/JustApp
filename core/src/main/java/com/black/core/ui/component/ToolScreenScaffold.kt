@@ -67,7 +67,7 @@ fun ToolScreenScaffold(
         )
         // 스크롤 중에 콘텐츠와 상단 바의 경계 표시(Material 3 상단 바가 스크롤 시 배경색을 바꾸는 것에 대응)
         if (scrollState.canScrollBackward) {
-            HorizontalDivider(thickness = 1.dp, color = AppColors.Divider)
+            HorizontalDivider()
         }
         Column(
             modifier = Modifier

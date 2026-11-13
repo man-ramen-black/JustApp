@@ -16,6 +16,8 @@ private val blackColorScheme = darkColorScheme(
     surfaceVariant = BlackThemeColors.Primary,
     onSurfaceVariant = BlackThemeColors.TextSub,
     outline = BlackThemeColors.TextHint,
+    // 색을 넘기지 않은 HorizontalDivider가 쓰는 색(DividerDefaults.color가 outlineVariant 참조)
+    outlineVariant = AppColors.Divider,
 )
 
 @Composable

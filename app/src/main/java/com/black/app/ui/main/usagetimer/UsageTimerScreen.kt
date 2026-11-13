@@ -163,7 +163,6 @@ private fun UsageTimerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(UsageTimerTestTags.SHOW_BUTTON),
-            letterSpacing = 0.sp,
         )
 
         // 일시정지 섹션
@@ -202,7 +201,6 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .height(OutlinedTextFieldDefaults.MinHeight)
                     .testTag(UsageTimerTestTags.SAVE_BUTTON),
-                letterSpacing = 0.sp,
             )
         }
 
@@ -223,7 +221,6 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .weight(1f)
                     .testTag(UsageTimerTestTags.PAUSE_BUTTON),
-                letterSpacing = 0.sp,
             )
             ActionButton(
                 text = stringResource(R.string.usage_timer_cancel_pause),
@@ -231,7 +228,6 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .weight(1f)
                     .testTag(UsageTimerTestTags.CANCEL_BUTTON),
-                letterSpacing = 0.sp,
             )
         }
 
@@ -243,7 +239,6 @@ private fun UsageTimerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(UsageTimerTestTags.ACCESSIBILITY_BUTTON),
-            letterSpacing = 0.sp,
         )
         ActionButton(
             text = stringResource(R.string.select_app),
@@ -252,7 +247,6 @@ private fun UsageTimerContent(
                 .fillMaxWidth()
                 .padding(top = 8.dp)
                 .testTag(UsageTimerTestTags.SELECT_APP_BUTTON),
-            letterSpacing = 0.sp,
         )
 
         // 선택한 앱 섹션
@@ -264,7 +258,7 @@ private fun UsageTimerContent(
                 modifier = Modifier
                     .padding(bottom = 24.dp)
                     .testTag(UsageTimerTestTags.SELECTED_APPS_EMPTY),
-                style = AppTypography.Body.copy(color = AppColors.Caption),
+                style = AppTypography.DimBody,
             )
         } else {
             LazyRow(
@@ -315,8 +309,11 @@ private fun PauseRemainCountDown(
         )
         Text(
             text = DataUtil.milliSecondsToTimeString("mm:ss", remainTimeMillis),
-            color = AppColors.Title,
-            fontFamily = FontFamily.Monospace,
+            style = AppTypography.Body.copy(
+                color = AppColors.Title,
+                fontSize = 16.sp,
+                fontFamily = FontFamily.Monospace,
+            ),
         )
     }
 }
@@ -333,7 +330,7 @@ private fun SelectedAppItemContent(item: SelectedAppUiItem) {
         )
         Text(
             text = item.label,
-            color = AppColors.Icon,
+            style = AppTypography.Body,
         )
     }
 }

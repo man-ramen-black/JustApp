@@ -20,7 +20,7 @@ import com.black.core.ui.theme.AppTypography
  * 화면 공용 액션 버튼
  *
  * 컨테이너 톤 박스 + ExtraBold 라벨 형태
- * 기본 자간은 영문 대문자 라벨용, 한글 라벨은 자간을 줄여 전달
+ * 기본 자간(0)은 한글 라벨용, 영문 대문자 라벨은 자간을 넓혀 전달
  */
 @Composable
 fun ActionButton(
