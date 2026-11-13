@@ -11,22 +11,20 @@ import android.widget.FrameLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.repeatOnLifecycle
 import com.black.core.component.BaseFragment
 import com.black.core.dialog.BKAlertDialogBuilder
 import com.black.core.dialog.DialogManager.Companion.showByDialogManager
 import com.black.core.dialog.DialogManager.ShowType
 import com.black.core.util.BackPressHelper
 import com.black.core.util.Cutout
-import com.black.core.util.FragmentExtension.viewLifecycleScope
 import com.black.core.util.UiUtil
 import com.black.core.viewmodel.ViewModelEvent
+import com.black.core.viewmodel.collectEvents
 import com.black.core.webkit.BKWebView
 import com.black.feature.pokerogue.R
 import com.black.feature.pokerogue.databinding.PkrgFragmentPokeRogueBinding
 import com.black.feature.pokerogue.model.PokeType
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
@@ -170,11 +168,7 @@ class PokeRogueFragment: BaseFragment<PkrgFragmentPokeRogueBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewLifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { handleEvent(it) }
-            }
-        }
+        collectEvents(viewModel) { handleEvent(it) }
 
         viewLifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
             val window = requireActivity().window

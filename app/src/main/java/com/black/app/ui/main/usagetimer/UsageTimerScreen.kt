@@ -2,7 +2,6 @@ package com.black.app.ui.main.usagetimer
 
 import android.os.SystemClock
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,6 +45,7 @@ import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 import com.black.core.util.DataUtil
+import com.black.core.util.Extensions.fragmentActivity
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 import kotlinx.coroutines.delay
@@ -80,9 +80,9 @@ fun UsageTimerScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // SelectAppDialog 결과 관찰 (AppCompatActivity의 supportFragmentManager 기반)
+    // SelectAppDialog 결과 관찰 (FragmentActivity의 supportFragmentManager 기반)
     LaunchedEffect(Unit) {
-        val activity = context as? AppCompatActivity ?: return@LaunchedEffect
+        val activity = context.fragmentActivity() ?: return@LaunchedEffect
         SelectAppDialogFragment.observeSelectedApp(
             activity.supportFragmentManager,
             lifecycleOwner,
@@ -111,7 +111,7 @@ fun UsageTimerScreen(
                 PermissionHelper.openAccessibilityServiceDetailSetting(context, UsageTimerAccessibility::class.java)
             }
             is UsageTimerViewModel.EventOpenSelectApp -> {
-                val activity = context as? AppCompatActivity ?: return@CollectEvents
+                val activity = context.fragmentActivity() ?: return@CollectEvents
                 SelectAppDialogFragment.newInstance(event.checkedPackageNames)
                     .show(activity.supportFragmentManager, SelectAppDialogFragment.TAG)
             }

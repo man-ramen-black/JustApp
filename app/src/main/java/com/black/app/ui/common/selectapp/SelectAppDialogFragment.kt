@@ -7,15 +7,14 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.black.app.R
 import com.black.app.databinding.DialogSelectAppBinding
 import com.black.app.util.InstalledAppResolver
 import com.black.core.component.BaseDialogFragment
 import com.black.core.viewmodel.ViewModelEvent
+import com.black.core.viewmodel.collectEvents
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,11 +60,7 @@ class SelectAppDialogFragment : BaseDialogFragment<DialogSelectAppBinding>() {
     override fun onBindVariable(binding: DialogSelectAppBinding) {
         binding.viewModel = viewModel
         binding.adapter = adapter
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { handleEvent(it) }
-            }
-        }
+        collectEvents(viewModel) { handleEvent(it) }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
