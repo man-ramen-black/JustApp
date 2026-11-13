@@ -10,7 +10,8 @@ import javax.inject.Inject
 /**
  * [FloatingForegroundService] 시작·중지와 플로팅 버튼 동작에 필요한 권한 상태 조회
  *
- * 설정 화면처럼 Hilt 주입을 받는 곳에서 사용하고, 바로가기는 서비스 인텐트를 직접 만들어 이 클래스를 거치지 않음
+ * 설정 화면처럼 Hilt 주입을 받는 곳에서 사용하고, 바로가기는 서비스 인텐트를 직접 만들어 이 클래스를 거치지 않음.
+ * 다른 앱 위에 표시 권한은 다른 기능 화면과 같이 core `OverlayPermissionStatus`로 조회
  */
 class FloatingButtonController @Inject constructor(
     @ApplicationContext context: Context,
@@ -19,9 +20,6 @@ class FloatingButtonController @Inject constructor(
 
     /** 플로팅 버튼 서비스 실행 여부 */
     val running: StateFlow<Boolean> = FloatingForegroundService.running
-
-    /** 다른 앱 위에 표시 권한 허용 여부(없으면 버튼을 띄울 수 없음) */
-    fun canDrawOverlays(): Boolean = PermissionHelper.canDrawOverlays(appContext)
 
     /** 뒤로 가기 버튼이 쓰는 [FloatingAccessibilityService] 사용 여부 */
     fun isAccessibilityServiceEnabled(): Boolean =

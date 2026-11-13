@@ -1,5 +1,6 @@
 package com.black.feature.floatingbutton.ui
 
+import com.black.core.util.OverlayPermissionStatus
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.test.BaseTest
 import com.black.test.collectValues
@@ -25,19 +26,22 @@ class FloatingSettingViewModelTest : BaseTest() {
     @MockK
     lateinit var controller: FloatingButtonController
 
+    @MockK
+    lateinit var overlayPermissionStatus: OverlayPermissionStatus
+
     private val running = MutableStateFlow(false)
 
     @Before
     fun setupMocks() {
         every { controller.running } returns running
-        every { controller.canDrawOverlays() } returns true
+        every { overlayPermissionStatus.canDrawOverlays() } returns true
         every { controller.isAccessibilityServiceEnabled() } returns true
         every { controller.start() } just Runs
         every { controller.stop() } just Runs
     }
 
     /** ViewModel 생성 후 init의 실행 상태 구독 시작까지 대기 */
-    private fun createViewModel() = FloatingSettingViewModel(controller)
+    private fun createViewModel() = FloatingSettingViewModel(controller, overlayPermissionStatus)
         .also { waitCoroutine() }
 
     /**
@@ -51,7 +55,7 @@ class FloatingSettingViewModelTest : BaseTest() {
     fun test_01_initReflectsStatus() = runTest {
         /** Given **/
         running.value = true
-        every { controller.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         every { controller.isAccessibilityServiceEnabled() } returns false
 
         /** When **/
@@ -116,7 +120,7 @@ class FloatingSettingViewModelTest : BaseTest() {
     @Test
     fun test_04_startWithoutPermissionShowsPermissionDialog() = runTest {
         /** Given **/
-        every { controller.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
 
         /** When **/
@@ -158,7 +162,7 @@ class FloatingSettingViewModelTest : BaseTest() {
     @Test
     fun test_06_openOverlaySettingsDismissesDialogAndSendsEvent() = runTest {
         /** Given **/
-        every { controller.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         val viewModel = createViewModel()
         viewModel.setRunning(true)
 
@@ -222,12 +226,12 @@ class FloatingSettingViewModelTest : BaseTest() {
     @Test
     fun test_09_refreshStatusReflectsChanges() = runTest {
         /** Given **/
-        every { controller.canDrawOverlays() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
         every { controller.isAccessibilityServiceEnabled() } returns false
         val viewModel = createViewModel()
 
         /** When **/
-        every { controller.canDrawOverlays() } returns true
+        every { overlayPermissionStatus.canDrawOverlays() } returns true
         every { controller.isAccessibilityServiceEnabled() } returns true
         viewModel.refreshStatus()
 

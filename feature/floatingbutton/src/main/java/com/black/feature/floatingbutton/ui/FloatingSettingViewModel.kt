@@ -1,5 +1,6 @@
 package com.black.feature.floatingbutton.ui
 
+import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.feature.floatingbutton.service.FloatingButtonController
@@ -15,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class FloatingSettingViewModel @Inject constructor(
     private val controller: FloatingButtonController,
+    private val overlayPermissionStatus: OverlayPermissionStatus,
 ) : EventViewModel() {
 
     /** 플로팅 버튼 설정 화면 일회성 이벤트 */
@@ -42,7 +44,7 @@ class FloatingSettingViewModel @Inject constructor(
     fun refreshStatus() {
         mutableUiState.update {
             it.copy(
-                overlayPermissionGranted = controller.canDrawOverlays(),
+                overlayPermissionGranted = overlayPermissionStatus.canDrawOverlays(),
                 accessibilityServiceEnabled = controller.isAccessibilityServiceEnabled(),
             )
         }
@@ -55,7 +57,7 @@ class FloatingSettingViewModel @Inject constructor(
             return
         }
         // 권한 없이 시작하면 버튼을 띄우지 못하므로 시작하지 않고 권한부터 안내
-        if (!controller.canDrawOverlays()) {
+        if (!overlayPermissionStatus.canDrawOverlays()) {
             showOverlayPermissionDialog()
             return
         }
