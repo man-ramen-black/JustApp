@@ -32,8 +32,7 @@ import com.black.app.R
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppShapes
 import com.black.core.ui.theme.AppTypography
-import java.text.SimpleDateFormat
-import java.util.Date
+import com.black.core.util.DataUtil
 import java.util.Locale
 
 /**
@@ -91,7 +90,7 @@ fun MainScreen(
 /** 모노스페이스 날짜 + 타이틀 헤더 */
 @Composable
 private fun MainHeader(modifier: Modifier = Modifier) {
-    val date = remember { SimpleDateFormat("yyyy.MM.dd", Locale.US).format(Date()) }
+    val date = remember { DataUtil.formatDateTime("yyyy.MM.dd", Locale.US) }
     Column(modifier = modifier.padding(top = 26.dp)) {
         Text(
             text = date,

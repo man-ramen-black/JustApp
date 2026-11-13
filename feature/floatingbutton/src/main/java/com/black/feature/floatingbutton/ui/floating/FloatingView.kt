@@ -4,14 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.TypedArray
 import android.media.AudioManager
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.black.core.util.Util
@@ -68,7 +66,7 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
 
     fun goBack() {
         if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
-            Toast.makeText(context, "접근성 설정이 필요합니다.", Toast.LENGTH_SHORT)
+            Toast.makeText(context, R.string.floating_accessibility_required, Toast.LENGTH_SHORT)
                 .show()
             PermissionHelper.openAccessibilityServiceDetailSetting(context, FloatingAccessibilityService::class.java)
             return
@@ -95,10 +93,7 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
     }
 
     private fun expandStatusBar(context: Context) {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.EXPAND_STATUS_BAR
-            ) != PackageManager.PERMISSION_GRANTED) {
+        if (!PermissionHelper.isGranted(context, Manifest.permission.EXPAND_STATUS_BAR)) {
             Log.w("EXPAND_STATUS_BAR permission denied")
             return
         }
@@ -108,7 +103,7 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
                 .getMethod("expandNotificationsPanel")
                 .invoke(context.getSystemService("statusbar"))
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(e)
         }
     }
 }

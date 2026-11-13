@@ -69,6 +69,11 @@ abstract class BaseDataStore(private val context: Context) {
             .map { it[key] }
     }
 
+    /** 저장값이 없거나 읽기에 실패(IOException)하면 [def]를 내보내는 [flow] */
+    protected fun <T> flow(key: Preferences.Key<T>, def: T): Flow<T> {
+        return flow(key).map { it ?: def }
+    }
+
     /**
      * 값 저장 결과 반환(실패 시 원인 예외)
      *

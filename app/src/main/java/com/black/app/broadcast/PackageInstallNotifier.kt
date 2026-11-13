@@ -1,6 +1,5 @@
 package com.black.app.broadcast
 
-import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.PackageManager
@@ -8,13 +7,13 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.black.app.R
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationStatus
 import com.black.core.util.Log
 import com.black.core.util.NotificationUtil
+import com.black.core.util.PermissionHelper
 
 /**
  * [PackageInstallReceiver]가 받은 다른 앱의 설치·업데이트를 알림으로 표시
@@ -35,21 +34,23 @@ object PackageInstallNotifier {
      * 채널은 첫 알림 때 만들어지므로 아직 없으면 표시 가능으로 판단
      */
     fun canShow(context: Context): Boolean {
-        val notificationManager = NotificationManagerCompat.from(context)
-        if (!notificationManager.areNotificationsEnabled()) {
+        if (!PermissionHelper.areNotificationsEnabled(context)) {
             return false
         }
-        val channel = notificationManager.getNotificationChannelCompat(NOTIFICATION_CHANNEL_ID)
+        val channel = NotificationManagerCompat.from(context).getNotificationChannelCompat(NOTIFICATION_CHANNEL_ID)
             ?: return true
         return channel.importance != NotificationManagerCompat.IMPORTANCE_NONE
     }
 
-    /** 알림 권한·앱 정보·실행 인텐트 중 하나라도 없으면 알림 없이 종료 */
+    /**
+     * 알림 권한·앱 정보·실행 인텐트 중 하나라도 없으면 알림 없이 종료
+     *
+     * [canShow]와 달리 알림 권한만 확인. Android 13 미만에서 앱 알림을 끈 경우와 이 채널만 끈 경우에도
+     * 바로가기 게시·알림 게시까지 진행하고, 표시는 시스템이 막음
+     */
     fun show(context: Context, packageName: String, isUpdate: Boolean) {
         // Android 13 이상 알림 권한 미허용 시 표시 불가, 13 미만은 권한 자체가 없어 검사 제외
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!PermissionHelper.isNotificationPermissionGranted(context)) {
             Log.w("notification permission not granted")
             return
         }

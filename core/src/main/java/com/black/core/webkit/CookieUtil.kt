@@ -65,7 +65,7 @@ object CookieUtil {
         try {
             CookieManager.getInstance().flush()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(e)
         }
     }
 }

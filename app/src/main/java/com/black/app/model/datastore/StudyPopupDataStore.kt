@@ -11,7 +11,6 @@ import com.black.core.model.BaseDataStore
 import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -64,7 +63,7 @@ class StudyPopupDataStore @Inject constructor(
     }
 
     fun getEnabledFlow(): Flow<Boolean> {
-        return flow(KEY_ENABLED).map { it ?: false }
+        return flow(KEY_ENABLED, false)
     }
 
     /** 마지막으로 연 내용 파일 기록 */

@@ -6,6 +6,7 @@ import com.black.app.R
 import com.black.app.model.StudyPopupRepository
 import com.black.app.service.ForegroundServiceController
 import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
+import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -132,7 +133,7 @@ class StudyPopupSettingViewModel @Inject constructor(
                     sendEvent(EventShowToast(R.string.study_popup_loaded))
                 }
                 .onFailure {
-                    it.printStackTrace()
+                    Log.w(it)
                     sendEvent(EventShowToast(R.string.study_popup_load_failed))
                 }
         }
@@ -163,7 +164,7 @@ class StudyPopupSettingViewModel @Inject constructor(
                     sendEvent(EventShowToast(R.string.study_popup_saved))
                 }
                 .onFailure {
-                    it.printStackTrace()
+                    Log.w(it)
                     sendEvent(EventShowToast(R.string.study_popup_save_failed))
                 }
         }
@@ -222,7 +223,7 @@ class StudyPopupSettingViewModel @Inject constructor(
             repository.readFile(uri)
                 .onSuccess { contents -> applyLoadedFile(uri, contents) }
                 .onFailure {
-                    it.printStackTrace()
+                    Log.w(it)
                     // 재설치 등으로 권한이 사라진 파일은 화면을 열 때마다 실패하지 않도록 기록 삭제
                     repository.removeLatestUri()
                     sendEvent(EventShowToast(R.string.study_popup_load_failed_latest_file))

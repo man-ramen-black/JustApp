@@ -2,6 +2,7 @@ package com.black.feature.floatingbutton.ui.floating
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
+import com.black.core.util.DataUtil
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -9,7 +10,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
@@ -34,8 +34,7 @@ class FloatingViewState(dataStore: FloatingDataStore) {
             } else {
                 "hh mm"
             }
-            SimpleDateFormat(pattern, Locale.getDefault(Locale.Category.FORMAT))
-                .format(it.time)
+            DataUtil.formatDateTime(pattern, Locale.getDefault(Locale.Category.FORMAT), it.timeInMillis)
         }
         .asLiveDataWithInitial("")
 

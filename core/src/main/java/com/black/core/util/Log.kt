@@ -50,6 +50,40 @@ object Log {
         printLog("$obj", 'e', tag)
     }
 
+    /*
+     * Throwable 오버로드: 예외를 Any?로 받으면 toString 결과만 남아 스택이 빠지므로 스택 트레이스 전체를 출력.
+     * 예외 객체 하나만 넘긴 호출(Log.w(e))이 이 오버로드로 해석됨
+     */
+
+    fun v(throwable: Throwable) {
+        printThrowable(throwable, 'v')
+    }
+
+    fun i(throwable: Throwable) {
+        printThrowable(throwable, 'i')
+    }
+
+    fun d(throwable: Throwable) {
+        printThrowable(throwable, 'd')
+    }
+
+    fun w(throwable: Throwable) {
+        printThrowable(throwable, 'w')
+    }
+
+    fun e(throwable: Throwable) {
+        printThrowable(throwable, 'e')
+    }
+
+    private fun printThrowable(throwable: Throwable, level: Char) {
+        // release 빌드에서 스택 트레이스 문자열 생성 비용 회피
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+
+        printLog(throwable.stackTraceToString(), level)
+    }
+
     private fun printLog(message: String, level: Char, tag: String? = null) {
         // release 빌드에서 로그 미출력(호출 정보 수집이 스택 트레이스를 만들어 비싸므로 가장 먼저 확인)
         if (!BuildConfig.DEBUG) {

@@ -136,13 +136,13 @@ object JsonUtil {
         return try {
             return Result.success(block())
         } catch (e: JsonParseException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         } catch (e: ClassCastException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         }.let { Result.failure(JsonUtilParseException(it)) }
     }
@@ -151,13 +151,13 @@ object JsonUtil {
         return try {
             return Result.success(block())
         } catch (e: SerializationException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         } catch (e: IllegalArgumentException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         } catch (e: ClassCastException) {
-            e.printStackTrace()
+            Log.w(e)
             e
         }.let { Result.failure(JsonUtilParseException(it)) }
     }

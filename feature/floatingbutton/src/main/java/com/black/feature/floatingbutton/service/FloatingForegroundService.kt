@@ -13,6 +13,7 @@ import com.black.core.service.ServiceActivityTarget
 import com.black.core.util.NotificationUtil
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.PermissionHelper
+import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.ui.floating.FloatingView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,7 +97,7 @@ class FloatingForegroundService: BaseForegroundService(), ServiceActivityTarget 
      * 권한이 없을 때와, 권한 확인 뒤 회수돼 오버레이 부착이 실패했을 때 함께 사용
      */
     private fun stopWithOverlayPermissionGuide() {
-        Toast.makeText(this, "다른 앱 위에 그리기 권한 허용이 필요합니다.", Toast.LENGTH_SHORT)
+        Toast.makeText(this, R.string.floating_overlay_permission_required, Toast.LENGTH_SHORT)
             .show()
         PermissionHelper.showDrawOverlaysSetting(this)
         // 버튼 없이 알림만 남은 채 실행되지 않도록 중지, 권한을 허용한 뒤 다시 켜면 버튼 표시

@@ -5,5 +5,7 @@
     <string name="cancel">취소</string>
     <string name="navigate_up">뒤로 가기</string>
 
+    <string name="ignore_battery_optimization_guide">배터리 최적화를 해제해주세요.</string>
+
     <string name="ssl_error_confirm_message">이 사이트의 보안 인증서를 신뢰할 수 없습니다.\n계속하시겠습니까?</string>
 </resources>

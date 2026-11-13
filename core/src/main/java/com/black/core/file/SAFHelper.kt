@@ -52,7 +52,7 @@ object SAFHelper {
         return try {
             context.contentResolver.openInputStream(this)
         } catch (e: FileNotFoundException) {
-            e.printStackTrace()
+            Log.w(e)
             null
         }
     }
@@ -68,7 +68,7 @@ object SAFHelper {
         return try {
             context.contentResolver.openOutputStream(this, mode)
         } catch (e: FileNotFoundException) {
-            e.printStackTrace()
+            Log.w(e)
             null
         }
     }
@@ -92,7 +92,7 @@ object SAFHelper {
                         }
                     }
             } catch (e: SecurityException) {
-                e.printStackTrace()
+                Log.w(e)
                 null
             }
 

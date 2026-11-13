@@ -1,6 +1,8 @@
 package com.black.core.util
 
+import android.Manifest
 import android.accessibilityservice.AccessibilityService
+import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
@@ -24,10 +26,11 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * [PermissionHelper]의 설정 화면 인텐트 검증
+ * [PermissionHelper]의 설정 화면 인텐트와 컨텍스트 기반 권한·알림 허용 확인 검증
  *
  * [PermissionHelper.showAppNotificationSettings]의 버전별 설정 화면 인텐트와
- * [PermissionHelper.openAccessibilityServiceDetailSetting]의 실패 시 다음 화면 시도 순서 검증
+ * [PermissionHelper.openAccessibilityServiceDetailSetting]의 실패 시 다음 화면 시도 순서,
+ * [PermissionHelper.isGranted]·[PermissionHelper.isNotificationPermissionGranted]·[PermissionHelper.areNotificationsEnabled]의 판단 검증
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PermissionHelperTest : BaseTest() {
@@ -173,6 +176,97 @@ class PermissionHelperTest : BaseTest() {
             startedIntents.map { it.action },
         )
         assertTrue(startedIntents[1].hasExtra(EXTRA_FRAGMENT_ARG_KEY))
+    }
+
+    /**
+     * Activity 없이 컨텍스트만으로 권한 허용 여부를 확인하는지 검증
+     *
+     * Given: SDK 34, 애플리케이션 컨텍스트에 EXPAND_STATUS_BAR 허용, CAMERA 거부
+     * When: isGranted 호출
+     * Then: EXPAND_STATUS_BAR true, CAMERA false
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_06_isGrantedFollowsPermissionState() = runTest {
+        /** Given **/
+        shadowOf(RuntimeEnvironment.getApplication()).grantPermissions(Manifest.permission.EXPAND_STATUS_BAR)
+        shadowOf(RuntimeEnvironment.getApplication()).denyPermissions(Manifest.permission.CAMERA)
+
+        /** When **/
+        val expandStatusBarGranted = PermissionHelper.isGranted(context, Manifest.permission.EXPAND_STATUS_BAR)
+        val cameraGranted = PermissionHelper.isGranted(context, Manifest.permission.CAMERA)
+
+        /** Then **/
+        assertTrue(expandStatusBarGranted)
+        assertFalse(cameraGranted)
+    }
+
+    /**
+     * Android 13 이상은 알림 권한 허용 여부를 그대로 따르는지 검증
+     *
+     * Given: SDK 34, 알림 권한 거부 후 허용
+     * When: 각 상태에서 isNotificationPermissionGranted 호출
+     * Then: 거부 시 false, 허용 시 true
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_07_notificationPermissionFollowsGrantFromTiramisu() = runTest {
+        /** Given **/
+        val application = RuntimeEnvironment.getApplication()
+        shadowOf(application).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+
+        /** When **/
+        val deniedResult = PermissionHelper.isNotificationPermissionGranted(context)
+        shadowOf(application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        val grantedResult = PermissionHelper.isNotificationPermissionGranted(context)
+
+        /** Then **/
+        assertFalse(deniedResult)
+        assertTrue(grantedResult)
+    }
+
+    /**
+     * Android 13 미만은 알림 권한이 없어 항상 허용으로 판단하는지 검증
+     *
+     * Given: SDK 32, 알림 권한 거부
+     * When: isNotificationPermissionGranted 호출
+     * Then: true
+     */
+    @Test
+    @Config(sdk = [32])
+    fun test_08_notificationPermissionGrantedBelowTiramisu() = runTest {
+        /** Given **/
+        shadowOf(RuntimeEnvironment.getApplication()).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+
+        /** When **/
+        val granted = PermissionHelper.isNotificationPermissionGranted(context)
+
+        /** Then **/
+        assertTrue(granted)
+    }
+
+    /**
+     * 앱 알림 허용 여부가 NotificationManager의 앱 알림 설정을 따르는지 검증
+     *
+     * Given: SDK 34, 앱 알림 끔 후 켬
+     * When: 각 상태에서 areNotificationsEnabled 호출
+     * Then: 끔 시 false, 켬 시 true
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_09_areNotificationsEnabledFollowsAppSetting() = runTest {
+        /** Given **/
+        val shadowNotificationManager = shadowOf(context.getSystemService(NotificationManager::class.java))
+        shadowNotificationManager.setNotificationsEnabled(false)
+
+        /** When **/
+        val disabledResult = PermissionHelper.areNotificationsEnabled(context)
+        shadowNotificationManager.setNotificationsEnabled(true)
+        val enabledResult = PermissionHelper.areNotificationsEnabled(context)
+
+        /** Then **/
+        assertFalse(disabledResult)
+        assertTrue(enabledResult)
     }
 
     private companion object {

@@ -6,6 +6,7 @@ import com.black.app.R
 import com.black.app.model.TextEditorRepository
 import com.black.app.ui.main.texteditor.TextEditorScreen
 import com.black.core.di.HiltModule
+import com.black.core.util.Log
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,7 +56,7 @@ class TextEditorViewModel @Inject constructor(
         launch(Dispatchers.IO) {
             val uri = textEditorRepository.currentFileUriFlow.firstOrNull() ?: return@launch
             loadFile(uri).exceptionOrNull()?.let {
-                it.printStackTrace()
+                Log.w(it)
                 // 마지막 파일 로드 실패 시 마지막 파일 uri 초기화(권한 없는 uri로 자동 저장되지 않도록)
                 textEditorRepository.reset()
                 if (it is SecurityException) {
@@ -121,7 +122,7 @@ class TextEditorViewModel @Inject constructor(
             uri ?: return@launch
             textEditorRepository.keepPermission(uri)
             loadFile(uri).exceptionOrNull()?.let {
-                it.printStackTrace()
+                Log.w(it)
                 sendEvent(EventShowToast(R.string.text_editor_load_failed))
             }
         }

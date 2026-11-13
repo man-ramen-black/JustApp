@@ -11,7 +11,6 @@ import com.black.core.model.BaseDataStore
 import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -79,6 +78,6 @@ class ForegroundServiceDataStore @Inject constructor(
     }
 
     fun getActivatedFlow(): Flow<Boolean> {
-        return flow(KEY_ACTIVATED).map { it ?: false }
+        return flow(KEY_ACTIVATED, false)
     }
 }

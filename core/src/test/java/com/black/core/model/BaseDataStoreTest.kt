@@ -7,8 +7,12 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.black.test.BaseTest
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -113,5 +117,92 @@ class BaseDataStoreTest : BaseTest() {
 
         /** Then **/
         assertTrue(thrown is CancellationException)
+    }
+
+    /** 기본값 Flow 검증용 DataStore */
+    private class FlowTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.flowTestDataStore by blackDataStore("flowTest")
+
+            private val KEY_TEXT = stringPreferencesKey("text")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.flowTestDataStore
+
+        suspend fun updateText(text: String): Result<Unit> = update(KEY_TEXT, text)
+
+        suspend fun removeText(): Result<Unit> = remove(KEY_TEXT)
+
+        fun getTextFlow(): Flow<String> = flow(KEY_TEXT, "default")
+    }
+
+    /** 읽기가 항상 [error]로 실패하는 DataStore를 쓰는 저장소 */
+    private class ReadFailingDataStore(context: Context, error: Throwable) : BaseDataStore(context) {
+        private val dataStore: DataStore<Preferences> = mockk {
+            every { data } returns flow { throw error }
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+        fun getTextFlow(): Flow<String> = flow(stringPreferencesKey("text"), "default")
+    }
+
+    /**
+     * 저장값이 없으면 기본값 Flow가 기본값을 내보내는지 검증
+     *
+     * Given: 값을 지운 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: "default"
+     */
+    @Test
+    fun test_04_flowWithDefaultEmitsDefaultWhenAbsent() = runTest {
+        /** Given **/
+        val dataStore = FlowTestDataStore(context)
+        dataStore.removeText()
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("default", text)
+    }
+
+    /**
+     * 저장값이 있으면 기본값 Flow가 저장값을 내보내는지 검증
+     *
+     * Given: "saved"를 저장한 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: "saved"
+     */
+    @Test
+    fun test_05_flowWithDefaultEmitsSavedValue() = runTest {
+        /** Given **/
+        val dataStore = FlowTestDataStore(context)
+        dataStore.updateText("saved")
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("saved", text)
+    }
+
+    /**
+     * 읽기 IOException은 기본값 Flow가 예외 대신 기본값으로 내보내는지 검증
+     *
+     * Given: 읽기 시 IOException을 던지는 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: 예외 없이 "default"
+     */
+    @Test
+    fun test_06_flowWithDefaultEmitsDefaultOnReadFailure() = runTest {
+        /** Given **/
+        val dataStore = ReadFailingDataStore(context, IOException("read failed"))
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("default", text)
     }
 }

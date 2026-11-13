@@ -1,5 +1,6 @@
 package com.black.core.util
 
+import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.content.ComponentName
@@ -16,12 +17,43 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.black.core.R
 
 class PermissionHelper(private val activity: Activity, private val activityResultCaller: ActivityResultCaller) {
 
     companion object {
+        /**
+         * [context]에 [permission] 권한이 허용됐는지 확인
+         *
+         * Activity 없이 확인만 하므로 서비스·리시버·오버레이 뷰에서도 사용. 요청·재요청 안내가 필요하면 [checkPermissions] 사용
+         */
+        fun isGranted(context: Context, permission: String): Boolean {
+            return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        }
+
+        /**
+         * 알림 권한 허용 여부
+         *
+         * Android 13 미만은 권한 자체가 없어 true
+         */
+        fun isNotificationPermissionGranted(context: Context): Boolean {
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                isGranted(context, Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        /**
+         * 앱 알림 허용 여부
+         *
+         * Android 13 이상은 알림 권한까지 반영하고, Android 13 미만은 앱 알림 설정에서 끈 경우도 false.
+         * 채널 하나만 끈 경우는 반영하지 않으므로 채널 단위 판단은 호출부가 채널 중요도로 확인
+         */
+        fun areNotificationsEnabled(context: Context): Boolean {
+            return NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
+
         fun canDrawOverlays(context: Context) : Boolean {
             return Settings.canDrawOverlays(context)
         }
@@ -39,7 +71,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         // dialog에서 바로 배터리 최적화 해제가 가능하지만, 구글 스토어에서 반려
         fun showIgnoreBatteryOptimizationSettings(context: Context, withToast: Boolean = false) {
             if (withToast) {
-                Toast.makeText(context, "배터리 최적화를 해제해주세요.", Toast.LENGTH_LONG)
+                Toast.makeText(context, R.string.ignore_battery_optimization_guide, Toast.LENGTH_LONG)
                     .show()
             }
 
@@ -154,7 +186,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
 
         for (permission in permissions) {
             when {
-                ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED -> {
+                isGranted(activity, permission) -> {
                     grantedPermissions.add(permission)
                 }
 

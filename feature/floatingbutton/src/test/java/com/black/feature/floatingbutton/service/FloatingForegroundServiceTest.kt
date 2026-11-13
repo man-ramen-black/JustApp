@@ -80,7 +80,7 @@ class FloatingForegroundServiceTest : BaseTest() {
         startService()
 
         /** Then **/
-        assertEquals("다른 앱 위에 그리기 권한 허용이 필요합니다.", ShadowToast.getTextOfLatestToast())
+        assertEquals("다른 앱 위에 표시 권한 허용이 필요합니다.", ShadowToast.getTextOfLatestToast())
         assertEquals(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             shadowOf(application).nextStartedActivity.action,
