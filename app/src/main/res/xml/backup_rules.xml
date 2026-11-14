@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+API 30 이하 자동 백업 규칙(android:fullBackupContent), API 31 이상은 data_extraction_rules.xml 적용.
+include 없이 exclude만 두어 나머지 앱 데이터는 기본대로 백업.
+기기 사용 기록 DB와 설정(암호화 키, 웹후크 주소, 설치 식별자)은 개인 기록과 비밀 값이고,
+설치 식별자가 다른 기기로 옮겨지면 PC가 기록 id로 거를 때 두 기기의 기록이 겹치므로 제외.
+-->
+<full-backup-content>
+    <exclude domain="database" path="UsageLog.db" />
+    <exclude domain="database" path="UsageLog.db-wal" />
+    <exclude domain="database" path="UsageLog.db-shm" />
+    <exclude domain="database" path="UsageLog.db-journal" />
+    <exclude domain="file" path="datastore/usage_log.preferences_pb" />
+</full-backup-content>

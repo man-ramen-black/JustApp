@@ -41,6 +41,20 @@ class InstalledAppResolver @Inject constructor(
     }
 
     /**
+     * [packageName] 앱의 라벨만 조회
+     *
+     * 아이콘을 불러오지 않아 기록 수집처럼 라벨만 필요한 곳에서 사용. 설치되지 않은 앱은 packageName
+     */
+    fun resolveLabel(packageName: String): String {
+        val packageManager = context.packageManager
+        return try {
+            packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
+        } catch (notFound: PackageManager.NameNotFoundException) {
+            packageName
+        }
+    }
+
+    /**
      * 이미 가진 [applicationInfo]로 라벨·아이콘 조회
      *
      * queryIntentActivities 결과처럼 [ApplicationInfo]가 있으면 패키지 정보를 다시 조회하지 않도록 사용

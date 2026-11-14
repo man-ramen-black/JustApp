@@ -30,10 +30,24 @@
     <!-- Android 13 이상 Notification, Toast 노출을 위한 권한 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 사용 기록: 앱 사용·화면 기록 읽기(UsageStatsManager), 선언이 없으면 설정의 사용 정보 접근 화면에서 허용할 수 없음 -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- 사용 기록: Wi-Fi 연결 감시와 SSID 읽기(Android 8.1 이상은 위치 권한과 위치 설정이 있어야 SSID가 보임) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
+    <!-- 백업 규칙: 기기 사용 기록 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -165,5 +179,16 @@
         <!--*********************************************-->
         <!-- Shortcut -->
         <!--*********************************************-->
+
+        <!-- 기기 사용 기록용 알림 접근 서비스 -->
+        <service
+            android:name=".usagelog.collect.UsageLogListenerService"
+            android:label="@string/usage_log_listener_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

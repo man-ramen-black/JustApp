@@ -15,6 +15,7 @@ import com.black.app.ui.main.calculator.CalculatorScreen
 import com.black.app.ui.main.etc.BlackFragment
 import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.main.texteditor.TextEditorScreen
+import com.black.app.ui.main.usagelog.UsageLogScreen
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import com.black.feature.pokerogue.ui.PokeRogueFragment
@@ -64,6 +65,9 @@ fun AppNavHost(
         }
         composable<AppRoute.AppInstallNotification> {
             AppInstallNotificationScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
+        composable<AppRoute.UsageLog> {
+            UsageLogScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
     }
 }
