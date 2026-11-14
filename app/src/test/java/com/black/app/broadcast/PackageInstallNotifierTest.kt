@@ -41,7 +41,7 @@ class PackageInstallNotifierTest : BaseTest() {
      *
      * Given: SDK 34, 알림 권한 허용, 런처 앱 설치
      * When: isUpdate=false로 show 호출
-     * Then: 알림 1개, 제목=앱 이름, 메시지=설치되었습니다., 채널 PackageInstall(이름, 중요도 LOW), 우선순위 LOW, small icon ic_app_install, 자동 취소, shortcutId=PackageInstall:<패키지명>, MessagingStyle(사용자 JustApp, 보낸 사람 앱 이름·key 패키지명·아이콘, 본문 설치 메시지), large icon 없음, 동적 바로가기 없음
+     * Then: 알림 1개, 제목=앱 이름, 메시지=설치되었습니다., 채널 PackageInstall(이름, 중요도 MIN), 우선순위 MIN, small icon ic_app_install, 자동 취소, shortcutId=PackageInstall:<패키지명>, MessagingStyle(사용자 JustApp, 보낸 사람 앱 이름·key 패키지명·아이콘, 본문 설치 메시지), large icon 없음, 동적 바로가기 없음
      */
     @Test
     fun test_01_newLauncherAppShowsConversationNotification() = runTest {
@@ -60,8 +60,8 @@ class PackageInstallNotifierTest : BaseTest() {
         assertEquals("PackageInstall", notification.channelId)
         val channel = PackageInstallTestFixture.notificationManager(context).getNotificationChannel("PackageInstall")
         assertEquals("앱 설치·업데이트", channel.name.toString())
-        assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
-        assertEquals(NotificationCompat.PRIORITY_LOW, notification.priority)
+        assertEquals(NotificationManager.IMPORTANCE_MIN, channel.importance)
+        assertEquals(NotificationCompat.PRIORITY_MIN, notification.priority)
         assertEquals(R.drawable.ic_app_install, notification.smallIcon.resId)
         assertTrue(notification.flags and Notification.FLAG_AUTO_CANCEL != 0)
         assertEquals("PackageInstall:$LAUNCHER_PACKAGE", notification.shortcutId)
@@ -460,16 +460,16 @@ class PackageInstallNotifierTest : BaseTest() {
     }
 
     /**
-     * 이전 버전이 DEFAULT로 만든 설치 알림 채널을 다음 알림 때 LOW로 낮추는지 검증
+     * 이전 버전이 DEFAULT로 만든 설치 알림 채널을 다음 알림 때 MIN으로 낮추는지 검증
      *
      * 사용자가 채널 설정을 바꾸지 않은 채널만 시스템이 중요도를 낮추며, Robolectric은 사용자 변경 여부 없이 하향만 흉내 냄
      *
      * Given: SDK 34, 알림 권한 허용, 런처 앱 설치, PackageInstall 채널 중요도 DEFAULT
      * When: show 호출
-     * Then: PackageInstall 채널 중요도 LOW, 알림 1개
+     * Then: PackageInstall 채널 중요도 MIN, 알림 1개
      */
     @Test
-    fun test_18_existingDefaultChannelLoweredToLow() = runTest {
+    fun test_18_existingDefaultChannelLoweredToMin() = runTest {
         /** Given **/
         PackageInstallTestFixture.grantNotificationPermission(context)
         PackageInstallTestFixture.installLauncherApp(context)
@@ -481,20 +481,20 @@ class PackageInstallNotifierTest : BaseTest() {
         PackageInstallNotifier.show(context, LAUNCHER_PACKAGE, isUpdate = false)
 
         /** Then **/
-        assertEquals(NotificationManager.IMPORTANCE_LOW, PackageInstallTestFixture.notificationManager(context).getNotificationChannel("PackageInstall").importance)
+        assertEquals(NotificationManager.IMPORTANCE_MIN, PackageInstallTestFixture.notificationManager(context).getNotificationChannel("PackageInstall").importance)
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
     }
 
     /**
-     * 채널이 없는 Android 8 미만에서 알림 우선순위가 LOW인지 검증
+     * 채널이 없는 Android 8 미만에서 알림 우선순위가 MIN인지 검증
      *
      * Given: SDK 25, 런처 앱 설치
      * When: show 호출
-     * Then: 알림 1개, 우선순위 LOW
+     * Then: 알림 1개, 우선순위 MIN
      */
     @Test
     @Config(sdk = [25])
-    fun test_19_belowOreoShowsLowPriority() = runTest {
+    fun test_19_belowOreoShowsMinPriority() = runTest {
         /** Given **/
         PackageInstallTestFixture.installLauncherApp(context)
 
@@ -504,6 +504,6 @@ class PackageInstallNotifierTest : BaseTest() {
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
         val notification = PackageInstallTestFixture.installNotification(context)
-        assertEquals(NotificationCompat.PRIORITY_LOW, notification.priority)
+        assertEquals(NotificationCompat.PRIORITY_MIN, notification.priority)
     }
 }
