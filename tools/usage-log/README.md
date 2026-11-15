@@ -2,7 +2,7 @@
 
 ## 1. 무엇인가
 
-폰의 JustApp 앱이 앱 사용 내역, 화면 켜짐·꺼짐, 받은 알림, Wi-Fi 연결·해제(집 도착·출발)를 모아 1시간마다, 그리고 집 도착·출발 때 전용 디스코드 채널로 보냅니다. 메시지 하나는 평문 머리말 한 줄과 암호화된 첨부 파일 하나입니다.
+폰의 JustApp 앱이 앱 사용 내역, 화면 켜짐·꺼짐, 받은 알림, 받은·보낸 문자(본문 전체), Wi-Fi 연결·해제(집 도착·출발)를 모아 1시간마다, 그리고 집 도착·출발 때 전용 디스코드 채널로 보냅니다. 메시지 하나는 평문 머리말 한 줄과 암호화된 첨부 파일 하나입니다.
 
 이 폴더는 그 메시지를 집 PC에서 받아 쌓고 꺼내 쓰는 방법을 설명합니다.
 
@@ -112,6 +112,7 @@ setx USAGE_LOG_DB "C:\Users\<사용자>\.usage_log\usage_log.sqlite3"
 | `screen_on`, `screen_off`, `unlock` | 없음 | 화면 켜짐, 꺼짐, 잠금 해제 |
 | `notification` | `key`, `package`, `appName`, `title`, `text`, `category` | 제목·본문·카테고리가 없으면 `null`입니다. |
 | `notification_removed` | `key`, `package`, `reason` | `reason`은 `click`, `dismiss`, `app_cancel`, `other` 중 하나입니다. |
+| `sms` | `messageKey`, `direction`, `peers`, `subject`, `text`, `mms`, `attachments` | 받은·보낸 문자와 MMS입니다. `direction`은 `received`, `sent` 중 하나이고 `peers`는 `address`와 `name`(연락처 이름, 없으면 `null`)을 가진 상대 목록입니다. `subject`·`text`가 없으면 `null`이고 `attachments`는 MMS 첨부 개수입니다. 수집을 켠 뒤에 오거나 보낸 문자만 담으며 채팅+(RCS)는 제외합니다. `messageKey`가 같은 문자는 `id`가 달라도 한 번만 쌓입니다. |
 | `wifi_connected` | `ssid`, `home`, `inferred` | `home`은 `true`, `false`, `null` 중 하나입니다. SSID를 읽지 못하면(위치 권한·위치 설정 없음) `ssid`와 `home`이 `null`입니다. |
 | `wifi_disconnected` | `ssid`, `home`, `inferred` | `ssid`와 `home`은 직전에 연결되어 있던 Wi-Fi 기준입니다. |
 | `gap` | `start`, `end`, `cause` | 기록이 없는 구간입니다. `cause`는 `collection_off`(수집을 끈 기간), `usage_events_expired`(시스템 보관 기간이 지나 앱 사용·화면 기록을 잃은 기간), `unsent_deleted`(보내기 전에 30일이 지나 지운 기록의 범위) 중 하나입니다. "폰을 쓰지 않음"이 아니라 "기록 없음"으로 다룹니다. |
@@ -128,6 +129,7 @@ setx USAGE_LOG_DB "C:\Users\<사용자>\.usage_log\usage_log.sqlite3"
 
 - `id`는 기록마다 고유합니다. 설치마다 한 번 만드는 임의 ID와 기록 번호를 이은 값이라, 앱을 다시 설치해도 겹치지 않습니다. `ingest`는 `id`로 걸러 같은 기록을 한 번만 저장합니다.
 - `seq`는 반복될 수 있습니다. 디스코드가 메시지를 받았는데 응답이 폰에 닿지 못하면 폰은 같은 순번으로 다시 보내고, 앱 데이터를 지우거나 다시 설치하면 순번이 1부터 다시 시작합니다. 그래서 중복 거르기는 `seq`가 아니라 기록 `id`로 합니다.
+- 문자(`sms`)는 `id`에 더해 `messageKey`로도 걸러, `messageKey`가 같은 문자는 `id`가 달라도 한 번만 저장합니다.
 - 순번이 건너뛴 것을 찾아 알리는 기능은 없습니다.
 
 ### 개발 앱과 시험용 채널
@@ -305,6 +307,7 @@ py <usage_log.py> summary 2026-11-13
 py <usage_log.py> timeline 2026-11-13 09:00 18:00
 py <usage_log.py> notifications 2026-11-13 --app 채팅앱 --search 약속
 py <usage_log.py> notifications --new
+py <usage_log.py> sms 2026-11-13 --who 홍길동 --search 모임
 py <usage_log.py> home 2026-11-13
 py <usage_log.py> apps 2026-11-07~2026-11-13 --app 유튜브
 py <usage_log.py> sql "SELECT type, COUNT(*) FROM records GROUP BY type"
@@ -316,6 +319,7 @@ py <usage_log.py> sql "SELECT type, COUNT(*) FROM records GROUP BY type"
 | `timeline <날짜> [시작 시각] [끝 시각]` | 시간대별 한 줄. 집, 밖, 알 수 없음, 마지막 기록 뒤 중 가장 긴 상태와 주로 쓴 앱과 사용 시간, `gap` 구간. 시각은 `00:00`부터 `24:00`까지이고 생략하면 하루 전체입니다. 기간은 받지 않습니다. |
 | `notifications <날짜 또는 기간> [--app 앱 이름] [--search 검색어]` | 조건에 맞는 알림 전부. 한 줄에 시각, 앱 이름, 제목, 본문 전체, `열어 봄`·`지움` 표시. |
 | `notifications --new` | 지난 `--new` 뒤에 새로 쌓인 알림. 날짜와 함께 시각 순으로 출력합니다. |
+| `sms <날짜 또는 기간> [--who 이름이나 번호] [--search 검색어]` | 조건에 맞는 문자 전부를 시각 순으로. 한 줄에 시각, `받음`·`보냄`, 상대(`이름(번호)`), `[제목]`, 본문 전체, MMS 첨부가 있으면 `· 첨부 N`. `--who`는 이름이나 번호에 포함된 글자(번호는 숫자만 비교해 하이픈을 무시), `--search`는 제목·본문에 포함된 글자입니다. |
 | `home <날짜 또는 기간>` | 집에 있던 구간과 알 수 없는 구간 목록, 집 도착·출발 횟수, 마지막 기록 시각 기준 지금 집에 있는지. 추정 기록이 만든 시각에는 `(추정)`이 붙습니다. |
 | `apps <기간> [--app 앱 이름]` | 기간 동안 앱별 사용 시간 합계와 날짜별 추이. |
 | `sql "<SELECT 문>"` | 읽기 전용 조회 결과. 위 명령으로 답할 수 없을 때만 씁니다. |
@@ -331,12 +335,13 @@ py <usage_log.py> sql "SELECT type, COUNT(*) FROM records GROUP BY type"
 `sql`은 다음과 같이 동작합니다.
 
 - SELECT 하나만 실행하고 최대 200행을 돌려줍니다. 5초를 넘기면 중단하고 오류로 끝납니다.
-- 표는 `records`입니다. 주요 열은 `type`, `app_name`, `title`, `text`, `ssid`, `home`, `inferred`, `cause`, 현지 시각 열 `local_t`·`local_start`·`local_end`(epoch 밀리초)입니다. `package_name`, `notification_key`, epoch 열 `t`·`start_t`·`end_t`도 고를 수 있지만 비서의 답에는 쓰지 않습니다.
+- 표는 `records`입니다. 주요 열은 `type`, `app_name`, `title`, `text`, `ssid`, `home`, `inferred`, `cause`, 문자 열 `direction`, `peers`(JSON), `subject`, `attachments`, 현지 시각 열 `local_t`·`local_start`·`local_end`(epoch 밀리초)입니다. `package_name`, `notification_key`, epoch 열 `t`·`start_t`·`end_t`도 고를 수 있지만 비서의 답에는 쓰지 않습니다.
+- 문자 열은 새 스크립트가 쓰기용으로 DB를 처음 연 뒤(`ingest` 한 번)에야 생깁니다. 그 전에 `sql`로 문자 열을 고르면 `no such column` 오류가 납니다.
 - 열은 탭으로 나뉩니다. 값 안의 탭은 공백으로, 줄바꿈은 ` ⏎ `로 바꿉니다.
 
 그 밖의 출력 규칙은 다음과 같습니다.
 
-- 결과가 300줄을 넘으면 앞 300줄과 `외 N줄`만 출력합니다. 날짜, 시간대, `--app`, `--search`로 범위를 좁혀 다시 조회합니다.
+- 결과가 300줄을 넘으면 앞 300줄과 `외 N줄`만 출력합니다. 날짜, 시간대, `--app`, `--who`, `--search`로 범위를 좁혀 다시 조회합니다.
 - 시각은 각 기록이 들어온 묶음의 `tzOffsetMinutes`로 바꾼 현지 시각입니다(8절의 시간대 한계 참고).
 
 ## 8. 알아 둘 한계
@@ -344,6 +349,12 @@ py <usage_log.py> sql "SELECT type, COUNT(*) FROM records GROUP BY type"
 - 묶음 하나에는 시간대 값(`tzOffsetMinutes`)이 하나만 있습니다. 폰은 보낼 때의 UTC 오프셋을 묶음 안의 모든 기록에 적용하므로, 해외에서 시간대가 바뀌거나 서머타임이 바뀐 직후에 보낸 묶음은 바뀌기 전 기록의 현지 시각이 몇 시간 어긋날 수 있습니다. epoch 열(`t`, `start_t`, `end_t`)은 정확합니다.
 - `seq`는 반복될 수 있고, 건너뛴 순번은 감지하지 않습니다(3절).
 - 기록은 최대 1시간 늦게 들어옵니다. 마지막 기록 시각 뒤의 일은 아직 모릅니다.
+- 문자는 폰에서 수집을 켠 뒤에 오거나 보낸 것만 있습니다. 문자 기록을 지원하기 전 앱에서 이미 수집을 켜 두었다면 앱을 갱신한 뒤 첫 수집부터 모읍니다.
+- 문자 권한(필수)은 수집을 켠 뒤에 허용해도 됩니다. 그사이 수집을 끄지 않았다면 권한이 없던 동안 오거나 보낸 문자도 허용한 뒤 첫 수집에서 모읍니다. 연락처 권한(선택)을 허용해야 상대 이름이 기록됩니다.
+- 채팅+(RCS) 문자는 담지 않습니다. 받은 채팅+는 알림 기록(`notifications`)에서 찾습니다.
+- 24시간보다 늦게 저장된 옛 날짜의 문자는 없습니다.
+- 폰 앱보다 이 스크립트를 먼저 갱신합니다. 이전 스크립트는 문자 상대와 제목을 버린 채 쌓습니다.
+- 이전 스크립트가 쌓은 문자 행은 같은 `id`라 다시 `ingest`해도 상대·제목이 채워지지 않습니다. 조회에는 `(상대 없음)`, `(방향 모름)`으로 나옵니다.
 
 ## 9. 문제 확인
 
