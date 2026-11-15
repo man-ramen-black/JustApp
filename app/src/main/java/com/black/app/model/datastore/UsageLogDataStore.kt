@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.black.app.usagelog.record.OpenUsageSession
+import com.black.app.usagelog.record.SmsProgress
 import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.upload.LastSendResult
 import com.black.app.usagelog.upload.UsageLogCipher
@@ -25,7 +26,7 @@ import javax.inject.Inject
 /**
  * 기기 사용 기록의 수집 설정과 진행 상태 저장소
  *
- * SSID(집 SSID 목록, 마지막 Wi-Fi 상태)와 열린 구간은 개인 데이터라 로그에 값을 남기지 않음.
+ * SSID(집 SSID 목록, 마지막 Wi-Fi 상태), 열린 구간, 문자 진행 상태(문자 키)는 개인 데이터라 로그에 값을 남기지 않음.
  * 웹후크 주소, 암호화 키, 설치 식별자도 비밀 값이라 로그에 값을 남기지 않음.
  */
 class UsageLogDataStore @Inject constructor(
@@ -46,6 +47,7 @@ class UsageLogDataStore @Inject constructor(
         private val KEY_ENCRYPTION_KEY = stringPreferencesKey("UsageLogEncryptionKey")
         private val KEY_SEND_SEQUENCE = longPreferencesKey("UsageLogSendSequence")
         private val KEY_LAST_SEND_RESULT = stringPreferencesKey("UsageLogLastSendResult")
+        private val KEY_SMS_PROGRESS = stringPreferencesKey("UsageLogSmsProgress")
     }
 
     override fun getDataStore(context: Context): DataStore<Preferences> = context.usageLogDataStore
@@ -201,5 +203,31 @@ class UsageLogDataStore @Inject constructor(
         val json = JsonUtil.to(result, true, JsonUtil.kotlinSerializationCompact)
             ?: return Result.failure(IllegalStateException("전송 결과 직렬화 실패"))
         return update(KEY_LAST_SEND_RESULT, json)
+    }
+
+    /**
+     * 문자 수집 진행 상태
+     *
+     * 저장값이 없거나 복원할 수 없으면 null.
+     */
+    suspend fun getSmsProgress(): SmsProgress? {
+        val json = get(KEY_SMS_PROGRESS, "", logValue = false)
+        if (json.isEmpty()) return null
+        return JsonUtil.from<SmsProgress>(json, true, logInput = false)
+    }
+
+    /**
+     * 문자 수집 진행 상태 JSON 문자열을 그대로 저장
+     *
+     * 손상된 저장값 상황을 만드는 테스트에만 사용.
+     */
+    @VisibleForTesting
+    suspend fun updateRawSmsProgress(json: String): Result<Unit> = update(KEY_SMS_PROGRESS, json, logValue = false)
+
+    /** 문자 수집 진행 상태를 한 키에 한 번에 저장 */
+    suspend fun updateSmsProgress(progress: SmsProgress): Result<Unit> {
+        val json = JsonUtil.to(progress, true)
+            ?: return Result.failure(IllegalStateException("문자 수집 진행 상태 직렬화 실패"))
+        return update(KEY_SMS_PROGRESS, json, logValue = false)
     }
 }

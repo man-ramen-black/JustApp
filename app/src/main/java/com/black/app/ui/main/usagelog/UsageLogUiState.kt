@@ -31,6 +31,14 @@ data class UsageLogUiState(
      * 꺼져 있으면 위치 권한이 있어도 Wi-Fi 이름을 읽을 수 없음.
      */
     val locationEnabled: Boolean = false,
+    /** 문자 읽기 권한 허용 여부 */
+    val smsGranted: Boolean = false,
+    /**
+     * 연락처 읽기 권한 허용 여부
+     *
+     * 없으면 문자 상대를 번호로만 기록함.
+     */
+    val contactsGranted: Boolean = false,
     /** 배터리 최적화 예외 여부 */
     val batteryOptimizationIgnored: Boolean = false,
     /**

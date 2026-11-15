@@ -7,6 +7,7 @@ import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.ui.main.usagelog.UsageLogScreen
 import com.black.app.usagelog.UsageLogCollectionController
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.NotificationPostedRecord
 import com.black.app.usagelog.record.NotificationRemovedRecord
@@ -37,6 +38,7 @@ class UsageLogViewModel @Inject constructor(
     repository: UsageLogRepository,
     private val controller: UsageLogCollectionController,
     private val collector: UsageStatsCollector,
+    private val smsCollector: SmsCollector,
     private val status: UsageLogSystemStatus,
     private val installedAppResolver: InstalledAppResolver,
     private val scheduler: UsageLogScheduler,
@@ -50,11 +52,11 @@ class UsageLogViewModel @Inject constructor(
     /** 알림 접근 설정 화면 이동 */
     data object EventOpenNotificationAccessSettings : UsageLogEvent()
     /**
-     * 위치 권한을 고를 앱 정보 화면 이동
+     * 권한을 고를 앱 정보 화면 이동
      *
      * 특정 권한 화면으로 바로 가는 공개 인텐트가 없어 앱 정보 화면을 엶.
      */
-    data object EventOpenLocationPermissionSettings : UsageLogEvent()
+    data object EventOpenAppPermissionSettings : UsageLogEvent()
     /** 기기 위치 설정 화면 이동 */
     data object EventOpenLocationSourceSettings : UsageLogEvent()
     /** 배터리 최적화 설정 화면 이동 */
@@ -139,6 +141,8 @@ class UsageLogViewModel @Inject constructor(
                 approximateLocationOnly = status.isApproximateLocationOnly(),
                 backgroundLocationGranted = status.isBackgroundLocationGranted(),
                 locationEnabled = status.isLocationEnabled(),
+                smsGranted = status.isSmsGranted(),
+                contactsGranted = status.isContactsGranted(),
                 batteryOptimizationIgnored = status.isBatteryOptimizationIgnored(),
                 currentSsid = status.currentSsid(),
             )
@@ -152,7 +156,10 @@ class UsageLogViewModel @Inject constructor(
      */
     fun refreshStatus() {
         refreshSystemStatus()
-        launch { runLoggingFailure("수집") { collector.collect() } }
+        launch {
+            runLoggingFailure("수집") { collector.collect() }
+            runLoggingFailure("문자 수집") { smsCollector.collect() }
+        }
     }
 
     /**
@@ -281,10 +288,14 @@ class UsageLogViewModel @Inject constructor(
     fun openLocationSettings() {
         when {
             !status.isFineLocationGranted() || !status.isBackgroundLocationGranted() -> {
-                sendEvent(EventOpenLocationPermissionSettings)
+                sendEvent(EventOpenAppPermissionSettings)
             }
             !status.isLocationEnabled() -> sendEvent(EventOpenLocationSourceSettings)
         }
+    }
+
+    fun openAppPermissionSettings() {
+        sendEvent(EventOpenAppPermissionSettings)
     }
 
     fun openBatteryOptimizationSettings() {

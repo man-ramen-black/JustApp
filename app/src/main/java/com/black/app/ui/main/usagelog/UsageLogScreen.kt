@@ -48,6 +48,8 @@ import com.black.app.usagelog.record.NotificationRemovedRecord
 import com.black.app.usagelog.record.RemovalReason
 import com.black.app.usagelog.record.ScreenOffRecord
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.record.SmsDirection
+import com.black.app.usagelog.record.SmsRecord
 import com.black.app.usagelog.record.UnlockRecord
 import com.black.app.usagelog.record.WifiConnectedRecord
 import com.black.app.usagelog.record.WifiDisconnectedRecord
@@ -80,6 +82,8 @@ internal object UsageLogTestTags {
     const val USAGE_ACCESS_STATUS = "usage_log_usage_access_status"
     const val NOTIFICATION_ACCESS_STATUS = "usage_log_notification_access_status"
     const val LOCATION_STATUS = "usage_log_location_status"
+    const val SMS_STATUS = "usage_log_sms_status"
+    const val CONTACTS_STATUS = "usage_log_contacts_status"
     const val BATTERY_STATUS = "usage_log_battery_status"
     const val REGISTER_WIFI_BUTTON = "usage_log_register_wifi_button"
     const val EMPTY_HOME_WIFI = "usage_log_empty_home_wifi"
@@ -122,7 +126,7 @@ fun UsageLogScreen(
             is UsageLogViewModel.EventOpenNotificationAccessSettings -> {
                 PermissionHelper.showNotificationListenerSettings(context, UsageLogListenerService::class.java)
             }
-            is UsageLogViewModel.EventOpenLocationPermissionSettings -> {
+            is UsageLogViewModel.EventOpenAppPermissionSettings -> {
                 PermissionHelper.showAppDetailsSettings(context)
             }
             is UsageLogViewModel.EventOpenLocationSourceSettings -> {
@@ -149,6 +153,7 @@ fun UsageLogScreen(
         onClickUsageAccess = viewModel::openUsageAccessSettings,
         onClickNotificationAccess = viewModel::openNotificationAccessSettings,
         onClickLocation = viewModel::openLocationSettings,
+        onClickAppPermission = viewModel::openAppPermissionSettings,
         onClickBatteryOptimization = viewModel::openBatteryOptimizationSettings,
         onClickRegisterWifi = viewModel::registerCurrentWifi,
         onClickDeleteWifi = viewModel::removeHomeWifi,
@@ -193,6 +198,7 @@ internal fun UsageLogContent(
     onClickUsageAccess: () -> Unit,
     onClickNotificationAccess: () -> Unit,
     onClickLocation: () -> Unit,
+    onClickAppPermission: () -> Unit,
     onClickBatteryOptimization: () -> Unit,
     onClickRegisterWifi: () -> Unit,
     onClickDeleteWifi: (String) -> Unit,
@@ -241,6 +247,18 @@ internal fun UsageLogContent(
             onClick = onClickLocation,
             testTag = UsageLogTestTags.LOCATION_STATUS,
             requiredValueResId = locationRequiredResId ?: R.string.usage_log_status_required,
+        )
+        PermissionRow(
+            labelResId = R.string.usage_log_permission_sms,
+            granted = uiState.smsGranted,
+            onClick = onClickAppPermission,
+            testTag = UsageLogTestTags.SMS_STATUS,
+        )
+        PermissionRow(
+            labelResId = R.string.usage_log_permission_contacts,
+            granted = uiState.contactsGranted,
+            onClick = onClickAppPermission,
+            testTag = UsageLogTestTags.CONTACTS_STATUS,
         )
         PermissionRow(
             labelResId = R.string.usage_log_permission_battery,
@@ -538,7 +556,7 @@ private fun RecordRow(
 /**
  * 기록 종류별 한 줄 설명
  *
- * 최근 기록은 사용자가 수집 결과를 폰에서 바로 확인하는 용도라 알림 제목·본문과 Wi-Fi 이름, 집 여부도 그대로 표시함.
+ * 최근 기록은 사용자가 수집 결과를 폰에서 바로 확인하는 용도라 알림 제목·본문, 문자 상대·본문, Wi-Fi 이름, 집 여부도 그대로 표시함.
  */
 @Composable
 private fun recordDescription(
@@ -566,6 +584,11 @@ private fun recordDescription(
         stringResource(gapCauseResId(record.cause)),
         timeFormat.format(Date(record.end)),
     )
+    is SmsRecord -> listOfNotNull(
+        stringResource(smsDirectionResId(record.direction)),
+        record.peers.joinToString(", ") { it.name ?: it.address }.ifEmpty { null },
+        record.text ?: record.subject,
+    ).joinToString(RECORD_SEPARATOR)
 }
 
 /**
@@ -586,6 +609,12 @@ private fun removalReasonResId(reason: RemovalReason): Int = when (reason) {
     RemovalReason.DISMISS -> R.string.usage_log_removal_dismiss
     RemovalReason.APP_CANCEL -> R.string.usage_log_removal_app_cancel
     RemovalReason.OTHER -> R.string.usage_log_removal_other
+}
+
+@StringRes
+private fun smsDirectionResId(direction: SmsDirection): Int = when (direction) {
+    SmsDirection.RECEIVED -> R.string.usage_log_record_sms_received
+    SmsDirection.SENT -> R.string.usage_log_record_sms_sent
 }
 
 @StringRes

@@ -130,3 +130,39 @@ data class GapRecord(
     val cause: GapCause,
     @SerialName("t") override val time: Long = start,
 ) : UsageLogRecord
+
+/** 문자 방향 */
+@Serializable
+enum class SmsDirection {
+    @SerialName("received") RECEIVED,
+    @SerialName("sent") SENT,
+}
+
+/**
+ * 문자 상대
+ *
+ * @property name 연락처 표시 이름. 연락처 권한이 없거나 연락처에 없으면 null
+ */
+@Serializable
+data class SmsPeer(val address: String, val name: String? = null)
+
+/**
+ * 문자 저장소에서 읽은 받은·보낸 문자 기록
+ *
+ * @property messageKey `sms:<_id>:<date>`나 `mms:<_id>:<date>`. 폰과 PC가 같은 문자를 한 번만 쌓는 데 씀
+ * @property peers 받은 문자는 보낸 사람, 보낸 문자는 받는 사람 목록
+ * @property subject MMS 제목
+ * @property attachments 본문 외 첨부 수
+ */
+@Serializable
+@SerialName("sms")
+data class SmsRecord(
+    @SerialName("t") override val time: Long,
+    val messageKey: String,
+    val direction: SmsDirection,
+    val peers: List<SmsPeer>,
+    val subject: String? = null,
+    val text: String? = null,
+    val mms: Boolean,
+    val attachments: Int = 0,
+) : UsageLogRecord

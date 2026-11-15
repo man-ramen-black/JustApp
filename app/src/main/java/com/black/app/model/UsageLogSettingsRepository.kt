@@ -3,6 +3,7 @@ package com.black.app.model
 import android.content.Context
 import com.black.app.model.datastore.UsageLogDataStore
 import com.black.app.usagelog.record.OpenUsageSession
+import com.black.app.usagelog.record.SmsProgress
 import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.upload.LastSendResult
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -99,4 +100,13 @@ class UsageLogSettingsRepository @Inject constructor(@ApplicationContext context
     val lastSendResult: Flow<LastSendResult?> get() = dataStore.getLastSendResultFlow()
 
     suspend fun setLastSendResult(result: LastSendResult): Result<Unit> = dataStore.updateLastSendResult(result)
+
+    /**
+     * 문자 수집 진행 상태
+     *
+     * null이면 문자를 아직 읽은 적이 없음.
+     */
+    suspend fun getSmsProgress(): SmsProgress? = dataStore.getSmsProgress()
+
+    suspend fun setSmsProgress(progress: SmsProgress): Result<Unit> = dataStore.updateSmsProgress(progress)
 }

@@ -7,6 +7,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.upload.DiscordWebhookClient
 import com.black.app.usagelog.upload.SendReason
@@ -31,7 +32,8 @@ class UsageLogSendWorker(context: Context, params: WorkerParameters) : Coroutine
             val repository = UsageLogRepository(applicationContext)
             val settings = UsageLogSettingsRepository(applicationContext)
             val collector = UsageStatsCollector(applicationContext, settings, repository, InstalledAppResolver(applicationContext))
-            UsageLogUploader(applicationContext, repository, settings, collector, DiscordWebhookClient()).upload(reason)
+            val smsCollector = SmsCollector(applicationContext, settings, repository)
+            UsageLogUploader(applicationContext, repository, settings, collector, smsCollector, DiscordWebhookClient()).upload(reason)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (failure: Exception) {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.core.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,6 +46,7 @@ class UsageLogUploader(
     private val repository: UsageLogRepository,
     private val settings: UsageLogSettingsRepository,
     private val collector: UsageStatsCollector,
+    private val smsCollector: SmsCollector,
     private val sender: WebhookSender,
     private val deviceInfo: DeviceInfo,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -55,11 +57,13 @@ class UsageLogUploader(
         repository: UsageLogRepository,
         settings: UsageLogSettingsRepository,
         collector: UsageStatsCollector,
+        smsCollector: SmsCollector,
         sender: DiscordWebhookClient,
     ) : this(
         repository,
         settings,
         collector,
+        smsCollector,
         sender,
         DeviceInfo(Build.MODEL, context.packageName) { time -> TimeZone.getDefault().getOffset(time) / 60_000 },
     )
@@ -67,7 +71,7 @@ class UsageLogUploader(
     /**
      * 미전송 기록을 모두 보냄
      *
-     * 수집이 켜져 있으면 먼저 수집하고 보관 기간 정리를 하며, 둘 중 무엇이 실패해도 이미 저장된 기록은 보냄.
+     * 수집이 켜져 있으면 먼저 앱 사용 수집과 문자 수집을 하고 보관 기간 정리를 하며, 무엇이 실패해도 이미 저장된 기록은 보냄.
      * 한 번에 [MAX_RECORDS_PER_ROUND]건씩 읽어 미전송 기록이 없어질 때까지 반복하고,
      * 묶음마다 전송 성공 직후 전송됨 표시와 순번 저장을 함.
      * 암호화 키는 라운드마다 다시 읽어 화면에서 새로 만든 키를 다음 라운드부터 씀.
@@ -84,6 +88,13 @@ class UsageLogUploader(
                 throw cancelled
             } catch (failure: Exception) {
                 Log.w("[UsageLogUploader] 수집 실패, 저장된 기록만 전송: ${failure::class.java.simpleName}")
+            }
+            try {
+                smsCollector.collect()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                Log.w("[UsageLogUploader] 문자 수집 실패, 저장된 기록만 전송: ${failure::class.java.simpleName}")
             }
         }
         // 보관 기간 정리가 실패해도 전송은 계속

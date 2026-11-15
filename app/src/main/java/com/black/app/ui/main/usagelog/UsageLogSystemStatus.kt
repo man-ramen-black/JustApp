@@ -1,5 +1,6 @@
 package com.black.app.ui.main.usagelog
 
+import android.Manifest
 import android.content.Context
 import android.net.wifi.WifiManager
 import com.black.app.usagelog.collect.UsageLogListenerService
@@ -11,7 +12,7 @@ import javax.inject.Inject
 /**
  * [UsageLogScreen]이 보여 주는 권한과 현재 Wi-Fi 이름 조회
  *
- * 사용 정보 접근·알림 접근·위치 권한·위치 설정·배터리 최적화 확인은 [PermissionHelper]에 위임함.
+ * 사용 정보 접근·알림 접근·위치 권한·문자 권한·연락처 권한·위치 설정·배터리 최적화 확인은 [PermissionHelper]에 위임함.
  * ViewModel에 주입하기 위한 얇은 래퍼.
  */
 class UsageLogSystemStatus @Inject constructor(
@@ -28,6 +29,10 @@ class UsageLogSystemStatus @Inject constructor(
 
     /** API 29 미만에는 백그라운드 위치 권한이 따로 없어 항상 true */
     fun isBackgroundLocationGranted(): Boolean = PermissionHelper.isBackgroundLocationGranted(context)
+
+    fun isSmsGranted(): Boolean = PermissionHelper.isGranted(context, Manifest.permission.READ_SMS)
+
+    fun isContactsGranted(): Boolean = PermissionHelper.isGranted(context, Manifest.permission.READ_CONTACTS)
 
     fun isLocationEnabled(): Boolean = PermissionHelper.isLocationEnabled(context)
 
