@@ -10,3 +10,9 @@
     - 기본 런처가 One UI 홈이거나, 홈 키·3버튼 내비게이션이면 정상이다.
 - **회피**: 치지직 설정 > 시청 환경 설정 > `백그라운드 재생`을 끄면 같은 조합에서도 정상이다(OFF 3/3 정상, ON 2/2 검은 화면).
 - **확인 순서**: 기본 런처와 내비게이션 방식부터 확인한다. 근본 수정은 치지직 쪽 몫이다(`onPause`가 아닌 `onStop`에서 영상 해제, 또는 `PictureInPictureUiState.isTransitioningToPip` 확인).
+
+## 런처 바로가기 목록에 JustApp 바로가기가 없음
+
+- **증상**: Smart Launcher의 위젯 목록과 `아이콘 추가 > 빠른 실행` 목록 어디에도 JustApp 바로가기(메모·수면 루틴·플로팅 On/Off)가 보이지 않는다.
+- **원인**: Smart Launcher 위젯 목록은 AppWidget만 보여 준다. 빠른 실행 목록은 ShortcutManager 바로가기(정적·동적)가 있는 앱만 보여 주고, `CREATE_SHORTCUT` 바로가기는 그런 앱의 것만 함께 나온다(Tasker의 `Task 바로가기`). `CREATE_SHORTCUT`만 있는 앱(정적 바로가기 추가 전 JustApp, Unified Remote)은 목록에 아예 없다.
+- **대응**: 바로가기는 `CREATE_SHORTCUT` 액티비티 대신 `res/xml/shortcuts.xml` 정적 바로가기로만 제공한다(개발 앱은 debug 소스셋 파일). 바로가기를 추가·수정하면 두 파일을 함께 고치고 `StaticShortcutsTest`로 확인한다.
