@@ -1,6 +1,7 @@
 package com.black.core.model
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
@@ -165,6 +166,26 @@ abstract class BaseDataStore(private val context: Context) {
         Log.v("[${key.name}]")
         return try {
             getDataStore(context).edit { it.remove(key) }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * 저장값 전체 삭제
+     *
+     * 테스트 간 격리에만 사용.
+     * 실패 처리는 [update]와 같음.
+     */
+    @VisibleForTesting
+    suspend fun clear(): Result<Unit> {
+        Log.v("[clear]")
+        return try {
+            getDataStore(context).edit { it.clear() }
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

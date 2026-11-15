@@ -24,7 +24,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 
-/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 기본값 Flow, 읽고 고쳐 쓰기, 여러 키 함께 저장 검증 */
+/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 기본값 Flow, 읽고 고쳐 쓰기, 여러 키 함께 저장, 전체 삭제 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BaseDataStoreTest : BaseTest() {
 
@@ -352,5 +352,27 @@ class BaseDataStoreTest : BaseTest() {
         /** Then **/
         assertTrue(failure.exceptionOrNull() is IOException)
         assertTrue(thrown is CancellationException)
+    }
+
+    /**
+     * 저장값 전체 삭제 후 기본값 조회 검증
+     *
+     * Given: ("a", 1)을 저장한 DataStore
+     * When: 저장값 전체 삭제
+     * Then: 삭제 성공, text와 number는 기본값 ""와 0
+     */
+    @Test
+    fun test_11_clearRemovesAllValues() = runTest {
+        /** Given **/
+        val dataStore = UpdateAllTestDataStore(context)
+        dataStore.updateBoth("a", 1L)
+
+        /** When **/
+        val result = dataStore.clear()
+
+        /** Then **/
+        assertTrue(result.isSuccess)
+        assertEquals("", dataStore.getText())
+        assertEquals(0L, dataStore.getNumber())
     }
 }

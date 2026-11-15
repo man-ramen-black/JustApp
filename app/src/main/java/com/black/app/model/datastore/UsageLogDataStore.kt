@@ -5,7 +5,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -18,7 +17,6 @@ import com.black.core.model.PreferenceUpdate
 import com.black.core.model.blackDataStore
 import com.black.core.util.JsonUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -203,22 +201,5 @@ class UsageLogDataStore @Inject constructor(
         val json = JsonUtil.to(result, true, JsonUtil.kotlinSerializationCompact)
             ?: return Result.failure(IllegalStateException("전송 결과 직렬화 실패"))
         return update(KEY_LAST_SEND_RESULT, json)
-    }
-
-    /**
-     * 저장값 전체 삭제
-     *
-     * 테스트 간 격리에만 사용.
-     */
-    @VisibleForTesting
-    suspend fun clear(): Result<Unit> {
-        return try {
-            getDataStore(context).edit { it.clear() }
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
     }
 }
