@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
  * [PermissionHelper.showAppNotificationSettings]의 버전별 설정 화면 인텐트와
  * [PermissionHelper.openAccessibilityServiceDetailSetting]의 실패 시 다음 화면 시도 순서,
  * [PermissionHelper.isGranted]·[PermissionHelper.isNotificationPermissionGranted]·[PermissionHelper.areNotificationsEnabled]의 판단,
- * 사용 정보 접근·알림 접근·위치 권한·위치 설정 판정과 각 설정 화면 인텐트 검증
+ * 사용 정보 접근·알림 접근·방해 금지 접근·위치 권한·위치 설정 판정과 각 설정 화면 인텐트 검증
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PermissionHelperTest : BaseTest() {
@@ -693,6 +693,48 @@ class PermissionHelperTest : BaseTest() {
         /** Then **/
         val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
         assertEquals(Settings.ACTION_LOCATION_SOURCE_SETTINGS, intent.action)
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /**
+     * 방해 금지 접근 허용 여부가 NotificationManager의 정책 접근 상태를 따르는지 검증
+     *
+     * Given: SDK 34, 방해 금지 접근 허용 후 해제
+     * When: 각 상태에서 isNotificationPolicyAccessGranted 호출
+     * Then: 허용 시 true, 해제 시 false
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_31_notificationPolicyAccessFollowsGrant() = runTest {
+        /** Given **/
+        val shadowNotificationManager = shadowOf(context.getSystemService(NotificationManager::class.java))
+        shadowNotificationManager.setNotificationPolicyAccessGranted(true)
+
+        /** When **/
+        val grantedResult = PermissionHelper.isNotificationPolicyAccessGranted(context)
+        shadowNotificationManager.setNotificationPolicyAccessGranted(false)
+        val revokedResult = PermissionHelper.isNotificationPolicyAccessGranted(context)
+
+        /** Then **/
+        assertTrue(grantedResult)
+        assertFalse(revokedResult)
+    }
+
+    /**
+     * 방해 금지 접근 설정 화면을 여는지 검증
+     *
+     * Given: Activity가 아닌 애플리케이션 컨텍스트
+     * When: showNotificationPolicyAccessSettings 호출
+     * Then: ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS, FLAG_ACTIVITY_NEW_TASK 포함
+     */
+    @Test
+    fun test_32_opensNotificationPolicyAccessSettings() = runTest {
+        /** Given / When **/
+        PermissionHelper.showNotificationPolicyAccessSettings(context)
+
+        /** Then **/
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS, intent.action)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
 

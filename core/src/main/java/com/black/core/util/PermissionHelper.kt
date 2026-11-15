@@ -4,6 +4,7 @@ import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
 import android.app.AppOpsManager
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -193,6 +194,21 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             }
 
             startFirstAvailable(context, intents)
+        }
+
+        /**
+         * 방해 금지 접근 허용 여부
+         *
+         * 매니페스트에 ACCESS_NOTIFICATION_POLICY 선언이 있어야 설정의 방해 금지 접근 목록에 앱이 표시됨
+         */
+        fun isNotificationPolicyAccessGranted(context: Context): Boolean {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            return notificationManager.isNotificationPolicyAccessGranted
+        }
+
+        /** 방해 금지 접근 설정 화면 이동 */
+        fun showNotificationPolicyAccessSettings(context: Context) {
+            Util.startActivitySafely(context, Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
 
         fun canDrawOverlays(context: Context) : Boolean {
