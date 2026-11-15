@@ -1,28 +1,40 @@
 package com.black.app.broadcast
 
-import android.content.Context
+import android.app.Application
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.model.SleepRoutineRepository
+import com.black.app.model.datastore.SleepRoutineDataStore
+import com.black.app.service.ForegroundServiceTestFixture
+import com.black.app.sleeproutine.SleepRoutineService
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import org.robolectric.annotation.Config
 
-/** [BootReceiver]의 action 확인 동작 검증 */
+/** [BootReceiver]의 action 확인 동작과 수면 루틴 세션 재개 요청 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BootReceiverTest : BaseTest() {
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val context = ApplicationProvider.getApplicationContext<Application>()
 
     /** 알림 권한 허용 */
     @Before
     fun setupNotificationPermission() {
         PackageInstallTestFixture.grantNotificationPermission(context)
+    }
+
+    /** 프로세스 단일 DataStore의 수면 루틴 세션 삭제 */
+    @After
+    fun clearSleepRoutineDataStore() = runTest {
+        SleepRoutineDataStore(context).clear()
     }
 
     /**
@@ -63,5 +75,28 @@ class BootReceiverTest : BaseTest() {
 
         /** Then **/
         assertEquals(1, PackageInstallTestFixture.shadowNotificationManager(context).size())
+    }
+
+    /**
+     * 부팅 완료 action을 받으면 저장된 수면 루틴 세션을 재개 인텐트로 시작하는지 검증
+     *
+     * Given: 종료 시각이 남은 수면 루틴 세션 저장
+     * When: BOOT_COMPLETED action으로 BootReceiver를 지정한 브로드캐스트 전송
+     * Then: SleepRoutineService 시작 인텐트에 재개 표시
+     */
+    @Test
+    fun test_03_bootCompletedResumesSleepRoutineSession() = runTest {
+        /** Given **/
+        SleepRoutineRepository(context).startSession(System.currentTimeMillis() + 60 * 60_000L)
+
+        /** When **/
+        context.sendBroadcast(Intent(Intent.ACTION_BOOT_COMPLETED).setClass(context, BootReceiver::class.java))
+        idleMainLooper()
+
+        /** Then **/
+        // 세션 확인은 goAsync로 이어 가는 Dispatchers.Default 범위에서 DataStore를 읽으므로 실제 시간으로 대기
+        val startedService = ForegroundServiceTestFixture.awaitNextStartedService(context)
+        assertEquals(SleepRoutineService::class.java.name, startedService.component?.className)
+        assertTrue(startedService.getBooleanExtra(SleepRoutineService.EXTRA_RESUME, false))
     }
 }
