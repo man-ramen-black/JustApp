@@ -118,6 +118,23 @@ class UsageLogManifestTest : BaseTest() {
     }
 
     /**
+     * 문자 수집에 필요한 문자 읽기와 연락처 읽기 권한이 선언됐는지 검증
+     *
+     * Given: 병합된 앱 매니페스트
+     * When: 요청 권한 목록 조회
+     * Then: READ_SMS, READ_CONTACTS 포함
+     */
+    @Test
+    fun test_04_declaresSmsPermissions() = runTest {
+        /** Given / When **/
+        val permissions = requestedPermissions()
+
+        /** Then **/
+        assertTrue(permissions.contains(Manifest.permission.READ_SMS))
+        assertTrue(permissions.contains(Manifest.permission.READ_CONTACTS))
+    }
+
+    /**
      * 기기 사용 기록 DB와 설정 파일만 클라우드 백업과 기기 이전에서 빠지는지 검증
      *
      * Given: 병합된 앱 매니페스트와 백업 규칙 파일(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules)

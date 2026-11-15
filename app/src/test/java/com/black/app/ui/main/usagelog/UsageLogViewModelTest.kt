@@ -5,6 +5,7 @@ import com.black.app.model.StoredUsageLogRecord
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.usagelog.UsageLogCollectionController
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.NotificationPostedRecord
 import com.black.app.usagelog.record.NotificationRemovedRecord
@@ -20,6 +21,7 @@ import com.black.test.BaseTest
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -62,6 +64,9 @@ class UsageLogViewModelTest : BaseTest() {
 
     @MockK
     lateinit var collector: UsageStatsCollector
+
+    @MockK
+    lateinit var smsCollector: SmsCollector
 
     @MockK
     lateinit var status: UsageLogSystemStatus
@@ -111,11 +116,14 @@ class UsageLogViewModelTest : BaseTest() {
         coEvery { controller.enable() } returns Result.success(Unit)
         coEvery { controller.disable() } returns Result.success(Unit)
         coEvery { collector.collect() } returns Unit
+        coEvery { smsCollector.collect() } returns Unit
         every { status.isUsageAccessGranted() } returns false
         every { status.isNotificationAccessGranted() } returns false
         every { status.isFineLocationGranted() } returns false
         every { status.isApproximateLocationOnly() } returns false
         every { status.isBackgroundLocationGranted() } returns false
+        every { status.isSmsGranted() } returns false
+        every { status.isContactsGranted() } returns false
         every { status.isLocationEnabled() } returns false
         every { status.isBatteryOptimizationIgnored() } returns false
         every { status.currentSsid() } returns null
@@ -123,7 +131,7 @@ class UsageLogViewModelTest : BaseTest() {
     }
 
     /** ViewModel 생성 후 init의 Flow 수집 시작까지 대기 */
-    private fun createViewModel() = UsageLogViewModel(settings, repository, controller, collector, status, installedAppResolver, scheduler)
+    private fun createViewModel() = UsageLogViewModel(settings, repository, controller, collector, smsCollector, status, installedAppResolver, scheduler)
         .also { waitCoroutine() }
 
     /**
@@ -284,7 +292,7 @@ class UsageLogViewModelTest : BaseTest() {
      *
      * Given: 정확한 위치 없음, 기기 위치 설정 켜짐
      * When: openLocationSettings 호출, 정확한 위치만 있는 상태로 다시 호출, 항상 허용 상태로 다시 호출
-     * Then: EventOpenLocationPermissionSettings 두 번, 항상 허용 상태에서는 이벤트 없음
+     * Then: EventOpenAppPermissionSettings 두 번, 항상 허용 상태에서는 이벤트 없음
      */
     @Test
     fun test_06_openLocationSettingsUntilAlwaysAllowed() = runTest {
@@ -303,8 +311,8 @@ class UsageLogViewModelTest : BaseTest() {
         /** Then **/
         assertEquals(
             listOf<ViewModelEvent>(
-                UsageLogViewModel.EventOpenLocationPermissionSettings,
-                UsageLogViewModel.EventOpenLocationPermissionSettings,
+                UsageLogViewModel.EventOpenAppPermissionSettings,
+                UsageLogViewModel.EventOpenAppPermissionSettings,
             ),
             receivedEvents,
         )
@@ -916,5 +924,108 @@ class UsageLogViewModelTest : BaseTest() {
         /** Then **/
         assertFalse(viewModel.uiState.value.showRegenerateKeyConfirm)
         coVerify(exactly = 0) { settings.setEncryptionKey(any()) }
+    }
+
+    /**
+     * 상태 갱신이 문자·연락처 권한을 다시 읽는지 검증
+     *
+     * Given: 생성 때 문자·연락처 권한 없음
+     * When: 문자 권한만 허용된 뒤 refreshStatus 호출, 연락처도 허용된 뒤 다시 호출
+     * Then: 처음엔 smsGranted true·contactsGranted false, 다음엔 둘 다 true
+     */
+    @Test
+    fun test_31_refreshStatusRereadsSmsAndContactsPermission() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+
+        /** When **/
+        every { status.isSmsGranted() } returns true
+        viewModel.refreshStatus()
+        waitCoroutine()
+        val afterSms = viewModel.uiState.value
+
+        every { status.isContactsGranted() } returns true
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        assertTrue(afterSms.smsGranted)
+        assertFalse(afterSms.contactsGranted)
+        assertTrue(viewModel.uiState.value.smsGranted)
+        assertTrue(viewModel.uiState.value.contactsGranted)
+    }
+
+    /**
+     * 앱 권한 설정 열기가 앱 정보 화면 이동 이벤트를 보내는지 검증
+     *
+     * Given: ViewModel 생성
+     * When: openAppPermissionSettings 호출
+     * Then: EventOpenAppPermissionSettings
+     */
+    @Test
+    fun test_32_openAppPermissionSettingsSendsEvent() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        val receivedEvents = collectEvents(viewModel)
+
+        /** When **/
+        viewModel.openAppPermissionSettings()
+
+        /** Then **/
+        assertEquals(
+            listOf<ViewModelEvent>(UsageLogViewModel.EventOpenAppPermissionSettings),
+            receivedEvents,
+        )
+    }
+
+    /**
+     * 상태 갱신이 앱 사용 수집과 문자 수집을 모두 실행하는지 검증
+     *
+     * Given: ViewModel 생성
+     * When: refreshStatus 호출
+     * Then: 앱 사용 수집 뒤 문자 수집 순서로 각 1회 호출
+     */
+    @Test
+    fun test_33_refreshStatusCollectsSmsToo() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 1) {
+            collector.collect()
+            smsCollector.collect()
+        }
+        coVerifyOrder {
+            collector.collect()
+            smsCollector.collect()
+        }
+    }
+
+    /**
+     * 앱 사용 수집이 실패해도 문자 수집은 실행되고, 문자 수집이 실패해도 앱이 종료되지 않는지 검증
+     *
+     * Given: 앱 사용 수집이 IOException을 던짐
+     * When: refreshStatus 호출, 이어서 문자 수집도 던지게 하고 다시 호출
+     * Then: 예외 없이 문자 수집 2회 호출
+     */
+    @Test
+    fun test_34_collectFailuresAreIsolated() = runTest {
+        /** Given **/
+        coEvery { collector.collect() } throws IOException("disk")
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.refreshStatus()
+        waitCoroutine()
+        coEvery { smsCollector.collect() } throws IOException("sms")
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 2) { smsCollector.collect() }
     }
 }

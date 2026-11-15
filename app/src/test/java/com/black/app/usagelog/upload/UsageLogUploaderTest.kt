@@ -8,8 +8,12 @@ import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.model.database.usagelog.UsageLogDatabase
 import com.black.app.model.database.usagelog.UsageLogEntity
 import com.black.app.model.datastore.UsageLogDataStore
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.record.SmsDirection
+import com.black.app.usagelog.record.SmsProgress
+import com.black.app.usagelog.record.SmsRecord
 import com.black.test.BaseTest
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,6 +44,7 @@ class UsageLogUploaderTest : BaseTest() {
     private lateinit var database: UsageLogDatabase
     private lateinit var repository: UsageLogRepository
     private val collector = mockk<UsageStatsCollector>(relaxed = true)
+    private val smsCollector = mockk<SmsCollector>(relaxed = true)
     private val sender = FakeSender()
     private val deviceInfo = DeviceInfo("SM-S921N", "com.black.app") { 540 }
     private val now = 1_763_000_000_000L
@@ -79,8 +84,10 @@ class UsageLogUploaderTest : BaseTest() {
         database.close()
     }
 
-    private fun createUploader(settingsRepository: UsageLogSettingsRepository = settings) =
-        UsageLogUploader(repository, settingsRepository, collector, sender, deviceInfo) { now }
+    private fun createUploader(
+        settingsRepository: UsageLogSettingsRepository = settings,
+        smsCollectorToUse: SmsCollector = smsCollector,
+    ) = UsageLogUploader(repository, settingsRepository, collector, smsCollectorToUse, sender, deviceInfo) { now }
 
     private suspend fun configure() {
         settings.setWebhookUrl(WEBHOOK_URL)
@@ -353,7 +360,7 @@ class UsageLogUploaderTest : BaseTest() {
         coEvery { failingRepository.purgeExpired(any()) } throws IOException("purge failed")
 
         /** When **/
-        val result = UsageLogUploader(failingRepository, settings, collector, sender, deviceInfo) { now }.upload(SendReason.PERIODIC)
+        val result = UsageLogUploader(failingRepository, settings, collector, smsCollector, sender, deviceInfo) { now }.upload(SendReason.PERIODIC)
 
         /** Then **/
         assertEquals(UploadResult.Sent(3), result)
@@ -463,6 +470,90 @@ class UsageLogUploaderTest : BaseTest() {
         assertTrue(lines[1].contains("\"type\":\"screen_on\""))
         assertTrue(lines[2].contains("\"type\":\"gap\",\"start\":0,\"end\":${corruptCount - 1},\"cause\":\"unsent_deleted\""))
         assertEquals(0, repository.getUnsent(10).size)
+    }
+
+    /**
+     * 수집이 켜져 있으면 전송 전에 문자를 수집해 같은 묶음에 담는지 검증
+     *
+     * Given: 수집 켜짐, 설정 완료, 문자 진행 상태, 구간 안 문자 1건을 돌려주는 문자 수집기
+     * When: upload 호출
+     * Then: Sent(1), 복호화한 묶음에 sms 기록
+     */
+    @Test
+    fun test_17_smsCollectedBeforeSendingIsInSameBatch() = runTest {
+        /** Given **/
+        configure()
+        settings.setCollectionEnabled(true)
+        val hour = 60L * 60 * 1000
+        settings.setSmsProgress(SmsProgress(now - 24 * hour, now - hour))
+        val message = SmsRecord(now - hour / 2, "sms:1:${now - hour / 2}", SmsDirection.RECEIVED, emptyList(), mms = false)
+        val realSmsCollector = SmsCollector({ _, _ -> listOf(message) }, settings, repository) { now }
+
+        /** When **/
+        val result = createUploader(smsCollectorToUse = realSmsCollector).upload(SendReason.PERIODIC)
+
+        /** Then **/
+        assertEquals(UploadResult.Sent(1), result)
+        assertTrue(decryptToText(sender.calls.single().attachment).contains("\"type\":\"sms\""))
+    }
+
+    /**
+     * 문자 수집이 실패해도 저장된 기록을 보내는지 검증
+     *
+     * Given: 수집 켜짐, 문자 collect가 예외, 기록 3건
+     * When: upload 호출
+     * Then: Sent(3)
+     */
+    @Test
+    fun test_18_smsCollectFailureStillSends() = runTest {
+        /** Given **/
+        configure()
+        settings.setCollectionEnabled(true)
+        coEvery { smsCollector.collect() } throws IOException("sms collect failed")
+        addRecords(3)
+
+        /** When / Then **/
+        assertEquals(UploadResult.Sent(3), createUploader().upload(SendReason.PERIODIC))
+    }
+
+    /**
+     * 앱 사용 수집이 실패해도 문자 수집은 도는지 검증
+     *
+     * Given: 수집 켜짐, 앱 사용 collect가 예외
+     * When: upload 호출
+     * Then: smsCollector.collect 호출
+     */
+    @Test
+    fun test_19_smsCollectedEvenWhenUsageCollectFails() = runTest {
+        /** Given **/
+        configure()
+        settings.setCollectionEnabled(true)
+        coEvery { collector.collect() } throws IOException("collect failed")
+
+        /** When **/
+        createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        coVerify { smsCollector.collect() }
+    }
+
+    /**
+     * 수집이 꺼져 있으면 문자 수집을 하지 않는지 검증
+     *
+     * Given: 수집 꺼짐, 설정 완료
+     * When: upload 호출
+     * Then: smsCollector.collect 호출 없음
+     */
+    @Test
+    fun test_20_smsNotCollectedWhenDisabled() = runTest {
+        /** Given **/
+        configure()
+
+        /** When **/
+        createUploader().upload(SendReason.PERIODIC)
+
+        /** Then **/
+        coVerify(exactly = 0) { smsCollector.collect() }
     }
 
     private companion object {

@@ -10,6 +10,9 @@ import com.black.app.R
 import com.black.app.testutil.BaseUiTest
 import com.black.app.usagelog.record.NotificationPostedRecord
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.record.SmsDirection
+import com.black.app.usagelog.record.SmsPeer
+import com.black.app.usagelog.record.SmsRecord
 import com.black.app.usagelog.record.WifiConnectedRecord
 import com.black.app.usagelog.upload.LastSendResult
 import com.black.core.ui.component.ToolTopBarTestTags
@@ -54,6 +57,7 @@ class UsageLogScreenTest : BaseUiTest() {
         onClickUsageAccess: () -> Unit = {},
         onClickNotificationAccess: () -> Unit = {},
         onClickLocation: () -> Unit = {},
+        onClickAppPermission: () -> Unit = {},
         onClickBatteryOptimization: () -> Unit = {},
         onClickRegisterWifi: () -> Unit = {},
         onClickDeleteWifi: (String) -> Unit = {},
@@ -72,6 +76,7 @@ class UsageLogScreenTest : BaseUiTest() {
                         onClickUsageAccess = onClickUsageAccess,
                         onClickNotificationAccess = onClickNotificationAccess,
                         onClickLocation = onClickLocation,
+                        onClickAppPermission = onClickAppPermission,
                         onClickBatteryOptimization = onClickBatteryOptimization,
                         onClickRegisterWifi = onClickRegisterWifi,
                         onClickDeleteWifi = onClickDeleteWifi,
@@ -164,23 +169,26 @@ class UsageLogScreenTest : BaseUiTest() {
     @Test
     fun test_03_clickRequiredPermissionInvokesCallback() {
         /** Given **/
-        val clickCounts = IntArray(4)
+        val clickCounts = IntArray(5)
         contentUiState.value = UsageLogUiState()
         hostUsageLogContent(
             onClickUsageAccess = { clickCounts[0]++ },
             onClickNotificationAccess = { clickCounts[1]++ },
             onClickLocation = { clickCounts[2]++ },
             onClickBatteryOptimization = { clickCounts[3]++ },
+            onClickAppPermission = { clickCounts[4]++ },
         )
 
         /** When **/
         clickTag(UsageLogTestTags.USAGE_ACCESS_STATUS, scrollTo = true)
         clickTag(UsageLogTestTags.NOTIFICATION_ACCESS_STATUS, scrollTo = true)
         clickTag(UsageLogTestTags.LOCATION_STATUS, scrollTo = true)
+        clickTag(UsageLogTestTags.SMS_STATUS, scrollTo = true)
+        clickTag(UsageLogTestTags.CONTACTS_STATUS, scrollTo = true)
         clickTag(UsageLogTestTags.BATTERY_STATUS, scrollTo = true)
 
         /** Then **/
-        assertEquals(listOf(1, 1, 1, 1), clickCounts.toList())
+        assertEquals(listOf(1, 1, 1, 1, 2), clickCounts.toList())
         assertTagTextContains(
             UsageLogTestTags.LOCATION_STATUS,
             context.getString(R.string.usage_log_permission_location),
@@ -577,13 +585,15 @@ class UsageLogScreenTest : BaseUiTest() {
     @Test
     fun test_17_grantedRowsNotClickable() {
         /** Given **/
-        val clickCounts = IntArray(4)
+        val clickCounts = IntArray(5)
         contentUiState.value = UsageLogUiState(
             usageAccessGranted = true,
             notificationAccessGranted = true,
             fineLocationGranted = true,
             backgroundLocationGranted = true,
             locationEnabled = true,
+            smsGranted = true,
+            contactsGranted = true,
             batteryOptimizationIgnored = true,
         )
         hostUsageLogContent(
@@ -591,11 +601,14 @@ class UsageLogScreenTest : BaseUiTest() {
             onClickNotificationAccess = { clickCounts[1]++ },
             onClickLocation = { clickCounts[2]++ },
             onClickBatteryOptimization = { clickCounts[3]++ },
+            onClickAppPermission = { clickCounts[4]++ },
         )
         val rowTags = listOf(
             UsageLogTestTags.USAGE_ACCESS_STATUS,
             UsageLogTestTags.NOTIFICATION_ACCESS_STATUS,
             UsageLogTestTags.LOCATION_STATUS,
+            UsageLogTestTags.SMS_STATUS,
+            UsageLogTestTags.CONTACTS_STATUS,
             UsageLogTestTags.BATTERY_STATUS,
         )
 
@@ -607,7 +620,7 @@ class UsageLogScreenTest : BaseUiTest() {
             assertTagTextContains(tag, context.getString(R.string.usage_log_status_allowed), scrollTo = true)
             assertTagMatches(tag, hasNoClickAction())
         }
-        assertEquals(listOf(0, 0, 0, 0), clickCounts.toList())
+        assertEquals(listOf(0, 0, 0, 0, 0), clickCounts.toList())
     }
 
     /**
@@ -711,5 +724,131 @@ class UsageLogScreenTest : BaseUiTest() {
         /** Then **/
         assertEquals(1, dismissCount)
         assertEquals(0, confirmCount)
+    }
+
+    /**
+     * 문자·연락처 행이 허용 여부에 따라 표시되고 허용 필요 행은 앱 권한 콜백을 호출하는지 검증
+     *
+     * Given:
+     * - 문자 허용, 연락처 미허용 상태로 UsageLogContent 호스팅
+     * When:
+     * - 문자 행과 연락처 행 클릭
+     * Then:
+     * - sms_status에 "문자", "허용됨", 클릭 동작 없음
+     * - contacts_status에 "연락처", "허용 필요"
+     * - 앱 권한 콜백 1회 호출
+     */
+    @Test
+    fun test_22_smsAndContactsRowsShowStateAndInvokeCallback() {
+        /** Given **/
+        var clickCount = 0
+        contentUiState.value = UsageLogUiState(smsGranted = true, contactsGranted = false)
+        hostUsageLogContent(onClickAppPermission = { clickCount++ })
+
+        /** When **/
+        clickTag(UsageLogTestTags.SMS_STATUS, scrollTo = true)
+        clickTag(UsageLogTestTags.CONTACTS_STATUS, scrollTo = true)
+
+        /** Then **/
+        assertTagTextContains(
+            UsageLogTestTags.SMS_STATUS,
+            context.getString(R.string.usage_log_permission_sms),
+            context.getString(R.string.usage_log_status_allowed),
+            scrollTo = true,
+        )
+        assertTagMatches(UsageLogTestTags.SMS_STATUS, hasNoClickAction())
+        assertTagTextContains(
+            UsageLogTestTags.CONTACTS_STATUS,
+            context.getString(R.string.usage_log_permission_contacts),
+            context.getString(R.string.usage_log_status_required),
+            scrollTo = true,
+        )
+        assertEquals(1, clickCount)
+    }
+
+    /**
+     * 최근 기록의 문자가 방향·상대·본문으로 표시되는지 검증
+     *
+     * Given:
+     * - 이름 있는 받은 문자, 이름 없는 보낸 문자, 상대 둘에 본문 없는 MMS, 상대 없는 문자, 본문·제목 없는 문자 가짜 기록으로 UsageLogContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - "문자 받음 · 홍길동 · 본문", "문자 보냄 · 0212345678 · 본문" 표시
+     * - 본문 없는 MMS는 "문자 받음 · 홍길동, 0212345678 · 모임 안내" 표시
+     * - 상대 없는 문자는 "문자 받음 · 본문", 본문·제목 없는 문자는 "문자 보냄 · 0212345678" 표시
+     */
+    @Test
+    fun test_23_smsRecordsDisplayed() {
+        /** Given **/
+        contentUiState.value = UsageLogUiState(
+            recentRecords = listOf(
+                UsageLogRecordItem(
+                    1L,
+                    SmsRecord(
+                        time = 1_700_000_000_000L,
+                        messageKey = "sms:1:1700000000000",
+                        direction = SmsDirection.RECEIVED,
+                        peers = listOf(SmsPeer("01012345678", "홍길동")),
+                        text = "본문",
+                        mms = false,
+                    ),
+                ),
+                UsageLogRecordItem(
+                    2L,
+                    SmsRecord(
+                        time = 1_700_000_001_000L,
+                        messageKey = "sms:2:1700000001000",
+                        direction = SmsDirection.SENT,
+                        peers = listOf(SmsPeer("0212345678")),
+                        text = "본문",
+                        mms = false,
+                    ),
+                ),
+                UsageLogRecordItem(
+                    3L,
+                    SmsRecord(
+                        time = 1_700_000_002_000L,
+                        messageKey = "mms:3:1700000002000",
+                        direction = SmsDirection.RECEIVED,
+                        peers = listOf(SmsPeer("01012345678", "홍길동"), SmsPeer("0212345678")),
+                        subject = "모임 안내",
+                        mms = true,
+                    ),
+                ),
+                UsageLogRecordItem(
+                    4L,
+                    SmsRecord(
+                        time = 1_700_000_003_000L,
+                        messageKey = "sms:4:1700000003000",
+                        direction = SmsDirection.RECEIVED,
+                        peers = emptyList(),
+                        text = "본문",
+                        mms = false,
+                    ),
+                ),
+                UsageLogRecordItem(
+                    5L,
+                    SmsRecord(
+                        time = 1_700_000_004_000L,
+                        messageKey = "mms:5:1700000004000",
+                        direction = SmsDirection.SENT,
+                        peers = listOf(SmsPeer("0212345678")),
+                        mms = true,
+                    ),
+                ),
+            ),
+        )
+        hostUsageLogContent()
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        assertTextDisplayed("문자 받음 · 홍길동 · 본문", scrollTo = true)
+        assertTextDisplayed("문자 보냄 · 0212345678 · 본문", scrollTo = true)
+        assertTextDisplayed("문자 받음 · 홍길동, 0212345678 · 모임 안내", scrollTo = true)
+        assertTextDisplayed("문자 받음 · 본문", scrollTo = true)
+        assertTextDisplayed("문자 보냄 · 0212345678", scrollTo = true)
     }
 }

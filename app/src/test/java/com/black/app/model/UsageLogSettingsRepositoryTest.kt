@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.datastore.UsageLogDataStore
 import com.black.app.usagelog.record.OpenUsageSession
+import com.black.app.usagelog.record.SmsProgress
 import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.upload.UsageLogCipher
 import com.black.test.BaseTest
@@ -168,8 +169,8 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
      * 개인 데이터 저장·조회가 로그에 값을 남기지 않는지 검증
      *
      * Given: 저장값 없음
-     * When: 집 SSID, 마지막 Wi-Fi 상태, 열린 구간 저장 후 조회, 설치 식별자 생성 후 재조회
-     * Then: Log.v 메시지에 SSID 문자열과 설치 식별자가 없음
+     * When: 집 SSID, 마지막 Wi-Fi 상태, 열린 구간, 문자 진행 상태 저장 후 조회, 설치 식별자 생성 후 재조회
+     * Then: Log.v 메시지에 SSID 문자열, 문자 키, 설치 식별자가 없음
      */
     @Test
     fun test_08_personalValuesAreNotLogged() = runTest {
@@ -180,11 +181,13 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
         repository.getLastWifiState()
         repository.setOpenSession(OpenUsageSession("com.a", 1000, null))
         repository.getOpenSession()
+        repository.setSmsProgress(SmsProgress(10L, 20L, setOf("sms:99:10")))
+        repository.getSmsProgress()
         val installId = repository.getInstallId().getOrThrow()
         repository.getInstallId()
 
         /** Then **/
-        verify(exactly = 0) { Log.v(any(), match { it.contains("MyHome_5G") || it.contains(installId) }) }
+        verify(exactly = 0) { Log.v(any(), match { it.contains("MyHome_5G") || it.contains("sms:99:10") || it.contains(installId) }) }
     }
 
     /**
@@ -265,5 +268,43 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
         assertTrue(second.isSuccess)
         assertNull(repository.getOpenSession())
         assertEquals(6000L, repository.getUsageCursor())
+    }
+
+    /**
+     * 문자 진행 상태가 저장 전 null이고 저장 후 같은 값으로 조회되는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 조회, 문자 진행 상태 저장 후 다시 조회
+     * Then: 첫 조회는 null, 둘째 조회는 저장한 값과 같음
+     */
+    @Test
+    fun test_13_smsProgressRoundTrip() = runTest {
+        /** Given **/
+        val progress = SmsProgress(10L, 20L, setOf("sms:1:10"))
+
+        /** When **/
+        val before = repository.getSmsProgress()
+        val result = repository.setSmsProgress(progress)
+
+        /** Then **/
+        assertNull(before)
+        assertTrue(result.isSuccess)
+        assertEquals(progress, repository.getSmsProgress())
+    }
+
+    /**
+     * 손상된 문자 진행 상태 JSON이 null로 처리되는지 검증
+     *
+     * Given: 문자 진행 상태 키에 깨진 JSON 저장
+     * When: 문자 진행 상태 조회
+     * Then: null
+     */
+    @Test
+    fun test_14_corruptSmsProgressReturnsNull() = runTest {
+        /** Given **/
+        UsageLogDataStore(context).updateRawSmsProgress("{broken")
+
+        /** When / Then **/
+        assertNull(repository.getSmsProgress())
     }
 }

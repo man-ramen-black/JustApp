@@ -8,11 +8,13 @@ import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.model.database.usagelog.UsageLogDatabase
 import com.black.app.model.datastore.UsageLogDataStore
+import com.black.app.usagelog.collect.SmsCollector
 import com.black.app.usagelog.collect.UsageStatsCollector
 import com.black.app.usagelog.record.GapCause
 import com.black.app.usagelog.record.GapRecord
 import com.black.app.usagelog.record.OpenUsageSession
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.record.SmsProgress
 import com.black.app.usagelog.record.WifiState
 import com.black.app.usagelog.work.UsageLogScheduler
 import com.black.test.BaseTest
@@ -74,7 +76,8 @@ class UsageLogCollectionControllerTest : BaseTest() {
         database.close()
     }
 
-    private fun createController() = UsageLogCollectionController(settings, repository, scheduler) { now }
+    private fun createController(smsGranted: Boolean = true) =
+        UsageLogCollectionController(settings, repository, scheduler, { smsGranted }) { now }
 
     /**
      * 처음 켜면 공백 기록 없이 켜지고 주기 작업이 예약되는지 검증
@@ -126,7 +129,7 @@ class UsageLogCollectionControllerTest : BaseTest() {
     /**
      * 끄면 열린 구간이 지워지고 꺼진 시각이 저장되며 주기 작업이 취소되는지 검증
      *
-     * Given: 켜진 상태와 저장된 열린 구간(시작 100)
+     * Given: 켜진 상태, 저장된 열린 구간(시작 100), 문자 커서 5000
      * When: 시각 7000에 disable
      * Then: 열린 구간 null, 꺼진 시각은 열린 구간 시작 100, 꺼짐, 주기 작업 취소
      */
@@ -136,6 +139,7 @@ class UsageLogCollectionControllerTest : BaseTest() {
         val controller = createController()
         controller.enable()
         settings.setOpenSession(OpenUsageSession("com.example.app", 100L))
+        settings.setSmsProgress(SmsProgress(0L, 5000L))
         now = 7000L
 
         /** When **/
@@ -264,7 +268,7 @@ class UsageLogCollectionControllerTest : BaseTest() {
     /**
      * 끈 시각보다 앞선 커서와 열린 구간 시작부터 공백 기록이 시작되는지 검증
      *
-     * Given: 켜진 상태, 커서 5000, 시작 4000인 열린 구간
+     * Given: 켜진 상태, 커서 5000, 문자 커서 6000, 시작 4000인 열린 구간
      * When: 시각 7000에 disable, 시각 9000에 enable
      * Then: GapRecord(4000, 9000, COLLECTION_OFF) 하나
      */
@@ -274,6 +278,7 @@ class UsageLogCollectionControllerTest : BaseTest() {
         val controller = createController()
         controller.enable()
         settings.setUsageCursor(5000L)
+        settings.setSmsProgress(SmsProgress(0L, 6000L))
         settings.setOpenSession(OpenUsageSession("com.example.app", 4000L))
 
         /** When **/
@@ -438,5 +443,146 @@ class UsageLogCollectionControllerTest : BaseTest() {
         verify(exactly = 1) { scheduler.schedulePeriodicCollect() }
         verify { Log.w(any<String>(), match<String> { it.contains("IOException") }) }
         verify(exactly = 0) { Log.w(any<String>(), match<String> { it.contains("purge-detail") }) }
+    }
+
+    /**
+     * 켜면 문자 진행 상태가 켠 시각으로 초기화되는지 검증
+     *
+     * Given: 문자 진행 상태가 옛 값
+     * When: 시각 9000에 enable
+     * Then: SmsProgress(9000, 9000)
+     */
+    @Test
+    fun test_15_enableResetsSmsProgress() = runTest {
+        /** Given **/
+        val controller = createController()
+        settings.setSmsProgress(SmsProgress(10L, 20L, setOf("sms:1:1")))
+        now = 9000L
+
+        /** When **/
+        controller.enable()
+
+        /** Then **/
+        assertEquals(SmsProgress(9000L, 9000L), settings.getSmsProgress())
+    }
+
+    /**
+     * 끄기 전 문자 수집으로도 문자 커서가 옮겨지지 않아 가장 이르면 공백 기록이 문자 커서부터 시작하는지 검증
+     *
+     * Given: 켜진 상태, 앱 사용 커서 5000, 문자 커서 3000, 커서를 옮기지 않는 문자 수집
+     * When: 시각 7000에 disable, 시각 9000에 enable
+     * Then: GapRecord(3000, 9000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_16_disableGapStartsAtSmsCursorWhenEarliest() = runTest {
+        /** Given **/
+        val controller = createController()
+        controller.enable()
+        settings.setUsageCursor(5000L)
+        settings.setSmsProgress(SmsProgress(0L, 3000L))
+
+        /** When **/
+        now = 7000L
+        controller.disable()
+        now = 9000L
+        controller.enable()
+
+        /** Then **/
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(3000L, 9000L, GapCause.COLLECTION_OFF)), records)
+    }
+
+    /**
+     * 문자 읽기 권한이 없으면 문자 커서를 공백 시작 후보에서 빼는지 검증
+     *
+     * Given: 켜진 상태, 앱 사용 커서 5000, 문자 커서 3000, 문자 읽기 권한 없음
+     * When: 시각 7000에 disable, 시각 9000에 enable
+     * Then: GapRecord(5000, 9000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_17_disableGapIgnoresSmsCursorWithoutPermission() = runTest {
+        /** Given **/
+        val controller = createController(smsGranted = false)
+        controller.enable()
+        settings.setUsageCursor(5000L)
+        settings.setSmsProgress(SmsProgress(0L, 3000L))
+
+        /** When **/
+        now = 7000L
+        controller.disable()
+        now = 9000L
+        controller.enable()
+
+        /** Then **/
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(5000L, 9000L, GapCause.COLLECTION_OFF)), records)
+    }
+
+    /**
+     * 끄기 전에 문자를 수집해, 멈춰 있던 문자 커서가 공백 시작을 앞당기지 않는지 검증
+     *
+     * Given: 켜진 상태, 앱 사용 커서 1,000,000, 문자 커서 300,000, 새 문자가 없는 문자 저장소
+     * When: 시각 1,200,000에 disable, 시각 1,500,000에 enable
+     * Then: 끈 직후 문자 커서가 끈 시각에서 미룸 시간을 뺀 값, GapRecord(1,000,000, 1,500,000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_18_disableCollectsSmsBeforeGapStart() = runTest {
+        /** Given **/
+        val smsCollector = SmsCollector({ _, _ -> emptyList() }, settings, repository) { now }
+        val controller = UsageLogCollectionController(
+            settings,
+            repository,
+            scheduler,
+            { true },
+            { smsCollector.collectWithinLock() },
+        ) { now }
+        controller.enable()
+        settings.setUsageCursor(1_000_000L)
+        settings.setSmsProgress(SmsProgress(0L, 300_000L))
+
+        /** When **/
+        now = 1_200_000L
+        controller.disable()
+        val smsCursorAfterDisable = settings.getSmsProgress()?.cursor
+        now = 1_500_000L
+        controller.enable()
+
+        /** Then **/
+        assertEquals(1_200_000L - SmsCollector.SETTLE_DELAY_MILLIS, smsCursorAfterDisable)
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(1_000_000L, 1_500_000L, GapCause.COLLECTION_OFF)), records)
+    }
+
+    /**
+     * 끄기 전 문자 수집이 예외로 실패해도 끄기가 계속되는지 검증
+     *
+     * Given: 켜진 상태, 앱 사용 커서 5000, 문자 커서 3000, 예외를 던지는 문자 수집
+     * When: 시각 7000에 disable, 시각 9000에 enable
+     * Then: disable 성공, GapRecord(3000, 9000, COLLECTION_OFF) 하나
+     */
+    @Test
+    fun test_19_disableContinuesWhenSmsCollectFails() = runTest {
+        /** Given **/
+        val controller = UsageLogCollectionController(
+            settings,
+            repository,
+            scheduler,
+            { true },
+            { throw IOException("sms") },
+        ) { now }
+        controller.enable()
+        settings.setUsageCursor(5000L)
+        settings.setSmsProgress(SmsProgress(0L, 3000L))
+
+        /** When **/
+        now = 7000L
+        val result = controller.disable()
+        now = 9000L
+        controller.enable()
+
+        /** Then **/
+        assertTrue(result.isSuccess)
+        val records = repository.getUnsent(10).map { it.record }
+        assertEquals(listOf(GapRecord(3000L, 9000L, GapCause.COLLECTION_OFF)), records)
     }
 }

@@ -9,6 +9,9 @@ import com.black.app.usagelog.record.NotificationRemovedRecord
 import com.black.app.usagelog.record.RemovalReason
 import com.black.app.usagelog.record.ScreenOffRecord
 import com.black.app.usagelog.record.ScreenOnRecord
+import com.black.app.usagelog.record.SmsDirection
+import com.black.app.usagelog.record.SmsPeer
+import com.black.app.usagelog.record.SmsRecord
 import com.black.app.usagelog.record.UnlockRecord
 import com.black.app.usagelog.record.UsageLogRecord
 import com.black.app.usagelog.record.WifiConnectedRecord
@@ -60,6 +63,8 @@ class UsageLogSampleExportTest : BaseTest() {
             NotificationPostedRecord("0|com.example.shop|4|null|10170", "com.example.shop", "쇼핑", at(8, 0), null, null, null),
             NotificationRemovedRecord("0|com.example.shop|4|null|10170", "com.example.shop", at(8, 1), RemovalReason.DISMISS),
             ScreenOffRecord(at(8, 5)),
+            SmsRecord(at(9, 0), "mms:41:${at(9, 0)}", SmsDirection.RECEIVED, listOf(SmsPeer("01012345678", "홍길동")), "모임 안내", "첫 줄\n둘째 줄", true, 1),
+            SmsRecord(at(9, 5), "sms:7:${at(9, 5)}", SmsDirection.SENT, listOf(SmsPeer("0212345678")), null, "확인했습니다", false, 0),
             WifiDisconnectedRecord(at(8, 30), "HomeWifi", true, false),
             ScreenOnRecord(at(12, 0)),
             AppUsageRecord("com.google.android.youtube", "YouTube", at(12, 1), at(12, 31)),

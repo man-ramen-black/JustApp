@@ -46,7 +46,7 @@ class UsageLogRecordCodecTest : BaseTest() {
     /**
      * 모든 기록이 JSON을 거쳐 원래대로 복원되는지 검증
      *
-     * Given: 화면 3종과 Wi-Fi 2종을 포함한 9가지 기록
+     * Given: 화면 3종, Wi-Fi 2종, 문자를 포함한 10가지 기록
      * When: encode 후 decode
      * Then: 모두 원본과 같음
      */
@@ -56,7 +56,7 @@ class UsageLogRecordCodecTest : BaseTest() {
         val records = allRecords()
 
         /** When / Then **/
-        assertEquals(9, records.size)
+        assertEquals(10, records.size)
         records.forEach { record ->
             assertEquals(record, UsageLogRecordCodec.decode(UsageLogRecordCodec.encode(record)))
         }
@@ -65,7 +65,7 @@ class UsageLogRecordCodecTest : BaseTest() {
     /**
      * type 값이 설계와 같은지 검증
      *
-     * Given: 9가지 기록
+     * Given: 10가지 기록
      * When: encode한 JSON의 type 읽기
      * Then: 설계의 type 문자열과 같음
      */
@@ -80,7 +80,7 @@ class UsageLogRecordCodecTest : BaseTest() {
         assertEquals(
             listOf(
                 "app_usage", "screen_on", "screen_off", "unlock", "notification",
-                "notification_removed", "wifi_connected", "wifi_disconnected", "gap",
+                "notification_removed", "wifi_connected", "wifi_disconnected", "gap", "sms",
             ),
             types,
         )
@@ -182,5 +182,30 @@ class UsageLogRecordCodecTest : BaseTest() {
         WifiConnectedRecord(8000, "home-ssid", true, false),
         WifiDisconnectedRecord(9000, null, null, true),
         GapRecord(10000, 11000, GapCause.UNSENT_DELETED),
+        SmsRecord(12000, "mms:5:12000", SmsDirection.RECEIVED, listOf(SmsPeer("01012345678", "홍길동")), "제목", "본문", true, 2),
     )
+
+    /**
+     * 문자 기록의 전송 JSON 한 줄이 설계 형식과 같은 키 순서·값인지 검증
+     *
+     * Given: 받은 MMS 문자 기록(상대 이름 있음, 제목 null)
+     * When: toJsonLine 호출
+     * Then: 줄이 설계 예시 문자열과 완전히 같음(null 생략 없음)
+     */
+    @Test
+    fun test_08_smsJsonLineMatchesSpec() = runTest {
+        /** Given **/
+        val record = SmsRecord(
+            1000, "mms:5:1000", SmsDirection.RECEIVED, listOf(SmsPeer("01012345678", "홍길동")), null, "본문", true, 1,
+        )
+
+        /** When **/
+        val line = UsageLogRecordCodec.toJsonLine("x", record)
+
+        /** Then **/
+        assertEquals(
+            """{"id":"x","type":"sms","t":1000,"messageKey":"mms:5:1000","direction":"received","peers":[{"address":"01012345678","name":"홍길동"}],"subject":null,"text":"본문","mms":true,"attachments":1}""",
+            line,
+        )
+    }
 }
