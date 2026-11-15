@@ -13,6 +13,7 @@ import com.black.app.ui.main.MainFragment
 import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
 import com.black.app.ui.main.calculator.CalculatorScreen
 import com.black.app.ui.main.etc.BlackFragment
+import com.black.app.ui.main.sleeproutine.SleepRoutineScreen
 import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.main.texteditor.TextEditorScreen
 import com.black.app.ui.main.usagelog.UsageLogScreen
@@ -68,6 +69,9 @@ fun AppNavHost(
         }
         composable<AppRoute.UsageLog> {
             UsageLogScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
+        composable<AppRoute.SleepRoutine> {
+            SleepRoutineScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
     }
 }

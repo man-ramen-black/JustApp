@@ -50,6 +50,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_usage_log,
             ) { navigateByActivity(AppRoute.UsageLog) },
             MainItem(
+                getString(R.string.fragment_name_sleep_routine),
+                R.drawable.ic_bedtime,
+            ) { navigateByActivity(AppRoute.SleepRoutine) },
+            MainItem(
                 getString(R.string.fragment_name_study_popup),
                 R.drawable.ic_quiz,
             ) { navigateByActivity(AppRoute.StudyPopup) },

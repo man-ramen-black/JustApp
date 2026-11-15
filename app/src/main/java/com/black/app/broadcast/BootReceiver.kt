@@ -6,7 +6,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.black.core.util.NotificationUtil
 
 /**
- * 부팅 완료 시 실행 설정이 켜진 ForegroundService 시작
+ * 부팅 완료 시 실행 설정이 켜진 ForegroundService 시작과 진행 중이던 수면 루틴 세션 재개
  *
  * 앱 업데이트 뒤 재시작은 [AppUpdateReceiver] 담당
  */

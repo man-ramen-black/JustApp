@@ -14,4 +14,5 @@ sealed interface AppRoute {
     @Serializable data object Floating : AppRoute
     @Serializable data object AppInstallNotification : AppRoute
     @Serializable data object UsageLog : AppRoute
+    @Serializable data object SleepRoutine : AppRoute
 }
