@@ -105,6 +105,11 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <data android:scheme="black"/>
             </intent-filter>
+
+            <!-- 앱 아이콘 길게 누르기 메뉴·런처 빠른 실행 목록의 고정 바로가기 -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- 각 모듈에서 참조할 Notification 아이콘 -->
@@ -176,35 +181,6 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
             </intent-filter>
         </receiver>
-
-        <!--*********************************************-->
-        <!-- Shortcut -->
-        <!--*********************************************-->
-        <activity android:name=".shortcut.MemoShortcutActivity"
-            android:label="@string/shortcut_memo_label"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".shortcut.SleepRoutineShortcutActivity"
-            android:theme="@style/Theme.Transparent"
-            android:label="@string/shortcut_sleep_routine_label"
-            android:launchMode="singleTask"
-            android:taskAffinity="${applicationId}.shortcut"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-        <!--*********************************************-->
-        <!-- Shortcut -->
-        <!--*********************************************-->
 
         <!-- 기기 사용 기록용 알림 접근 서비스 -->
         <service

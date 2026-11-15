@@ -9,4 +9,5 @@
     <string name="shortcut_memo_label">(Dev)메모</string>
     <string name="shortcut_floating_on_label">(Dev)JustApp - 플로팅 On</string>
     <string name="shortcut_floating_off_label">(Dev)JustApp - 플로팅 Off</string>
+    <string name="shortcut_sleep_routine_label">(Dev)수면 루틴</string>
 </resources>

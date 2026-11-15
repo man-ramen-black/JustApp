@@ -3,10 +3,8 @@
     <string name="accessibility_description">접근성 서비스</string>
     <string name="special_use_description">SpecialUse</string>
 
-    <string name="shortcut_floating_on_id">floating_on</string>
+    <!-- app 모듈 res/xml/shortcuts.xml의 플로팅 버튼 바로가기 이름 -->
     <string name="shortcut_floating_on_label">JustApp - 플로팅 On</string>
-
-    <string name="shortcut_floating_off_id">floating_off</string>
     <string name="shortcut_floating_off_label">JustApp - 플로팅 Off</string>
 
     <string name="accessibility_service_label_floating">JustApp - FloatingButton</string>

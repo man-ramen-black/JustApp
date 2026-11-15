@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱 아이콘 길게 누르기 메뉴와 런처 빠른 실행 목록에 보이는 고정 바로가기 -->
+<!-- CREATE_SHORTCUT 방식은 목록에 보여 주지 않는 런처(Smart Launcher 등)가 있어 정적 바로가기로만 제공 -->
+<!-- 바로가기 ID를 바꾸면 이 정의로 홈 화면에 고정한 바로가기가 정의에서 빠진 것으로 처리돼 비활성화되므로 기존 값 유지 -->
+<!-- CREATE_SHORTCUT 시절에 고정한 같은 ID 바로가기가 남은 기기에서는 시스템이 그 ID의 정적 바로가기를 게시하지 않음(ShortcutPackage의 "not from AndroidManifest.xml" 처리) -->
+<!-- 시스템이 인텐트 속성의 리소스 참조를 앱 리소스로 해석하지 않아 패키지·클래스를 직접 적고, 개발 앱(.dev)은 debug 소스셋의 같은 파일이 덮어씀 -->
+<!-- 서비스 바로가기 extra 이름은 ServiceActivity.EXTRA_CLASS_NAME·BaseForegroundService.EXTRA_STOP 값 -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_memo"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_memo_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="black://navigate/memo"
+            android:targetPackage="com.black.app"
+            android:targetClass="com.black.app.ui.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="shortcut_sleep_routine"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_sleep_routine_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.app.sleeproutine.SleepRoutineService" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="floating_on"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_floating_on_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.feature.floatingbutton.service.FloatingForegroundService" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="floating_off"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_floating_off_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.feature.floatingbutton.service.FloatingForegroundService" />
+            <extra
+                android:name="ForegroundService.EXTRA_STOP"
+                android:value="true" />
+        </intent>
+    </shortcut>
+</shortcuts>

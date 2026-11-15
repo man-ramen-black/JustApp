@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- main 소스셋 shortcuts.xml의 개발 앱(com.black.app.dev)판, 인텐트 패키지만 다르고 나머지는 같게 유지 -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_memo"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_memo_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="black://navigate/memo"
+            android:targetPackage="com.black.app.dev"
+            android:targetClass="com.black.app.ui.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="shortcut_sleep_routine"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_sleep_routine_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app.dev"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.app.sleeproutine.SleepRoutineService" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="floating_on"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_floating_on_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app.dev"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.feature.floatingbutton.service.FloatingForegroundService" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="floating_off"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_floating_off_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.black.app.dev"
+            android:targetClass="com.black.core.service.ServiceActivity">
+            <extra
+                android:name="ServiceActivity.EXTRA_CLASS_NAME"
+                android:value="com.black.feature.floatingbutton.service.FloatingForegroundService" />
+            <extra
+                android:name="ForegroundService.EXTRA_STOP"
+                android:value="true" />
+        </intent>
+    </shortcut>
+</shortcuts>
