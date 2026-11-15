@@ -41,6 +41,11 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- 수면 루틴: 방해 금지 켜기·끄기(선언이 있어야 설정의 방해 금지 접근 목록에 표시) -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- 수면 루틴: 종료 시각까지 CPU를 깨워 두는 부분 wake lock -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
     <!-- 백업 규칙: 기기 사용 기록 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
     <application
@@ -110,6 +115,13 @@
         <service android:name=".service.ForegroundService"
             android:foregroundServiceType="specialUse" />
 
+        <service android:name=".sleeproutine.SleepRoutineService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="@string/sleep_routine_special_use_description" />
+        </service>
+
         <receiver android:name=".broadcast.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
@@ -170,6 +182,20 @@
         <!--*********************************************-->
         <activity android:name=".shortcut.MemoShortcutActivity"
             android:label="@string/shortcut_memo_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".shortcut.SleepRoutineShortcutActivity"
+            android:theme="@style/Theme.Transparent"
+            android:label="@string/shortcut_sleep_routine_label"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.shortcut"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
