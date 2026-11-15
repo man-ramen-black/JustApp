@@ -61,6 +61,9 @@ object AppTypography {
     /** 여러 줄 설명 문단용 한글 캡션(스위치·상태 행 아래 안내) */
     val ParagraphCaption = Caption.copy(lineHeight = 18.sp)
 
+    /** 입력 칸 아래 오류 문구 */
+    val ErrorCaption = ParagraphCaption.copy(color = AppColors.Error)
+
     /** 한글 본문(상태 행·알림 메시지) */
     val Body = BaseTextStyle.copy(
         color = AppColors.Icon,

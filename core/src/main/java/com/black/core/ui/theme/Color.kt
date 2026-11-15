@@ -27,6 +27,13 @@ object AppColors {
     val Divider = Color(0xFF1A1B1E)
     /** 입력 칸 안에 보여 주는 계산값 색, 입력값(ItemName)과 구분되는 푸른 계열이며 검은 배경 대비 9:1 이상 */
     val CalculatedValue = Color(0xFF7FB2FF)
+    /**
+     * 입력 오류 색
+     *
+     * 입력 칸의 오류 테두리·커서·오류 문구에 사용.
+     * Material3 다크 기본 오류 색(Error80)과 같은 값이며 검은 배경 대비 12:1 이상
+     */
+    val Error = Color(0xFFF2B8B5)
     /** 밝은 상단바 미리보기 배경 */
     val LightPreviewBackground = Color(0xFFF2F2F4)
     /** 밝은 상단바 미리보기 아이콘 색 */

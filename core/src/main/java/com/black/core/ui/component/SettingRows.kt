@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
@@ -35,7 +36,8 @@ fun SectionHeader(title: String) {
 /**
  * 라벨 + 스위치 행
  *
- * 라벨까지 행 전체를 눌러 토글하고, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여
+ * 라벨까지 행 전체를 눌러 토글하고, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여.
+ * [enabled]가 false면 [ActionButton]처럼 흐리게 보이고 눌리지 않음
  */
 @Composable
 fun SwitchRow(
@@ -43,12 +45,14 @@ fun SwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Row(
         // 스위치(32dp)만으로는 Android 권장 최소 터치 높이(48dp)에 못 미쳐 행 높이를 보장
         modifier = modifier
             .heightIn(min = 48.dp)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+            .alpha(if (enabled) 1f else DISABLED_ALPHA)
+            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

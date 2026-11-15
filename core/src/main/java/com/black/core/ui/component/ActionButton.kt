@@ -46,5 +46,5 @@ fun ActionButton(
     }
 }
 
-/** 비활성 버튼의 투명도 */
-private const val DISABLED_ALPHA = 0.4f
+/** 비활성 버튼·스위치 행의 투명도 */
+internal const val DISABLED_ALPHA = 0.4f

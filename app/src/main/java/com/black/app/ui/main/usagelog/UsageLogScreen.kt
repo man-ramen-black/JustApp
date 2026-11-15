@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,13 +54,13 @@ import com.black.app.usagelog.record.WifiDisconnectedRecord
 import com.black.app.usagelog.record.WifiRecord
 import com.black.app.usagelog.upload.DiscordWebhookFormat
 import com.black.core.ui.component.ActionButton
+import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ContainerIconButton
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
 import com.black.core.ui.component.ToolScreenScaffold
-import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 import com.black.core.util.DataUtil
 import com.black.core.util.PermissionHelper
@@ -426,24 +424,12 @@ private fun WebhookUrlField(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(UsageLogTestTags.WEBHOOK_URL_FIELD),
-        textStyle = AppTypography.Body.copy(color = AppColors.ItemName),
+        textStyle = AppTextFieldDefaults.InputTextStyle,
         label = { Text(text = stringResource(R.string.usage_log_webhook_url_label), style = AppTypography.Caption) },
         isError = text.isNotBlank() && !DiscordWebhookFormat.isValidWebhookUrl(text.trim()),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = AppColors.ContainerBorder,
-            focusedBorderColor = AppColors.Arrow,
-            // AppColors에 오류 색이 없어 오류 커서와 같은 테마 오류 색 사용
-            errorBorderColor = MaterialTheme.colorScheme.error,
-            focusedTextColor = AppColors.ItemName,
-            unfocusedTextColor = AppColors.ItemName,
-            errorTextColor = AppColors.ItemName,
-            cursorColor = AppColors.Title,
-            focusedLabelColor = AppColors.Caption,
-            unfocusedLabelColor = AppColors.Caption,
-            errorLabelColor = AppColors.Caption,
-        ),
+        colors = AppTextFieldDefaults.colors(),
     )
 }
 
