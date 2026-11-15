@@ -14,6 +14,7 @@ import io
 import json
 import os
 import re
+import sqlite3
 import sys
 import tempfile
 import time
@@ -56,6 +57,12 @@ def removal(record_id, key, package, time, reason):
 
 def wifi(record_id, record_type, time, ssid="HomeWifi", home=True):
     return {"id": record_id, "type": record_type, "t": time, "ssid": ssid, "home": home, "inferred": False}
+
+
+def sms(record_id, time, direction, peers, text, subject=None, mms=False, attachments=0, key=None):
+    return {"id": record_id, "type": "sms", "t": time, "messageKey": key or "sms:%s:%d" % (record_id, time),
+            "direction": direction, "peers": peers, "subject": subject, "text": text, "mms": mms,
+            "attachments": attachments}
 
 
 def encrypt_batch(records, key=TEST_KEY, seq=1, offset_minutes=TIMEZONE_OFFSET_MINUTES, version=1, app="com.black.app"):
@@ -128,7 +135,7 @@ class DecryptTest(UsageLogTestCase):
 
         self.assertEqual((0, ""), (code, errors))
         self.assertEqual(expected, output)
-        self.assertEqual("새 기록 18건, 중복 0건", self.ingest_sample(sample_folder))
+        self.assertEqual("새 기록 20건, 중복 0건", self.ingest_sample(sample_folder))
         self.assertEqual([
             "2025-11-12 요약",
             "앱별 사용 시간 상위 2개",
@@ -155,6 +162,10 @@ class DecryptTest(UsageLogTestCase):
             "11-12 18:30(추정)~ 집에 있음 (마지막 기록까지)",
             "마지막 기록 11-12 18:30 기준 지금은 집에 있음",
         ], self.query("home", "2025-11-12").splitlines())
+        self.assertEqual([
+            "09:00 받음 홍길동(01012345678) [모임 안내] 첫 줄 ⏎ 둘째 줄 · 첨부 1",
+            "09:05 보냄 0212345678 확인했습니다",
+        ], self.query("sms", "2025-11-12").splitlines())
 
     def ingest_sample(self, sample_folder):
         code, output, errors = self.run_command("ingest", os.path.join(sample_folder, "sample.bin"))
@@ -594,6 +605,402 @@ class QueryTest(UsageLogTestCase):
         self.assertEqual("외 5줄", lines[-1])
 
 
+# 문자 열이 생기기 전 스크립트가 만들던 records 표 (현재 SCHEMA와 무관하게 고정)
+OLD_RECORDS_TABLE = """
+CREATE TABLE records (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    t INTEGER NOT NULL,
+    local_t INTEGER NOT NULL,
+    tz_offset_minutes INTEGER NOT NULL,
+    seq INTEGER,
+    package_name TEXT,
+    app_name TEXT,
+    start_t INTEGER,
+    end_t INTEGER,
+    local_start INTEGER,
+    local_end INTEGER,
+    notification_key TEXT,
+    title TEXT,
+    text TEXT,
+    category TEXT,
+    ssid TEXT,
+    home INTEGER,
+    inferred INTEGER,
+    reason TEXT,
+    cause TEXT
+)
+"""
+EXPECTED_SMS_COLUMNS = ["message_key", "direction", "peers", "subject", "is_mms", "attachments"]
+
+
+class SmsTest(UsageLogTestCase):
+
+    def ingest_two_sms(self):
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "01012345678", "name": "홍길동"}],
+                "첫 줄\n둘째 줄", subject="모임 안내", mms=True, attachments=1),
+            sms("s-2", local_ms(9, 5), "sent", [{"address": "0212345678", "name": None}], "확인했습니다"),
+        ])
+
+    def create_old_database(self, with_sms_row=False):
+        """옛 records 표에 알림 한 건(과 선택적으로 문자 한 건)이 든 DB를 만듦"""
+        connection = sqlite3.connect(os.environ["USAGE_LOG_DB"])
+        try:
+            connection.execute(OLD_RECORDS_TABLE)
+            connection.execute(
+                "INSERT INTO records (id, type, t, local_t, tz_offset_minutes, seq, app_name, notification_key, title, text)"
+                " VALUES ('n-1', 'notification', ?, ?, ?, 1, '카카오톡', 'key-1', '홍길동', '내일 몇 시?')",
+                (local_ms(7, 35), local_ms(7, 35) + TIMEZONE_OFFSET_MINUTES * 60_000, TIMEZONE_OFFSET_MINUTES))
+            if with_sms_row:
+                connection.execute(
+                    "INSERT INTO records (id, type, t, local_t, tz_offset_minutes, seq, text)"
+                    " VALUES ('s-old', 'sms', ?, ?, ?, 1, '옛 스크립트가 쌓은 문자')",
+                    (local_ms(9, 0), local_ms(9, 0) + TIMEZONE_OFFSET_MINUTES * 60_000, TIMEZONE_OFFSET_MINUTES))
+            connection.commit()
+        finally:
+            connection.close()
+
+    def table_columns(self):
+        connection = sqlite3.connect(os.environ["USAGE_LOG_DB"])
+        try:
+            return [item[1] for item in connection.execute("PRAGMA table_info(records)")]
+        finally:
+            connection.close()
+
+    def test_01_sms_is_stored_and_listed(self):
+        """
+        받은 MMS와 보낸 SMS를 적재해 조회
+
+        Given 받은 MMS와 보낸 SMS를 적재했을 때
+        When sms 명령으로 그날을 조회하면
+        Then 시각, 방향, 상대, 제목, 본문, 첨부가 한 줄씩 나옴
+        """
+        # Given
+        self.ingest_two_sms()
+
+        # When
+        output = self.query("sms", "2025-11-12")
+
+        # Then
+        self.assertEqual([
+            "09:00 받음 홍길동(01012345678) [모임 안내] 첫 줄 ⏎ 둘째 줄 · 첨부 1",
+            "09:05 보냄 0212345678 확인했습니다",
+        ], output.splitlines())
+
+    def test_02_who_and_search_filter_sms(self):
+        """
+        --who와 --search로 문자 거르기
+
+        Given 문자 두 건을 적재했을 때
+        When --who(이름, 하이픈 섞은 번호)와 --search(제목, 본문)로 조회하면
+        Then 조건에 맞는 문자만 나오고 없으면 안내 문구가 나옴
+        """
+        # Given
+        self.ingest_two_sms()
+
+        # When
+        by_name = self.query("sms", "2025-11-12", "--who", "홍길동").splitlines()
+        by_number = self.query("sms", "2025-11-12", "--who", "010-1234").splitlines()
+        by_subject = self.query("sms", "2025-11-12", "--search", "모임").splitlines()
+        by_text = self.query("sms", "2025-11-12", "--search", "확인").splitlines()
+        none = self.query("sms", "2025-11-12", "--who", "김철수")
+
+        # Then
+        self.assertEqual(1, len(by_name))
+        self.assertIn("홍길동", by_name[0])
+        self.assertEqual(by_name, by_number)
+        self.assertEqual(by_name, by_subject)
+        self.assertEqual(1, len(by_text))
+        self.assertIn("보냄", by_text[0])
+        self.assertEqual("조건에 맞는 문자 없음", none.strip())
+
+    def test_03_same_message_key_is_stored_once(self):
+        """
+        같은 messageKey는 한 번만 적재
+
+        Given messageKey가 같고 id가 다른 문자 두 건을
+        When 한 번에 적재하면
+        Then 새 기록 1건, 중복 1건으로 한 줄만 쌓임
+        """
+        # Given
+        peers = [{"address": "01012345678", "name": None}]
+        records = [
+            sms("s-1", local_ms(9, 0), "received", peers, "안녕", key="sms:1"),
+            sms("s-2", local_ms(9, 0), "received", peers, "안녕", key="sms:1"),
+        ]
+
+        # When
+        output = self.ingest(records)
+
+        # Then
+        self.assertEqual("새 기록 1건, 중복 1건", output.strip())
+        self.assertEqual(1, len(self.query("sms", "2025-11-12").splitlines()))
+
+    def test_04_range_query_shows_date(self):
+        """
+        기간 조회는 날짜를 붙임
+
+        Given 문자를 적재했을 때
+        When 기간으로 조회하면
+        Then 시각 앞에 날짜가 붙음
+        """
+        # Given
+        self.ingest_two_sms()
+
+        # When
+        output = self.query("sms", "2025-11-11~2025-11-12")
+
+        # Then
+        self.assertTrue(output.splitlines()[0].startswith("11-12 09:00 "))
+
+    def test_05_empty_content_and_missing_peer_are_labeled(self):
+        """
+        내용·상대가 없는 문자의 표시
+
+        Given 본문·제목이 없는 문자와 상대가 없는 문자를 적재했을 때
+        When 조회하면
+        Then 각각 (내용 없음)과 (상대 없음)으로 나옴
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "01011112222", "name": None}], None),
+            sms("s-2", local_ms(9, 5), "sent", [], "본문만"),
+        ])
+
+        # When
+        lines = self.query("sms", "2025-11-12").splitlines()
+
+        # Then
+        self.assertEqual("09:00 받음 01011112222 (내용 없음)", lines[0])
+        self.assertEqual("09:05 보냄 (상대 없음) 본문만", lines[1])
+
+    def test_06_old_database_is_migrated(self):
+        """
+        옛 DB에 문자 열을 더하고 색인으로 중복을 거름
+
+        Given 문자 열이 없는 옛 records 표와 알림 한 건이 있는 DB가
+        When 문자를 적재하면
+        Then 옛 알림 조회는 그대로이고 새 열 6개와 유일 색인이 생겨 같은 messageKey는 중복 처리됨
+        """
+        # Given
+        self.create_old_database()
+        before = self.query("notifications", "2025-11-12")
+        peers = [{"address": "01012345678", "name": None}]
+
+        # When
+        self.ingest_two_sms()
+        duplicate = self.ingest([sms("s-dup", local_ms(9, 0), "received", peers, "중복", key="sms:s-1:%d" % local_ms(9, 0))])
+
+        # Then
+        self.assertEqual("07:35 카카오톡 홍길동: 내일 몇 시?", before.strip())
+        self.assertEqual(before, self.query("notifications", "2025-11-12"))
+        columns = self.table_columns()
+        for name in EXPECTED_SMS_COLUMNS:
+            self.assertIn(name, columns)
+        self.assertEqual("새 기록 0건, 중복 1건", duplicate.strip())
+        self.assertEqual(2, len(self.query("sms", "2025-11-12").splitlines()))
+
+    def test_07_sms_row_of_old_script_is_readable_without_ingest(self):
+        """
+        문자 열이 없는 옛 DB의 문자 행 조회
+
+        Given 문자 열이 없는 DB에 옛 스크립트가 쌓은 문자 행이 있을 때
+        When ingest 없이 sms를 조회하면
+        Then 오류 없이 상대 없음과 방향 모름으로 나옴
+        """
+        # Given
+        self.create_old_database(with_sms_row=True)
+
+        # When
+        output = self.query("sms", "2025-11-12")
+
+        # Then
+        self.assertEqual("09:00 (방향 모름) (상대 없음) 옛 스크립트가 쌓은 문자", output.strip())
+
+    def test_08_who_compares_digits_only_for_phone_like_needle(self):
+        """
+        --who 숫자 비교는 전화번호 모양일 때만
+
+        Given 이름에 숫자가 든 상대와 번호만 있는 상대의 문자를 적재했을 때
+        When --who 학원2와 --who 010-1234로 조회하면
+        Then 학원2는 이름 일치만, 010-1234는 번호 일치만 걸림
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "01022223333", "name": "학원"}], "일반 학원"),
+            sms("s-2", local_ms(9, 5), "received", [{"address": "01099992222", "name": "학원2"}], "두 번째 학원"),
+        ])
+
+        # When
+        by_name = self.query("sms", "2025-11-12", "--who", "학원2").splitlines()
+        by_number = self.query("sms", "2025-11-12", "--who", "010-9999").splitlines()
+
+        # Then
+        self.assertEqual(1, len(by_name))
+        self.assertIn("두 번째 학원", by_name[0])
+        self.assertEqual(1, len(by_number))
+        self.assertIn("두 번째 학원", by_number[0])
+
+    def test_09_who_treats_country_code_82_as_zero(self):
+        """
+        국가번호 82와 0을 같게 비교
+
+        Given 국가번호 형식(+82)으로 저장된 번호와 국내 형식으로 저장된 번호가 있을 때
+        When 반대 형식으로 --who 조회하면
+        Then 둘 다 걸림
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "+821012345678", "name": None}], "국제 형식"),
+            sms("s-2", local_ms(9, 5), "received", [{"address": "01087654321", "name": None}], "국내 형식"),
+        ])
+
+        # When
+        by_domestic = self.query("sms", "2025-11-12", "--who", "010-1234-5678").splitlines()
+        by_international = self.query("sms", "2025-11-12", "--who", "+82 10-8765-4321").splitlines()
+        by_partial = self.query("sms", "2025-11-12", "--who", "821").splitlines()
+
+        # Then
+        self.assertEqual(1, len(by_domestic))
+        self.assertIn("국제 형식", by_domestic[0])
+        self.assertEqual(1, len(by_international))
+        # 82로 시작하는 짧은 번호 조각은 국가번호로 바꾸지 않아 01이 든 모든 번호에 걸리지 않음
+        self.assertEqual(1, len(by_partial))
+        self.assertIn("국제 형식", by_partial[0])
+        self.assertIn("국내 형식", by_international[0])
+
+    def test_10_malformed_peers_do_not_break_query(self):
+        """
+        깨진 peers 값이 있는 행
+
+        Given peers가 JSON이 아닌 행, 목록이 아닌 행, 이름·번호가 숫자이고 객체 아닌 항목이 든 행이 섞여 있을 때
+        When sms를 조회하고 --who로 거르면
+        Then 오류 없이 모든 행이 나오고 걸러도 깨지지 않음
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "01011112222", "name": None}], "정상"),
+            sms("s-2", local_ms(9, 1), "received", [], "JSON 아님"),
+            sms("s-3", local_ms(9, 2), "received", [], "목록 아님"),
+        ])
+        connection = sqlite3.connect(os.environ["USAGE_LOG_DB"])
+        try:
+            connection.execute("UPDATE records SET peers = '{not json' WHERE id = 's-2'")
+            connection.execute("UPDATE records SET peers = '{\"address\": \"01011112222\"}' WHERE id = 's-3'")
+            connection.execute(
+                "INSERT INTO records (id, type, t, local_t, tz_offset_minutes, text, direction, peers)"
+                " VALUES ('s-4', 'sms', ?, ?, ?, '숫자 이름과 번호, 객체 아닌 항목', 'sent',"
+                " '[{\"address\": 123, \"name\": 5}, \"문자열\", 7]')",
+                (local_ms(9, 3), local_ms(9, 3) + TIMEZONE_OFFSET_MINUTES * 60_000, TIMEZONE_OFFSET_MINUTES))
+            connection.commit()
+        finally:
+            connection.close()
+
+        # When
+        lines = self.query("sms", "2025-11-12").splitlines()
+        filtered = self.query("sms", "2025-11-12", "--who", "0101111").splitlines()
+
+        # Then
+        self.assertEqual(4, len(lines))
+        self.assertEqual("09:00 받음 01011112222 정상", lines[0])
+        self.assertEqual("09:01 받음 (상대 없음) JSON 아님", lines[1])
+        self.assertEqual("09:02 받음 (상대 없음) 목록 아님", lines[2])
+        self.assertEqual("09:03 보냄 (상대 없음) 숫자 이름과 번호, 객체 아닌 항목", lines[3])
+        self.assertEqual(["09:00 받음 01011112222 정상"], filtered)
+
+    def test_11_who_and_search_combine(self):
+        """
+        --who와 --search 동시 사용
+
+        Given 같은 상대의 문자 두 건과 다른 상대의 문자 한 건이 있을 때
+        When --who와 --search를 함께 주면
+        Then 둘 다 맞는 문자만 나옴
+        """
+        # Given
+        peers = [{"address": "01012345678", "name": "홍길동"}]
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", peers, "점심 약속"),
+            sms("s-2", local_ms(9, 5), "received", peers, "저녁 약속"),
+            sms("s-3", local_ms(9, 10), "received", [{"address": "01099998888", "name": "김철수"}], "점심 약속"),
+        ])
+
+        # When
+        lines = self.query("sms", "2025-11-12", "--who", "홍길동", "--search", "점심").splitlines()
+
+        # Then
+        self.assertEqual(["09:00 받음 홍길동(01012345678) 점심 약속"], lines)
+
+    def test_12_migration_rolls_back_on_error(self):
+        """
+        마이그레이션 실패 시 롤백
+
+        Given 문자 열이 없는 옛 DB에서 마지막 열 추가가 실패하도록 잘못된 열 정의를 끼웠을 때
+        When migrate를 실행하면
+        Then 오류가 나도 열이 반쯤 더해진 채 남지 않음
+        """
+        # Given
+        self.create_old_database()
+        connection = sqlite3.connect(os.environ["USAGE_LOG_DB"])
+        try:
+            with mock.patch.object(usage_log, "SMS_COLUMNS", usage_log.SMS_COLUMNS + (("broken", "NOT A TYPE ((",),)):
+                # When
+                with self.assertRaises(sqlite3.Error):
+                    usage_log.migrate(connection)
+            # Then
+            columns = [item[1] for item in connection.execute("PRAGMA table_info(records)")]
+        finally:
+            connection.close()
+        for name in EXPECTED_SMS_COLUMNS:
+            self.assertNotIn(name, columns)
+
+    def test_13_who_keeps_zero_written_after_country_code(self):
+        """
+        국가번호 뒤에 0을 붙여 쓴 번호 비교
+
+        Given 국가번호 형식과 국내 형식으로 저장된 같은 번호, 다른 번호가 있을 때
+        When --who +82 010-1234-5678로 조회하면
+        Then 0을 한 번만 붙여 비교해 같은 번호 두 건만 걸림
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "+821012345678", "name": None}], "국제 형식"),
+            sms("s-2", local_ms(9, 5), "received", [{"address": "01012345678", "name": None}], "국내 형식"),
+            sms("s-3", local_ms(9, 10), "received", [{"address": "01087654321", "name": None}], "다른 번호"),
+        ])
+
+        # When
+        lines = self.query("sms", "2025-11-12", "--who", "+82 010-1234-5678").splitlines()
+
+        # Then
+        self.assertEqual(2, len(lines))
+        self.assertIn("국제 형식", lines[0])
+        self.assertIn("국내 형식", lines[1])
+
+    def test_14_who_skips_digits_when_only_country_code_is_given(self):
+        """
+        국가번호만 준 검색어는 숫자 비교 안 함
+
+        Given 국가번호 형식과 국내 형식으로 저장된 번호가 있을 때
+        When --who +82와 --who +82 1로 조회하면
+        Then 0이나 01이 든 번호에 걸리지 않고, +82는 번호 글자에 +82가 든 국가번호 형식만 걸림
+        """
+        # Given
+        self.ingest([
+            sms("s-1", local_ms(9, 0), "received", [{"address": "+821012345678", "name": None}], "국제 형식"),
+            sms("s-2", local_ms(9, 5), "received", [{"address": "01087654321", "name": None}], "국내 형식"),
+        ])
+
+        # When
+        country_code_only = self.query("sms", "2025-11-12", "--who", "+82").splitlines()
+        one_digit_after = self.query("sms", "2025-11-12", "--who", "+82 1")
+
+        # Then
+        self.assertEqual(1, len(country_code_only))
+        self.assertIn("국제 형식", country_code_only[0])
+        self.assertEqual("조건에 맞는 문자 없음", one_digit_after.strip())
+
+
 class SqlTest(UsageLogTestCase):
 
     def count_records(self):
@@ -660,6 +1067,8 @@ class OutputFormatTest(UsageLogTestCase):
             notification("a-5", "0|com.kakao.talk|2|null|10164", "com.kakao.talk", "카카오톡", local_ms(7, 35), "홍길동", "내일 몇 시?"),
             removal("a-6", "0|com.kakao.talk|2|null|10164", "com.kakao.talk", local_ms(7, 40), "click"),
             wifi("a-7", "wifi_disconnected", local_ms(8, 30)),
+            sms("a-9", local_ms(9, 0), "received", [{"address": "01012345678", "name": "홍길동"}], "안녕", key="sms:key-9"),
+            sms("a-10", local_ms(9, 5), "sent", [{"address": "0212345678", "name": None}], "네", key="sms:key-10"),
             {"id": "a-8", "type": "gap", "start": local_ms(13, 10), "end": local_ms(14, 0),
              "cause": "usage_events_expired", "t": local_ms(13, 10)},
         ])
@@ -670,9 +1079,12 @@ class OutputFormatTest(UsageLogTestCase):
             ("notifications", "2025-11-11~2025-11-12"),
             ("home", "2025-11-12"),
             ("apps", "2025-11-11~2025-11-12"),
+            ("sms", "2025-11-12"),
+            ("sms", "2025-11-11~2025-11-12"),
         ]
         forbidden = [r"\d{13}", r"com\.kakao", r"com\.black", r"0\|com", r"\btzOffsetMinutes\b", r"\bappName\b",
-                     r'"type"', r"\bnotification_removed\b", r"\bpackage\b"]
+                     r'"type"', r"\bnotification_removed\b", r"\bpackage\b",
+                     r"sms:key", r"\breceived\b", r"\bsent\b", r"\bmessageKey\b", r"\bpeers\b"]
 
         for command in commands:
             output = self.query(*command)
