@@ -27,6 +27,9 @@
     notifications --new                         지난 --new 뒤에 쌓인 알림을 쌓인 순서로 300건까지 골라 시각 순으로
                                                 출력. 날짜, --app, --search와 함께 쓸 수 없음. 남은 알림이 있으면
                                                 끝에 "외 N줄"이 붙고 다음 --new가 이어서 돌려줌
+    sms <날짜|날짜~날짜> [--who 이름이나 번호] [--search 단어]
+                                                받은·보낸 문자와 MMS를 본문 전체로 시각 순 출력.
+                                                번호는 숫자만 비교해 하이픈을 무시
     home <날짜|날짜~날짜>                       집에 있던 구간과 집 여부를 알 수 없는 구간, 마지막 기록 시각.
                                                 추정 기록이 만든 경계 시각에는 "(추정)"
     apps <날짜|날짜~날짜> [--app 이름]          앱별 사용 시간 합계와 날짜별 추이
@@ -40,6 +43,8 @@ DB 테이블
     records        기록 한 건당 한 행. id가 기본키이며 같은 id는 한 번만 들어감.
                    t, start_t, end_t는 epoch 밀리초, local_t, local_start, local_end는 현지 시각으로 옮긴 같은 값,
                    tz_offset_minutes는 그 기록이 속한 묶음의 시간대 값.
+                   문자(sms) 열 message_key, direction, peers(JSON), subject, is_mms, attachments는 이 스크립트가
+                   처음 쓰기용으로 DB를 열 때 더해지고, message_key가 같은 기록은 id가 달라도 한 번만 들어감.
     read_position  notifications --new가 마지막으로 출력한 알림 records의 rowid. 출력을 마친 뒤에만 옮김.
 """
 
@@ -127,13 +132,25 @@ CREATE TABLE IF NOT EXISTS read_position (
 );
 """
 
+# 문자 기록용 열(이전 스크립트가 만든 DB에도 migrate가 더함)
+SMS_COLUMNS = (
+    ("message_key", "TEXT"),
+    ("direction", "TEXT"),
+    ("peers", "TEXT"),
+    ("subject", "TEXT"),
+    ("is_mms", "INTEGER"),
+    ("attachments", "INTEGER"),
+)
+
 INSERT_SQL = """
 INSERT OR IGNORE INTO records (
     id, type, t, local_t, tz_offset_minutes, seq, package_name, app_name, start_t, end_t,
-    local_start, local_end, notification_key, title, text, category, ssid, home, inferred, reason, cause
+    local_start, local_end, notification_key, title, text, category, ssid, home, inferred, reason, cause,
+    message_key, direction, peers, subject, is_mms, attachments
 ) VALUES (
     :id, :type, :t, :local_t, :tz_offset_minutes, :seq, :package_name, :app_name, :start_t, :end_t,
-    :local_start, :local_end, :notification_key, :title, :text, :category, :ssid, :home, :inferred, :reason, :cause
+    :local_start, :local_end, :notification_key, :title, :text, :category, :ssid, :home, :inferred, :reason, :cause,
+    :message_key, :direction, :peers, :subject, :is_mms, :attachments
 )
 """
 
@@ -195,7 +212,28 @@ def open_writable_database():
     connection = sqlite3.connect(path)
     OPEN_CONNECTIONS.append(connection)
     connection.executescript(SCHEMA)
+    migrate(connection)
     return connection
+
+
+def migrate(connection):
+    """records 표에 없는 문자 열을 더하고 문자 키 유일 색인을 만듦
+
+    같은 문자가 폰에서 두 번 오더라도 INSERT OR IGNORE로 한 번만 쌓이게 함.
+    """
+    # sqlite3 모듈은 DDL 앞에서 트랜잭션을 열지 않으므로 BEGIN IMMEDIATE로 직접 열어,
+    # 동시에 ingest가 두 번 돌아도 열 확인과 ALTER가 끼어들지 않게 함
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        existing = {row[1] for row in connection.execute("PRAGMA table_info(records)")}
+        for name, column_type in SMS_COLUMNS:
+            if name not in existing:
+                connection.execute("ALTER TABLE records ADD COLUMN %s %s" % (name, column_type))
+        connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS records_message_key ON records (message_key)")
+    except BaseException:
+        connection.rollback()
+        raise
+    connection.commit()
 
 
 def open_readonly_database():
@@ -251,6 +289,12 @@ def build_row(record, meta):
         "inferred": to_flag_or_none(record.get("inferred")),
         "reason": record.get("reason"),
         "cause": record.get("cause"),
+        "message_key": record.get("messageKey"),
+        "direction": record.get("direction"),
+        "peers": None if record.get("peers") is None else json.dumps(record["peers"], ensure_ascii=False),
+        "subject": record.get("subject"),
+        "is_mms": to_flag_or_none(record.get("mms")),
+        "attachments": to_int_or_none(record.get("attachments")),
     }
 
 
@@ -733,6 +777,115 @@ def command_notifications(arguments):
     emit(lines or ["조건에 맞는 알림 없음"])
 
 
+SMS_DIRECTION_LABELS = {"received": "받음", "sent": "보냄"}
+# 국가번호를 바꾼 국내 번호를 숫자 비교에 쓰는 최소 자릿수 (앞자리 0 포함, 이보다 짧은 0·01은 거의 모든 번호에 들어 있음)
+MIN_NATIONAL_DIGITS = 3
+
+
+def row_value(row, name):
+    """열이 없는 이전 DB의 행에서도 읽을 수 있는 값 (없으면 None)"""
+    return row[name] if name in row.keys() else None
+
+
+def sms_peers(row):
+    try:
+        peers = json.loads(row_value(row, "peers") or "[]")
+    except ValueError:
+        return []
+    if not isinstance(peers, list):
+        return []
+    return [peer for peer in peers if isinstance(peer, dict)]
+
+
+def peer_text(peer, field):
+    """상대 항목의 이름·번호 (문자열이 아니면 없는 값으로 봄)"""
+    value = peer.get(field)
+    return value if isinstance(value, str) else ""
+
+
+def peer_label(peer):
+    name = peer_text(peer, "name")
+    address = peer_text(peer, "address")
+    if name and address:
+        return "%s(%s)" % (name, address)
+    return name or address
+
+
+def format_sms(row, show_date):
+    time_text = format_month_day_time(row["local_t"]) if show_date else format_time(row["local_t"])
+    direction = row_value(row, "direction")
+    peers = ", ".join(label for label in (peer_label(peer) for peer in sms_peers(row)) if label) or "(상대 없음)"
+    parts = [time_text, SMS_DIRECTION_LABELS.get(direction, "(방향 모름)"), peers]
+    subject = flatten(row_value(row, "subject") or "")
+    text = flatten(row["text"] or "")
+    if subject:
+        parts.append("[%s]" % subject)
+    if text:
+        parts.append(text)
+    if not subject and not text:
+        parts.append("(내용 없음)")
+    line = " ".join(parts)
+    attachments = row_value(row, "attachments") or 0
+    return "%s · 첨부 %d" % (line, attachments) if attachments else line
+
+
+def phone_digits(text):
+    """숫자만 남기고 국가번호 82를 국내 번호의 앞자리 0으로 바꾼 값
+
+    +82 10-1234-5678, +82 010-1234-5678, 010-1234-5678을 모두 01012345678로 같게 봄.
+    국가번호로 보는 것은 +로 시작하거나 82 뒤로 국내 번호 길이(9자리 이상)가 이어질 때뿐이라,
+    "8231"처럼 번호 가운데를 찾는 짧은 검색어는 그대로 둠.
+    국가번호를 뗀 나머지가 이미 0으로 시작하면 0을 더 붙이지 않음.
+    바꾼 국내 번호가 MIN_NATIONAL_DIGITS자리보다 짧으면("+82", "+82 1") 0이나 01이 든 거의 모든 번호에 걸리므로
+    빈 값을 돌려줘 숫자 비교에 쓰지 않음.
+    """
+    digits = re.sub(r"\D", "", text)
+    international = text.strip().startswith("+") or len(digits) >= 11
+    # 국가번호 형식이 아니면 숫자 그대로
+    if not (international and digits.startswith("82")):
+        return digits
+    # 앞자리 0은 한 번만, 너무 짧으면 비교 제외
+    rest = digits[2:]
+    national = rest if rest.startswith("0") else "0" + rest
+    return national if len(national) >= MIN_NATIONAL_DIGITS else ""
+
+
+def sms_matches_who(row, needle):
+    """이름이나 번호에 needle이 들어 있는지
+
+    needle이 전화번호 모양(숫자, 공백, +, -, 괄호만)일 때만 숫자끼리 비교해 하이픈·국가번호를 무시.
+    그 외에는 글자 포함 여부만 봐서 "학원2"가 2가 든 번호에 걸리지 않음.
+    """
+    lowered = needle.lower()
+    digits = phone_digits(needle) if re.fullmatch(r"[\d\s+\-()]+", needle) else ""
+    for peer in sms_peers(row):
+        address = peer_text(peer, "address")
+        if lowered in peer_text(peer, "name").lower() or lowered in address.lower():
+            return True
+        if digits and digits in phone_digits(address):
+            return True
+    return False
+
+
+def command_sms(arguments):
+    window_start, window_end = parse_day_range(arguments.date)
+    show_date = window_end - window_start > DAY_MS
+    connection = open_readonly_database()
+    rows = connection.execute(
+        "SELECT * FROM records WHERE type = 'sms' AND local_t >= ? AND local_t < ? ORDER BY t, rowid",
+        (window_start, window_end),
+    ).fetchall()
+    search_needle = arguments.search.lower() if arguments.search else None
+    lines = []
+    for row in rows:
+        if arguments.who and not sms_matches_who(row, arguments.who):
+            continue
+        if search_needle and search_needle not in ("%s\n%s" % (row_value(row, "subject") or "", row["text"] or "")).lower():
+            continue
+        lines.append(format_sms(row, show_date))
+    emit(lines or ["조건에 맞는 문자 없음"])
+
+
 def show_new_notifications():
     """지난 --new 뒤에 쌓인 알림을 쌓인 순서(rowid)로 300건까지 골라 시각 순으로 출력
 
@@ -930,6 +1083,12 @@ def build_parser():
         "--new", action="store_true",
         help="지난 --new 뒤에 쌓인 알림만 (날짜, --app, --search와 함께 쓸 수 없음)")
     notifications.set_defaults(handler=command_notifications)
+
+    sms = commands.add_parser("sms", help="문자 조회")
+    sms.add_argument("date", help="YYYY-MM-DD 또는 YYYY-MM-DD~YYYY-MM-DD")
+    sms.add_argument("--who", help="상대 이름이나 번호에 포함된 글자")
+    sms.add_argument("--search", help="제목·본문에 포함된 글자")
+    sms.set_defaults(handler=command_sms)
 
     home = commands.add_parser("home", help="집에 있던 구간")
     home.add_argument("date", help="YYYY-MM-DD 또는 YYYY-MM-DD~YYYY-MM-DD")
