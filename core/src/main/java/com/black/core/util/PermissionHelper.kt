@@ -257,10 +257,30 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             Util.startActivitySafely(context, intent)
         }
 
-        /** 접근성 권한 있는지 체크 */
-        fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
-            val expectedComponentName = ComponentName(context, service)
+        /**
+         * 이 앱이 매니페스트에 선언한 접근성 서비스, 선언이 없으면 null
+         *
+         * 앱의 접근성 서비스는 하나로 합쳐 두므로 첫 항목 사용.
+         * 기능 모듈은 앱 모듈의 서비스 클래스를 참조할 수 없어 매니페스트 선언으로 찾음
+         */
+        fun findAccessibilityService(context: Context): ComponentName? {
+            val intent = Intent(AccessibilityService.SERVICE_INTERFACE).setPackage(context.packageName)
+            val serviceInfo = context.packageManager.queryIntentServices(intent, 0).firstOrNull()?.serviceInfo
+                ?: return null
+            return ComponentName(serviceInfo.packageName, serviceInfo.name)
+        }
 
+        /** 이 앱의 접근성 서비스([findAccessibilityService])가 켜져 있는지 체크 */
+        fun isAccessibilityServiceEnabled(context: Context): Boolean {
+            val componentName = findAccessibilityService(context) ?: return false
+            return isAccessibilityServiceEnabled(context, componentName)
+        }
+
+        /** 접근성 권한 있는지 체크 */
+        fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean =
+            isAccessibilityServiceEnabled(context, ComponentName(context, service))
+
+        private fun isAccessibilityServiceEnabled(context: Context, expectedComponentName: ComponentName): Boolean {
             val enabledServicesSetting = Settings.Secure.getString(
                 context.contentResolver,
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
@@ -278,9 +298,20 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             Util.startActivitySafely(context, intent)
         }
 
+        /** 이 앱의 접근성 서비스([findAccessibilityService]) 상세 설정 화면 표시, 선언이 없으면 접근성 설정 목록 */
+        fun openAccessibilityServiceDetailSetting(context: Context) {
+            val componentName = findAccessibilityService(context)
+                ?: return openAccessibilitySetting(context)
+            openAccessibilityServiceDetailSetting(context, componentName)
+        }
+
         /** 특정 접근성 서비스 상세 설정 화면 표시(차단·미지원 시 접근성 설정 목록에서 해당 서비스 하이라이트) */
         fun openAccessibilityServiceDetailSetting(context: Context, service: Class<out AccessibilityService>) {
-            val componentName = ComponentName(context, service).flattenToString()
+            openAccessibilityServiceDetailSetting(context, ComponentName(context, service))
+        }
+
+        private fun openAccessibilityServiceDetailSetting(context: Context, service: ComponentName) {
+            val componentName = service.flattenToString()
 
             // Settings에 공개 상수가 없는 액션, Android 16부터 시스템 권한이 필요해 SecurityException 발생
             val detailIntent = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")

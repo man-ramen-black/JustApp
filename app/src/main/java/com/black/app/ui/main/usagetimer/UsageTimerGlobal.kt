@@ -16,7 +16,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * UsageTimerAccessibility에서 UsageTimer 동작 구현
+ * [UsageTimerWindowHandler]에서 UsageTimer 동작 구현
  * Created by jinhyuk.lee on 2022/04/29
  **/
 object UsageTimerGlobal {
@@ -272,7 +272,7 @@ object UsageTimerGlobal {
     /**
      * 표시 중인 타이머의 경과 시간 초기화
      *
-     * 화면을 껐다 켜면 새 사용 세션으로 보고 경과 시간을 0부터 다시 시작하도록 [UsageTimerAccessibility]가 화면이 켜질 때 호출
+     * 화면을 껐다 켜면 새 사용 세션으로 보고 경과 시간을 0부터 다시 시작하도록 [UsageTimerWindowHandler]가 화면이 켜질 때 호출
      */
     fun resetTimer() {
         if (sessionStartElapsedMillis != null) {

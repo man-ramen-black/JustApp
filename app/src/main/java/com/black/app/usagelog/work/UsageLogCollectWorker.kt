@@ -17,7 +17,7 @@ import kotlinx.coroutines.CancellationException
  *
  * 정리·수집이 실패해도 저장된 알림·Wi-Fi 기록이 전송되도록 항상 전송 작업을 예약하고 성공으로 끝냄.
  *
- * hilt-work를 쓰지 않고 저장소를 직접 만듦(기존 `UsageTimerAccessibility`와 같은 방식).
+ * hilt-work를 쓰지 않고 저장소를 직접 만듦(기존 `AppAccessibilityService`와 같은 방식).
  */
 class UsageLogCollectWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 

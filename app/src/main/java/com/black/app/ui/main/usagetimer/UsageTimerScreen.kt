@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
+import com.black.app.service.AppAccessibilityService
 import com.black.app.ui.common.selectapp.AppIconImage
 import com.black.app.ui.common.selectapp.SelectAppDialogFragment
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
@@ -106,7 +107,7 @@ fun UsageTimerScreen(
                 UsageTimerGlobal.detachAllViews()
             }
             is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
-                PermissionHelper.openAccessibilityServiceDetailSetting(context, UsageTimerAccessibility::class.java)
+                PermissionHelper.openAccessibilityServiceDetailSetting(context, AppAccessibilityService::class.java)
             }
             is UsageTimerViewModel.EventOpenSelectApp -> {
                 val activity = context.fragmentActivity() ?: return@CollectEvents

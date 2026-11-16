@@ -7,6 +7,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
+import com.black.app.service.AppAccessibilityService
 import com.black.app.testutil.BaseUiTest
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -17,7 +18,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 /**
- * 접근성 서비스를 UiAutomator로 직접 켜고 선택 앱 포그라운드 시 UsageTimer가
+ * 앱 접근성 서비스([AppAccessibilityService])를 UiAutomator로 직접 켜고 선택 앱 포그라운드 시 UsageTimer가
  * 노출된 뒤 사라지지 않고 유지되는지 검증하는 계측 테스트
  *
  * 계측 중에도 이 앱의 접근성 서비스가 바인딩되는 것은 `HiltTestRunner`가 UiAutomation의 접근성 서비스 억제를 끄기 때문
@@ -26,7 +27,7 @@ import org.junit.runners.MethodSorters
  *
  * 사용자가 켜 둔 다른 접근성 서비스는 그대로 두고 이 서비스만 더해 켬.
  * 접근성 설정·오버레이 표시 권한·선택 앱은 테스트 후 테스트 전 값으로 되돌림
- * 바인딩 확인은 개발 앱 서비스 라벨((Dev)JustApp - UsageTimer)로 해 같은 기기의 실사용 앱 서비스와 구분
+ * 바인딩 확인은 개발 앱 서비스 라벨((Dev)JustApp)로 해 같은 기기의 실사용 앱 서비스와 구분
  *
  * 잠금 중에는 오버레이 창이 표시되지 않고 홈 앱도 포그라운드가 되지 않아,
  * `UsageTimerViewUiTest`와 같이 화면을 켜고 잠금 해제를 시도한 뒤 그래도 잠겨 있으면 실패 대신 건너뜀
@@ -42,7 +43,7 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
     private val repository = UsageTimerRepository(context)
 
     /** 이 앱의 접근성 서비스 컴포넌트(패키지는 설치한 빌드의 applicationId) */
-    private val accessibilityComponentName = ComponentName(context, UsageTimerAccessibility::class.java)
+    private val accessibilityComponentName = ComponentName(context, AppAccessibilityService::class.java)
 
     // 리소스 이름의 패키지 부분을 applicationId·namespace 중 하나로 가정하지 않고 실제 리소스 이름(패키지:id/timer)으로 조회
     private val timerSelector = By.res(context.resources.getResourceName(R.id.timer))
@@ -166,7 +167,7 @@ class UsageTimerAccessibilityUiTest : BaseUiTest() {
         val afterHeader = dump.substring(start + BOUND_SERVICES_HEADER.length)
         val end = NEXT_SERVICES_HEADER.find(afterHeader)?.range?.first ?: afterHeader.length
         val boundSection = afterHeader.substring(0, end)
-        return boundSection.contains(context.getString(R.string.accessibility_service_label_usage_timer))
+        return boundSection.contains(context.getString(R.string.accessibility_service_label))
     }
 
     companion object {

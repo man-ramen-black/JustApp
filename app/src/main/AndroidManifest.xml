@@ -137,9 +137,10 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".ui.main.usagetimer.UsageTimerAccessibility"
+        <!-- 앱의 유일한 접근성 서비스(사용 타이머, 플로팅 버튼 뒤로 가기), 기능 모듈은 매니페스트 선언으로 이 서비스를 찾음 -->
+        <service android:name=".service.AppAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:label="@string/accessibility_service_label_usage_timer"
+            android:label="@string/accessibility_service_label"
             android:exported="true"
             >
             <intent-filter>
@@ -148,7 +149,7 @@
 
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/usage_timer_accessibility_config" />
+                android:resource="@xml/accessibility_service_config" />
         </service>
 
         <!-- 빠른 설정창 화면 켜짐 유지 타일 -->

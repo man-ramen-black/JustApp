@@ -111,8 +111,8 @@
     <string name="sleep_routine_end_time_passed">종료 예정 시각이 지났습니다.\n종료를 눌러 마무리해주세요.</string>
     <string name="sleep_routine_shortcut_guide">JustApp 아이콘을 길게 눌러 수면 루틴 바로가기를 홈 화면에 추가할 수 있습니다.</string>
 
-    <string name="accessibility_service_label_usage_timer">JustApp - UsageTimer</string>
-    <string name="accessibility_usage_timer_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우기 위해 접근성 서비스를 활성화합니다.</string>
+    <string name="accessibility_service_label">JustApp</string>
+    <string name="accessibility_service_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우고, 플로팅 버튼의 뒤로 가기를 실행합니다.</string>
 
     <string name="usage_timer_section_overlay">타이머 표시</string>
     <string name="usage_timer_show">타이머 띄우기</string>

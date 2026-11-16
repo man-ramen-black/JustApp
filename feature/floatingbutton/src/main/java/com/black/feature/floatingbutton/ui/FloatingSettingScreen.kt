@@ -22,7 +22,6 @@ import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 import com.black.feature.floatingbutton.R
-import com.black.feature.floatingbutton.service.FloatingAccessibilityService
 
 /**
  * [FloatingSettingScreen] 요소의 testTag
@@ -59,7 +58,7 @@ fun FloatingSettingScreen(
                 PermissionHelper.showDrawOverlaysSetting(context)
             }
             is FloatingSettingViewModel.EventOpenAccessibilitySettings -> {
-                PermissionHelper.openAccessibilityServiceDetailSetting(context, FloatingAccessibilityService::class.java)
+                PermissionHelper.openAccessibilityServiceDetailSetting(context)
             }
             else -> Unit
         }

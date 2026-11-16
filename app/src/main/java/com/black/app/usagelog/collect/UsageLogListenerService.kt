@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 /**
  * 알림 접근 권한으로 알림 게시와 제거를 기록하는 서비스
  *
- * 기존 서비스(`UsageTimerAccessibility`)처럼 Hilt 주입 없이 저장소를 직접 만듦(서비스에 `@AndroidEntryPoint`를 쓰는 곳이 없음).
+ * 기존 서비스(`AppAccessibilityService`)처럼 Hilt 주입 없이 저장소를 직접 만듦(서비스에 `@AndroidEntryPoint`를 쓰는 곳이 없음).
  * 알림 제목·본문은 로그에 남기지 않음.
  */
 class UsageLogListenerService : NotificationListenerService() {

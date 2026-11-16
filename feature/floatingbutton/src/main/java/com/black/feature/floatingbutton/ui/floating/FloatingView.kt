@@ -10,6 +10,7 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
+import com.black.core.service.GlobalActionRequest
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
 import com.black.core.util.Util
@@ -17,7 +18,6 @@ import com.black.core.view.MovableOverlayView
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import com.black.feature.floatingbutton.databinding.ViewFloatingBinding
-import com.black.feature.floatingbutton.service.FloatingAccessibilityService
 
 class FloatingView : MovableOverlayView<ViewFloatingBinding> {
 
@@ -65,14 +65,14 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
     }
 
     fun goBack() {
-        if (!PermissionHelper.isAccessibilityServiceEnabled(context, FloatingAccessibilityService::class.java)) {
+        if (!PermissionHelper.isAccessibilityServiceEnabled(context)) {
             Toast.makeText(context, R.string.floating_accessibility_required, Toast.LENGTH_SHORT)
                 .show()
-            PermissionHelper.openAccessibilityServiceDetailSetting(context, FloatingAccessibilityService::class.java)
+            PermissionHelper.openAccessibilityServiceDetailSetting(context)
             return
         }
 
-        context.sendBroadcast(FloatingAccessibilityService.createRequestBackIntent(context))
+        context.sendBroadcast(GlobalActionRequest.createBackIntent(context))
     }
 
     fun lowerVolume() {

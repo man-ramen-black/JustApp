@@ -21,9 +21,9 @@ class FloatingButtonController @Inject constructor(
     /** 플로팅 버튼 서비스 실행 여부 */
     val running: StateFlow<Boolean> = FloatingForegroundService.running
 
-    /** 뒤로 가기 버튼이 쓰는 [FloatingAccessibilityService] 사용 여부 */
+    /** 뒤로 가기 버튼이 쓰는 앱 접근성 서비스 사용 여부 */
     fun isAccessibilityServiceEnabled(): Boolean =
-        PermissionHelper.isAccessibilityServiceEnabled(appContext, FloatingAccessibilityService::class.java)
+        PermissionHelper.isAccessibilityServiceEnabled(appContext)
 
     fun start() {
         BaseForegroundService.start(appContext, FloatingForegroundService::class.java)

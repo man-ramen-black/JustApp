@@ -1,8 +1,9 @@
 package com.black.feature.floatingbutton.ui.floating
 
+import android.accessibilityservice.AccessibilityService
 import android.content.ComponentName
 import android.content.Intent
-import com.black.feature.floatingbutton.service.FloatingAccessibilityService
+import android.content.IntentFilter
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,15 +22,21 @@ class FloatingViewTest : BaseTest() {
     private val application = RuntimeEnvironment.getApplication()
 
     /**
-     * 접근성 서비스가 꺼져 있으면 뒤로 가기 버튼이 이 기능의 접근성 상세 화면을 여는지 검증
+     * 접근성 서비스가 꺼져 있으면 뒤로 가기 버튼이 앱 접근성 서비스의 상세 화면을 여는지 검증
      *
-     * Given: 접근성 서비스 꺼짐(활성 서비스 설정 없음), 애플리케이션 컨텍스트의 FloatingView
+     * Given: 앱 접근성 서비스 선언, 서비스 꺼짐(활성 서비스 설정 없음), 애플리케이션 컨텍스트의 FloatingView
      * When: goBack 호출
-     * Then: 안내 토스트, ACCESSIBILITY_DETAILS_SETTINGS 인텐트에 FloatingAccessibilityService 컴포넌트 이름과 FLAG_ACTIVITY_NEW_TASK 포함
+     * Then: 안내 토스트, ACCESSIBILITY_DETAILS_SETTINGS 인텐트에 선언한 서비스 컴포넌트 이름과 FLAG_ACTIVITY_NEW_TASK 포함
      */
     @Test
     fun test_01_goBackOpensAccessibilityDetailWhenDisabled() = runTest {
         /** Given **/
+        // 앱 모듈이 선언하는 접근성 서비스를 기능 모듈 테스트에서 대신 등록
+        val service = ComponentName(application.packageName, "${application.packageName}.TestAccessibilityService")
+        shadowOf(application.packageManager).apply {
+            addServiceIfNotPresent(service)
+            addIntentFilterForService(service, IntentFilter(AccessibilityService.SERVICE_INTERFACE))
+        }
         val view = FloatingView(application)
 
         /** When **/
@@ -39,10 +46,7 @@ class FloatingViewTest : BaseTest() {
         assertEquals("접근성 설정이 필요합니다.", ShadowToast.getTextOfLatestToast())
         val intent = shadowOf(application).nextStartedActivity
         assertEquals(ACTION_ACCESSIBILITY_DETAILS_SETTINGS, intent.action)
-        assertEquals(
-            ComponentName(application, FloatingAccessibilityService::class.java).flattenToString(),
-            intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME),
-        )
+        assertEquals(service.flattenToString(), intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME))
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
 
