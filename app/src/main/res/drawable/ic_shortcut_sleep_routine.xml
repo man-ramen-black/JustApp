@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 수면 루틴 정적 바로가기 아이콘, Material Icons hotel(침대에 누운 사람) -->
+<!-- 스마트 런처 홈 화면의 흰 글리프 아이콘처럼 배경 없이 글리프가 아이콘 크기를 채우도록 일반 벡터로 제공 -->
+<!-- 적응형 아이콘이면 런처 마스크(원형 등)가 이 크기의 글리프 모서리를 자르고, 안전 영역에 맞추면 다른 아이콘보다 작아짐 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#E5E5E5"
+        android:pathData="M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3zM19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z" />
+</vector>

@@ -14,7 +14,7 @@
 
     <shortcut
         android:shortcutId="shortcut_sleep_routine"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_shortcut_sleep_routine"
         android:shortcutShortLabel="@string/shortcut_sleep_routine_label">
         <intent
             android:action="android.intent.action.VIEW"
