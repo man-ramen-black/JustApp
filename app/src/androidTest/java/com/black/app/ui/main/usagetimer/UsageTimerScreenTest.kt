@@ -1,6 +1,7 @@
 package com.black.app.ui.main.usagetimer
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.hasNoClickAction
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
@@ -9,6 +10,7 @@ import com.black.app.testutil.assertDisplayed
 import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
+import com.black.core.util.PermissionHelper
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -63,7 +65,8 @@ class UsageTimerScreenTest : BaseUiTest() {
         assertTagExists(UsageTimerTestTags.SAVE_BUTTON)
         assertTagExists(UsageTimerTestTags.PAUSE_BUTTON)
         assertTagExists(UsageTimerTestTags.CANCEL_BUTTON)
-        assertTagExists(UsageTimerTestTags.ACCESSIBILITY_BUTTON)
+        assertTagExists(UsageTimerTestTags.ACCESSIBILITY_STATUS)
+        assertTagExists(UsageTimerTestTags.OVERLAY_STATUS)
         assertTagExists(UsageTimerTestTags.SELECT_APP_BUTTON)
         assertTagNotExists(UsageTimerTestTags.PAUSE_INFO)
     }
@@ -76,7 +79,8 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 타이머 띄우기/저장/일시정지/일시정지 해제/접근성 서비스 설정/앱 선택 한국어 라벨 텍스트 존재
+     * - 타이머 띄우기/저장/일시정지/일시정지 해제/앱 선택 한국어 라벨 텍스트 존재
+     * - 이전 접근성 서비스 설정 버튼 문구 "접근성 서비스 설정" 미존재
      */
     @Test
     fun test_02_buttonsDisplayExpectedLabels() {
@@ -91,8 +95,8 @@ class UsageTimerScreenTest : BaseUiTest() {
         assertTagText(UsageTimerTestTags.SAVE_BUTTON, "저장")
         assertTagText(UsageTimerTestTags.PAUSE_BUTTON, "일시정지")
         assertTagText(UsageTimerTestTags.CANCEL_BUTTON, "일시정지 해제")
-        assertTagText(UsageTimerTestTags.ACCESSIBILITY_BUTTON, "접근성 서비스 설정")
         assertTagText(UsageTimerTestTags.SELECT_APP_BUTTON, "앱 선택")
+        assertTextNotExists("접근성 서비스 설정")
     }
 
     /**
@@ -171,7 +175,7 @@ class UsageTimerScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 타이머 표시/설정/선택한 앱 캡션 존재
+     * - 권한/타이머 표시/설정/선택한 앱 캡션 존재
      * - TOOL/OVERLAY/SETTINGS/SELECTED APPS 캡션 미존재
      */
     @Test
@@ -183,6 +187,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         // 캡션은 정적이므로 별도 조작 없이 검증
 
         /** Then **/
+        assertTextExists("권한")
         assertTextExists("타이머 표시")
         assertTextExists("설정")
         assertTextExists("선택한 앱")
@@ -276,5 +281,137 @@ class UsageTimerScreenTest : BaseUiTest() {
         /** Then **/
         assertTagNotExists(OverlayPermissionDialogTestTags.DIALOG)
         assertTagDisplayed(UsageTimerTestTags.TITLE)
+    }
+
+    /**
+     * 권한 섹션의 두 행이 현재 권한 상태를 표시하는지 검증
+     *
+     * Given:
+     * - UsageTimerScreen 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음, 기기의 현재 권한 상태를 기대값으로 조회)
+     * Then:
+     * - 접근성 서비스 행에 라벨과 켜짐 여부에 맞는 상태 문구 표시
+     * - 다른 앱 위에 표시 행에 라벨과 허용 여부에 맞는 상태 문구 표시
+     *
+     * 클릭으로 설정 화면을 여는 동작은 ViewModel 유닛 테스트로 검증
+     */
+    @Test
+    fun test_10_permissionRowsShowCurrentStatus() {
+        /** Given **/
+        hostUsageTimerScreen()
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        val accessibilityValue = context.getString(
+            if (PermissionHelper.isAccessibilityServiceEnabled(context)) {
+                R.string.permission_status_allowed
+            } else {
+                R.string.permission_status_required
+            }
+        )
+        val overlayValue = context.getString(
+            if (PermissionHelper.canDrawOverlays(context)) {
+                R.string.permission_status_allowed
+            } else {
+                R.string.permission_status_required
+            }
+        )
+        assertTagTextContains(UsageTimerTestTags.ACCESSIBILITY_STATUS, "접근성 서비스", accessibilityValue)
+        assertTagTextContains(UsageTimerTestTags.OVERLAY_STATUS, "다른 앱 위에 표시", overlayValue)
+    }
+
+    /** [uiState]를 주입한 UsageTimerContent를 HiltTestActivity에 setContent로 호스팅 */
+    private fun hostUsageTimerContent(
+        uiState: UsageTimerUiState,
+        onClickAccessibility: () -> Unit = {},
+        onClickOverlaySettings: () -> Unit = {},
+    ) {
+        onHostActivity { activity ->
+            activity.setContent {
+                BlackTheme {
+                    UsageTimerContent(
+                        uiState = uiState,
+                        onNavigateUp = {},
+                        onPauseDurationInputChanged = {},
+                        onClickShow = {},
+                        onClickSave = {},
+                        onClickPause = {},
+                        onClickCancelPause = {},
+                        onClickAccessibility = onClickAccessibility,
+                        onClickOverlaySettings = onClickOverlaySettings,
+                        onClickSelectApp = {},
+                        onFinishTimer = {},
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * 권한이 필요한 상태에서 각 권한 행을 누르면 자기 설정 이동 콜백만 호출되는지 검증
+     *
+     * 기기의 접근성 설정을 바꾸지 않도록 UsageTimerContent에 상태를 직접 주입
+     *
+     * Given:
+     * - 접근성 서비스 꺼짐, 다른 앱 위에 표시 거부 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 접근성 서비스 행 클릭 후 다른 앱 위에 표시 행 클릭
+     * Then:
+     * - 두 행 모두 "허용 필요" 표시
+     * - 접근성 콜백 1회, 오버레이 콜백 1회
+     */
+    @Test
+    fun test_11_clickRequiredPermissionRowsCallsOwnCallbacks() {
+        /** Given **/
+        var accessibilityClickCount = 0
+        var overlayClickCount = 0
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(accessibilityServiceEnabled = false, overlayPermissionGranted = false),
+            onClickAccessibility = { accessibilityClickCount++ },
+            onClickOverlaySettings = { overlayClickCount++ },
+        )
+
+        /** When **/
+        clickTag(UsageTimerTestTags.ACCESSIBILITY_STATUS)
+        clickTag(UsageTimerTestTags.OVERLAY_STATUS)
+
+        /** Then **/
+        val requiredValue = context.getString(R.string.permission_status_required)
+        assertTagTextContains(UsageTimerTestTags.ACCESSIBILITY_STATUS, "접근성 서비스", requiredValue)
+        assertTagTextContains(UsageTimerTestTags.OVERLAY_STATUS, "다른 앱 위에 표시", requiredValue)
+        assertEquals(1, accessibilityClickCount)
+        assertEquals(1, overlayClickCount)
+    }
+
+    /**
+     * 권한이 모두 허용된 상태에서 권한 행이 허용으로 표시되고 누를 수 없는지 검증
+     *
+     * Given:
+     * - 접근성 서비스 켜짐, 다른 앱 위에 표시 허용 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - 두 행 모두 "허용됨" 표시
+     * - 두 행 모두 클릭 동작 없음
+     */
+    @Test
+    fun test_12_allowedPermissionRowsHaveNoClickAction() {
+        /** Given **/
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(accessibilityServiceEnabled = true, overlayPermissionGranted = true),
+        )
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        val allowedValue = context.getString(R.string.permission_status_allowed)
+        listOf(UsageTimerTestTags.ACCESSIBILITY_STATUS, UsageTimerTestTags.OVERLAY_STATUS).forEach { tag ->
+            assertTagTextContains(tag, allowedValue)
+            assertTagMatches(tag, hasNoClickAction())
+        }
     }
 }

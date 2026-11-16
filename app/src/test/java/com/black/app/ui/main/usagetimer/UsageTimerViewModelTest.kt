@@ -4,6 +4,7 @@ import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.util.InstalledAppResolver
 import com.black.app.util.mockInstalledApps
+import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.OverlayPermissionStatus
 import com.black.test.BaseTest
 import com.black.test.collectValues
@@ -38,6 +39,9 @@ class UsageTimerViewModelTest : BaseTest() {
     @MockK
     lateinit var overlayPermissionStatus: OverlayPermissionStatus
 
+    @MockK
+    lateinit var accessibilityServiceStatus: AccessibilityServiceStatus
+
     @Before
     fun setupViewModel() {
         coEvery { repository.getPauseDuration() } returns 3
@@ -45,10 +49,11 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.getSelectedApps() } returns listOf("com.a", "com.b")
         installedAppResolver.mockInstalledApps()
         every { overlayPermissionStatus.canDrawOverlays() } returns true
+        every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns false
     }
 
     /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
-    private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver, overlayPermissionStatus)
+    private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver, overlayPermissionStatus, accessibilityServiceStatus)
         .also { waitCoroutine() }
 
     /**
@@ -334,5 +339,58 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Then **/
         assertFalse(viewModel.uiState.value.showOverlayPermissionDialog)
         assertEquals(UsageTimerViewModel.EventOpenAccessibilitySettings, receivedEvents[0])
+    }
+
+    /**
+     * 권한 상태 갱신이 접근성 서비스 켜짐과 다른 앱 위에 표시 허용 여부를 UiState에 반영하는지 검증
+     *
+     * Given: 접근성 서비스 켜짐, 다른 앱 위에 표시 거부
+     * When: refreshStatus 호출
+     * Then: accessibilityServiceEnabled true, overlayPermissionGranted false
+     * 반대 조합(접근성 꺼짐, 표시 허용)도 같은 방식으로 반영
+     */
+    @Test
+    fun test_13_refreshStatusReflectsPermissionStatus() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns true
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
+
+        /** When **/
+        viewModel.refreshStatus()
+
+        /** Then **/
+        assertTrue(viewModel.uiState.value.accessibilityServiceEnabled)
+        assertFalse(viewModel.uiState.value.overlayPermissionGranted)
+
+        /** When **/
+        every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns false
+        every { overlayPermissionStatus.canDrawOverlays() } returns true
+        viewModel.refreshStatus()
+
+        /** Then **/
+        assertFalse(viewModel.uiState.value.accessibilityServiceEnabled)
+        assertTrue(viewModel.uiState.value.overlayPermissionGranted)
+    }
+
+    /**
+     * 생성 직후 UiState가 현재 권한 상태를 반영하는지 검증
+     *
+     * Given: 접근성 서비스 켜짐, 다른 앱 위에 표시 거부
+     * When: ViewModel 생성(초기 로드 완료 대기)
+     * Then: refreshStatus 호출 없이 accessibilityServiceEnabled true, overlayPermissionGranted false
+     */
+    @Test
+    fun test_14_initReflectsPermissionStatus() = runTest {
+        /** Given **/
+        every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns true
+        every { overlayPermissionStatus.canDrawOverlays() } returns false
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertTrue(viewModel.uiState.value.accessibilityServiceEnabled)
+        assertFalse(viewModel.uiState.value.overlayPermissionGranted)
     }
 }
