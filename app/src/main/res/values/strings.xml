@@ -83,6 +83,7 @@
     <string name="sleep_routine_failed_do_not_disturb">방해 금지 접근 권한이 없어 방해 금지를 켜지 못했습니다.</string>
     <string name="sleep_routine_failed_sleep_tracking">Sleep as Android를 실행하지 못했습니다.</string>
     <string name="sleep_routine_failed_youtube">YouTube를 열지 못했습니다.</string>
+    <string name="sleep_routine_failed_screen_off">접근성 서비스가 꺼져 있어 화면을 끄지 못했습니다.</string>
     <string name="fragment_name_sleep_routine">수면 루틴</string>
     <string name="sleep_routine_section_youtube">YouTube</string>
     <string name="sleep_routine_youtube_url_label">YouTube URL</string>
@@ -96,14 +97,10 @@
     <string name="sleep_routine_save_completed">저장되었습니다.</string>
     <string name="sleep_routine_save_failed">저장에 실패했습니다.</string>
     <string name="sleep_routine_input_invalid">입력값을 확인해주세요.</string>
-    <string name="sleep_routine_section_permission">권한</string>
     <string name="sleep_routine_permission_do_not_disturb">방해 금지 접근</string>
-    <string name="sleep_routine_permission_overlay">다른 앱 위에 표시</string>
     <string name="sleep_routine_permission_notification_listener">알림 접근</string>
     <string name="sleep_routine_permission_notification">알림 표시</string>
-    <string name="sleep_routine_status_allowed">허용</string>
-    <string name="sleep_routine_status_required">필요</string>
-    <string name="sleep_routine_permission_guide">다른 앱 위에 표시는 YouTube와 홈 화면을 띄우는 데 필요합니다.\n알림 접근은 YouTube 재생 상태를 확인하는 데 필요합니다.</string>
+    <string name="sleep_routine_permission_guide">다른 앱 위에 표시는 YouTube와 홈 화면을 띄우는 데 필요합니다.\n알림 접근은 YouTube 재생 상태를 확인하는 데 필요합니다.\n접근성 서비스는 YouTube를 백그라운드 재생으로 넘긴 뒤 화면을 끄는 데 필요합니다.</string>
     <string name="sleep_routine_section_run">실행</string>
     <string name="sleep_routine_start">지금 시작</string>
     <string name="sleep_routine_stop">종료</string>
@@ -112,7 +109,7 @@
     <string name="sleep_routine_shortcut_guide">JustApp 아이콘을 길게 눌러 수면 루틴 바로가기를 홈 화면에 추가할 수 있습니다.</string>
 
     <string name="accessibility_service_label">JustApp</string>
-    <string name="accessibility_service_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우고, 플로팅 버튼의 뒤로 가기를 실행합니다.</string>
+    <string name="accessibility_service_description">선택한 앱을 사용할 때 앱 사용 타이머를 띄우고, 플로팅 버튼의 뒤로 가기와 수면 루틴의 화면 끄기를 실행합니다.</string>
 
     <string name="usage_timer_section_overlay">타이머 표시</string>
     <string name="usage_timer_show">타이머 띄우기</string>
@@ -123,7 +120,6 @@
     <string name="usage_timer_cancel_pause">일시정지 해제</string>
     <string name="usage_timer_pause_remain">남은 일시정지 시간</string>
     <string name="usage_timer_section_settings">설정</string>
-    <string name="usage_timer_accessibility">접근성 서비스 설정</string>
     <string name="usage_timer_section_selected_apps">선택한 앱</string>
     <string name="usage_timer_selected_apps_empty">선택한 앱이 없습니다.</string>
     <string name="usage_timer_save_completed">저장되었습니다.</string>
@@ -178,7 +174,6 @@
     <string name="app_install_notification_icon_shared">설치·업데이트 알림 공통 아이콘</string>
     <string name="usage_log_listener_label">기기 사용 기록</string>
     <string name="usage_log_section_collection">수집</string>
-    <string name="usage_log_section_permission">권한</string>
     <string name="usage_log_section_home_wifi">집 Wi-Fi</string>
     <string name="usage_log_section_send">전송</string>
     <string name="usage_log_section_recent">최근 기록</string>
@@ -189,8 +184,6 @@
     <string name="usage_log_permission_sms">문자</string>
     <string name="usage_log_permission_contacts">연락처</string>
     <string name="usage_log_permission_battery">배터리 사용량 제한 없음</string>
-    <string name="usage_log_status_allowed">허용됨</string>
-    <string name="usage_log_status_required">허용 필요</string>
     <string name="usage_log_status_precise_location_required">정확한 위치 필요</string>
     <string name="usage_log_status_location_off">위치 꺼짐</string>
     <string name="usage_log_register_wifi">지금 연결된 %1$s 등록</string>

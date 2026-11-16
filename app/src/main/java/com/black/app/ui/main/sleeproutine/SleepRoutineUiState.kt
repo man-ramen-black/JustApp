@@ -32,6 +32,8 @@ data class SleepRoutineUiState(
     val notificationListenerEnabled: Boolean = false,
     /** 알림 표시 허용 여부 */
     val notificationsEnabled: Boolean = false,
+    /** 접근성 서비스 켜짐 여부 */
+    val accessibilityServiceEnabled: Boolean = false,
 ) {
     /**
      * 수면 루틴 진행 중 여부

@@ -33,6 +33,8 @@ class SleepRoutineViewModel @Inject constructor(
     data object EventOpenNotificationListenerSettings : SleepRoutineEvent()
     /** 앱 알림 설정 화면 이동 */
     data object EventOpenNotificationSettings : SleepRoutineEvent()
+    /** 접근성 서비스 설정 화면 이동 */
+    data object EventOpenAccessibilitySettings : SleepRoutineEvent()
     /** 문자열 리소스 토스트 표시 */
     data class EventShowToast(@StringRes val messageResId: Int) : SleepRoutineEvent()
 
@@ -82,6 +84,7 @@ class SleepRoutineViewModel @Inject constructor(
                 overlayGranted = systemStatus.canDrawOverlays(),
                 notificationListenerEnabled = systemStatus.isNotificationListenerEnabled(),
                 notificationsEnabled = systemStatus.canShowNotification(),
+                accessibilityServiceEnabled = systemStatus.isAccessibilityServiceEnabled(),
             )
         }
     }
@@ -137,6 +140,10 @@ class SleepRoutineViewModel @Inject constructor(
 
     fun openNotificationSettings() {
         sendEvent(EventOpenNotificationSettings)
+    }
+
+    fun openAccessibilitySettings() {
+        sendEvent(EventOpenAccessibilitySettings)
     }
 
     /**

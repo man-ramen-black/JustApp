@@ -318,6 +318,7 @@ class SleepRoutineService : BaseForegroundService(), ServiceActivityTarget {
                 SleepRoutineFailure.DO_NOT_DISTURB -> R.string.sleep_routine_failed_do_not_disturb
                 SleepRoutineFailure.SLEEP_TRACKING -> R.string.sleep_routine_failed_sleep_tracking
                 SleepRoutineFailure.YOUTUBE -> R.string.sleep_routine_failed_youtube
+                SleepRoutineFailure.SCREEN_OFF -> R.string.sleep_routine_failed_screen_off
             }
         )
     }

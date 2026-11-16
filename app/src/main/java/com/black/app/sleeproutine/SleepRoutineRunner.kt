@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * 수면 루틴 단계 순서·대기·마무리 진행
  *
  * 기기 동작은 [SleepRoutineActions]로 받아 가상 시간 유닛 테스트로 검증.
- * YouTube는 재생 중일 때 홈 화면으로 가면 PIP로 바뀌므로 일시정지 후 홈 화면으로 보내고 다시 재생해 백그라운드 재생으로 전환
+ * YouTube는 재생 중일 때 홈 화면으로 가면 PIP로 바뀌므로 일시정지 후 홈 화면으로 보내고 다시 재생해 백그라운드 재생으로 전환.
+ * 백그라운드 재생 전환 뒤 화면 끄기.
+ * 이번 실행에서 방해 금지·수면 기록이 실패했으면 화면을 끄지 않고 기기의 자동 꺼짐에 맡기며, 처음 띄운 실패 안내가 화면 끄기 시점까지 시간이 지나 사라져 있으므로 그 실패를 다시 알림
  *
  * @param onFailure 실패해 건너뛴 단계 알림(서비스의 토스트 안내)
  * @param clock 종료 시각과 비교하는 현재 시각(벽시계)
@@ -78,15 +80,30 @@ class SleepRoutineRunner(
     }
 
     private suspend fun launchApps(youtubeUrl: String, volumeLevel: Int?) {
-        if (runStep { actions.enableDoNotDisturb() } != true) reportFailure(SleepRoutineFailure.DO_NOT_DISTURB)
-        if (runStep { actions.startSleepTracking() } != true) reportFailure(SleepRoutineFailure.SLEEP_TRACKING)
+        // 방해 금지 켜기
+        val doNotDisturbEnabled = runStep { actions.enableDoNotDisturb() } == true
+        if (!doNotDisturbEnabled) reportFailure(SleepRoutineFailure.DO_NOT_DISTURB)
+        // 수면 기록 시작
+        val sleepTrackingStarted = runStep { actions.startSleepTracking() } == true
+        if (!sleepTrackingStarted) reportFailure(SleepRoutineFailure.SLEEP_TRACKING)
+        // 수면 기록 화면이 뜰 때까지 대기 뒤 볼륨 조정
         delay(SLEEP_TO_YOUTUBE_DELAY_MILLIS)
         if (volumeLevel != null) runStep { actions.applyMediaVolume(volumeLevel) }
+        // YouTube 열기, 열지 못하면 백그라운드 전환·화면 끄기 없이 종료 대기
         if (runStep { actions.openYoutube(youtubeUrl) } != true) {
             reportFailure(SleepRoutineFailure.YOUTUBE)
             return
         }
+        // 백그라운드 재생 전환
         moveYoutubeToBackground()
+        // 앞 단계가 실패했으면 화면은 기기의 자동 꺼짐에 맡기고, 사라진 실패 안내를 다시 띄움
+        if (!doNotDisturbEnabled || !sleepTrackingStarted) {
+            if (!doNotDisturbEnabled) reportFailure(SleepRoutineFailure.DO_NOT_DISTURB)
+            if (!sleepTrackingStarted) reportFailure(SleepRoutineFailure.SLEEP_TRACKING)
+            return
+        }
+        // 화면 끄기
+        if (runStep { actions.lockScreen() } != true) reportFailure(SleepRoutineFailure.SCREEN_OFF)
     }
 
     /**

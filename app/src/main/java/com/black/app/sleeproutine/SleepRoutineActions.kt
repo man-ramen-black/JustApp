@@ -29,6 +29,9 @@ interface SleepRoutineActions {
     fun playYoutube()
 
     fun pauseYoutube()
+
+    /** 화면 끄기, 접근성 서비스가 꺼져 있거나 API 28 미만이면 false */
+    fun lockScreen(): Boolean
 }
 
 /**
@@ -40,4 +43,5 @@ enum class SleepRoutineFailure {
     DO_NOT_DISTURB,
     SLEEP_TRACKING,
     YOUTUBE,
+    SCREEN_OFF,
 }

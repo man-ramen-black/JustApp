@@ -28,11 +28,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
+import com.black.app.service.AppAccessibilityService
 import com.black.app.usagelog.collect.UsageLogListenerService
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.SectionHeader
-import com.black.core.ui.component.StatusRow
+import com.black.core.ui.component.PermissionStatusRow
 import com.black.core.ui.component.SwitchRow
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
@@ -59,6 +60,7 @@ internal object SleepRoutineTestTags {
     const val OVERLAY_STATUS = "overlay_status"
     const val NOTIFICATION_LISTENER_STATUS = "notification_listener_status"
     const val NOTIFICATION_STATUS = "notification_status"
+    const val ACCESSIBILITY_STATUS = "accessibility_status"
     const val START_BUTTON = "start_button"
     const val STOP_BUTTON = "stop_button"
     const val END_TIME_TEXT = "end_time_text"
@@ -94,6 +96,9 @@ fun SleepRoutineScreen(
             is SleepRoutineViewModel.EventOpenNotificationSettings -> {
                 PermissionHelper.showAppNotificationSettings(context)
             }
+            is SleepRoutineViewModel.EventOpenAccessibilitySettings -> {
+                PermissionHelper.openAccessibilityServiceDetailSetting(context, AppAccessibilityService::class.java)
+            }
             is SleepRoutineViewModel.EventShowToast -> {
                 Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
             }
@@ -114,6 +119,7 @@ fun SleepRoutineScreen(
         onClickOverlay = viewModel::openOverlaySettings,
         onClickNotificationListener = viewModel::openNotificationListenerSettings,
         onClickNotification = viewModel::openNotificationSettings,
+        onClickAccessibility = viewModel::openAccessibilitySettings,
         onClickStart = viewModel::startRoutine,
         onClickStop = viewModel::stopRoutine,
     )
@@ -140,6 +146,7 @@ internal fun SleepRoutineContent(
     onClickOverlay: () -> Unit,
     onClickNotificationListener: () -> Unit,
     onClickNotification: () -> Unit,
+    onClickAccessibility: () -> Unit,
     onClickStart: () -> Unit,
     onClickStop: () -> Unit,
 ) {
@@ -202,7 +209,7 @@ internal fun SleepRoutineContent(
         )
 
         // 권한 섹션
-        SectionHeader(title = stringResource(R.string.sleep_routine_section_permission))
+        SectionHeader(title = stringResource(R.string.permission_section_title))
         PermissionStatusRow(
             label = stringResource(R.string.sleep_routine_permission_do_not_disturb),
             granted = uiState.doNotDisturbAccessGranted,
@@ -210,7 +217,7 @@ internal fun SleepRoutineContent(
             modifier = Modifier.testTag(SleepRoutineTestTags.DO_NOT_DISTURB_STATUS),
         )
         PermissionStatusRow(
-            label = stringResource(R.string.sleep_routine_permission_overlay),
+            label = stringResource(R.string.permission_overlay),
             granted = uiState.overlayGranted,
             onClick = onClickOverlay,
             modifier = Modifier.testTag(SleepRoutineTestTags.OVERLAY_STATUS),
@@ -226,6 +233,12 @@ internal fun SleepRoutineContent(
             granted = uiState.notificationsEnabled,
             onClick = onClickNotification,
             modifier = Modifier.testTag(SleepRoutineTestTags.NOTIFICATION_STATUS),
+        )
+        PermissionStatusRow(
+            label = stringResource(R.string.permission_accessibility_service),
+            granted = uiState.accessibilityServiceEnabled,
+            onClick = onClickAccessibility,
+            modifier = Modifier.testTag(SleepRoutineTestTags.ACCESSIBILITY_STATUS),
         )
         Text(
             text = stringResource(R.string.sleep_routine_permission_guide),
@@ -380,26 +393,3 @@ private fun VolumeLevelRow(
     }
 }
 
-/**
- * 권한 허용 여부 상태 행
- *
- * 허용되지 않았으면 행을 눌러 해당 설정 화면으로 이동
- */
-@Composable
-private fun PermissionStatusRow(
-    label: String,
-    granted: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StatusRow(
-        label = label,
-        value = if (granted) {
-            stringResource(R.string.sleep_routine_status_allowed)
-        } else {
-            stringResource(R.string.sleep_routine_status_required)
-        },
-        onClick = if (granted) null else onClick,
-        modifier = modifier,
-    )
-}

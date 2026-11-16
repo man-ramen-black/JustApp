@@ -5,6 +5,7 @@ import com.black.app.sleeproutine.MediaVolumeController
 import com.black.app.sleeproutine.SleepRoutineService
 import com.black.app.usagelog.collect.UsageLogListenerService
 import com.black.core.service.BaseForegroundService
+import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import javax.inject.Inject
  */
 class SleepRoutineSystemStatus @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val accessibilityServiceStatus: AccessibilityServiceStatus,
 ) {
     /** 수면 루틴 서비스 실행 여부 */
     val running: StateFlow<Boolean> = SleepRoutineService.running
@@ -39,6 +41,13 @@ class SleepRoutineSystemStatus @Inject constructor(
         PermissionHelper.isNotificationListenerEnabled(context, UsageLogListenerService::class.java)
 
     fun canShowNotification(): Boolean = PermissionHelper.areNotificationsEnabled(context)
+
+    /**
+     * 앱 접근성 서비스 켜짐 여부
+     *
+     * YouTube를 백그라운드 재생으로 넘긴 뒤 화면을 끄는 데 필요
+     */
+    fun isAccessibilityServiceEnabled(): Boolean = accessibilityServiceStatus.isAccessibilityServiceEnabled()
 
     fun maxVolumeLevel(): Int = MediaVolumeController(context).maxLevel()
 
