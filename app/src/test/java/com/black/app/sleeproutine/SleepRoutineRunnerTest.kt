@@ -11,7 +11,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [SleepRoutineRunner]의 단계 순서·간격, YouTube 백그라운드 전환, 종료 시각 마무리, 단계 실패 뒤 진행을 가상 시간으로 검증 */
+/** [SleepRoutineRunner]의 단계 순서·간격, YouTube 백그라운드 전환, 화면 끄기, 종료 시각 마무리, 단계 실패 뒤 진행을 가상 시간으로 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class SleepRoutineRunnerTest : BaseTest() {
@@ -22,7 +22,7 @@ class SleepRoutineRunnerTest : BaseTest() {
         private const val END_TIME_MILLIS = 3_600_000L
 
         /**
-         * 앱 실행 단계의 기기 동작 순서
+         * 앱 실행 단계 중 화면 끄기 전까지의 기기 동작 순서
          *
          * YouTube 백그라운드 전환 포함
          */
@@ -36,8 +36,14 @@ class SleepRoutineRunnerTest : BaseTest() {
             "playYoutube",
         )
 
-        /** 앱 실행 단계부터 마무리까지 끝까지 진행했을 때의 기기 동작 순서 */
-        private val COMPLETED_CALL_NAMES = LAUNCH_CALL_NAMES + listOf("pauseYoutube", "disableDoNotDisturb")
+        /** 앱 실행 단계가 모두 성공했을 때의 기기 동작 순서, 백그라운드 전환 뒤 화면 끄기 */
+        private val SCREEN_OFF_LAUNCH_CALL_NAMES = LAUNCH_CALL_NAMES + "lockScreen"
+
+        /** 마무리 단계의 기기 동작 순서 */
+        private val FINISH_CALL_NAMES = listOf("pauseYoutube", "disableDoNotDisturb")
+
+        /** 앞 단계 실패로 화면 끄기를 건너뛰고 마무리까지 진행했을 때의 기기 동작 순서 */
+        private val COMPLETED_WITHOUT_SCREEN_OFF_CALL_NAMES = LAUNCH_CALL_NAMES + FINISH_CALL_NAMES
     }
 
     private val failures = mutableListOf<SleepRoutineFailure>()
@@ -48,6 +54,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      * YouTube 상태는 마지막 명령으로 결정.
      * openYoutube 뒤 [playingDelayMillis]가 지나면 PLAYING, pauseYoutube 뒤 [pausedDelayMillis]가 지나면 PAUSED(그 전에는 일시정지 전 상태), playYoutube 뒤 PLAYING이고 처음 [ignorePlayCount]번의 playYoutube는 상태를 바꾸지 않음.
      * [pausedAfterOpen]이면 openYoutube 뒤에도 일시정지 상태로 남아 자동 재생하지 않고 playYoutube 뒤에야 PLAYING.
+     * lockScreen은 [screenLockable]을 반환하고 [lockScreenFailure]가 있으면 던짐.
      * 상태 조회는 순서 단언을 흐리지 않도록 [calls] 대신 [playbackStateQueryCount]로 집계
      */
     private class FakeSleepRoutineActions(
@@ -61,6 +68,8 @@ class SleepRoutineRunnerTest : BaseTest() {
         ignorePlayCount: Int = 0,
         private val pauseFailure: Exception? = null,
         private val pausedAfterOpen: Boolean = false,
+        private val screenLockable: Boolean = true,
+        private val lockScreenFailure: Exception? = null,
     ) : SleepRoutineActions {
         val calls = mutableListOf<String>()
         var playbackStateQueryCount = 0
@@ -146,6 +155,12 @@ class SleepRoutineRunnerTest : BaseTest() {
                 if (clock() - pausedAt >= pausedDelayMillis) YoutubePlaybackState.PAUSED else stateBeforePause()
             }
         }
+
+        override fun lockScreen(): Boolean {
+            record("lockScreen")
+            lockScreenFailure?.let { throw it }
+            return screenLockable
+        }
     }
 
     /** 대기 중 벽시계 변경을 재현하려고 [wallClockMillis]에 더하는 값 */
@@ -179,7 +194,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 열고 4초 뒤 재생 중이 되는 YouTube, 상태 조회 가능
      * When: 볼륨 6단계로 시작 후 종료 시각 직전까지 진행
-     * Then: 방해 금지·수면 기록(0) → 볼륨·YouTube 열기(3000) → 재생 확인 뒤 일시정지 → 일시정지 반영 즉시 홈 → 1초 뒤 재생 한 번, 실패 없음
+     * Then: 방해 금지·수면 기록(0) → 볼륨·YouTube 열기(3000) → 재생 확인 뒤 일시정지 → 일시정지 반영 즉시 홈 → 1초 뒤 재생 한 번 → 같은 시각 화면 끄기, 실패 없음
      */
     @Test
     fun test_01_startRunsStepsInOrderWhenPlaybackObservable() = runTest {
@@ -203,6 +218,7 @@ class SleepRoutineRunnerTest : BaseTest() {
                 "pauseYoutube@$pauseTime",
                 "goHome@$homeTime",
                 "playYoutube@${homeTime + 1_000}",
+                "lockScreen@${homeTime + 1_000}",
             ),
             actions.calls,
         )
@@ -240,7 +256,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 방해 금지 접근 권한이 없어 enableDoNotDisturb가 false
      * When: 시작해 끝까지 진행
-     * Then: onFailure(DO_NOT_DISTURB) 1회, 나머지 단계와 마무리 모두 진행
+     * Then: onFailure(DO_NOT_DISTURB)가 처음과 화면 끄기를 건너뛸 때 2회, 화면 끄기만 건너뛰고 나머지 단계와 마무리 모두 진행
      */
     @Test
     fun test_03_doNotDisturbFailureReportsAndContinues() = runTest {
@@ -253,8 +269,8 @@ class SleepRoutineRunnerTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertEquals(listOf(SleepRoutineFailure.DO_NOT_DISTURB), failures)
-        assertEquals(COMPLETED_CALL_NAMES, actions.callNames())
+        assertEquals(listOf(SleepRoutineFailure.DO_NOT_DISTURB, SleepRoutineFailure.DO_NOT_DISTURB), failures)
+        assertEquals(COMPLETED_WITHOUT_SCREEN_OFF_CALL_NAMES, actions.callNames())
     }
 
     /**
@@ -262,7 +278,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: Sleep as Android가 없어 startSleepTracking이 ActivityNotFoundException을 던짐
      * When: 시작해 끝까지 진행
-     * Then: onFailure(SLEEP_TRACKING) 1회, 나머지 단계와 마무리 모두 진행
+     * Then: onFailure(SLEEP_TRACKING)가 처음과 화면 끄기를 건너뛸 때 2회, 화면 끄기만 건너뛰고 나머지 단계와 마무리 모두 진행
      */
     @Test
     fun test_04_sleepTrackingExceptionReportsAndContinues() = runTest {
@@ -278,8 +294,8 @@ class SleepRoutineRunnerTest : BaseTest() {
         waitCoroutine()
 
         /** Then **/
-        assertEquals(listOf(SleepRoutineFailure.SLEEP_TRACKING), failures)
-        assertEquals(COMPLETED_CALL_NAMES, actions.callNames())
+        assertEquals(listOf(SleepRoutineFailure.SLEEP_TRACKING, SleepRoutineFailure.SLEEP_TRACKING), failures)
+        assertEquals(COMPLETED_WITHOUT_SCREEN_OFF_CALL_NAMES, actions.callNames())
     }
 
     /**
@@ -287,7 +303,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: openYoutube가 false
      * When: 시작해 끝까지 진행
-     * Then: onFailure(YOUTUBE), 실행 단계의 일시정지·홈·재생 없음, 마무리 일시정지만 종료 시각에 1회
+     * Then: onFailure(YOUTUBE), 실행 단계의 일시정지·홈·재생·화면 끄기 없음, 마무리 일시정지만 종료 시각에 1회
      */
     @Test
     fun test_05_youtubeOpenFailureSkipsBackgroundSwitch() = runTest {
@@ -313,7 +329,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: canObserveYoutube가 false
      * When: 시작 후 종료 시각 직전까지 진행
-     * Then: 상태 조회 0회, 일시정지 = 열기 + 5000, 홈 = 일시정지 + 1000, 재생 = 홈 + 1000이고 재생은 한 번
+     * Then: 상태 조회 0회, 일시정지 = 열기 + 5000, 홈 = 일시정지 + 1000, 재생 = 홈 + 1000이고 재생은 한 번, 재생 직후 같은 시각 화면 끄기
      */
     @Test
     fun test_06_unobservablePlaybackUsesFixedWaits() = runTest {
@@ -334,6 +350,8 @@ class SleepRoutineRunnerTest : BaseTest() {
         assertEquals(openTime + 5_000, pauseTime)
         assertEquals(pauseTime + 1_000, homeTime)
         assertEquals(homeTime + 1_000, playTime)
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES, actions.callNames())
+        assertEquals(listOf(playTime), actions.callTimes("lockScreen"))
     }
 
     /**
@@ -341,7 +359,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 열어도 재생 중이 되지 않는 YouTube(광고·느린 로딩)
      * When: 시작 후 종료 시각 직전까지 진행
-     * Then: 일시정지가 열기 3000 + 로딩 대기 2000 + 제한 시간 20000 = 25000에 실행되고 홈(25000)·재생(26000)까지 진행
+     * Then: 일시정지가 열기 3000 + 로딩 대기 2000 + 제한 시간 20000 = 25000에 실행되고 홈(25000)·재생(26000)·화면 끄기까지 진행
      */
     @Test
     fun test_07_playingTimeoutStillContinues() = runTest {
@@ -354,7 +372,7 @@ class SleepRoutineRunnerTest : BaseTest() {
         advanceCoroutineTime(END_TIME_MILLIS - 1)
 
         /** Then **/
-        assertEquals(LAUNCH_CALL_NAMES, actions.callNames())
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES, actions.callNames())
         assertEquals(listOf(25_000L), actions.callTimes("pauseYoutube"))
         assertEquals(listOf(25_000L), actions.callTimes("goHome"))
         assertEquals(listOf(26_000L), actions.callTimes("playYoutube"))
@@ -365,7 +383,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: playYoutube를 두 번 모두 무시하는 YouTube
      * When: 시작 후 종료 시각 직전까지 진행
-     * Then: playYoutube는 홈 + 1000인 8000과 재생 확인 제한 시간 3000이 지난 11000에 2회만 실행
+     * Then: playYoutube는 홈 + 1000인 8000과 재생 확인 제한 시간 3000이 지난 11000에 2회만 실행, 두 번째 재생 직후 화면 끄기
      */
     @Test
     fun test_08_ignoredResumeRetriesPlayOnce() = runTest {
@@ -378,8 +396,9 @@ class SleepRoutineRunnerTest : BaseTest() {
         advanceCoroutineTime(END_TIME_MILLIS - 1)
 
         /** Then **/
-        assertEquals(LAUNCH_CALL_NAMES + "playYoutube", actions.callNames())
+        assertEquals(LAUNCH_CALL_NAMES + "playYoutube" + "lockScreen", actions.callNames())
         assertEquals(listOf(8_000L, 11_000L), actions.callTimes("playYoutube"))
+        assertEquals(listOf(11_000L), actions.callTimes("lockScreen"))
     }
 
     /**
@@ -443,7 +462,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 가상 시각 10_000
      * When: 종료 시각 5_000으로 resume
-     * Then: 10_000에 pauseYoutube → disableDoNotDisturb만 실행, 상태 조회·실패 없음
+     * Then: 10_000에 pauseYoutube → disableDoNotDisturb만 실행(화면 끄기 없음), 상태 조회·실패 없음
      */
     @Test
     fun test_11_resumeAfterEndTimeFinishesImmediately() = runTest {
@@ -467,7 +486,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: pauseYoutube가 예외를 던짐
      * When: finish 호출
-     * Then: pauseYoutube 시도 뒤 disableDoNotDisturb 실행
+     * Then: pauseYoutube 시도 뒤 disableDoNotDisturb 실행, 화면 끄기 없음
      */
     @Test
     fun test_12_finishDisablesDoNotDisturbWhenPauseFails() = runTest {
@@ -500,7 +519,7 @@ class SleepRoutineRunnerTest : BaseTest() {
         advanceCoroutineTime(END_TIME_MILLIS - 1)
 
         /** Then **/
-        assertEquals(LAUNCH_CALL_NAMES, actions.callNames())
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES, actions.callNames())
         assertEquals(listOf(7_000L), actions.callTimes("pauseYoutube"))
         assertEquals(listOf(8_250L), actions.callTimes("goHome"))
         assertEquals(listOf(9_250L), actions.callTimes("playYoutube"))
@@ -524,7 +543,7 @@ class SleepRoutineRunnerTest : BaseTest() {
         advanceCoroutineTime(END_TIME_MILLIS - 1)
 
         /** Then **/
-        assertEquals(LAUNCH_CALL_NAMES, actions.callNames())
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES, actions.callNames())
         assertEquals(listOf(7_000L), actions.callTimes("pauseYoutube"))
         assertEquals(listOf(7_000L + SleepRoutineRunner.PAUSED_TIMEOUT_MILLIS), actions.callTimes("goHome"))
         assertEquals(listOf(11_000L), actions.callTimes("playYoutube"))
@@ -561,7 +580,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 가상 시각 10_000
      * When: 종료 시각 100_000으로 resume한 뒤 종료 시각 직전까지 진행하고 1ms 더 진행
-     * Then: 직전에는 호출 없음, 100_000에 pauseYoutube → disableDoNotDisturb만 실행 후 종료, 상태 조회·실패 없음
+     * Then: 직전에는 호출 없음, 100_000에 pauseYoutube → disableDoNotDisturb만 실행(화면 끄기 없음) 후 종료, 상태 조회·실패 없음
      */
     @Test
     fun test_16_resumeBeforeEndTimeFinishesAtEndTime() = runTest {
@@ -630,7 +649,7 @@ class SleepRoutineRunnerTest : BaseTest() {
      *
      * Given: 열어도 자동 재생하지 않고 PAUSED로 남는 YouTube
      * When: 시작 후 종료 시각 직전까지 진행
-     * Then: 로딩 대기 직후 5000에 playYoutube, PLAYING이 되자마자 같은 시각에 일시정지 → 홈, 1초 뒤 6000에 재생
+     * Then: 로딩 대기 직후 5000에 playYoutube, PLAYING이 되자마자 같은 시각에 일시정지 → 홈, 1초 뒤 6000에 재생 → 화면 끄기
      */
     @Test
     fun test_18_pausedSameVideoGetsPlayCommandAfterLoadingDelay() = runTest {
@@ -649,7 +668,7 @@ class SleepRoutineRunnerTest : BaseTest() {
         assertEquals(listOf(loadedTime), actions.callTimes("pauseYoutube"))
         assertEquals(listOf(loadedTime), actions.callTimes("goHome"))
         assertEquals(
-            LAUNCH_CALL_NAMES.toMutableList().apply { add(indexOf("pauseYoutube"), "playYoutube") },
+            SCREEN_OFF_LAUNCH_CALL_NAMES.toMutableList().apply { add(indexOf("pauseYoutube"), "playYoutube") },
             actions.callNames(),
         )
     }
@@ -672,7 +691,142 @@ class SleepRoutineRunnerTest : BaseTest() {
         advanceCoroutineTime(END_TIME_MILLIS - 1)
 
         /** Then **/
-        assertEquals(LAUNCH_CALL_NAMES, actions.callNames())
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES, actions.callNames())
         assertEquals(1, actions.callTimes("playYoutube").size)
+    }
+
+    /**
+     * 백그라운드 전환 뒤 화면을 한 번만 끄고 종료 시각 마무리에서는 다시 끄지 않는지 검증
+     *
+     * Given: 기본 가짜 기기 동작(모든 단계 성공)
+     * When: 시작해 끝까지 진행
+     * Then: 백그라운드 전환의 마지막 재생 직후 lockScreen 1회, 마무리는 pauseYoutube → disableDoNotDisturb만, 실패 없음
+     */
+    @Test
+    fun test_20_lockScreenRunsOnceAfterBackgroundSwitch() = runTest {
+        /** Given **/
+        val actions = FakeSleepRoutineActions(::virtualTimeMillis)
+        val runner = createRunner(actions)
+
+        /** When **/
+        val job = launch { runner.start(YOUTUBE_URL, VOLUME_LEVEL, END_TIME_MILLIS) }
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES + FINISH_CALL_NAMES, actions.callNames())
+        assertEquals(listOf(actions.callTimes("playYoutube").last()), actions.callTimes("lockScreen"))
+        assertEquals(emptyList<SleepRoutineFailure>(), failures)
+        assertTrue(job.isCompleted)
+    }
+
+    /**
+     * 화면을 끄지 못하면 SCREEN_OFF 실패를 알리고 종료 시각에 마무리하는지 검증
+     *
+     * Given: 접근성 서비스가 꺼져 lockScreen이 false
+     * When: 시작해 끝까지 진행
+     * Then: onFailure(SCREEN_OFF) 1회, 종료 시각에 pauseYoutube → disableDoNotDisturb 실행 후 종료
+     */
+    @Test
+    fun test_21_lockScreenFalseReportsScreenOffFailure() = runTest {
+        /** Given **/
+        val actions = FakeSleepRoutineActions(::virtualTimeMillis, screenLockable = false)
+        val runner = createRunner(actions)
+
+        /** When **/
+        val job = launch { runner.start(YOUTUBE_URL, VOLUME_LEVEL, END_TIME_MILLIS) }
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(listOf(SleepRoutineFailure.SCREEN_OFF), failures)
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES + FINISH_CALL_NAMES, actions.callNames())
+        assertEquals(listOf("pauseYoutube@$END_TIME_MILLIS", "disableDoNotDisturb@$END_TIME_MILLIS"), actions.calls.takeLast(2))
+        assertTrue(job.isCompleted)
+    }
+
+    /**
+     * 화면 끄기가 예외를 던져도 SCREEN_OFF 실패를 알리고 종료 시각에 마무리하는지 검증
+     *
+     * Given: lockScreen이 SecurityException을 던짐
+     * When: 시작해 끝까지 진행
+     * Then: onFailure(SCREEN_OFF) 1회, 종료 시각에 pauseYoutube → disableDoNotDisturb 실행 후 종료
+     */
+    @Test
+    fun test_22_lockScreenExceptionReportsScreenOffFailure() = runTest {
+        /** Given **/
+        val actions = FakeSleepRoutineActions(
+            ::virtualTimeMillis,
+            lockScreenFailure = SecurityException("broadcast not allowed"),
+        )
+        val runner = createRunner(actions)
+
+        /** When **/
+        val job = launch { runner.start(YOUTUBE_URL, VOLUME_LEVEL, END_TIME_MILLIS) }
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(listOf(SleepRoutineFailure.SCREEN_OFF), failures)
+        assertEquals(SCREEN_OFF_LAUNCH_CALL_NAMES + FINISH_CALL_NAMES, actions.callNames())
+        assertEquals(listOf("pauseYoutube@$END_TIME_MILLIS", "disableDoNotDisturb@$END_TIME_MILLIS"), actions.calls.takeLast(2))
+        assertTrue(job.isCompleted)
+    }
+
+    /**
+     * 방해 금지와 수면 기록이 모두 실패하면 화면 끄기를 건너뛸 때 두 실패를 순서대로 다시 알리는지 검증
+     *
+     * Given: 방해 금지 접근 권한이 없고 수면 기록 시작도 예외를 던짐
+     * When: 시작해 끝까지 진행
+     * Then: onFailure가 DO_NOT_DISTURB, SLEEP_TRACKING, DO_NOT_DISTURB, SLEEP_TRACKING 순서, lockScreen 호출 없음
+     */
+    @Test
+    fun test_23_skippedScreenOffReportsFailedStepsAgainInOrder() = runTest {
+        /** Given **/
+        val actions = FakeSleepRoutineActions(
+            ::virtualTimeMillis,
+            doNotDisturbAllowed = false,
+            sleepTrackingFailure = ActivityNotFoundException("Sleep as Android not installed"),
+        )
+        val runner = createRunner(actions)
+
+        /** When **/
+        launch { runner.start(YOUTUBE_URL, VOLUME_LEVEL, END_TIME_MILLIS) }
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(
+            listOf(
+                SleepRoutineFailure.DO_NOT_DISTURB,
+                SleepRoutineFailure.SLEEP_TRACKING,
+                SleepRoutineFailure.DO_NOT_DISTURB,
+                SleepRoutineFailure.SLEEP_TRACKING,
+            ),
+            failures,
+        )
+        assertEquals(emptyList<Long>(), actions.callTimes("lockScreen"))
+    }
+
+    /**
+     * 앱 실행 단계 중 지금 종료로 취소하면 화면을 끄지 않는지 검증
+     *
+     * Given: 앱 실행 단계 진행 중(YouTube를 연 뒤 백그라운드 전환 대기 중)
+     * When: 실행 코루틴을 취소한 뒤 finish 호출
+     * Then: lockScreen 호출 없음, 마무리의 pauseYoutube → disableDoNotDisturb만 실행
+     */
+    @Test
+    fun test_24_cancelDuringLaunchDoesNotLockScreen() = runTest {
+        /** Given **/
+        val actions = FakeSleepRoutineActions(::virtualTimeMillis)
+        val runner = createRunner(actions)
+        val job = launch { runner.start(YOUTUBE_URL, VOLUME_LEVEL, END_TIME_MILLIS) }
+        advanceCoroutineTime(SleepRoutineRunner.SLEEP_TO_YOUTUBE_DELAY_MILLIS + 1)
+
+        /** When **/
+        job.cancel()
+        runner.finish()
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(emptyList<Long>(), actions.callTimes("lockScreen"))
+        assertEquals(FINISH_CALL_NAMES, actions.callNames().takeLast(2))
+        assertTrue(job.isCancelled)
     }
 }

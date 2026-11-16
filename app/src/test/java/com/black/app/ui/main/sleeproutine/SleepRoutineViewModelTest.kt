@@ -51,6 +51,7 @@ class SleepRoutineViewModelTest : BaseTest() {
         every { systemStatus.canDrawOverlays() } returns true
         every { systemStatus.isNotificationListenerEnabled() } returns true
         every { systemStatus.canShowNotification() } returns true
+        every { systemStatus.isAccessibilityServiceEnabled() } returns true
         every { systemStatus.maxVolumeLevel() } returns 15
         every { systemStatus.startRoutine() } just Runs
         every { systemStatus.stopRoutine() } just Runs
@@ -86,7 +87,7 @@ class SleepRoutineViewModelTest : BaseTest() {
     /**
      * 생성 시 저장 설정·권한 상태·최대 볼륨이 UiState에 반영되고 최대보다 큰 저장 볼륨은 최대로 맞추는지 검증
      *
-     * Given: 저장 설정(URL, 45분, 볼륨 꺼짐, 볼륨 20), 방해 금지·알림 접근 미허용, 다른 앱 위에 표시·알림 표시 허용, 최대 볼륨 15
+     * Given: 저장 설정(URL, 45분, 볼륨 꺼짐, 볼륨 20), 방해 금지·알림 접근 미허용, 접근성 서비스 꺼짐, 다른 앱 위에 표시·알림 표시 허용, 최대 볼륨 15
      * When: ViewModel 생성
      * Then: settingsLoaded true, 입력값·스위치·권한 상태 반영, volumeLevel 15, maxVolumeLevel 15
      */
@@ -101,6 +102,7 @@ class SleepRoutineViewModelTest : BaseTest() {
         )
         every { systemStatus.hasDoNotDisturbAccess() } returns false
         every { systemStatus.isNotificationListenerEnabled() } returns false
+        every { systemStatus.isAccessibilityServiceEnabled() } returns false
 
         /** When **/
         val viewModel = createViewModel()
@@ -117,6 +119,7 @@ class SleepRoutineViewModelTest : BaseTest() {
         assertTrue(uiState.overlayGranted)
         assertFalse(uiState.notificationListenerEnabled)
         assertTrue(uiState.notificationsEnabled)
+        assertFalse(uiState.accessibilityServiceEnabled)
     }
 
     /**
@@ -382,7 +385,7 @@ class SleepRoutineViewModelTest : BaseTest() {
      *
      * Given: 권한 모두 미허용 상태로 생성 후 모두 허용으로 변경
      * When: refreshStatus 호출
-     * Then: 네 권한 상태 모두 true
+     * Then: 접근성 서비스를 포함한 다섯 권한 상태 모두 true
      */
     @Test
     fun test_12_refreshStatusUpdatesPermissions() = runTest {
@@ -391,11 +394,14 @@ class SleepRoutineViewModelTest : BaseTest() {
         every { systemStatus.canDrawOverlays() } returns false
         every { systemStatus.isNotificationListenerEnabled() } returns false
         every { systemStatus.canShowNotification() } returns false
+        every { systemStatus.isAccessibilityServiceEnabled() } returns false
         val viewModel = createViewModel()
+        assertFalse(viewModel.uiState.value.accessibilityServiceEnabled)
         every { systemStatus.hasDoNotDisturbAccess() } returns true
         every { systemStatus.canDrawOverlays() } returns true
         every { systemStatus.isNotificationListenerEnabled() } returns true
         every { systemStatus.canShowNotification() } returns true
+        every { systemStatus.isAccessibilityServiceEnabled() } returns true
 
         /** When **/
         viewModel.refreshStatus()
@@ -406,14 +412,15 @@ class SleepRoutineViewModelTest : BaseTest() {
         assertTrue(uiState.overlayGranted)
         assertTrue(uiState.notificationListenerEnabled)
         assertTrue(uiState.notificationsEnabled)
+        assertTrue(uiState.accessibilityServiceEnabled)
     }
 
     /**
      * 설정 화면 열기 함수가 각 설정 화면 이동 이벤트를 보내는지 검증
      *
      * Given: ViewModel 생성
-     * When: openDoNotDisturbSettings, openOverlaySettings, openNotificationListenerSettings, openNotificationSettings 순서로 호출
-     * Then: 대응하는 이벤트 4개를 호출 순서대로 수신
+     * When: openDoNotDisturbSettings, openOverlaySettings, openNotificationListenerSettings, openNotificationSettings, openAccessibilitySettings 순서로 호출
+     * Then: 대응하는 이벤트 5개를 호출 순서대로 수신
      */
     @Test
     fun test_13_openSettingsSendsSettingsEvents() = runTest {
@@ -426,6 +433,7 @@ class SleepRoutineViewModelTest : BaseTest() {
             viewModel.openOverlaySettings()
             viewModel.openNotificationListenerSettings()
             viewModel.openNotificationSettings()
+            viewModel.openAccessibilitySettings()
         }
 
         /** Then **/
@@ -435,6 +443,7 @@ class SleepRoutineViewModelTest : BaseTest() {
                 SleepRoutineViewModel.EventOpenOverlaySettings,
                 SleepRoutineViewModel.EventOpenNotificationListenerSettings,
                 SleepRoutineViewModel.EventOpenNotificationSettings,
+                SleepRoutineViewModel.EventOpenAccessibilitySettings,
             ),
             receivedEvents,
         )

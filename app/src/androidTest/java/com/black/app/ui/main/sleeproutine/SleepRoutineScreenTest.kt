@@ -58,6 +58,7 @@ class SleepRoutineScreenTest : BaseUiTest() {
         onClickOverlay: () -> Unit = {},
         onClickNotificationListener: () -> Unit = {},
         onClickNotification: () -> Unit = {},
+        onClickAccessibility: () -> Unit = {},
         onClickStart: () -> Unit = {},
         onClickStop: () -> Unit = {},
     ) {
@@ -76,6 +77,7 @@ class SleepRoutineScreenTest : BaseUiTest() {
                         onClickOverlay = onClickOverlay,
                         onClickNotificationListener = onClickNotificationListener,
                         onClickNotification = onClickNotification,
+                        onClickAccessibility = onClickAccessibility,
                         onClickStart = onClickStart,
                         onClickStop = onClickStop,
                     )
@@ -119,11 +121,11 @@ class SleepRoutineScreenTest : BaseUiTest() {
      * 권한이 모두 없으면 상태 행이 필요로 표시되고 누르면 해당 설정 화면 이동을 요청하는지 검증
      *
      * Given:
-     * - 방해 금지 접근·다른 앱 위에 표시·알림 접근·알림 표시 모두 미허용 상태로 SleepRoutineContent 호스팅
+     * - 방해 금지 접근·다른 앱 위에 표시·알림 접근·알림 표시 미허용, 접근성 서비스 꺼짐 상태로 SleepRoutineContent 호스팅
      * When:
-     * - 네 상태 행 차례로 클릭
+     * - 다섯 상태 행 차례로 클릭
      * Then:
-     * - 네 행 모두 라벨과 "필요" 표시
+     * - 다섯 행 모두 라벨과 "필요" 표시
      * - 각 행의 콜백 1회씩 호출
      */
     @Test
@@ -133,17 +135,20 @@ class SleepRoutineScreenTest : BaseUiTest() {
         var overlayClickCount = 0
         var notificationListenerClickCount = 0
         var notificationClickCount = 0
+        var accessibilityClickCount = 0
         contentUiState.value = loadedUiState.copy(
             doNotDisturbAccessGranted = false,
             overlayGranted = false,
             notificationListenerEnabled = false,
             notificationsEnabled = false,
+            accessibilityServiceEnabled = false,
         )
         hostSleepRoutineContent(
             onClickDoNotDisturb = { doNotDisturbClickCount++ },
             onClickOverlay = { overlayClickCount++ },
             onClickNotificationListener = { notificationListenerClickCount++ },
             onClickNotification = { notificationClickCount++ },
+            onClickAccessibility = { accessibilityClickCount++ },
         )
 
         /** When **/
@@ -151,28 +156,31 @@ class SleepRoutineScreenTest : BaseUiTest() {
         clickTag(SleepRoutineTestTags.OVERLAY_STATUS, scrollTo = true)
         clickTag(SleepRoutineTestTags.NOTIFICATION_LISTENER_STATUS, scrollTo = true)
         clickTag(SleepRoutineTestTags.NOTIFICATION_STATUS, scrollTo = true)
+        clickTag(SleepRoutineTestTags.ACCESSIBILITY_STATUS, scrollTo = true)
 
         /** Then **/
-        val requiredValue = context.getString(R.string.sleep_routine_status_required)
+        val requiredValue = context.getString(R.string.permission_status_required)
         assertTagTextContains(SleepRoutineTestTags.DO_NOT_DISTURB_STATUS, "방해 금지 접근", requiredValue, scrollTo = true)
         assertTagTextContains(SleepRoutineTestTags.OVERLAY_STATUS, "다른 앱 위에 표시", requiredValue, scrollTo = true)
         assertTagTextContains(SleepRoutineTestTags.NOTIFICATION_LISTENER_STATUS, "알림 접근", requiredValue, scrollTo = true)
         assertTagTextContains(SleepRoutineTestTags.NOTIFICATION_STATUS, "알림 표시", requiredValue, scrollTo = true)
+        assertTagTextContains(SleepRoutineTestTags.ACCESSIBILITY_STATUS, "접근성 서비스", requiredValue, scrollTo = true)
         assertEquals(1, doNotDisturbClickCount)
         assertEquals(1, overlayClickCount)
         assertEquals(1, notificationListenerClickCount)
         assertEquals(1, notificationClickCount)
+        assertEquals(1, accessibilityClickCount)
     }
 
     /**
      * 권한이 모두 있으면 상태 행이 허용으로 표시되고 누를 수 없는지 검증
      *
      * Given:
-     * - 네 권한 모두 허용 상태로 SleepRoutineContent 호스팅
+     * - 네 권한 모두 허용, 접근성 서비스 켜짐 상태로 SleepRoutineContent 호스팅
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - 네 행 모두 "허용" 표시, 클릭 동작 없음
+     * - 다섯 행 모두 "허용" 표시, 클릭 동작 없음
      */
     @Test
     fun test_03_permissionRowsShowAllowed() {
@@ -182,6 +190,7 @@ class SleepRoutineScreenTest : BaseUiTest() {
             overlayGranted = true,
             notificationListenerEnabled = true,
             notificationsEnabled = true,
+            accessibilityServiceEnabled = true,
         )
         hostSleepRoutineContent()
 
@@ -189,12 +198,13 @@ class SleepRoutineScreenTest : BaseUiTest() {
         // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
 
         /** Then **/
-        val allowedValue = context.getString(R.string.sleep_routine_status_allowed)
+        val allowedValue = context.getString(R.string.permission_status_allowed)
         listOf(
             SleepRoutineTestTags.DO_NOT_DISTURB_STATUS,
             SleepRoutineTestTags.OVERLAY_STATUS,
             SleepRoutineTestTags.NOTIFICATION_LISTENER_STATUS,
             SleepRoutineTestTags.NOTIFICATION_STATUS,
+            SleepRoutineTestTags.ACCESSIBILITY_STATUS,
         ).forEach { tag ->
             assertTagTextContains(tag, allowedValue, scrollTo = true)
             assertTagMatches(tag, !hasClickAction())
