@@ -6,6 +6,7 @@ import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.selectedAppUiItem
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.app.util.InstalledAppResolver
+import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
@@ -22,6 +23,7 @@ class UsageTimerViewModel @Inject constructor(
     private val repository: UsageTimerRepository,
     private val installedAppResolver: InstalledAppResolver,
     private val overlayPermissionStatus: OverlayPermissionStatus,
+    private val accessibilityServiceStatus: AccessibilityServiceStatus,
 ) : EventViewModel() {
 
     /** UsageTimer 화면 일회성 이벤트 */
@@ -47,6 +49,8 @@ class UsageTimerViewModel @Inject constructor(
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
 
     init {
+        // 첫 화면부터 실제 권한 상태 표시
+        refreshStatus()
         launch {
             val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
             val pauseDurationInput = repository.getPauseDuration().toString()
@@ -58,6 +62,20 @@ class UsageTimerViewModel @Inject constructor(
                     selectedApps = selectedApps,
                 )
             }
+        }
+    }
+
+    /** 설정 앱에서 권한을 바꾸고 돌아온 경우를 위한 권한 상태 갱신 */
+    fun refreshStatus() {
+        // 두 권한 상태 조회
+        val accessibilityServiceEnabled = accessibilityServiceStatus.isAccessibilityServiceEnabled()
+        val overlayPermissionGranted = overlayPermissionStatus.canDrawOverlays()
+        // UiState 반영
+        mutableUiState.update {
+            it.copy(
+                accessibilityServiceEnabled = accessibilityServiceEnabled,
+                overlayPermissionGranted = overlayPermissionGranted,
+            )
         }
     }
 

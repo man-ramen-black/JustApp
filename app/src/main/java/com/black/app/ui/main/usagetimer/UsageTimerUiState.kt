@@ -12,4 +12,8 @@ data class UsageTimerUiState(
     val selectedApps: List<SelectedAppUiItem> = emptyList(),
     /** 다른 앱 위에 표시 권한 안내 다이얼로그 표시 여부 */
     val showOverlayPermissionDialog: Boolean = false,
+    /** 앱 접근성 서비스 켜짐 여부 */
+    val accessibilityServiceEnabled: Boolean = false,
+    /** 다른 앱 위에 표시 권한 허용 여부 */
+    val overlayPermissionGranted: Boolean = false,
 )

@@ -31,6 +31,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
@@ -41,6 +43,7 @@ import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.OverlayPermissionDialog
+import com.black.core.ui.component.PermissionStatusRow
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolScreenScaffold
 import com.black.core.ui.theme.AppColors
@@ -63,7 +66,8 @@ internal object UsageTimerTestTags {
     const val SAVE_BUTTON = "save_button"
     const val PAUSE_BUTTON = "pause_button"
     const val CANCEL_BUTTON = "cancel_button"
-    const val ACCESSIBILITY_BUTTON = "accessibility_button"
+    const val ACCESSIBILITY_STATUS = "usage_timer_accessibility_status"
+    const val OVERLAY_STATUS = "usage_timer_overlay_status"
     const val SELECT_APP_BUTTON = "select_app_button"
     const val SELECTED_APPS_EMPTY = "selected_apps_empty"
     const val SELECTED_APPS_LIST = "selected_apps_list"
@@ -80,6 +84,11 @@ fun UsageTimerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 설정 앱에서 권한을 바꾸고 돌아온 경우의 상태 갱신
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshStatus()
+    }
 
     // SelectAppDialog 결과 관찰 (FragmentActivity의 supportFragmentManager 기반)
     LaunchedEffect(Unit) {
@@ -128,6 +137,7 @@ fun UsageTimerScreen(
         onClickPause = viewModel::onClickPause,
         onClickCancelPause = viewModel::onClickCancelPause,
         onClickAccessibility = viewModel::onClickAccessibility,
+        onClickOverlaySettings = viewModel::openOverlaySettings,
         onClickSelectApp = viewModel::onClickSelectApp,
         onFinishTimer = viewModel::onFinishTimer,
     )
@@ -143,7 +153,7 @@ fun UsageTimerScreen(
 
 /** UsageTimer 화면 콘텐츠(상태 무관 렌더링 전용) */
 @Composable
-private fun UsageTimerContent(
+internal fun UsageTimerContent(
     uiState: UsageTimerUiState,
     modifier: Modifier = Modifier,
     onNavigateUp: () -> Unit,
@@ -153,6 +163,7 @@ private fun UsageTimerContent(
     onClickPause: () -> Unit,
     onClickCancelPause: () -> Unit,
     onClickAccessibility: () -> Unit,
+    onClickOverlaySettings: () -> Unit,
     onClickSelectApp: () -> Unit,
     onFinishTimer: () -> Unit,
 ) {
@@ -162,6 +173,21 @@ private fun UsageTimerContent(
         modifier = modifier,
         titleModifier = Modifier.testTag(UsageTimerTestTags.TITLE),
     ) {
+        // 권한 섹션
+        SectionHeader(stringResource(R.string.permission_section_title))
+        PermissionStatusRow(
+            label = stringResource(R.string.permission_accessibility_service),
+            granted = uiState.accessibilityServiceEnabled,
+            onClick = onClickAccessibility,
+            modifier = Modifier.testTag(UsageTimerTestTags.ACCESSIBILITY_STATUS),
+        )
+        PermissionStatusRow(
+            label = stringResource(R.string.permission_overlay),
+            granted = uiState.overlayPermissionGranted,
+            onClick = onClickOverlaySettings,
+            modifier = Modifier.testTag(UsageTimerTestTags.OVERLAY_STATUS),
+        )
+
         // 타이머 표시 섹션
         SectionHeader(stringResource(R.string.usage_timer_section_overlay))
         ActionButton(
@@ -234,18 +260,10 @@ private fun UsageTimerContent(
         // 설정 섹션
         SectionHeader(stringResource(R.string.usage_timer_section_settings))
         ActionButton(
-            text = stringResource(R.string.usage_timer_accessibility),
-            onClick = onClickAccessibility,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(UsageTimerTestTags.ACCESSIBILITY_BUTTON),
-        )
-        ActionButton(
             text = stringResource(R.string.select_app),
             onClick = onClickSelectApp,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
                 .testTag(UsageTimerTestTags.SELECT_APP_BUTTON),
         )
 
