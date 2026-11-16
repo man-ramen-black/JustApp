@@ -8,6 +8,7 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
@@ -22,6 +23,7 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -36,7 +38,8 @@ import org.robolectric.annotation.Config
  * [PermissionHelper.showAppNotificationSettings]의 버전별 설정 화면 인텐트와
  * [PermissionHelper.openAccessibilityServiceDetailSetting]의 실패 시 다음 화면 시도 순서,
  * [PermissionHelper.isGranted]·[PermissionHelper.isNotificationPermissionGranted]·[PermissionHelper.areNotificationsEnabled]의 판단,
- * 사용 정보 접근·알림 접근·방해 금지 접근·위치 권한·위치 설정 판정과 각 설정 화면 인텐트 검증
+ * 사용 정보 접근·알림 접근·방해 금지 접근·위치 권한·위치 설정 판정과 각 설정 화면 인텐트,
+ * 매니페스트 선언으로 찾는 이 앱의 접근성 서비스 켜짐 판정과 상세 화면 인텐트 검증
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PermissionHelperTest : BaseTest() {
@@ -736,6 +739,109 @@ class PermissionHelperTest : BaseTest() {
         val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
         assertEquals(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS, intent.action)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /**
+     * 매니페스트에 선언한 이 앱의 접근성 서비스를 찾는지 검증
+     *
+     * Given: 접근성 서비스 인텐트 필터를 가진 이 앱의 서비스 선언
+     * When: findAccessibilityService 호출
+     * Then: 선언한 서비스 컴포넌트
+     */
+    @Test
+    fun test_33_findsDeclaredAccessibilityService() = runTest {
+        /** Given **/
+        val service = declareAccessibilityService()
+
+        /** When **/
+        val found = PermissionHelper.findAccessibilityService(context)
+
+        /** Then **/
+        assertEquals(service, found)
+    }
+
+    /**
+     * 접근성 서비스 선언이 없으면 꺼짐으로 보고 접근성 설정 목록을 여는지 검증
+     *
+     * Given: 접근성 서비스 선언 없음
+     * When: findAccessibilityService, isAccessibilityServiceEnabled, openAccessibilityServiceDetailSetting 호출
+     * Then: null, false, extras 없는 ACTION_ACCESSIBILITY_SETTINGS
+     */
+    @Test
+    fun test_34_noDeclaredAccessibilityServiceOpensList() = runTest {
+        /** Given **/
+        // 테스트 매니페스트에 접근성 서비스 선언 없음
+
+        /** When **/
+        val found = PermissionHelper.findAccessibilityService(context)
+        val enabled = PermissionHelper.isAccessibilityServiceEnabled(context)
+        PermissionHelper.openAccessibilityServiceDetailSetting(context)
+
+        /** Then **/
+        assertNull(found)
+        assertFalse(enabled)
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Settings.ACTION_ACCESSIBILITY_SETTINGS, intent.action)
+        assertFalse(intent.hasExtra(EXTRA_FRAGMENT_ARG_KEY))
+    }
+
+    /**
+     * 이 앱의 접근성 서비스 켜짐 여부를 접근성 설정의 활성 서비스 목록으로 판정하는지 검증
+     *
+     * Given: 선언한 접근성 서비스, 다른 앱 서비스와 함께 켠 설정과 다른 앱 서비스만 켠 설정
+     * When: 각 설정에서 isAccessibilityServiceEnabled 호출
+     * Then: 함께 켠 설정은 true, 다른 앱 서비스만 켠 설정은 false
+     */
+    @Test
+    fun test_35_declaredAccessibilityServiceEnabledFollowsSetting() = runTest {
+        /** Given **/
+        val service = declareAccessibilityService()
+        val otherService = "com.other.app/com.other.app.OtherAccessibilityService"
+
+        /** When **/
+        putEnabledAccessibilityServices("$otherService:${service.flattenToString()}")
+        val enabledResult = PermissionHelper.isAccessibilityServiceEnabled(context)
+        putEnabledAccessibilityServices(otherService)
+        val disabledResult = PermissionHelper.isAccessibilityServiceEnabled(context)
+
+        /** Then **/
+        assertTrue(enabledResult)
+        assertFalse(disabledResult)
+    }
+
+    /**
+     * 클래스 없이 이 앱의 접근성 서비스 상세 화면을 여는지 검증
+     *
+     * Given: 선언한 접근성 서비스
+     * When: openAccessibilityServiceDetailSetting(context) 호출
+     * Then: ACCESSIBILITY_DETAILS_SETTINGS에 선언한 서비스 컴포넌트 이름, FLAG_ACTIVITY_NEW_TASK 포함
+     */
+    @Test
+    fun test_36_opensDeclaredAccessibilityServiceDetail() = runTest {
+        /** Given **/
+        val service = declareAccessibilityService()
+
+        /** When **/
+        PermissionHelper.openAccessibilityServiceDetailSetting(context)
+
+        /** Then **/
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(ACTION_ACCESSIBILITY_DETAILS_SETTINGS, intent.action)
+        assertEquals(service.flattenToString(), intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME))
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /** 앱 모듈의 접근성 서비스 선언을 대신해 이 앱 패키지에 접근성 서비스 인텐트 필터를 가진 서비스 등록 */
+    private fun declareAccessibilityService(): ComponentName {
+        val service = ComponentName(context.packageName, "${context.packageName}.TestAccessibilityService")
+        val packageManager = shadowOf(context.packageManager)
+        packageManager.addServiceIfNotPresent(service)
+        packageManager.addIntentFilterForService(service, IntentFilter(AccessibilityService.SERVICE_INTERFACE))
+        return service
+    }
+
+    private fun putEnabledAccessibilityServices(value: String) {
+        Settings.Secure.putString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, value)
     }
 
     private companion object {
