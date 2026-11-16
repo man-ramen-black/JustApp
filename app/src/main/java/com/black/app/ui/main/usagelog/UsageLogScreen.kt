@@ -59,6 +59,7 @@ import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ContainerIconButton
+import com.black.core.ui.component.PermissionStatusRow
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
@@ -228,43 +229,43 @@ internal fun UsageLogContent(
         )
 
         // 권한 섹션
-        SectionHeader(title = stringResource(R.string.usage_log_section_permission))
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_usage_access,
+        SectionHeader(title = stringResource(R.string.permission_section_title))
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_usage_access),
             granted = uiState.usageAccessGranted,
             onClick = onClickUsageAccess,
-            testTag = UsageLogTestTags.USAGE_ACCESS_STATUS,
+            modifier = Modifier.testTag(UsageLogTestTags.USAGE_ACCESS_STATUS),
         )
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_notification_access,
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_notification_access),
             granted = uiState.notificationAccessGranted,
             onClick = onClickNotificationAccess,
-            testTag = UsageLogTestTags.NOTIFICATION_ACCESS_STATUS,
+            modifier = Modifier.testTag(UsageLogTestTags.NOTIFICATION_ACCESS_STATUS),
         )
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_location,
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_location),
             granted = locationRequiredResId == null,
             onClick = onClickLocation,
-            testTag = UsageLogTestTags.LOCATION_STATUS,
-            requiredValueResId = locationRequiredResId ?: R.string.usage_log_status_required,
+            modifier = Modifier.testTag(UsageLogTestTags.LOCATION_STATUS),
+            requiredValue = stringResource(locationRequiredResId ?: R.string.permission_status_required),
         )
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_sms,
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_sms),
             granted = uiState.smsGranted,
             onClick = onClickAppPermission,
-            testTag = UsageLogTestTags.SMS_STATUS,
+            modifier = Modifier.testTag(UsageLogTestTags.SMS_STATUS),
         )
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_contacts,
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_contacts),
             granted = uiState.contactsGranted,
             onClick = onClickAppPermission,
-            testTag = UsageLogTestTags.CONTACTS_STATUS,
+            modifier = Modifier.testTag(UsageLogTestTags.CONTACTS_STATUS),
         )
-        PermissionRow(
-            labelResId = R.string.usage_log_permission_battery,
+        PermissionStatusRow(
+            label = stringResource(R.string.usage_log_permission_battery),
             granted = uiState.batteryOptimizationIgnored,
             onClick = onClickBatteryOptimization,
-            testTag = UsageLogTestTags.BATTERY_STATUS,
+            modifier = Modifier.testTag(UsageLogTestTags.BATTERY_STATUS),
         )
 
         // 집 Wi-Fi 섹션
@@ -460,27 +461,6 @@ private fun maskKey(key: String): String =
     }
 
 /**
- * 권한 상태 행
- *
- * 허용됨이면 누를 수 없고, 아니면 [requiredValueResId] 상태값을 보여 주며 눌러 조치 화면으로 이동.
- */
-@Composable
-private fun PermissionRow(
-    @StringRes labelResId: Int,
-    granted: Boolean,
-    onClick: () -> Unit,
-    testTag: String,
-    @StringRes requiredValueResId: Int = R.string.usage_log_status_required,
-) {
-    StatusRow(
-        label = stringResource(labelResId),
-        value = stringResource(if (granted) R.string.usage_log_status_allowed else requiredValueResId),
-        onClick = if (granted) null else onClick,
-        modifier = Modifier.testTag(testTag),
-    )
-}
-
-/**
  * 위치 행에 보여 줄 조치 필요 상태값
  *
  * 권한과 기기 위치 설정이 모두 갖춰졌으면 null.
@@ -490,7 +470,7 @@ private fun PermissionRow(
 @StringRes
 private fun locationRequiredStatusResId(uiState: UsageLogUiState): Int? = when {
     !uiState.fineLocationGranted && uiState.approximateLocationOnly -> R.string.usage_log_status_precise_location_required
-    !uiState.fineLocationGranted || !uiState.backgroundLocationGranted -> R.string.usage_log_status_required
+    !uiState.fineLocationGranted || !uiState.backgroundLocationGranted -> R.string.permission_status_required
     !uiState.locationEnabled -> R.string.usage_log_status_location_off
     else -> null
 }

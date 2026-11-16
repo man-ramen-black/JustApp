@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.black.core.R
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 
@@ -121,6 +123,27 @@ fun StatusRow(
             )
         }
     }
+}
+
+/**
+ * 권한 상태 행
+ *
+ * 허용됨이면 누를 수 없고, 아니면 [requiredValue] 상태값을 보여 주며 눌러 조치 화면으로 이동.
+ */
+@Composable
+fun PermissionStatusRow(
+    label: String,
+    granted: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    requiredValue: String = stringResource(R.string.permission_status_required),
+) {
+    StatusRow(
+        label = label,
+        value = if (granted) stringResource(R.string.permission_status_allowed) else requiredValue,
+        onClick = if (granted) null else onClick,
+        modifier = modifier,
+    )
 }
 
 /** [onClick]이 있을 때만 버튼 역할의 클릭 처리 추가 */

@@ -114,7 +114,7 @@ class UsageLogScreenTest : BaseUiTest() {
         /** Then **/
         assertTagText(UsageLogTestTags.TITLE, context.getString(R.string.fragment_name_usage_log))
         assertTextDisplayed(context.getString(R.string.usage_log_section_collection))
-        assertTextDisplayed(context.getString(R.string.usage_log_section_permission), scrollTo = true)
+        assertTextDisplayed(context.getString(R.string.permission_section_title), scrollTo = true)
         assertTextDisplayed(context.getString(R.string.usage_log_section_home_wifi), scrollTo = true)
         assertTextDisplayed(context.getString(R.string.usage_log_section_send), scrollTo = true)
         assertTextDisplayed(context.getString(R.string.usage_log_section_recent), scrollTo = true)
@@ -144,13 +144,13 @@ class UsageLogScreenTest : BaseUiTest() {
         assertTagTextContains(
             UsageLogTestTags.USAGE_ACCESS_STATUS,
             context.getString(R.string.usage_log_permission_usage_access),
-            context.getString(R.string.usage_log_status_allowed),
+            context.getString(R.string.permission_status_allowed),
             scrollTo = true,
         )
         assertTagTextContains(
             UsageLogTestTags.NOTIFICATION_ACCESS_STATUS,
             context.getString(R.string.usage_log_permission_notification_access),
-            context.getString(R.string.usage_log_status_required),
+            context.getString(R.string.permission_status_required),
             scrollTo = true,
         )
     }
@@ -192,7 +192,7 @@ class UsageLogScreenTest : BaseUiTest() {
         assertTagTextContains(
             UsageLogTestTags.LOCATION_STATUS,
             context.getString(R.string.usage_log_permission_location),
-            context.getString(R.string.usage_log_status_required),
+            context.getString(R.string.permission_status_required),
             scrollTo = true,
         )
     }
@@ -566,7 +566,7 @@ class UsageLogScreenTest : BaseUiTest() {
         /** Then **/
         assertTagTextContains(
             UsageLogTestTags.LOCATION_STATUS,
-            context.getString(R.string.usage_log_status_required),
+            context.getString(R.string.permission_status_required),
             scrollTo = true,
         )
     }
@@ -617,7 +617,7 @@ class UsageLogScreenTest : BaseUiTest() {
 
         /** Then **/
         rowTags.forEach { tag ->
-            assertTagTextContains(tag, context.getString(R.string.usage_log_status_allowed), scrollTo = true)
+            assertTagTextContains(tag, context.getString(R.string.permission_status_allowed), scrollTo = true)
             assertTagMatches(tag, hasNoClickAction())
         }
         assertEquals(listOf(0, 0, 0, 0, 0), clickCounts.toList())
@@ -753,14 +753,14 @@ class UsageLogScreenTest : BaseUiTest() {
         assertTagTextContains(
             UsageLogTestTags.SMS_STATUS,
             context.getString(R.string.usage_log_permission_sms),
-            context.getString(R.string.usage_log_status_allowed),
+            context.getString(R.string.permission_status_allowed),
             scrollTo = true,
         )
         assertTagMatches(UsageLogTestTags.SMS_STATUS, hasNoClickAction())
         assertTagTextContains(
             UsageLogTestTags.CONTACTS_STATUS,
             context.getString(R.string.usage_log_permission_contacts),
-            context.getString(R.string.usage_log_status_required),
+            context.getString(R.string.permission_status_required),
             scrollTo = true,
         )
         assertEquals(1, clickCount)

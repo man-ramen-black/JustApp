@@ -6,6 +6,11 @@
     <string name="navigate_up">뒤로 가기</string>
 
     <string name="ignore_battery_optimization_guide">배터리 최적화를 해제해주세요.</string>
+    <string name="permission_section_title">권한</string>
+    <string name="permission_status_allowed">허용됨</string>
+    <string name="permission_status_required">허용 필요</string>
+    <string name="permission_accessibility_service">접근성 서비스</string>
+    <string name="permission_overlay">다른 앱 위에 표시</string>
     <string name="open_overlay_settings">허용하러 가기</string>
 
     <string name="ssl_error_confirm_message">이 사이트의 보안 인증서를 신뢰할 수 없습니다.\n계속하시겠습니까?</string>
