@@ -3,12 +3,17 @@ package com.black.app.broadcast
 import android.app.Application
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import com.black.app.assistanttask.alarm.AssistantTaskAlarmRescheduler
 import com.black.app.model.SleepRoutineRepository
 import com.black.app.model.datastore.SleepRoutineDataStore
 import com.black.app.service.ForegroundServiceTestFixture
 import com.black.app.sleeproutine.SleepRoutineService
 import com.black.test.BaseTest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,17 +23,30 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 import org.robolectric.annotation.Config
 
-/** [BootReceiver]의 action 확인 동작과 수면 루틴 세션 재개 요청 검증 */
+/** [BootReceiver]의 action 확인 동작과 수면 루틴 세션 재개 요청, Todo 시각 알림 다시 예약 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BootReceiverTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Application>()
+    private val originalAlarmRescheduler = ForegroundServiceStartReceiver.createAlarmRescheduler
+    private val rescheduled = CompletableDeferred<Unit>()
 
     /** 알림 권한 허용 */
     @Before
     fun setupNotificationPermission() {
         PackageInstallTestFixture.grantNotificationPermission(context)
+    }
+
+    /** 실제 저장본을 읽지 않도록 다시 예약을 호출 기록으로 대체 */
+    @Before
+    fun replaceAlarmRescheduler() {
+        ForegroundServiceStartReceiver.createAlarmRescheduler = { AssistantTaskAlarmRescheduler { rescheduled.complete(Unit) } }
+    }
+
+    @After
+    fun restoreAlarmRescheduler() {
+        ForegroundServiceStartReceiver.createAlarmRescheduler = originalAlarmRescheduler
     }
 
     /** 프로세스 단일 DataStore의 수면 루틴 세션 삭제 */
@@ -98,5 +116,26 @@ class BootReceiverTest : BaseTest() {
         val startedService = ForegroundServiceTestFixture.awaitNextStartedService(context)
         assertEquals(SleepRoutineService::class.java.name, startedService.component?.className)
         assertTrue(startedService.getBooleanExtra(SleepRoutineService.EXTRA_RESUME, false))
+    }
+
+    /**
+     * 부팅 완료 action을 받으면 Todo 시각 알림을 다시 예약하는지 검증
+     *
+     * Given: 다시 예약 호출 기록
+     * When: BOOT_COMPLETED action으로 BootReceiver를 지정한 브로드캐스트 전송
+     * Then: 다시 예약 호출
+     */
+    @Test
+    fun test_04_bootCompletedReschedulesAlarms() = runTest {
+        /** Given **/
+        // 다시 예약 대체는 @Before에서 처리
+
+        /** When **/
+        context.sendBroadcast(Intent(Intent.ACTION_BOOT_COMPLETED).setClass(context, BootReceiver::class.java))
+        idleMainLooper()
+
+        /** Then **/
+        // 다시 예약은 goAsync로 이어 가는 Dispatchers.Default 범위에서 불리므로 실제 시간으로 대기
+        withContext(Dispatchers.Default) { withTimeout(5_000) { rescheduled.await() } }
     }
 }

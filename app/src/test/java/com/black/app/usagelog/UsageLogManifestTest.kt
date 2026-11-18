@@ -83,6 +83,19 @@ class UsageLogManifestTest : BaseTest() {
         "$section exclude file datastore/usage_log.preferences_pb",
     )
 
+    /** Todo 저장본 DB와 노션 연결 설정 파일을 [section]에서 빼는 항목 */
+    private fun assistantTaskExclusions(section: String): List<String> = listOf(
+        "$section exclude database AssistantTask.db",
+        "$section exclude database AssistantTask.db-wal",
+        "$section exclude database AssistantTask.db-shm",
+        "$section exclude database AssistantTask.db-journal",
+        "$section exclude file datastore/assistant_task.preferences_pb",
+    )
+
+    /** [section]에서 빼야 하는 전체 항목(기기 사용 기록, Todo 저장본) */
+    private fun expectedExclusions(section: String): List<String> =
+        usageLogExclusions(section) + assistantTaskExclusions(section)
+
     /**
      * 설정 앱의 사용 정보 접근 화면에서 앱을 허용할 수 있도록 사용 정보 접근 권한이 선언됐는지 검증
      *
@@ -135,14 +148,15 @@ class UsageLogManifestTest : BaseTest() {
     }
 
     /**
-     * 기기 사용 기록 DB와 설정 파일만 클라우드 백업과 기기 이전에서 빠지는지 검증
+     * 기기 사용 기록과 Todo 저장본의 DB와 설정 파일만 클라우드 백업과 기기 이전에서 빠지는지 검증
      *
      * Given: 병합된 앱 매니페스트와 백업 규칙 파일(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules)
      * When: 백업 허용 여부, 매니페스트가 가리키는 규칙 파일, 두 규칙 파일의 항목 조회
-     * Then: 백업 허용 유지, 두 속성이 규칙 파일을 가리킴, 모든 구역에서 UsageLog.db와 그 -wal·-shm·-journal, usage_log DataStore 파일 제외, include 없음
+     * Then: 백업 허용 유지, 두 속성이 규칙 파일을 가리킴, 모든 구역에서 UsageLog.db·AssistantTask.db와 그 -wal·-shm·-journal,
+     *   usage_log·assistant_task DataStore 파일 제외, include 없음
      */
     @Test
-    fun test_03_excludesUsageLogFromBackup() = runTest {
+    fun test_03_excludesUsageLogAndAssistantTaskFromBackup() = runTest {
         /** Given **/
         val applicationInfo = context.applicationInfo
 
@@ -156,9 +170,9 @@ class UsageLogManifestTest : BaseTest() {
         assertTrue(applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP != 0)
         assertEquals("@xml/backup_rules", fullBackupContent)
         assertEquals("@xml/data_extraction_rules", dataExtractionRules)
-        assertEquals(usageLogExclusions("full-backup-content").toSet(), fullBackupEntries.toSet())
+        assertEquals(expectedExclusions("full-backup-content").toSet(), fullBackupEntries.toSet())
         assertEquals(
-            (usageLogExclusions("cloud-backup") + usageLogExclusions("device-transfer")).toSet(),
+            (expectedExclusions("cloud-backup") + expectedExclusions("device-transfer")).toSet(),
             dataExtractionEntries.toSet(),
         )
     }

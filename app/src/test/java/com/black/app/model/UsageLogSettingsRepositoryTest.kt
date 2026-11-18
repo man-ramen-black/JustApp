@@ -22,7 +22,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [UsageLogSettingsRepository]의 수집 설정, 집 SSID, 진행 상태 저장·조회 검증 */
+/** [UsageLogSettingsRepository]의 수집 설정, 집 SSID, 진행 상태 저장·조회와 로그 생략 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UsageLogSettingsRepositoryTest : BaseTest() {
 
@@ -306,5 +306,36 @@ class UsageLogSettingsRepositoryTest : BaseTest() {
 
         /** When / Then **/
         assertNull(repository.getSmsProgress())
+    }
+
+    /**
+     * Wi-Fi 연결·해제마다 읽고 쓰는 값이 키 이름도 로그에 남기지 않는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 마지막 Wi-Fi 상태 저장·조회, 수집 켜짐·집 SSID 조회, 대조용 사용 기록 커서 저장·조회
+     * Then: 저장한 Wi-Fi 상태 그대로 조회, Log.v에 세 키 이름이 없고 커서 키 이름은 저장·조회 2회
+     */
+    @Test
+    fun test_15_wifiEventValuesAreNotLogged() = runTest {
+        /** Given / When **/
+        val saved = repository.setLastWifiState(WifiState(true, "MyHome_5G"))
+        val state = repository.getLastWifiState()
+        repository.isCollectionEnabled()
+        repository.getHomeSsids()
+        repository.setUsageCursor(1000L)
+        repository.getUsageCursor()
+
+        /** Then **/
+        assertTrue(saved.isSuccess)
+        assertEquals(WifiState(true, "MyHome_5G"), state)
+        verify(exactly = 0) {
+            Log.v(
+                any(),
+                match {
+                    it.contains("UsageLogLastWifiState") || it.contains("UsageLogCollectionEnabled") || it.contains("UsageLogHomeSsids")
+                },
+            )
+        }
+        verify(exactly = 2) { Log.v(any(), match { it.contains("[UsageLogUsageCursor]") }) }
     }
 }

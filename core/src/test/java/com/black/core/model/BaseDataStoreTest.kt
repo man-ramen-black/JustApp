@@ -1,6 +1,7 @@
 package com.black.core.model
 
 import android.content.Context
+import android.util.Log as AndroidLog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -11,6 +12,7 @@ import com.black.test.BaseTest
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -24,7 +26,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 
-/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 기본값 Flow, 읽고 고쳐 쓰기, 여러 키 함께 저장, 전체 삭제 검증 */
+/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 기본값 Flow, 읽고 고쳐 쓰기, 여러 키 함께 저장, 전체 삭제, 저장 로그 끄기 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BaseDataStoreTest : BaseTest() {
 
@@ -374,5 +376,46 @@ class BaseDataStoreTest : BaseTest() {
         assertTrue(result.isSuccess)
         assertEquals("", dataStore.getText())
         assertEquals(0L, dataStore.getNumber())
+    }
+
+    /** 저장 로그 끄기 검증용 DataStore */
+    private class WriteLogTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.writeLogTestDataStore by blackDataStore("writeLogTest")
+
+            private val KEY_SILENT_TIME = longPreferencesKey("silentTime")
+            private val KEY_LOGGED_TIME = longPreferencesKey("loggedTime")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.writeLogTestDataStore
+
+        suspend fun updateSilentTime(time: Long): Result<Unit> = update(KEY_SILENT_TIME, time, logValue = false, logWrite = false)
+
+        suspend fun updateLoggedTime(time: Long): Result<Unit> = update(KEY_LOGGED_TIME, time, logValue = false)
+
+        fun getSilentTimeFlow(): Flow<Long> = flow(KEY_SILENT_TIME, 0L)
+    }
+
+    /**
+     * 저장 로그를 끄면 값을 저장하면서 키 이름도 로그에 남기지 않는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 저장 로그를 끈 키에 1234, 값만 숨긴 키에 5678 저장
+     * Then: 1234가 저장됨, Log.v에 끈 키 이름은 없고 값만 숨긴 키 이름은 있음
+     */
+    @Test
+    fun test_12_updateWithoutWriteLogSavesSilently() = runTest {
+        /** Given **/
+        val dataStore = WriteLogTestDataStore(context)
+
+        /** When **/
+        val silent = dataStore.updateSilentTime(1234L)
+        val logged = dataStore.updateLoggedTime(5678L)
+
+        /** Then **/
+        assertTrue(silent.isSuccess && logged.isSuccess)
+        assertEquals(1234L, dataStore.getSilentTimeFlow().first())
+        verify(exactly = 0) { AndroidLog.v(any(), match { it.contains("silentTime") }) }
+        verify(exactly = 1) { AndroidLog.v(any(), match { it.contains("[loggedTime]") && !it.contains("5678") }) }
     }
 }

@@ -1,6 +1,9 @@
 package com.black.core.util
 
+import android.Manifest
+import android.app.Application
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -11,6 +14,7 @@ import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
@@ -20,7 +24,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-/** [NotificationUtil]의 기본 알림 아이콘 선택과 상시 실행 알림 구성 검증 */
+/** [NotificationUtil]의 기본 알림 아이콘 선택, 상시 실행 알림 구성, 표시 가능 여부, 알림 제거 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class NotificationUtilTest : BaseTest() {
@@ -145,4 +149,49 @@ class NotificationUtilTest : BaseTest() {
      */
     private fun mutableApplicationInfo(): ApplicationInfo =
         checkNotNull(shadowOf(context.packageManager).getInternalMutablePackageInfo(context.packageName).applicationInfo)
+
+    /**
+     * 채널이 없으면 표시 가능, 채널 중요도가 NONE이거나 앱 알림이 꺼져 있으면 불가인지 검증
+     *
+     * Given: 채널 없음, 중요도 NONE 채널, DEFAULT 채널, 앱 알림 끔
+     * When: canShow
+     * Then: true, false, true, false
+     */
+    @Test
+    fun test_20_canShowFollowsChannelImportanceAndAppSetting() = runTest {
+        /** Given / When / Then **/
+        assertTrue(NotificationUtil.canShow(context, "canShowNone"))
+        NotificationUtil.createNotificationChannel(context, "canShowNone", "name", NotificationManagerCompat.IMPORTANCE_NONE)
+        assertFalse(NotificationUtil.canShow(context, "canShowNone"))
+        NotificationUtil.createNotificationChannel(context, "canShowDefault", "name", NotificationManagerCompat.IMPORTANCE_DEFAULT)
+        assertTrue(NotificationUtil.canShow(context, "canShowDefault"))
+        shadowOf(context.getSystemService(NotificationManager::class.java)).setNotificationsEnabled(false)
+        assertFalse(NotificationUtil.canShow(context, "canShowDefault"))
+    }
+
+    /**
+     * cancelNotification이 지정한 ID 알림만 지우고, 없는 ID는 아무 동작 없이 끝나는지 검증
+     *
+     * Given: 알림 권한 허용, ID 1·2 알림 표시
+     * When: ID 1로 cancelNotification, 이어서 띄운 적 없는 ID 3으로 cancelNotification
+     * Then: ID 1 알림 없음, ID 2 알림 유지, 남은 알림 1개
+     */
+    @Test
+    fun test_21_cancelNotificationRemovesOnlyThatId() = runTest {
+        /** Given **/
+        shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        NotificationUtil.createNotificationChannel(context, "cancel", "name", NotificationManagerCompat.IMPORTANCE_DEFAULT)
+        NotificationUtil.showNotification(context, "cancel", "first", "message", 1)
+        NotificationUtil.showNotification(context, "cancel", "second", "message", 2)
+
+        /** When **/
+        NotificationUtil.cancelNotification(context, 1)
+        NotificationUtil.cancelNotification(context, 3)
+
+        /** Then **/
+        val shadowManager = shadowOf(context.getSystemService(NotificationManager::class.java))
+        assertNull(shadowManager.getNotification(1))
+        assertNotNull(shadowManager.getNotification(2))
+        assertEquals(1, shadowManager.allNotifications.size)
+    }
 }

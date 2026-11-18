@@ -48,7 +48,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiConnectedRecord(100, "MyHome_5G", true, true)), reported.records)
-        assertEquals(listOf(true), reported.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = true, time = 100L)), reported.homeTransitions)
         assertEquals(atHome, reported.newPersisted)
         assertTrue(enabled.records.isEmpty())
         assertTrue(enabled.homeTransitions.isEmpty())
@@ -73,7 +73,7 @@ class WifiTransitionMachineTest : BaseTest() {
         /** Then **/
         assertNothing(enabled)
         assertEquals(listOf(WifiConnectedRecord(100, "MyHome_5G", true, true)), reported.records)
-        assertEquals(listOf(true), reported.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = true, time = 100L)), reported.homeTransitions)
     }
 
     /**
@@ -93,7 +93,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiDisconnectedRecord(100, "MyHome_5G", true, true)), enabled.records)
-        assertEquals(listOf(false), enabled.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = true, time = 100L)), enabled.homeTransitions)
         assertEquals(disconnected, enabled.newPersisted)
     }
 
@@ -116,7 +116,7 @@ class WifiTransitionMachineTest : BaseTest() {
         /** Then **/
         assertNothing(enabled)
         assertEquals(listOf(WifiDisconnectedRecord(105, "MyHome_5G", true, true)), timeout.records)
-        assertEquals(listOf(false), timeout.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = true, time = 105L)), timeout.homeTransitions)
     }
 
     /**
@@ -136,7 +136,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiConnectedRecord(100, "MyHome_5G", true, false)), decision.records)
-        assertEquals(listOf(true), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = false, time = 100L)), decision.homeTransitions)
     }
 
     /**
@@ -228,7 +228,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiDisconnectedRecord(120, "MyHome_5G", true, false)), decision.records)
-        assertEquals(listOf(false), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = false, time = 120L)), decision.homeTransitions)
         assertEquals(disconnected, decision.newPersisted)
     }
 
@@ -250,7 +250,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiConnectedRecord(130, "MyHome_5G", true, true)), decision.records)
-        assertEquals(listOf(true), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = true, time = 130L)), decision.homeTransitions)
         assertEquals(atHome, decision.newPersisted)
     }
 
@@ -292,7 +292,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiDisconnectedRecord(100, "MyHome_5G", true, true)), enabled.records)
-        assertEquals(listOf(false), enabled.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = true, time = 100L)), enabled.homeTransitions)
         assertEquals(disconnected, enabled.newPersisted)
         assertEquals(listOf(WifiConnectedRecord(110, "Cafe", false, false)), reported.records)
         assertTrue(reported.homeTransitions.isEmpty())
@@ -372,7 +372,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiConnectedRecord(200, "Cafe", true, true)), decision.records)
-        assertEquals(listOf(true), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = true, time = 200L)), decision.homeTransitions)
         assertEquals(atCafe, decision.newPersisted)
     }
 
@@ -400,7 +400,7 @@ class WifiTransitionMachineTest : BaseTest() {
             ),
             decision.records,
         )
-        assertEquals(listOf(false), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = true, time = 200L)), decision.homeTransitions)
         assertEquals(atHome, decision.newPersisted)
     }
 
@@ -467,7 +467,7 @@ class WifiTransitionMachineTest : BaseTest() {
 
         /** Then **/
         assertEquals(listOf(WifiDisconnectedRecord(110, "MyHome_5G", true, true)), decision.records)
-        assertEquals(listOf(false), decision.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = true, time = 110L)), decision.homeTransitions)
         assertEquals(disconnected, decision.newPersisted)
     }
 
@@ -496,7 +496,7 @@ class WifiTransitionMachineTest : BaseTest() {
             ),
             toCafe.records,
         )
-        assertEquals(listOf(false), toCafe.homeTransitions)
+        assertEquals(listOf(HomeTransition(false, inferred = false, time = 110L)), toCafe.homeTransitions)
         assertEquals(
             listOf(
                 WifiDisconnectedRecord(120, "Cafe", false, false),
@@ -504,7 +504,7 @@ class WifiTransitionMachineTest : BaseTest() {
             ),
             backHome.records,
         )
-        assertEquals(listOf(true), backHome.homeTransitions)
+        assertEquals(listOf(HomeTransition(true, inferred = false, time = 120L)), backHome.homeTransitions)
     }
 
     /**

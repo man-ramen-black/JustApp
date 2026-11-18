@@ -31,6 +31,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowAlarmManager
 
 /**
  * [PermissionHelper]의 설정 화면 인텐트와 컨텍스트 기반 권한·알림 허용 확인 검증
@@ -829,6 +830,102 @@ class PermissionHelperTest : BaseTest() {
         assertEquals(ACTION_ACCESSIBILITY_DETAILS_SETTINGS, intent.action)
         assertEquals(service.flattenToString(), intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME))
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /**
+     * API 31 미만에서는 정확한 알람이 항상 허용으로 판정되는지 검증
+     *
+     * Given: SDK 30(정확한 알람 권한 개념 없음)
+     * When: canScheduleExactAlarms 호출
+     * Then: true
+     */
+    @Test
+    @Config(sdk = [30])
+    fun test_37_exactAlarmAlwaysAllowedBelowApi31() = runTest {
+        /** Given **/
+        // SDK는 @Config로 지정(별도 준비 없음)
+
+        /** When **/
+        val result = PermissionHelper.canScheduleExactAlarms(context)
+
+        /** Then **/
+        assertTrue(result)
+    }
+
+    /**
+     * API 31 이상에서 정확한 알람 허용 여부가 AlarmManager 상태를 따르는지 검증
+     *
+     * Given: SDK 33, AlarmManager가 정확한 알람 불가
+     * When: canScheduleExactAlarms 호출
+     * Then: false, 허용으로 바꾸면 true
+     */
+    @Test
+    @Config(sdk = [33])
+    fun test_38_exactAlarmFollowsAlarmManagerFromApi31() = runTest {
+        /** Given **/
+        ShadowAlarmManager.setCanScheduleExactAlarms(false)
+
+        /** When **/
+        val denied = PermissionHelper.canScheduleExactAlarms(context)
+        ShadowAlarmManager.setCanScheduleExactAlarms(true)
+        val allowed = PermissionHelper.canScheduleExactAlarms(context)
+
+        /** Then **/
+        assertFalse(denied)
+        assertTrue(allowed)
+    }
+
+    /**
+     * API 31 이상에서 정확한 알람 설정 화면을 앱 패키지 지정으로 여는지 검증
+     *
+     * Given: SDK 33, Activity가 아닌 애플리케이션 컨텍스트
+     * When: showExactAlarmSetting 호출
+     * Then: ACTION_REQUEST_SCHEDULE_EXACT_ALARM, data가 package:<앱 패키지>, FLAG_ACTIVITY_NEW_TASK 포함
+     */
+    @Test
+    @Config(sdk = [33])
+    fun test_39_opensExactAlarmSettingWithPackageUri() = runTest {
+        /** Given **/
+        // SDK는 @Config, 애플리케이션 컨텍스트는 필드로 지정(별도 준비 없음)
+
+        /** When **/
+        PermissionHelper.showExactAlarmSetting(context)
+
+        /** Then **/
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, intent.action)
+        assertEquals("package:${context.packageName}", intent.dataString)
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /**
+     * 정확한 알람 설정 화면을 열 수 없으면 앱 상세 설정으로 대체하는지 검증
+     *
+     * Given: SDK 33, 정확한 알람 화면 시작이 ActivityNotFoundException을 던지는 컨텍스트
+     * When: showExactAlarmSetting 호출
+     * Then: 두 번째로 시작한 인텐트가 package:<앱 패키지> 데이터의 ACTION_APPLICATION_DETAILS_SETTINGS
+     */
+    @Test
+    @Config(sdk = [33])
+    fun test_40_fallsBackToAppDetailsWhenExactAlarmScreenMissing() = runTest {
+        /** Given **/
+        val started = mutableListOf<Intent>()
+        val failingContext = mockk<Context> {
+            every { packageName } returns "com.black.app"
+            every { startActivity(any()) } answers {
+                started.add(firstArg())
+                if (started.size == 1) throw ActivityNotFoundException("No Activity found")
+            }
+        }
+
+        /** When **/
+        PermissionHelper.showExactAlarmSetting(failingContext)
+
+        /** Then **/
+        assertEquals(2, started.size)
+        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, started[0].action)
+        assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, started[1].action)
+        assertEquals("package:com.black.app", started[1].dataString)
     }
 
     /** 앱 모듈의 접근성 서비스 선언을 대신해 이 앱 패키지에 접근성 서비스 인텐트 필터를 가진 서비스 등록 */
