@@ -3,7 +3,12 @@ package com.black.app.model
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.black.app.model.datastore.UsageTimerDataStore
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
 import com.black.test.BaseTest
+import com.black.test.collectDuring
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -30,7 +35,10 @@ class UsageTimerRepositoryTest : BaseTest() {
     /** 일시정지 종료 시각 초기화(DataStore가 프로세스 단일 인스턴스라 다른 테스트 클래스의 타이머가 일시정지로 판단하지 않도록) */
     @After
     fun clearPause() {
-        runTest { repository.cancelPause() }
+        runTest {
+            repository.cancelPause()
+            repository.savePosition(UsageTimerDataStore.DEFAULT_POSITION)
+        }
     }
 
     /**
@@ -163,5 +171,60 @@ class UsageTimerRepositoryTest : BaseTest() {
         /** Then **/
         assertFalse(isPaused)
         assertEquals(0L, remainTimeMillis)
+    }
+
+    /**
+     * 저장값이 없으면 기본 위치를 돌려주는지 검증
+     *
+     * Given: 기본 위치가 저장된 상태
+     * When: 위치 Flow의 첫 값 조회
+     * Then: 기본 위치(왼쪽 가운데)
+     */
+    @Test
+    fun test_08_positionDefaultsWhenNothingSaved() = runTest {
+        /** Given / When **/
+        val position = repository.getPositionFlow().first()
+
+        /** Then **/
+        assertEquals(UsageTimerDataStore.DEFAULT_POSITION, position)
+    }
+
+    /**
+     * 저장한 위치를 그대로 다시 읽어오는지 검증
+     *
+     * Given: 오른쪽 아래, 아래 여백 30dp 위치 저장
+     * When: 위치 Flow의 첫 값 조회
+     * Then: 저장한 위치
+     */
+    @Test
+    fun test_09_savePositionRoundTrip() = runTest {
+        /** Given **/
+        val position = OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.BOTTOM, marginBottomDp = 30)
+        repository.savePosition(position)
+
+        /** When **/
+        val loaded = repository.getPositionFlow().first()
+
+        /** Then **/
+        assertEquals(position, loaded)
+    }
+
+    /**
+     * 위치와 무관한 저장은 위치 Flow에 다시 나오지 않는지 검증
+     *
+     * Given: 위치 Flow 수집 시작
+     * When: 일시정지 시간과 선택 앱 저장
+     * Then: 수집된 값은 처음 하나뿐
+     */
+    @Test
+    fun test_10_unrelatedSaveDoesNotEmitPosition() = runTest {
+        /** Given / When **/
+        val values = collectDuring(repository.getPositionFlow()) {
+            repository.savePauseDuration(5)
+            repository.saveSelectedApps(listOf("com.a"))
+        }
+
+        /** Then **/
+        assertEquals(listOf(UsageTimerDataStore.DEFAULT_POSITION), values)
     }
 }

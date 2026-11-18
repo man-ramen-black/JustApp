@@ -1,15 +1,24 @@
 package com.black.feature.floatingbutton.ui
 
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
+import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.util.OverlayPermissionStatus
+import com.black.feature.floatingbutton.R
+import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.test.BaseTest
 import com.black.test.collectValues
 import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,6 +38,9 @@ class FloatingSettingViewModelTest : BaseTest() {
     @MockK
     lateinit var overlayPermissionStatus: OverlayPermissionStatus
 
+    @MockK
+    lateinit var dataStore: FloatingDataStore
+
     private val running = MutableStateFlow(false)
 
     @Before
@@ -38,10 +50,12 @@ class FloatingSettingViewModelTest : BaseTest() {
         every { controller.isAccessibilityServiceEnabled() } returns true
         every { controller.start() } just Runs
         every { controller.stop() } just Runs
+        every { dataStore.getPositionFlow() } returns flowOf(FloatingDataStore.DEFAULT_POSITION)
+        coEvery { dataStore.putPosition(any()) } returns Result.success(Unit)
     }
 
     /** ViewModel 생성 후 init의 실행 상태 구독 시작까지 대기 */
-    private fun createViewModel() = FloatingSettingViewModel(controller, overlayPermissionStatus)
+    private fun createViewModel() = FloatingSettingViewModel(controller, overlayPermissionStatus, dataStore)
         .also { waitCoroutine() }
 
     /**
@@ -238,5 +252,68 @@ class FloatingSettingViewModelTest : BaseTest() {
         /** Then **/
         assertTrue(viewModel.uiState.value.overlayPermissionGranted)
         assertTrue(viewModel.uiState.value.accessibilityServiceEnabled)
+    }
+
+    /**
+     * 생성 시 저장된 표시 위치를 입력 상태로 불러오는지 검증
+     *
+     * Given: 저장된 위치가 오른쪽 위 40dp
+     * When: ViewModel 생성
+     * Then: positionInput이 그 위치의 입력 상태
+     */
+    @Test
+    fun test_10_initLoadsSavedPosition() = runTest {
+        /** Given **/
+        val position = OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.TOP, marginTopDp = 40)
+        every { dataStore.getPositionFlow() } returns flowOf(position)
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertEquals(OverlayPositionInput.from(position), viewModel.uiState.value.positionInput)
+    }
+
+    /**
+     * 표시 위치를 바꾸면 입력 상태에 반영하고 저장하는지 검증
+     *
+     * Given: ViewModel 생성
+     * When: updatePosition 호출
+     * Then: positionInput이 입력 그대로, putPosition이 입력의 위치로 호출
+     */
+    @Test
+    fun test_11_updatePositionSaves() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        val input = OverlayPositionInput(HorizontalAnchor.CENTER, VerticalAnchor.BOTTOM, marginBottom = "30")
+
+        /** When **/
+        viewModel.updatePosition(input)
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(input, viewModel.uiState.value.positionInput)
+        coVerify(exactly = 1) { dataStore.putPosition(input.toPosition()) }
+    }
+
+    /**
+     * 표시 위치 저장에 실패하면 실패 토스트 이벤트를 보내는지 검증
+     *
+     * Given: putPosition 실패
+     * When: updatePosition 호출
+     * Then: EventShowToast(floating_setting_save_failed) 수신
+     */
+    @Test
+    fun test_12_updatePositionFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { dataStore.putPosition(any()) } returns Result.failure(IllegalStateException("save failed"))
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.updatePosition(OverlayPositionInput(marginTop = "10"))
+        val receivedEvents = viewModel.events.collectValues(count = 1)
+
+        /** Then **/
+        assertEquals(FloatingSettingViewModel.EventShowToast(R.string.floating_setting_save_failed), receivedEvents[0])
     }
 }

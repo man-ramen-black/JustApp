@@ -5,8 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
+import androidx.compose.ui.test.isSelected
 import com.black.app.testutil.BaseUiTest
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
 import com.black.core.ui.component.OverlayPermissionDialogTestTags
+import com.black.core.ui.component.OverlayPositionInput
+import com.black.core.ui.component.OverlayPositionTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import com.black.feature.floatingbutton.R
@@ -68,6 +73,7 @@ class FloatingSettingScreenTest : BaseUiTest() {
     private fun hostFloatingSettingContent(
         onClickOverlayPermission: () -> Unit = {},
         onClickAccessibility: () -> Unit = {},
+        onPositionInputChange: (OverlayPositionInput) -> Unit = {},
     ) {
         onHostActivity { activity ->
             activity.setContent {
@@ -78,6 +84,7 @@ class FloatingSettingScreenTest : BaseUiTest() {
                         onRunningChange = {},
                         onClickOverlayPermission = onClickOverlayPermission,
                         onClickAccessibility = onClickAccessibility,
+                        onPositionInputChange = onPositionInputChange,
                     )
                 }
             }
@@ -307,5 +314,103 @@ class FloatingSettingScreenTest : BaseUiTest() {
         /** Then **/
         assertTagDisplayed(OverlayPermissionDialogTestTags.DIALOG)
         assertTextDisplayed(context.getString(R.string.floating_setting_overlay_permission_guide))
+    }
+
+    /**
+     * 상태의 표시 위치 입력이 위치 설정에 반영되는지 검증
+     *
+     * Given:
+     * - 오른쪽·아래, 아래 여백 25인 입력으로 FloatingSettingContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - 가로 오른쪽·세로 아래 선택
+     * - 아래 여백 칸 글자 25
+     */
+    @Test
+    fun test_08_positionInputIsReflected() {
+        /** Given **/
+        contentUiState.value = FloatingSettingUiState(
+            positionInput = OverlayPositionInput(HorizontalAnchor.RIGHT, VerticalAnchor.BOTTOM, marginBottom = "25"),
+        )
+        hostFloatingSettingContent()
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        assertTagMatches(OverlayPositionTestTags.HORIZONTAL_RIGHT, isSelected())
+        assertTagMatches(OverlayPositionTestTags.VERTICAL_BOTTOM, isSelected())
+        assertTagEditableText(OverlayPositionTestTags.MARGIN_BOTTOM, "25")
+    }
+
+    /**
+     * 가로 기준을 누르면 그 기준이 담긴 입력으로 변경 콜백이 호출되는지 검증
+     *
+     * Given:
+     * - 기본 입력으로 FloatingSettingContent 호스팅
+     * When:
+     * - 가로 가운데 클릭
+     * Then:
+     * - onPositionInputChange가 horizontal = CENTER인 입력으로 1회 호출
+     */
+    @Test
+    fun test_09_clickHorizontalCenterCallsCallback() {
+        /** Given **/
+        val changedInputs = mutableListOf<OverlayPositionInput>()
+        hostFloatingSettingContent(onPositionInputChange = { changedInputs += it })
+
+        /** When **/
+        clickTag(OverlayPositionTestTags.HORIZONTAL_CENTER, scrollTo = true)
+
+        /** Then **/
+        assertEquals(1, changedInputs.size)
+        assertEquals(HorizontalAnchor.CENTER, changedInputs[0].horizontal)
+    }
+
+    /**
+     * 여백 입력에서 숫자가 아닌 글자를 걸러 변경 콜백에 전달하는지 검증
+     *
+     * Given:
+     * - 기본 입력으로 FloatingSettingContent 호스팅
+     * When:
+     * - 왼쪽 여백 칸에 12a3 입력
+     * Then:
+     * - 콜백 입력의 marginLeft가 123
+     */
+    @Test
+    fun test_10_marginInputKeepsDigitsOnly() {
+        /** Given **/
+        val changedInputs = mutableListOf<OverlayPositionInput>()
+        hostFloatingSettingContent(onPositionInputChange = { changedInputs += it })
+
+        /** When **/
+        replaceTagText(OverlayPositionTestTags.MARGIN_LEFT, "12a3")
+
+        /** Then **/
+        assertEquals("123", changedInputs.last().marginLeft)
+    }
+
+    /**
+     * 여백 입력의 숫자가 3자리를 넘으면 입력이 무시되고 이전 값이 유지되는지 검증
+     *
+     * Given:
+     * - 기본 입력(왼쪽 여백 0)으로 FloatingSettingContent 호스팅
+     * When:
+     * - 왼쪽 여백 칸에 1234 입력
+     * Then:
+     * - 콜백 입력의 marginLeft가 이전 값 0
+     */
+    @Test
+    fun test_11_marginInputOverThreeDigitsKeepsPreviousValue() {
+        /** Given **/
+        val changedInputs = mutableListOf<OverlayPositionInput>()
+        hostFloatingSettingContent(onPositionInputChange = { changedInputs += it })
+
+        /** When **/
+        replaceTagText(OverlayPositionTestTags.MARGIN_LEFT, "1234")
+
+        /** Then **/
+        assertEquals("0", changedInputs.last().marginLeft)
     }
 }

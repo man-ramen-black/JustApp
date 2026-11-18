@@ -5,6 +5,8 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.os.SystemClock
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
@@ -184,6 +186,18 @@ abstract class BaseUiTest {
         useUnmergedTree: Boolean = false,
     ): SemanticsNodeInteraction =
         composeRule.onNodeWithTag(tag, useUnmergedTree).assertTextEquals(text)
+
+    /**
+     * testTag가 [tag]인 입력 칸의 입력값(EditableText)이 [text]와 일치하는지 검증
+     *
+     * 라벨이 병합돼 Text가 입력값과 다른 입력 칸에 사용. 라벨은 비교하지 않음
+     */
+    protected fun assertTagEditableText(tag: String, text: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(tag).assert(
+            SemanticsMatcher("EditableText == '$text'") {
+                it.config.getOrNull(SemanticsProperties.EditableText)?.text == text
+            },
+        )
 
     /**
      * testTag가 [tag]인 입력 칸의 텍스트를 [text]로 교체

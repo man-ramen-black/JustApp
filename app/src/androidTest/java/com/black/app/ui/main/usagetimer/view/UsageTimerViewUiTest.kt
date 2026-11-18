@@ -5,22 +5,30 @@ import android.view.ContextThemeWrapper
 import android.view.Surface
 import android.view.WindowInsets
 import com.black.app.R
+import com.black.app.model.UsageTimerRepository
+import com.black.app.model.datastore.UsageTimerDataStore
 import com.black.app.testutil.BaseUiTest
 import com.black.app.testutil.isStatusBarVisible
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
 import com.black.core.util.Cutout
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.UiUtil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
- * [UsageTimerView] 오버레이 창의 첫 표시 위치와 드래그 이동 범위가 실제 화면에 맞는지 검증하는 계측 테스트
+ * [UsageTimerView] 오버레이 창의 표시 위치와 드래그 이동 범위가 실제 화면에 맞는지 검증하는 계측 테스트
  *
  * 오버레이 창 x, y는 WindowManager가 창 속성(컷아웃 모드 등)에 따라 시스템 바를 피해 잡은 부모 프레임 기준이라 실제 기기 배치로만 확인 가능
  * 이동 가능 영역은 화면에서 보이는 시스템 바만 뺀 영역(컷아웃 영역 포함)
@@ -36,7 +44,14 @@ class UsageTimerViewUiTest : BaseUiTest() {
 
     private var timerView: UsageTimerView? = null
 
+    private val repository = UsageTimerRepository(context)
+
     override fun setup() {
+        // 저장된 위치가 기본값이 아니면 test_01이 깨지므로 기본값으로 맞추되, 테스트 전 위치는 테스트 뒤 되돌림
+        preserveValue(read = { repository.getPositionFlow().first() }, restore = { repository.savePosition(it) })
+        runBlocking { repository.savePosition(UsageTimerDataStore.DEFAULT_POSITION) }
+        // test_07이 바꾸는 일시정지 시간은 테스트 뒤 되돌림
+        preserveValue(read = { repository.getPauseDuration() }, restore = { repository.savePauseDuration(it) })
         // 오버레이 표시 권한 부여(shell uid 권한으로 직접 허용, teardown 뒤 BaseUiTest가 테스트 전 모드로 복원)
         setAppOpMode("SYSTEM_ALERT_WINDOW", "allow")
         // 자동 회전 해제(user_rotation 고정 회전 적용 조건, teardown 뒤 BaseUiTest가 테스트 전 값으로 복원)
@@ -110,6 +125,120 @@ class UsageTimerViewUiTest : BaseUiTest() {
     fun test_04_moveToEdgesReachesScreenEdgesInImmersiveReverseLandscape() = runBlocking {
         assertMoveToEdgesReachesMovableArea(Surface.ROTATION_270, isImmersive = true)
     }
+
+    /**
+     * 저장된 오른쪽 아래 위치와 여백대로 처음 표시되는지 검증
+     *
+     * Given: 잠금 해제 상태, 세로 화면, 오른쪽 아래·오른쪽 여백 16dp·아래 여백 40dp 저장
+     * When: 타이머 창 추가
+     * Then: 창 오른쪽이 이동 가능 영역 오른쪽에서 16dp, 창 아래가 이동 가능 영역 아래에서 40dp(1px 허용)
+     */
+    @Test
+    fun test_05_attachShowsAtStoredRightBottomWithMargins() = runBlocking {
+        /** Given **/
+        assumeUnlocked()
+        val movableArea = prepareScreen(Surface.ROTATION_0, isImmersive = false)
+        repository.savePosition(
+            OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.BOTTOM, marginRightDp = 16, marginBottomDp = 40)
+        )
+        val expectedRight = movableArea.right - dpToPx(16)
+        val expectedBottom = movableArea.bottom - dpToPx(40)
+
+        /** When **/
+        attachTimer()
+        assertTrue(
+            "저장된 위치로 옮겨지지 않았습니다: ${timerRect()}",
+            waitUntil { isNear(timerRect().right, expectedRight) && isNear(timerRect().bottom, expectedBottom) },
+        )
+
+        /** Then **/
+        val timerRect = timerRect()
+        assertEquals("창 오른쪽 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", expectedRight.toFloat(), timerRect.right.toFloat(), 1f)
+        assertEquals("창 아래 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", expectedBottom.toFloat(), timerRect.bottom.toFloat(), 1f)
+    }
+
+    /**
+     * 떠 있는 타이머가 저장된 위치 변경을 따라 옮겨지는지 검증
+     *
+     * Given: 잠금 해제 상태, 세로 화면, 기본 위치로 타이머 창 표시
+     * When: 오른쪽 위 위치 저장
+     * Then: 창이 이동 가능 영역 오른쪽 위 가장자리로 옮겨짐
+     */
+    @Test
+    fun test_06_changingStoredPositionMovesAttachedTimer() = runBlocking {
+        /** Given **/
+        assumeUnlocked()
+        val movableArea = prepareScreen(Surface.ROTATION_0, isImmersive = false)
+        attachTimer()
+
+        /** When **/
+        repository.savePosition(OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.TOP))
+        assertTrue(
+            "저장된 위치로 옮겨지지 않았습니다: ${timerRect()}",
+            waitUntil { isNear(timerRect().right, movableArea.right) && isNear(timerRect().top, movableArea.top) },
+        )
+
+        /** Then **/
+        val timerRect = timerRect()
+        assertEquals("창 오른쪽 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", movableArea.right.toFloat(), timerRect.right.toFloat(), 1f)
+        assertEquals("창 위쪽 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", movableArea.top.toFloat(), timerRect.top.toFloat(), 1f)
+    }
+
+    /**
+     * 위치와 무관한 설정을 저장해도 드래그로 옮긴 타이머 위치가 유지되는지 검증
+     *
+     * Given: 잠금 해제 상태, 세로 화면, 타이머 창을 오른쪽 아래로 이동
+     * When: 일시정지 시간 5분 저장
+     * Then: 창 위치가 저장 전과 같음
+     */
+    @Test
+    fun test_07_unrelatedSaveKeepsMovedTimer() = runBlocking {
+        /** Given **/
+        assumeUnlocked()
+        prepareScreen(Surface.ROTATION_0, isImmersive = false)
+        attachTimer()
+        val movedRect = moveTimer(OUTSIDE_POSITION, OUTSIDE_POSITION)
+
+        /** When **/
+        repository.savePauseDuration(5)
+        delay(SETTLE_DELAY)
+
+        /** Then **/
+        assertEquals("창 위치가 바뀌었습니다", movedRect, timerRect())
+    }
+
+    /**
+     * 드래그 없이 회전해도 저장된 가장자리에 다시 붙는지 검증
+     *
+     * Given: 잠금 해제 상태, 오른쪽 아래 위치 저장, 세로 화면에서 타이머 창 표시
+     * When: 가로, 세로로 차례로 회전(회전 처리 지연보다 길게 대기)
+     * Then: 창이 이동 가능 영역 오른쪽 아래 가장자리에 있음
+     */
+    @Test
+    fun test_08_rotationKeepsStoredEdgeWithoutDrag() = runBlocking {
+        /** Given **/
+        assumeUnlocked()
+        repository.savePosition(OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.BOTTOM))
+        val movableArea = prepareScreen(Surface.ROTATION_0, isImmersive = false)
+        attachTimer()
+
+        /** When **/
+        prepareScreen(Surface.ROTATION_90, isImmersive = false)
+        delay(ROTATION_SETTLE_DELAY)
+        prepareScreen(Surface.ROTATION_0, isImmersive = false)
+        delay(ROTATION_SETTLE_DELAY)
+
+        /** Then **/
+        val timerRect = timerRect()
+        assertEquals("창 오른쪽 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", movableArea.right.toFloat(), timerRect.right.toFloat(), 1f)
+        assertEquals("창 아래 위치가 다릅니다: $timerRect, 이동 가능 영역 $movableArea", movableArea.bottom.toFloat(), timerRect.bottom.toFloat(), 1f)
+    }
+
+    /** dp를 현재 화면 밀도의 px로 환산 */
+    private fun dpToPx(dp: Int): Int = (dp * context.resources.displayMetrics.density).roundToInt()
+
+    /** 두 px 좌표가 1px 이내인지 */
+    private fun isNear(actual: Int, expected: Int): Boolean = abs(actual - expected) <= 1
 
     /** test_02~04 공통: 지정 회전·몰입 모드에서 화면 밖 양 끝으로 이동 시 이동 가능 영역 가장자리에 맞춰지는지 확인 */
     private suspend fun assertMoveToEdgesReachesMovableArea(rotation: Int, isImmersive: Boolean) {
@@ -209,5 +338,11 @@ class UsageTimerViewUiTest : BaseUiTest() {
         private const val OUTSIDE_POSITION = 100_000f
         /** 창 이동 후 재배치 완료 대기 시간 */
         private const val SETTLE_DELAY = 700L
+        /**
+         * 회전 후 위치 재적용 완료 대기 시간
+         *
+         * 회전 처리 지연 300ms를 포함.
+         */
+        private const val ROTATION_SETTLE_DELAY = 1_000L
     }
 }

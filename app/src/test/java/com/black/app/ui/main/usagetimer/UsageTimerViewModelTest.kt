@@ -2,8 +2,13 @@ package com.black.app.ui.main.usagetimer
 
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
+import com.black.app.model.datastore.UsageTimerDataStore
 import com.black.app.util.InstalledAppResolver
 import com.black.app.util.mockInstalledApps
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
+import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.OverlayPermissionStatus
 import com.black.test.BaseTest
@@ -15,6 +20,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,6 +53,7 @@ class UsageTimerViewModelTest : BaseTest() {
         coEvery { repository.getPauseDuration() } returns 3
         coEvery { repository.getPauseRemainTimeMillis() } returns 0L
         coEvery { repository.getSelectedApps() } returns listOf("com.a", "com.b")
+        every { repository.getPositionFlow() } returns flowOf(UsageTimerDataStore.DEFAULT_POSITION)
         installedAppResolver.mockInstalledApps()
         every { overlayPermissionStatus.canDrawOverlays() } returns true
         every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns false
@@ -392,5 +399,69 @@ class UsageTimerViewModelTest : BaseTest() {
         /** Then **/
         assertTrue(viewModel.uiState.value.accessibilityServiceEnabled)
         assertFalse(viewModel.uiState.value.overlayPermissionGranted)
+    }
+
+    /**
+     * 생성 시 저장된 표시 위치가 UiState 입력값으로 로드되는지 검증
+     *
+     * Given: 저장된 위치가 오른쪽 위
+     * When: ViewModel 생성(초기 로드 완료 대기)
+     * Then: uiState.positionInput이 그 위치의 입력값
+     */
+    @Test
+    fun test_15_initLoadsSavedPosition() = runTest {
+        /** Given **/
+        val position = OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.TOP)
+        every { repository.getPositionFlow() } returns flowOf(position)
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertEquals(OverlayPositionInput.from(position), viewModel.uiState.value.positionInput)
+    }
+
+    /**
+     * 표시 위치 변경이 UiState에 반영되고 저장되는지 검증
+     *
+     * Given: 위치 저장 성공 모킹
+     * When: 오른쪽 아래 입력으로 updatePosition 호출 후 코루틴 완료 대기
+     * Then: uiState.positionInput이 그 입력, savePosition이 입력을 변환한 위치로 호출
+     */
+    @Test
+    fun test_16_updatePositionSavesAndUpdatesState() = runTest {
+        /** Given **/
+        coEvery { repository.savePosition(any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        val input = OverlayPositionInput.from(OverlayPosition(HorizontalAnchor.RIGHT, VerticalAnchor.BOTTOM, marginBottomDp = 30))
+
+        /** When **/
+        viewModel.updatePosition(input)
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(input, viewModel.uiState.value.positionInput)
+        coVerify { repository.savePosition(input.toPosition()) }
+    }
+
+    /**
+     * 표시 위치 저장에 실패하면 실패 토스트를 보내는지 검증
+     *
+     * Given: savePosition이 실패 결과를 돌려주는 저장소
+     * When: updatePosition 호출
+     * Then: 저장 실패 토스트 수신
+     */
+    @Test
+    fun test_17_updatePositionFailureShowsToast() = runTest {
+        /** Given **/
+        coEvery { repository.savePosition(any()) } returns Result.failure(IOException("disk full"))
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.updatePosition(OverlayPositionInput.from(UsageTimerDataStore.DEFAULT_POSITION))
+        val receivedEvents = viewModel.events.collectValues(count = 1)
+
+        /** Then **/
+        assertEquals(UsageTimerViewModel.EventShowToast(R.string.usage_timer_save_failed), receivedEvents[0])
     }
 }

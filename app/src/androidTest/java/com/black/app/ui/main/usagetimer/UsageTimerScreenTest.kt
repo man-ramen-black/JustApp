@@ -2,12 +2,18 @@ package com.black.app.ui.main.usagetimer
 
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.hasNoClickAction
+import androidx.compose.ui.test.isNotSelected
+import androidx.compose.ui.test.isSelected
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import com.black.app.R
 import com.black.app.model.UsageTimerRepository
 import com.black.app.testutil.BaseUiTest
 import com.black.app.testutil.assertDisplayed
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
 import com.black.core.ui.component.OverlayPermissionDialogTestTags
+import com.black.core.ui.component.OverlayPositionInput
+import com.black.core.ui.component.OverlayPositionTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
@@ -328,6 +334,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         uiState: UsageTimerUiState,
         onClickAccessibility: () -> Unit = {},
         onClickOverlaySettings: () -> Unit = {},
+        onPositionInputChange: (OverlayPositionInput) -> Unit = {},
     ) {
         onHostActivity { activity ->
             activity.setContent {
@@ -343,6 +350,7 @@ class UsageTimerScreenTest : BaseUiTest() {
                         onClickAccessibility = onClickAccessibility,
                         onClickOverlaySettings = onClickOverlaySettings,
                         onClickSelectApp = {},
+                        onPositionInputChange = onPositionInputChange,
                         onFinishTimer = {},
                     )
                 }
@@ -413,5 +421,101 @@ class UsageTimerScreenTest : BaseUiTest() {
             assertTagTextContains(tag, allowedValue)
             assertTagMatches(tag, hasNoClickAction())
         }
+    }
+
+    /**
+     * 표시 위치 설정이 입력 상태의 선택을 표시하는지 검증
+     *
+     * Given:
+     * - 오른쪽·아래 기준 입력 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 위치 설정 영역으로 스크롤
+     * Then:
+     * - 가로 오른쪽, 세로 아래 선택됨
+     * - 가로 왼쪽, 세로 위쪽 선택 안 됨
+     * - 여백 칸이 입력 상태의 값을 표시
+     */
+    @Test
+    fun test_13_positionSettingShowsSelectedAnchors() {
+        /** Given **/
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(
+                positionInput = OverlayPositionInput(
+                    horizontal = HorizontalAnchor.RIGHT,
+                    vertical = VerticalAnchor.BOTTOM,
+                    marginTop = "11",
+                    marginBottom = "22",
+                    marginLeft = "33",
+                    marginRight = "44",
+                ),
+            ),
+        )
+
+        /** When **/
+        assertTagDisplayed(OverlayPositionTestTags.HORIZONTAL_RIGHT, scrollTo = true)
+
+        /** Then **/
+        assertTagMatches(OverlayPositionTestTags.HORIZONTAL_RIGHT, isSelected())
+        assertTagMatches(OverlayPositionTestTags.HORIZONTAL_LEFT, isNotSelected())
+        assertTagMatches(OverlayPositionTestTags.VERTICAL_BOTTOM, isSelected())
+        assertTagMatches(OverlayPositionTestTags.VERTICAL_TOP, isNotSelected())
+        assertTagEditableText(OverlayPositionTestTags.MARGIN_TOP, "11")
+        assertTagEditableText(OverlayPositionTestTags.MARGIN_BOTTOM, "22")
+        assertTagEditableText(OverlayPositionTestTags.MARGIN_LEFT, "33")
+        assertTagEditableText(OverlayPositionTestTags.MARGIN_RIGHT, "44")
+    }
+
+    /**
+     * 가로 가운데를 누르면 가운데 기준으로 바뀐 입력이 콜백으로 전달되는지 검증
+     *
+     * Given:
+     * - 기본 입력 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 가로 가운데 버튼 클릭
+     * Then:
+     * - 콜백 1회, 가로 기준만 가운데로 바뀐 입력
+     */
+    @Test
+    fun test_14_clickHorizontalCenterCallsCallback() {
+        /** Given **/
+        val receivedInputs = mutableListOf<OverlayPositionInput>()
+        val initialInput = OverlayPositionInput()
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(positionInput = initialInput),
+            onPositionInputChange = { receivedInputs += it },
+        )
+
+        /** When **/
+        clickTag(OverlayPositionTestTags.HORIZONTAL_CENTER, scrollTo = true)
+
+        /** Then **/
+        assertEquals(listOf(initialInput.copy(horizontal = HorizontalAnchor.CENTER)), receivedInputs)
+    }
+
+    /**
+     * 여백 칸에 숫자가 아닌 글자를 입력하면 숫자만 남겨 콜백으로 전달되는지 검증
+     *
+     * Given:
+     * - 기본 입력 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 위쪽 여백 칸의 값을 "a1b2"로 교체
+     * Then:
+     * - 콜백으로 전달된 위쪽 여백이 "12"
+     */
+    @Test
+    fun test_15_marginInputKeepsOnlyDigits() {
+        /** Given **/
+        val receivedInputs = mutableListOf<OverlayPositionInput>()
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(),
+            onPositionInputChange = { receivedInputs += it },
+        )
+        assertTagDisplayed(OverlayPositionTestTags.MARGIN_TOP, scrollTo = true)
+
+        /** When **/
+        replaceTagText(OverlayPositionTestTags.MARGIN_TOP, "a1b2")
+
+        /** Then **/
+        assertEquals("12", receivedInputs.last().marginTop)
     }
 }
