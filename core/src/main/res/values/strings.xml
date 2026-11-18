@@ -13,5 +13,18 @@
     <string name="permission_overlay">다른 앱 위에 표시</string>
     <string name="open_overlay_settings">허용하러 가기</string>
 
+    <string name="overlay_position_section_title">표시 위치</string>
+    <string name="overlay_position_horizontal">가로</string>
+    <string name="overlay_position_vertical">세로</string>
+    <string name="overlay_position_left">왼쪽</string>
+    <string name="overlay_position_center">가운데</string>
+    <string name="overlay_position_right">오른쪽</string>
+    <string name="overlay_position_top">위</string>
+    <string name="overlay_position_bottom">아래</string>
+    <string name="overlay_position_margin_top">위 여백(dp)</string>
+    <string name="overlay_position_margin_bottom">아래 여백(dp)</string>
+    <string name="overlay_position_margin_left">왼쪽 여백(dp)</string>
+    <string name="overlay_position_margin_right">오른쪽 여백(dp)</string>
+
     <string name="ssl_error_confirm_message">이 사이트의 보안 인증서를 신뢰할 수 없습니다.\n계속하시겠습니까?</string>
 </resources>

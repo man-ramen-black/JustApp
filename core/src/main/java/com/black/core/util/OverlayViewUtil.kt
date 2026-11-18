@@ -8,10 +8,24 @@ import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 object OverlayViewUtil {
+    /**
+     * 창 배치 값(gravity와 x, y)
+     *
+     * gravity가 오른쪽·아래이면 x·y는 그 가장자리에서 떨어진 거리이고,
+     * 가운데이면 가운데에서 밀린 거리(WindowManager 규칙)
+     */
+    data class WindowPlacement(val gravity: Int, val x: Int, val y: Int)
+
     fun attachView(
         view: View,
         onSetWindowParams: ((windowParams: WindowManager.LayoutParams) -> Unit)? = null
@@ -180,4 +194,50 @@ object OverlayViewUtil {
         return Point(x, y)
     }
 
+    /**
+     * [position]을 창의 gravity와 x, y로 변환
+     *
+     * 붙은 쪽 여백만 쓰고 가운데 기준은 양쪽 여백의 차이를 절반으로 나눈 오프셋을 씀.
+     * 오른쪽·아래 gravity의 x·y는 그 가장자리에서 떨어진 거리라는 WindowManager 규칙을 따름
+     */
+    @SuppressLint("RtlHardcoded")
+    fun calculateWindowPlacement(position: OverlayPosition, density: Float): WindowPlacement {
+        val (horizontalGravity, x) = when (position.horizontal) {
+            HorizontalAnchor.LEFT -> Gravity.LEFT to (position.marginLeftDp * density).roundToInt()
+            HorizontalAnchor.RIGHT -> Gravity.RIGHT to (position.marginRightDp * density).roundToInt()
+            HorizontalAnchor.CENTER -> Gravity.CENTER_HORIZONTAL to
+                    ((position.marginLeftDp - position.marginRightDp) * density / 2f).roundToInt()
+        }
+        val (verticalGravity, y) = when (position.vertical) {
+            VerticalAnchor.TOP -> Gravity.TOP to (position.marginTopDp * density).roundToInt()
+            VerticalAnchor.BOTTOM -> Gravity.BOTTOM to (position.marginBottomDp * density).roundToInt()
+            VerticalAnchor.CENTER -> Gravity.CENTER_VERTICAL to
+                    ((position.marginTopDp - position.marginBottomDp) * density / 2f).roundToInt()
+        }
+        return WindowPlacement(horizontalGravity or verticalGravity, x, y)
+    }
+
+    /** 현재 창의 배치 값, 창 LayoutParams가 아니면 null */
+    fun currentWindowPlacement(view: View): WindowPlacement? {
+        val windowParams = view.layoutParams as? WindowManager.LayoutParams ?: return null
+        return WindowPlacement(windowParams.gravity, windowParams.x, windowParams.y)
+    }
+
+    /**
+     * [placement]를 창에 반영
+     *
+     * [updateView]로 gravity·x·y를 갱신
+     */
+    fun applyWindowPlacement(view: View, placement: WindowPlacement) {
+        updateView(view) {
+            it.gravity = placement.gravity
+            it.x = placement.x
+            it.y = placement.y
+        }
+    }
+
+    /** [flow]가 예외로 끝나면 [default]를 내보내는 Flow */
+    fun positionOrDefault(flow: Flow<OverlayPosition>, default: OverlayPosition): Flow<OverlayPosition> {
+        return flow.catch { emit(default) }
+    }
 }

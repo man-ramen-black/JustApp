@@ -5,13 +5,17 @@ import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import androidx.core.view.children
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.lifecycleScope
+import com.black.core.model.OverlayPosition
 import com.black.core.util.Log
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.UiUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 
@@ -54,6 +58,70 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
         defStyleRes: Int
     ) : super(context, attrs, defStyleAttr, defStyleRes)
 
+    /**
+     * 창을 처음 붙일 때 적용할 기본 위치
+     *
+     * null이면 위치를 지정하지 않음(하위 클래스가 [onInitializeWindowLayoutParams]에서 직접 지정)
+     */
+    protected open val defaultPosition: OverlayPosition? get() = null
+
+    /**
+     * 저장된 위치를 내보내는 Flow, null이면 저장된 위치를 쓰지 않음
+     *
+     * null이 아니면 [defaultPosition]도 함께 override해야 함(예외 시 대체 위치).
+     * 첫 값을 반영하기 전까지 뷰를 숨겨 기본 위치가 깜빡이지 않게 함.
+     * 부착마다 [onInitializeWindowLayoutParams]에서 한 번만 호출됨
+     */
+    protected open fun createPositionFlow(): Flow<OverlayPosition>? = null
+
+    /**
+     * 마지막으로 위치 설정에서 반영한 배치 값
+     *
+     * 끌어서 옮겼는지 판별에 사용
+     */
+    private var appliedPlacement: OverlayViewUtil.WindowPlacement? = null
+
+    /** [onInitializeWindowLayoutParams]에서 만들어 [onAttachedToWindow]가 수집하는 위치 Flow */
+    private var positionFlow: Flow<OverlayPosition>? = null
+
+    /** 하위 클래스는 super를 호출한 뒤 자기 설정을 더함 */
+    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
+        super.onInitializeWindowLayoutParams(windowParams)
+        // ViewRootImpl은 첫 순회에서 호스트 가시성을 onAttachedToWindow보다 먼저 읽어 첫 프레임을 판정하므로
+        // 창을 추가(addView)하기 전인 여기서 숨겨야 기본 위치가 한 프레임도 보이지 않음
+        positionFlow = createPositionFlow()
+        if (positionFlow != null) visibility = INVISIBLE
+        val position = defaultPosition ?: return
+        val placement = OverlayViewUtil.calculateWindowPlacement(position, resources.displayMetrics.density)
+        windowParams.gravity = placement.gravity
+        windowParams.x = placement.x
+        windowParams.y = placement.y
+        appliedPlacement = placement
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+
+        val flow = positionFlow ?: return
+        val fallback = defaultPosition ?: return
+        lifecycleScope.launch {
+            OverlayViewUtil.positionOrDefault(flow, fallback).collect { position ->
+                val placement = OverlayViewUtil.calculateWindowPlacement(position, resources.displayMetrics.density)
+                // 배치 반영에 실패해도 뷰가 계속 숨겨지지 않도록 표시는 항상 실행
+                try {
+                    OverlayViewUtil.applyWindowPlacement(this@MovableOverlayView, placement)
+                    appliedPlacement = placement
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e("apply overlay position failed : $e")
+                } finally {
+                    visibility = VISIBLE
+                }
+            }
+        }
+    }
+
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         handleTouchEvent(event)
         return super.onInterceptTouchEvent(event)
@@ -73,6 +141,10 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
         // 일정 시간 지연 후 위치 변경
         lifecycleScope.launch {
             delay(300)
+            // 위치 설정대로 두고 끌어서 옮기지 않은 창은 WindowManager가 같은 가장자리 기준으로 다시 배치하므로 재배치하지 않음
+            // 재배치하면 Top·Left 기준으로 바뀌어 오른쪽·아래·가운데 설정이 풀림
+            val applied = appliedPlacement
+            if (applied != null && applied == OverlayViewUtil.currentWindowPlacement(this@MovableOverlayView)) return@launch
             val viewPosition = OverlayViewUtil.getAbsoluteWindowPosition(this@MovableOverlayView)
             OverlayViewUtil.moveView(this@MovableOverlayView, viewPosition.x.toFloat(), viewPosition.y.toFloat())
         }
