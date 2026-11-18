@@ -1,6 +1,8 @@
 package com.black.app.ui.main.usagetimer
 
+import com.black.app.model.datastore.UsageTimerDataStore
 import com.black.app.ui.common.selectapp.SelectedAppUiItem
+import com.black.core.ui.component.OverlayPositionInput
 
 /** UsageTimer 화면 상태 */
 data class UsageTimerUiState(
@@ -10,6 +12,8 @@ data class UsageTimerUiState(
     val pauseDurationInput: String = "",
     /** 선택된 앱 표시 목록 */
     val selectedApps: List<SelectedAppUiItem> = emptyList(),
+    /** 타이머 표시 위치 입력값 */
+    val positionInput: OverlayPositionInput = OverlayPositionInput.from(UsageTimerDataStore.DEFAULT_POSITION),
     /** 다른 앱 위에 표시 권한 안내 다이얼로그 표시 여부 */
     val showOverlayPermissionDialog: Boolean = false,
     /** 앱 접근성 서비스 켜짐 여부 */

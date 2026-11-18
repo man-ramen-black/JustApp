@@ -6,6 +6,7 @@ import com.black.app.model.UsageTimerRepository
 import com.black.app.ui.common.selectapp.selectedAppUiItem
 import com.black.app.ui.main.usagetimer.UsageTimerScreen
 import com.black.app.util.InstalledAppResolver
+import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
@@ -14,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -63,6 +65,11 @@ class UsageTimerViewModel @Inject constructor(
                 )
             }
         }
+        // 선택 앱 해석을 기다리지 않도록 위치는 따로 읽고, 입력 중인 값을 덮지 않도록 한 번만 읽음
+        launch {
+            val positionInput = OverlayPositionInput.from(repository.getPositionFlow().first())
+            mutableUiState.update { it.copy(positionInput = positionInput) }
+        }
     }
 
     /** 설정 앱에서 권한을 바꾸고 돌아온 경우를 위한 권한 상태 갱신 */
@@ -81,6 +88,20 @@ class UsageTimerViewModel @Inject constructor(
 
     fun onPauseDurationInputChanged(input: String) {
         mutableUiState.update { it.copy(pauseDurationInput = input) }
+    }
+
+    /**
+     * 표시 위치 입력을 화면에 반영하고 저장
+     *
+     * 저장에 실패하면 실패 토스트를 보냄.
+     */
+    fun updatePosition(input: OverlayPositionInput) {
+        mutableUiState.update { it.copy(positionInput = input) }
+        launch {
+            if (repository.savePosition(input.toPosition()).isFailure) {
+                sendEvent(EventShowToast(R.string.usage_timer_save_failed))
+            }
+        }
     }
 
     fun onClickShow() {

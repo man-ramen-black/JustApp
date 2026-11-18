@@ -43,6 +43,8 @@ import com.black.app.ui.common.selectapp.SelectedAppUiItem
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.AppTextFieldDefaults
 import com.black.core.ui.component.OverlayPermissionDialog
+import com.black.core.ui.component.OverlayPositionInput
+import com.black.core.ui.component.OverlayPositionSetting
 import com.black.core.ui.component.PermissionStatusRow
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolScreenScaffold
@@ -139,6 +141,7 @@ fun UsageTimerScreen(
         onClickAccessibility = viewModel::onClickAccessibility,
         onClickOverlaySettings = viewModel::openOverlaySettings,
         onClickSelectApp = viewModel::onClickSelectApp,
+        onPositionInputChange = viewModel::updatePosition,
         onFinishTimer = viewModel::onFinishTimer,
     )
 
@@ -165,6 +168,7 @@ internal fun UsageTimerContent(
     onClickAccessibility: () -> Unit,
     onClickOverlaySettings: () -> Unit,
     onClickSelectApp: () -> Unit,
+    onPositionInputChange: (OverlayPositionInput) -> Unit,
     onFinishTimer: () -> Unit,
 ) {
     ToolScreenScaffold(
@@ -196,6 +200,12 @@ internal fun UsageTimerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(UsageTimerTestTags.SHOW_BUTTON),
+        )
+        // 표시 위치 섹션
+        SectionHeader(stringResource(R.string.overlay_position_section_title))
+        OverlayPositionSetting(
+            input = uiState.positionInput,
+            onInputChange = onPositionInputChange,
         )
 
         // 일시정지 섹션

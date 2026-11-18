@@ -8,8 +8,12 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.black.core.model.BaseDataStore
+import com.black.core.model.OverlayPosition
+import com.black.core.model.OverlayPosition.HorizontalAnchor
+import com.black.core.model.OverlayPosition.VerticalAnchor
 import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 /**
@@ -45,7 +49,17 @@ class UsageTimerDataStore @Inject constructor(
         private val KEY_PAUSE_DURATION = intPreferencesKey("UsageTimerPauseDuration")
         private val KEY_SELECTED_APPS = stringPreferencesKey("UsageTimerSelectedApps")
 
+        // 위치는 이관 대상이 아닌 새 키
+        private val KEY_POSITION = stringPreferencesKey("UsageTimerPosition")
+
         private const val DEFAULT_PAUSE_DURATION_MINUTES = 3
+
+        /**
+         * 저장된 위치가 없을 때의 표시 위치
+         *
+         * 화면 세로 중앙 왼쪽.
+         */
+        val DEFAULT_POSITION = OverlayPosition(HorizontalAnchor.LEFT, VerticalAnchor.CENTER)
     }
 
     override fun getDataStore(context: Context): DataStore<Preferences>
@@ -74,5 +88,18 @@ class UsageTimerDataStore @Inject constructor(
     suspend fun getSelectedApps(): List<String> {
         val joined = get(KEY_SELECTED_APPS, "")
         return if (joined.isEmpty()) emptyList() else joined.split(",")
+    }
+
+    /**
+     * 표시 위치 Flow
+     *
+     * 저장값이 없거나 복원에 실패하면 [DEFAULT_POSITION]. 다른 키가 저장돼도 같은 위치는 다시 내보내지 않음.
+     */
+    fun getPositionFlow(): Flow<OverlayPosition> {
+        return OverlayPosition.fromJsonFlow(flow(KEY_POSITION), DEFAULT_POSITION)
+    }
+
+    suspend fun updatePosition(position: OverlayPosition): Result<Unit> {
+        return position.saveAsJson { update(KEY_POSITION, it) }
     }
 }

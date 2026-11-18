@@ -2,7 +2,9 @@ package com.black.app.model
 
 import android.content.Context
 import com.black.app.model.datastore.UsageTimerDataStore
+import com.black.core.model.OverlayPosition
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 /**
@@ -52,5 +54,18 @@ class UsageTimerRepository @Inject constructor(@ApplicationContext context: Cont
 
     suspend fun getSelectedApps() : List<String> {
         return dataStore.getSelectedApps()
+    }
+
+    /**
+     * 사용 타이머 표시 위치 Flow
+     *
+     * 저장값이 없으면 기본 위치.
+     */
+    fun getPositionFlow(): Flow<OverlayPosition> {
+        return dataStore.getPositionFlow()
+    }
+
+    suspend fun savePosition(position: OverlayPosition): Result<Unit> {
+        return dataStore.updatePosition(position)
     }
 }

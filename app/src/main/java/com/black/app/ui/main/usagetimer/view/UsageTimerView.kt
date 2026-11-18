@@ -1,15 +1,17 @@
 package com.black.app.ui.main.usagetimer.view
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.TypedArray
-import android.view.Gravity
 import android.view.WindowManager
 import com.black.app.R
 import com.black.app.databinding.ViewUsageTimerBinding
+import com.black.app.model.UsageTimerRepository
+import com.black.app.model.datastore.UsageTimerDataStore
 import com.black.app.ui.main.usagetimer.UsageTimerGlobal
+import com.black.core.model.OverlayPosition
 import com.black.core.util.OnClick
 import com.black.core.view.MovableOverlayView
+import kotlinx.coroutines.flow.Flow
 
 /**
  * CustomView 가이드
@@ -31,13 +33,25 @@ class UsageTimerView(context: Context) : MovableOverlayView<ViewUsageTimerBindin
         isMovable = true
     }
 
-    /** 첫 표시 위치: 화면 세로 중앙 왼쪽 */
-    @SuppressLint("RtlHardcoded")
+    /**
+     * 저장된 위치를 읽기 전까지 쓰는 표시 위치
+     *
+     * 읽기에 실패했을 때도 이 위치를 씀.
+     */
+    override val defaultPosition: OverlayPosition get() = UsageTimerDataStore.DEFAULT_POSITION
+
+    /**
+     * 저장된 표시 위치 Flow
+     *
+     * 설정 화면에서 바꾸면 떠 있는 타이머도 옮겨짐.
+     */
+    override fun createPositionFlow(): Flow<OverlayPosition> =
+        UsageTimerRepository(context.applicationContext).getPositionFlow()
+
+    /** 위치는 [MovableOverlayView]가 맡으므로 표시 애니메이션만 지정 */
     override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
-        windowParams.apply {
-            gravity = Gravity.LEFT or Gravity.CENTER_VERTICAL
-            windowAnimations = android.R.style.Animation_Toast
-        }
+        super.onInitializeWindowLayoutParams(windowParams)
+        windowParams.windowAnimations = android.R.style.Animation_Toast
     }
 
     /** attach 시 적용할 타이머 기준 시각(elapsedRealtime ms). null이면 0부터 시작 */
