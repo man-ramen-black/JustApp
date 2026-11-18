@@ -68,7 +68,7 @@ class TextEditorScreenTest : BaseUiTest() {
      * When:
      * - 초기 렌더링 상태 유지(별도 조작 없음)
      * Then:
-     * - text_editor_title이 "메모장"으로 표시
+     * - text_editor_title이 "메모"로 표시
      * - save_button, load_button, new_button, editor_input 표시
      */
     @Test

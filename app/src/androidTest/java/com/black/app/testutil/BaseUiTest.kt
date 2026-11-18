@@ -3,6 +3,7 @@ package com.black.app.testutil
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.os.SystemClock
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -22,8 +24,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.Dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -52,10 +56,10 @@ import org.junit.runner.RunWith
  * 제공 기능:
  * - [hiltRule]: Hilt 주입 규칙. [setup] 호출 전에 inject()가 먼저 수행된다.
  * - [composeRule]: Compose UI 검증 규칙. 호스팅 없는 빈 규칙이라 Compose 미사용 테스트에도 무해하다.
- * - [assertTagDisplayed]·[clickTag]·[waitUntilTagExists]·[waitUntilTagMatches] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
+ * - [assertTagDisplayed]·[clickTag]·[scrollListToTag]·[waitUntilTagExists]·[waitUntilTagMatches] 등: testTag·텍스트 기준으로 반복되는 Compose 검증·조작 헬퍼
  * - [waitUntil]·[waitUntilFlowValue]: Compose 노드가 아닌 조건·Flow 값 대기
  * - [assumeUnlocked]: 화면 켜기·잠금 해제 후 잠겨 있으면 테스트 건너뜀
- * - [launchHost]/[launchActivity]: 실행한 [ActivityScenario]를 보관해 [teardown]에서 자동으로 close 한다.
+ * - [launchHost]/[launchActivity]: 실행한 [ActivityScenario]를 보관해 [teardown]에서 자동 close(클래스 또는 인텐트로 실행)
  * - [currentActivity]: 보관 중인 scenario의 현재 Activity 인스턴스
  * - [putSetting]/[setAppOpMode]: 기기 설정·앱 작업 변경. 테스트 전 값을 보관해 [teardown] 뒤 자동 복원
  * - [preserveValue]: 앱 저장값·싱글톤 상태의 테스트 전 값 보관. 기기 설정과 같은 단계에서 등록 역순으로 자동 복원
@@ -126,6 +130,16 @@ abstract class BaseUiTest {
     }
 
     /**
+     * [intent]로 Activity를 실행하고 scenario 보관, teardown에서 자동 close
+     *
+     * 알림·딥링크처럼 데이터가 담긴 인텐트로 여는 경로 검증에 사용. 이미 실행 중인 scenario가 있으면 먼저 close.
+     */
+    protected fun <A : Activity> launchActivity(intent: Intent): ActivityScenario<A> {
+        scenario?.close()
+        return ActivityScenario.launch<A>(intent).also { scenario = it }
+    }
+
+    /**
      * [HiltTestActivity]를 실행한 뒤 액티비티 인스턴스로 [block]을 실행한다.
      * scenario는 보관되어 teardown에서 자동으로 close 된다.
      */
@@ -170,9 +184,14 @@ abstract class BaseUiTest {
     protected fun assertTagExists(tag: String): SemanticsNodeInteraction =
         composeRule.onNodeWithTag(tag).assertExists()
 
-    /** testTag가 [tag]인 노드가 컴포지션에 없는지 검증 */
-    protected fun assertTagNotExists(tag: String) {
-        composeRule.onNodeWithTag(tag).assertDoesNotExist()
+    /**
+     * testTag가 [tag]인 노드가 컴포지션에 없는지 검증
+     *
+     * [useUnmergedTree]가 true면 부모에 병합되지 않은 트리에서 찾음(클릭 가능한 행 안 자손에 달린 태그).
+     * 병합된 트리에는 자손 태그가 원래 없어 그 트리의 부재 단언은 아무것도 확인하지 못함
+     */
+    protected fun assertTagNotExists(tag: String, useUnmergedTree: Boolean = false) {
+        composeRule.onNodeWithTag(tag, useUnmergedTree).assertDoesNotExist()
     }
 
     /**
@@ -293,6 +312,15 @@ abstract class BaseUiTest {
     }
 
     /**
+     * testTag가 [listTag]인 스크롤 목록을 testTag가 [tag]인 항목이 보일 때까지 스크롤
+     *
+     * 화면 밖이라 아직 그리지 않은 지연 목록(`LazyColumn`) 항목은 의미 트리에 없어 [clickTag]·[assertTagDisplayed]의 scrollTo로 찾을 수 없으므로,
+     * 목록 노드에서 항목을 찾아 스크롤함
+     */
+    protected fun scrollListToTag(listTag: String, tag: String): SemanticsNodeInteraction =
+        composeRule.onNodeWithTag(listTag).performScrollToNode(hasTestTag(tag))
+
+    /**
      * [text]를 가진 노드 클릭
      *
      * [scrollTo]가 true면 먼저 화면에 보이도록 스크롤
@@ -317,6 +345,13 @@ abstract class BaseUiTest {
         }
         return node.captureToImage()
     }
+
+    /**
+     * testTag가 [tag]인 노드의 루트 기준 위쪽 좌표
+     *
+     * 구획·행의 세로 순서 비교에 사용. 스크롤 영역 밖으로 일부가 잘린 노드도 원래 위치로 비교하도록 잘리지 않은 경계를 씀
+     */
+    protected fun tagTop(tag: String): Dp = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot().top
 
     /**
      * testTag가 [tag]인 노드가 생길 때까지 최대 [timeoutMillis] 대기
