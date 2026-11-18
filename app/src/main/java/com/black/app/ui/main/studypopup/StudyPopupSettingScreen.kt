@@ -168,8 +168,9 @@ fun StudyPopupSettingScreen(
 }
 
 /**
- * 스터디 팝업 설정 화면 콘텐츠(상태 무관 렌더링 전용)
+ * 스터디 팝업 설정 화면 콘텐츠
  *
+ * 상태 무관 렌더링 전용.
  * 계측 테스트가 상태를 주입해 기기 상태와 무관하게 상태 행의 분기마다 검증하도록 private 대신 internal
  */
 @Composable

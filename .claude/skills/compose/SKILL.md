@@ -46,7 +46,11 @@ fun TextEditorScreen(
     )
 }
 
-/** TextEditor 화면 콘텐츠(상태 무관 렌더링 전용) */
+/**
+ * TextEditor 화면 콘텐츠
+ *
+ * 상태 무관 렌더링 전용.
+ */
 @Composable
 private fun TextEditorContent(
     uiState: TextEditorUiState,

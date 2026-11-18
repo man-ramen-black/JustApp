@@ -154,7 +154,11 @@ fun UsageTimerScreen(
     }
 }
 
-/** UsageTimer 화면 콘텐츠(상태 무관 렌더링 전용) */
+/**
+ * UsageTimer 화면 콘텐츠
+ *
+ * 상태 무관 렌더링 전용.
+ */
 @Composable
 internal fun UsageTimerContent(
     uiState: UsageTimerUiState,
