@@ -29,6 +29,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_editor,
             ) { navigateByActivity(AppRoute.TextEditor) },
             MainItem(
+                getString(R.string.fragment_name_assistant_task),
+                R.drawable.ic_checklist,
+            ) { navigateByActivity(AppRoute.AssistantTask) },
+            MainItem(
                 getString(R.string.fragment_name_calculator),
                 R.drawable.ic_calculator,
             ) { navigateByActivity(AppRoute.Calculator) },
