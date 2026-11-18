@@ -6,6 +6,7 @@ import com.black.core.util.DataUtil
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -40,22 +41,27 @@ class FloatingViewState(dataStore: FloatingDataStore) {
 
     val size: LiveData<Float> = dataStore.getSizeFlow()
         .filterNotNull()
+        .distinctUntilChanged()
         .asLiveDataWithInitial(45f)
 
     val padding: LiveData<Float> = dataStore.getPaddingFlow()
         .filterNotNull()
+        .distinctUntilChanged()
         .asLiveDataWithInitial(3f)
 
     val margin: LiveData<Float> = dataStore.getMarginFlow()
         .filterNotNull()
+        .distinctUntilChanged()
         .asLiveDataWithInitial(2f)
 
     val radius: LiveData<Float> = dataStore.getRadiusFlow()
         .filterNotNull()
+        .distinctUntilChanged()
         .asLiveDataWithInitial(3f)
 
     val opacity: LiveData<Float> = dataStore.getOpacityFlow()
         .filterNotNull()
+        .distinctUntilChanged()
         .asLiveDataWithInitial(0.3f)
 
     private fun <T> Flow<T>.asLiveDataWithInitial(initialValue: T): LiveData<T> {

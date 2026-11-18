@@ -1,15 +1,13 @@
 package com.black.feature.floatingbutton.ui.floating
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.TypedArray
 import android.media.AudioManager
 import android.util.AttributeSet
-import android.view.Gravity
-import android.view.WindowManager
 import android.widget.Toast
+import com.black.core.model.OverlayPosition
 import com.black.core.service.GlobalActionRequest
 import com.black.core.util.Log
 import com.black.core.util.PermissionHelper
@@ -18,6 +16,7 @@ import com.black.core.view.MovableOverlayView
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import com.black.feature.floatingbutton.databinding.ViewFloatingBinding
+import kotlinx.coroutines.flow.Flow
 
 class FloatingView : MovableOverlayView<ViewFloatingBinding> {
 
@@ -44,12 +43,10 @@ class FloatingView : MovableOverlayView<ViewFloatingBinding> {
         isMovable = true
     }
 
-    /** 첫 표시 위치: 화면 왼쪽 아래 */
-    @SuppressLint("RtlHardcoded")
-    override fun onInitializeWindowLayoutParams(windowParams: WindowManager.LayoutParams) {
-        windowParams.gravity = Gravity.LEFT or Gravity.BOTTOM
-        windowParams.y = 70
-    }
+    override val defaultPosition: OverlayPosition get() = FloatingDataStore.DEFAULT_POSITION
+
+    override fun createPositionFlow(): Flow<OverlayPosition> =
+        FloatingDataStore(context.applicationContext).getPositionFlow()
 
     override fun bindVariable(binding: ViewFloatingBinding) {
         super.bindVariable(binding)

@@ -1,14 +1,19 @@
 package com.black.feature.floatingbutton.ui
 
+import androidx.annotation.StringRes
+import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.util.OverlayPermissionStatus
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
+import com.black.feature.floatingbutton.R
+import com.black.feature.floatingbutton.data.datastore.FloatingDataStore
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -17,6 +22,7 @@ import javax.inject.Inject
 class FloatingSettingViewModel @Inject constructor(
     private val controller: FloatingButtonController,
     private val overlayPermissionStatus: OverlayPermissionStatus,
+    private val dataStore: FloatingDataStore,
 ) : EventViewModel() {
 
     /** 플로팅 버튼 설정 화면 일회성 이벤트 */
@@ -26,6 +32,8 @@ class FloatingSettingViewModel @Inject constructor(
     data object EventOpenOverlaySettings : FloatingSettingEvent()
     /** 플로팅 버튼 접근성 서비스 설정 화면 이동 */
     data object EventOpenAccessibilitySettings : FloatingSettingEvent()
+    /** 문자열 리소스 토스트 표시 */
+    data class EventShowToast(@StringRes val messageResId: Int) : FloatingSettingEvent()
 
     private val mutableUiState = MutableStateFlow(FloatingSettingUiState())
     val uiState: StateFlow<FloatingSettingUiState> = mutableUiState.asStateFlow()
@@ -36,6 +44,11 @@ class FloatingSettingViewModel @Inject constructor(
             controller.running.collect { running ->
                 mutableUiState.update { it.copy(running = running) }
             }
+        }
+        // 저장된 표시 위치는 처음 한 번만 읽어 입력 칸에 채움(이후 입력은 이 화면이 소유)
+        launch {
+            val position = dataStore.getPositionFlow().first()
+            mutableUiState.update { it.copy(positionInput = OverlayPositionInput.from(position)) }
         }
         refreshStatus()
     }
@@ -80,5 +93,14 @@ class FloatingSettingViewModel @Inject constructor(
 
     fun openAccessibilitySettings() {
         sendEvent(EventOpenAccessibilitySettings)
+    }
+
+    /** 표시 위치 입력 반영과 저장, 저장에 실패하면 토스트 이벤트 */
+    fun updatePosition(input: OverlayPositionInput) {
+        mutableUiState.update { it.copy(positionInput = input) }
+        launch {
+            dataStore.putPosition(input.toPosition())
+                .onFailure { sendEvent(EventShowToast(R.string.floating_setting_save_failed)) }
+        }
     }
 }

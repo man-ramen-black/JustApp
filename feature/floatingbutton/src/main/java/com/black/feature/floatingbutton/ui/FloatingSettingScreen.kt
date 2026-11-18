@@ -1,5 +1,6 @@
 package com.black.feature.floatingbutton.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,7 +14,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.black.core.R as CoreR
 import com.black.core.ui.component.OverlayPermissionDialog
+import com.black.core.ui.component.OverlayPositionInput
+import com.black.core.ui.component.OverlayPositionSetting
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.StatusRow
 import com.black.core.ui.component.SwitchRow
@@ -60,6 +64,9 @@ fun FloatingSettingScreen(
             is FloatingSettingViewModel.EventOpenAccessibilitySettings -> {
                 PermissionHelper.openAccessibilityServiceDetailSetting(context)
             }
+            is FloatingSettingViewModel.EventShowToast -> {
+                Toast.makeText(context, event.messageResId, Toast.LENGTH_SHORT).show()
+            }
             else -> Unit
         }
     }
@@ -71,6 +78,7 @@ fun FloatingSettingScreen(
         onRunningChange = viewModel::setRunning,
         onClickOverlayPermission = viewModel::showOverlayPermissionDialog,
         onClickAccessibility = viewModel::openAccessibilitySettings,
+        onPositionInputChange = viewModel::updatePosition,
     )
 
     if (uiState.showOverlayPermissionDialog) {
@@ -96,6 +104,7 @@ fun FloatingSettingContent(
     onRunningChange: (Boolean) -> Unit,
     onClickOverlayPermission: () -> Unit,
     onClickAccessibility: () -> Unit,
+    onPositionInputChange: (OverlayPositionInput) -> Unit,
 ) {
     ToolScreenScaffold(
         title = stringResource(R.string.fragment_name_floating),
@@ -115,6 +124,13 @@ fun FloatingSettingContent(
             text = stringResource(R.string.floating_setting_running_description),
             modifier = Modifier.padding(top = 8.dp),
             style = AppTypography.ParagraphCaption,
+        )
+
+        // 표시 위치 섹션
+        SectionHeader(title = stringResource(CoreR.string.overlay_position_section_title))
+        OverlayPositionSetting(
+            input = uiState.positionInput,
+            onInputChange = onPositionInputChange,
         )
 
         // 상태 섹션
