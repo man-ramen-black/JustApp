@@ -4,6 +4,7 @@ import android.app.Notification
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.black.app.assistanttask.arrival.AssistantTaskHomeArrivalHandler
 import com.black.app.model.UsageLogRepository
 import com.black.app.model.UsageLogSettingsRepository
 import com.black.app.usagelog.record.RemovalReason
@@ -31,6 +32,7 @@ class UsageLogListenerService : NotificationListenerService() {
     private val settings by lazy { UsageLogSettingsRepository(applicationContext) }
     private val repository by lazy { UsageLogRepository(applicationContext) }
     private val appResolver by lazy { InstalledAppResolver(applicationContext) }
+    private val homeArrivalHandler by lazy { AssistantTaskHomeArrivalHandler(applicationContext) }
     private val duplicateFilter = NotificationDuplicateFilter()
 
     /**
@@ -38,12 +40,20 @@ class UsageLogListenerService : NotificationListenerService() {
      *
      * 알림 접근이 처음 연결될 때 만들어, 한 번도 연결되지 않고 끝나는 서비스는 감시기를 만들지 않음.
      * 다시 연결돼도 같은 감시기를 써서 새 세션이 이전 세션의 저장이 끝나기를 기다릴 수 있음.
-     * 집 도착·출발 알림은 [HomeTransitionListener]로 받아 [UsageLogScheduler.enqueueSend]로 즉시 전송을 예약함.
+     * 집 도착·출발 알림은 [HomeTransitionListener]로 받아 [UsageLogScheduler.enqueueSend]로 즉시 전송을 예약하고,
+     * 같은 신호를 [AssistantTaskHomeArrivalHandler]에도 넘겨 Todo 집 도착 알림 처리와 마지막 집 출발 시각 저장에 씀.
      */
     private var wifiMonitor: WifiMonitor? = null
 
     /** 콜백 도착 순서대로 하나씩 처리하기 위한 알림 이벤트 대기열 */
     private val events = Channel<NotificationEvent>(Channel.UNLIMITED)
+
+    /**
+     * Todo 집 도착 처리에 받은 순서대로 하나씩 넘기는 집 전환 대기열
+     *
+     * 기기 사용 기록 전송과 따로 실패하도록 전송 예약보다 먼저 넣어 별도 코루틴에서 처리함.
+     */
+    private val homeTransitions = HomeTransitionQueue(scope) { transition -> homeArrivalHandler.onHomeTransition(transition) }
 
     override fun onCreate() {
         super.onCreate()
@@ -95,6 +105,7 @@ class UsageLogListenerService : NotificationListenerService() {
     override fun onDestroy() {
         wifiMonitor?.stop()
         events.close()
+        homeTransitions.close()
         scope.cancel()
         super.onDestroy()
     }
@@ -104,7 +115,11 @@ class UsageLogListenerService : NotificationListenerService() {
         settings = settings,
         repository = repository,
         scope = scope,
-        listener = HomeTransitionListener { arrived -> enqueueHomeSend(arrived) },
+        listener = HomeTransitionListener { transition ->
+            // 전송 예약이 던져도 Todo 처리는 돌도록 먼저 대기열에 넣음
+            homeTransitions.offer(transition)
+            enqueueHomeSend(transition.arrived)
+        },
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {

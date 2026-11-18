@@ -50,8 +50,9 @@ class UsageStatsCollector(
      * 두 저장은 저장소가 달라 원자적이지 않으므로 진행 상태 저장이 실패하면 다음 수집에서 같은 기록이 중복될 수 있음.
      * 시스템 사용 기록 조회와 앱 라벨 조회가 블로킹 호출이라 호출 스레드와 무관하게 IO 디스패처에서 실행함.
      */
-    suspend fun collect() = mutex.withLock {
-        withContext(Dispatchers.IO) { collectLocked() }
+    suspend fun collect() {
+        // 잠금을 IO 디스패처 안에서 잡아, 수집이 끝나면 호출자 디스패처로 돌아가기를 기다리지 않고 바로 풂
+        withContext(Dispatchers.IO) { mutex.withLock { collectLocked() } }
     }
 
     private suspend fun collectLocked() {

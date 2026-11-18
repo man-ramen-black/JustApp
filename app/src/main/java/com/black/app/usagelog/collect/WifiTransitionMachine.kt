@@ -17,12 +17,12 @@ class WifiCollectionContext(val persisted: WifiState, val homes: Set<String>)
  * 이벤트 하나의 판정 결과
  *
  * @property records 저장할 기록
- * @property homeTransitions 집 도착(true)·출발(false) 알림 순서. 추정 기록도 포함하고, 집 Wi-Fi끼리 옮긴 판정은 비어 있음
+ * @property homeTransitions 집 도착·출발 알림 순서(기록의 시각·추정 여부 포함). 추정 기록도 포함하고, 집 Wi-Fi끼리 옮긴 판정은 비어 있음
  * @property newPersisted 저장할 마지막 상태(저장하지 않으면 null)
  */
 class WifiDecision(
     val records: List<WifiRecord>,
-    val homeTransitions: List<Boolean>,
+    val homeTransitions: List<HomeTransition>,
     val newPersisted: WifiState?,
 ) {
     companion object {
@@ -175,7 +175,7 @@ class WifiTransitionMachine(initialHandles: Set<Long>) {
         val homeRecords = records.filter { it.home == true }
         // 해제와 연결이 모두 집이면 집 Wi-Fi끼리 옮긴 것(2.4GHz·5GHz 전환 등)이라 도착·출발이 아님
         val withinHome = homeRecords.any { it is WifiDisconnectedRecord } && homeRecords.any { it is WifiConnectedRecord }
-        val transitions = if (withinHome) emptyList() else homeRecords.map { it is WifiConnectedRecord }
+        val transitions = if (withinHome) emptyList() else homeRecords.map { HomeTransition(it is WifiConnectedRecord, it.inferred, it.time) }
         return WifiDecision(records, transitions, currentState)
     }
 }

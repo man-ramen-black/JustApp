@@ -237,9 +237,9 @@ class WifiMonitor(
                 Log.w("[WifiMonitor] Wi-Fi 상태 저장 실패: ${it::class.java.simpleName}")
             }
         }
-        decision.homeTransitions.forEach { arrived ->
+        decision.homeTransitions.forEach { transition ->
             try {
-                listener.onHomeTransition(arrived)
+                listener.onHomeTransition(transition)
             } catch (failure: Exception) {
                 // 전송 예약 실패가 다음 알림과 감시를 막지 않도록 클래스 이름만 기록
                 Log.w("[WifiMonitor] 집 전환 알림 실패: ${failure::class.java.simpleName}")

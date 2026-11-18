@@ -19,6 +19,7 @@ import com.black.core.model.blackDataStore
 import com.black.core.util.JsonUtil
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 import javax.inject.Inject
@@ -28,6 +29,9 @@ import javax.inject.Inject
  *
  * SSID(집 SSID 목록, 마지막 Wi-Fi 상태), 열린 구간, 문자 진행 상태(문자 키)는 개인 데이터라 로그에 값을 남기지 않음.
  * 웹후크 주소, 암호화 키, 설치 식별자도 비밀 값이라 로그에 값을 남기지 않음.
+ * Wi-Fi 연결·해제마다 읽고 쓰는 수집 켜짐, 집 SSID 목록, 마지막 Wi-Fi 상태는 키 이름도 로그에 남기지 않음.
+ * 실사용 앱(`stable`)도 core debug 변형을 써 core 로그가 찍히고, 그 logcat 시각이 곧 집 출발·도착 시각이기 때문.
+ * 읽기는 로그를 남기지 않는 [flow]의 첫 값으로, 저장은 저장 로그를 끈 [update]로 처리.
  */
 class UsageLogDataStore @Inject constructor(
     @ApplicationContext private val context: Context
@@ -56,7 +60,8 @@ class UsageLogDataStore @Inject constructor(
 
     fun getHomeSsidsFlow(): Flow<Set<String>> = flow(KEY_HOME_SSIDS).map { it ?: emptySet() }
 
-    suspend fun getCollectionEnabled(): Boolean = get(KEY_COLLECTION_ENABLED, false)
+    /** 수집 켜짐 여부, Wi-Fi 연결·해제마다 읽어 읽기 로그를 남기지 않음 */
+    suspend fun getCollectionEnabled(): Boolean = flow(KEY_COLLECTION_ENABLED, false).first()
 
     suspend fun updateCollectionEnabled(enabled: Boolean): Result<Unit> = update(KEY_COLLECTION_ENABLED, enabled)
 
@@ -64,7 +69,8 @@ class UsageLogDataStore @Inject constructor(
 
     suspend fun updateCollectionOffSince(time: Long): Result<Unit> = update(KEY_COLLECTION_OFF_SINCE, time)
 
-    suspend fun getHomeSsids(): Set<String> = get(KEY_HOME_SSIDS, emptySet(), logValue = false)
+    /** 집 SSID 목록, Wi-Fi 연결·해제마다 읽어 읽기 로그를 남기지 않음 */
+    suspend fun getHomeSsids(): Set<String> = flow(KEY_HOME_SSIDS, emptySet()).first()
 
     /**
      * 집 SSID 추가
@@ -136,18 +142,23 @@ class UsageLogDataStore @Inject constructor(
      * 마지막 Wi-Fi 상태
      *
      * 저장값이 없거나 복원할 수 없으면 `WifiState(false, null)`.
+     * Wi-Fi 연결·해제마다 읽어 읽기 로그를 남기지 않음.
      */
     suspend fun getLastWifiState(): WifiState {
-        val json = get(KEY_LAST_WIFI_STATE, "", logValue = false)
+        val json = flow(KEY_LAST_WIFI_STATE, "").first()
         if (json.isEmpty()) return WifiState(false, null)
         return JsonUtil.from<WifiState>(json, true, logInput = false) ?: WifiState(false, null)
     }
 
-    /** 마지막 Wi-Fi 상태를 SSID 포함 한 키에 한 번에 저장 */
+    /**
+     * 마지막 Wi-Fi 상태를 SSID 포함 한 키에 한 번에 저장
+     *
+     * 집 출발·도착 직전에도 저장해, 키 이름만 남겨도 그 logcat 시각이 곧 출발·도착 시각이라 저장 로그 자체를 끔.
+     */
     suspend fun updateLastWifiState(state: WifiState): Result<Unit> {
         val json = JsonUtil.to(state, true)
             ?: return Result.failure(IllegalStateException("Wi-Fi 상태 직렬화 실패"))
-        return update(KEY_LAST_WIFI_STATE, json, logValue = false)
+        return update(KEY_LAST_WIFI_STATE, json, logWrite = false)
     }
 
     /**
