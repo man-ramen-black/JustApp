@@ -3,6 +3,7 @@ package com.black.core.util
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
 import android.app.Activity
+import android.app.AlarmManager
 import android.app.AppOpsManager
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -242,6 +243,40 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         fun isIgnoringBatteryOptimizations(context: Context) : Boolean {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        }
+
+        /**
+         * 정확한 알람 허용 여부
+         *
+         * API 31 미만은 별도 허용 없이 정확한 알람을 쓸 수 있어 true.
+         * API 31 이상은 매니페스트의 `SCHEDULE_EXACT_ALARM` 선언이 있어야 하고, 사용자가 허용을 끌 수 있음
+         */
+        fun canScheduleExactAlarms(context: Context): Boolean {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                return true
+            }
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            return alarmManager.canScheduleExactAlarms()
+        }
+
+        /**
+         * 정확한 알람 설정 화면 이동
+         *
+         * 이 앱의 항목 화면을 먼저 시도하고, 열 수 없거나 API 31 미만이면 앱 정보 화면.
+         */
+        fun showExactAlarmSetting(context: Context) {
+            val appDetailsIntent =
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri())
+            val intents = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                listOf(
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:${context.packageName}".toUri()),
+                    appDetailsIntent,
+                )
+            } else {
+                listOf(appDetailsIntent)
+            }
+
+            startFirstAvailable(context, intents)
         }
 
         /** 앱 알림 설정 화면 이동 */

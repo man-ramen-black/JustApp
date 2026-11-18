@@ -24,15 +24,35 @@ import com.black.core.R
 import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppTypography
 
-/** 도구 화면 섹션 위 디바이더 + 한글 캡션 */
+/**
+ * 도구 화면 섹션 위 디바이더 + 한글 캡션
+ *
+ * [trailing]이 있으면 캡션 줄 끝에 붙여 표시(접고 펴는 구획의 상태 아이콘 등).
+ */
 @Composable
-fun SectionHeader(title: String) {
+fun SectionHeader(title: String, trailing: (@Composable () -> Unit)? = null) {
     HorizontalDivider(modifier = Modifier.padding(top = 24.dp))
-    Text(
-        text = title,
-        modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
-        style = AppTypography.Caption,
-    )
+    if (trailing == null) {
+        Text(
+            text = title,
+            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp),
+            style = AppTypography.Caption,
+        )
+        return
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 12.dp, bottom = 12.dp),
+            style = AppTypography.Caption,
+        )
+        trailing()
+    }
 }
 
 /**

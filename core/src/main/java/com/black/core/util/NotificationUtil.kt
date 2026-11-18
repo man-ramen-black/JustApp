@@ -129,4 +129,13 @@ object NotificationUtil {
                 )
             )
     }
+
+    /**
+     * [showNotification]으로 띄운 알림 중 [notificationId] 알림 제거
+     *
+     * 이미 사라졌거나 띄운 적 없는 ID여도 아무 동작 없이 끝나며, 알림 권한 없이 호출 가능.
+     */
+    fun cancelNotification(context: Context, notificationId: Int) {
+        NotificationManagerCompat.from(context).cancel(notificationId)
+    }
 }

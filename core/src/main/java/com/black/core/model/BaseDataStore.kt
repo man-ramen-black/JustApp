@@ -93,9 +93,16 @@ abstract class BaseDataStore(private val context: Context) {
      * 결과를 돌려주며 실패면 원인 예외를 담음.
      * 코루틴 취소는 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함.
      * [logValue]가 false면 개인 데이터가 로그에 남지 않도록 키 이름만 기록.
+     * [logWrite]가 false면 [logValue]와 상관없이 저장 로그를 남기지 않음.
+     * 키 이름만 남겨도 logcat 시각이 곧 저장한 순간이라, 그 순간 자체가 개인 데이터인 값(집 출발 시각 등)에 씀.
      */
-    protected suspend fun <T> update(key: Preferences.Key<T>, data: T, logValue: Boolean = true): Result<Unit> {
-        Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
+    protected suspend fun <T> update(
+        key: Preferences.Key<T>,
+        data: T,
+        logValue: Boolean = true,
+        logWrite: Boolean = true,
+    ): Result<Unit> {
+        if (logWrite) Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
         return try {
             getDataStore(context).edit { it[key] = data }
             Result.success(Unit)
