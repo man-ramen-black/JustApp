@@ -8,6 +8,7 @@ description: 작업 브랜치를 release에 머지한다. 머지 방식(`--ff-on
 ## 원칙
 
 - 커밋 정리는 머지 전에 `squash` 스킬로 끝낸다. 머지 단계에서 커밋을 합치지 않고 브랜치 히스토리를 그대로 올린다.
+- `git log --oneline release..<브랜치> -- docs/superpowers/`에 커밋이 나오면 머지하지 않고 먼저 `squash` 스킬로 그 커밋을 결과에서 뺀다. `handoff` 스킬의 인계 커밋이 이렇게 남으며, 범위는 인계 문서의 시작 HEAD부터다.
 - 이번 세션에서 테스트 코드를 고쳤으면 실행·통과를 확인한 뒤 머지한다.
 - `git push`는 하지 않는다. 머지 커밋 메시지는 CLAUDE.md의 git 기본 한 줄을 따른다.
 
@@ -61,6 +62,7 @@ git merge --ff-only <브랜치>        # 또는 git merge --no-ff --no-edit <브
   - 워크트리에 `docs/` 밖의 미커밋 변경이 있으면 지우지 않고 보고한다.
   - 커밋하지 않는 `docs/superpowers/` 문서는 기본 체크아웃의 같은 경로로 먼저 옮긴다. `remove --force`가 함께 지운다.
   - `git worktree remove --force <워크트리>` 후 `git branch -d <브랜치>`
+  - push했던 브랜치를 스쿼시했으면 `-d`가 `not yet merged to 'refs/remotes/origin/<브랜치>'`로 거부한다. `git branch --unset-upstream <브랜치>` 뒤 다시 `-d`하고, 원격 브랜치는 지우지 않고 남았다고 보고한다.
 - 이번 작업의 `backup/*` 브랜치도 지운다. `git branch --list 'backup/*'` 전량을 나열해 이번 작업의 것인지 가른다.
 - auto-memory 디렉터리(세션 시스템 프롬프트가 알려 주는 경로)에서 `grep -l "규칙 이동: <브랜치>"`로 찾은 메모리는 지우고, `MEMORY.md`에서 그 파일을 가리키는 줄도 지운다. 그 내용은 이번 머지로 release 규칙에 들어갔다.
 

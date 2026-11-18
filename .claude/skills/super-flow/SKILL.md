@@ -29,6 +29,7 @@ brainstorming부터 기능 완성까지 다음 규칙을 지킨다. 이 규칙�
    - 설계 문서를 마크다운(`.md`) 파일로 만든다: `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`. 이 설계 문서에는 **"이후 `superpowers:writing-plans` 스킬로 계획을 진행한다"**는 내용과 **시작 HEAD**(brainstorming 시작 시점의 `git rev-parse HEAD`)를 포함하고, 계획 문서에도 시작 HEAD를 옮겨 적는다. 컨텍스트가 압축돼도 스쿼시 범위를 문서에서 복원하기 위함이다.
    - 계획 문서도 마크다운(`.md`) 파일로 만든다: `docs/superpowers/plans/YYYY-MM-DD-<feature>.md`.
    - 두 문서 모두 워킹 트리에 생성만 하고 **`git add`·커밋하지 않는다.** 하위 스킬이 문서를 커밋하라고 안내해도 그 단계는 건너뛴다. 이후 모든 커밋·스쿼시에서도 이 경로(`docs/superpowers/specs`, `docs/superpowers/plans`)는 제외한다.
+   - 예외: 사용자가 작업 인계를 지시하면 `handoff` 스킬이 이 문서들을 임시 커밋 하나로 넣고, 스쿼시 때 결과에서 뺀다.
 
 5. **테스트 코드로 검증** — 기능 구현 후 테스트 코드로 검증한다. 테스트 코드를 작성할 때는 **종류에 맞는 저장소 테스트 스킬을 필수로 참고**한다(JVM 유닛 테스트 `unit-test`, Fragment 계측 테스트 `ui-test`, Compose 화면과 그 계측 테스트 `compose`). 작성에 그치지 말고 실제로 실행해 통과를 확인한 뒤에만 완료로 넘어간다(`superpowers:verification-before-completion`).
 
