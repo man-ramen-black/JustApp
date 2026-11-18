@@ -37,12 +37,7 @@ object PackageInstallNotifier {
      * 채널은 첫 알림 때 만들어지므로 아직 없으면 표시 가능으로 판단
      */
     fun canShow(context: Context): Boolean {
-        if (!PermissionHelper.areNotificationsEnabled(context)) {
-            return false
-        }
-        val channel = NotificationManagerCompat.from(context).getNotificationChannelCompat(NOTIFICATION_CHANNEL_ID)
-            ?: return true
-        return channel.importance != NotificationManagerCompat.IMPORTANCE_NONE
+        return NotificationUtil.canShow(context, NOTIFICATION_CHANNEL_ID)
     }
 
     /**

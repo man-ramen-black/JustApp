@@ -32,6 +32,18 @@ object NotificationUtil {
             .createNotificationChannel(channelBuilder.build())
     }
 
+    /**
+     * 이 채널의 알림 표시 가능 여부
+     *
+     * 앱 알림 허용(Android 13 이상 알림 권한 포함)만으로는 이 채널만 끈 경우를 알 수 없어 채널 중요도까지 확인.
+     * 채널은 첫 알림 때 만들어지므로 아직 없으면 표시 가능으로 판단.
+     */
+    fun canShow(context: Context, channelId: String): Boolean {
+        if (!PermissionHelper.areNotificationsEnabled(context)) return false
+        val channel = NotificationManagerCompat.from(context).getNotificationChannelCompat(channelId) ?: return true
+        return channel.importance != NotificationManagerCompat.IMPORTANCE_NONE
+    }
+
     fun deleteNotificationChannel(context: Context, channelId: String) {
         NotificationManagerCompat.from(context).deleteNotificationChannel(channelId)
     }
