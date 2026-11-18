@@ -30,6 +30,9 @@
     <!-- Android 13 이상 Notification, Toast 노출을 위한 권한 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 정확한 시각의 알람(Todo 기한 알림) 예약, API 31 이상은 사용자가 설정에서 허용해야 동작 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <!-- 사용 기록: 앱 사용·화면 기록 읽기(UsageStatsManager), 선언이 없으면 설정의 사용 정보 접근 화면에서 허용할 수 없음 -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -51,7 +54,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
-    <!-- 백업 규칙: 기기 사용 기록 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
+    <!-- 백업 규칙: 기기 사용 기록과 비서 할 일의 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -177,6 +180,16 @@
             <intent-filter>
                 <action android:name="com.black.app.action.ACTIVATE_KEEP_SCREEN_ON" />
                 <action android:name="com.black.app.action.DEACTIVATE_KEEP_SCREEN_ON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Todo 시각 알림 알람 수신, 앱이 보낸 알람 인텐트만 받음 -->
+        <receiver android:name=".assistanttask.alarm.AssistantTaskAlarmReceiver" android:exported="false" />
+
+        <!-- 정확한 알람 허용 뒤 Todo 시각 알림 다시 예약, 시스템 방송이라 exported이며 수신기가 액션을 확인 -->
+        <receiver android:name=".assistanttask.alarm.AssistantTaskExactAlarmPermissionReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
             </intent-filter>
         </receiver>
 

@@ -6,6 +6,7 @@ import com.black.app.assistanttask.AssistantTask
 import com.black.app.assistanttask.AssistantTaskDates
 import com.black.app.assistanttask.AssistantTaskDue
 import com.black.app.assistanttask.AssistantTaskKind
+import com.black.app.assistanttask.AssistantTaskNotifier
 import com.black.app.assistanttask.AssistantTaskPermissionStatus
 import com.black.app.assistanttask.AssistantTaskReminder
 import com.black.app.assistanttask.alarm.AssistantTaskAlarmScheduler
@@ -48,6 +49,7 @@ class AssistantTaskViewModel @Inject constructor(
     private val scheduler: AssistantTaskSyncScheduler,
     private val permissionStatus: AssistantTaskPermissionStatus,
     private val alarms: AssistantTaskAlarmScheduler,
+    private val notifier: AssistantTaskNotifier,
 ) : EventViewModel() {
 
     /** 비서 할 일 화면 일회성 이벤트 */
@@ -425,13 +427,18 @@ class AssistantTaskViewModel @Inject constructor(
      * 완료 여부를 뒤집어 반영 대기로 저장하고 바로 동기화 요청과 시각 알림 다시 예약
      *
      * 미설정이면 무시함(연결 전에 바꾼 항목은 연결하며 저장본을 비울 때 사라지기 때문).
+     * 완료로 바꿔 저장했으면 이미 뜬 그 Todo의 시각 알림을 지우고, 완료 해제와 저장 실패는 알림을 그대로 둠.
+     * 저장 중에 화면을 닫아도 저장은 커밋되므로 알림 제거는 화면 닫힘 확인보다 앞에 둠.
      */
     fun toggleDone(task: AssistantTask) {
         if (!mutableUiState.value.configured) return
         launch {
+            val newDone = !task.done
             val changed = writeThenRequestSyncAndReschedule("완료 변경 실패") {
-                repository.markDone(task.pageId, !task.done, currentTimeMillis())
+                repository.markDone(task.pageId, newDone, currentTimeMillis())
             }
+            // 완료로 바꿨으면 그 Todo의 시각 알림 제거
+            if (changed && newDone) notifier.cancelTimeReminder(task.pageId)
             // 화면을 닫았으면 토스트 생략
             ensureActive()
             if (!changed) sendEvent(EventShowToast(R.string.assistant_task_change_failed))

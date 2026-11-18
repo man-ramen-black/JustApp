@@ -18,12 +18,20 @@ sealed interface Deeplink {
 
     object PathNavigate {
         const val MEMO = "memo"
+        const val TODO = "todo"
     }
 
     /** @param clearBackStack true면 Main까지 백스택 정리 후 이동 */
     data class Navigate(val route: AppRoute, val clearBackStack: Boolean = false) : Deeplink
 
     companion object {
+        /** [PathNavigate]의 [path]로 이동하는 `black://navigate/<path>` Uri */
+        fun navigateUri(path: String): Uri = Uri.Builder()
+            .scheme(Scheme.APP)
+            .authority(Host.NAVIGATE)
+            .appendPath(path)
+            .build()
+
         fun parse(uri: Uri?): Deeplink? {
             Log.d(uri)
             uri ?: return null
@@ -44,6 +52,7 @@ sealed interface Deeplink {
         private fun parseNavigateDeeplink(uri: Uri): Deeplink? {
             return when (uri.pathSegments.firstOrNull()) {
                 PathNavigate.MEMO -> Navigate(AppRoute.TextEditor, clearBackStack = true)
+                PathNavigate.TODO -> Navigate(AppRoute.AssistantTask, clearBackStack = true)
                 else -> null
             }
         }
