@@ -1,8 +1,8 @@
 package com.black.app.service
 
 import android.app.Application
-import com.black.app.model.datastore.ForegroundServiceDataStore
-import com.black.app.service.ForegroundServiceController.StartResult
+import com.black.app.data.datastore.ForegroundServiceDataStore
+import com.black.core.service.ForegroundServiceControl.StartResult
 import com.black.test.BaseTest
 import io.mockk.coEvery
 import io.mockk.mockkConstructor

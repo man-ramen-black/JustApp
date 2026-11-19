@@ -40,7 +40,8 @@ import org.robolectric.shadows.ShadowAlarmManager
  * [PermissionHelper.openAccessibilityServiceDetailSetting]의 실패 시 다음 화면 시도 순서,
  * [PermissionHelper.isGranted]·[PermissionHelper.isNotificationPermissionGranted]·[PermissionHelper.areNotificationsEnabled]의 판단,
  * 사용 정보 접근·알림 접근·방해 금지 접근·위치 권한·위치 설정 판정과 각 설정 화면 인텐트,
- * 매니페스트 선언으로 찾는 이 앱의 접근성 서비스 켜짐 판정과 상세 화면 인텐트 검증
+ * 매니페스트 선언으로 찾는 이 앱의 접근성 서비스 켜짐 판정과 상세 화면 인텐트,
+ * 매니페스트 선언으로 찾는 이 앱의 알림 리스너 알림 접근 판정과 설정 화면 인텐트 검증
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PermissionHelperTest : BaseTest() {
@@ -96,7 +97,7 @@ class PermissionHelperTest : BaseTest() {
     /**
      * 접근성 상세 화면, 하이라이트 목록, 일반 목록이 모두 실패해도 예외 없이 끝나는지 검증
      *
-     * Given: 상세 화면은 SecurityException, 접근성 설정 목록은 ActivityNotFoundException을 던지는 컨텍스트
+     * Given: 선언한 접근성 서비스, 상세 화면은 SecurityException, 접근성 설정 목록은 ActivityNotFoundException을 던지는 컨텍스트
      * When: openAccessibilityServiceDetailSetting 호출
      * Then: 예외 없이 상세 화면, 하이라이트 extras가 있는 목록, extras 없는 목록 순으로 3회 시도
      */
@@ -105,7 +106,9 @@ class PermissionHelperTest : BaseTest() {
         /** Given **/
         val failingContext: Context = mockk()
         val startedIntents = mutableListOf<Intent>()
+        declareAccessibilityService()
         every { failingContext.packageName } returns context.packageName
+        every { failingContext.packageManager } returns context.packageManager
         every { failingContext.startActivity(capture(startedIntents)) } answers {
             if (firstArg<Intent>().action == ACTION_ACCESSIBILITY_DETAILS_SETTINGS) {
                 throw SecurityException("Permission Denial")
@@ -114,7 +117,7 @@ class PermissionHelperTest : BaseTest() {
         }
 
         /** When **/
-        PermissionHelper.openAccessibilityServiceDetailSetting(failingContext, AccessibilityService::class.java)
+        PermissionHelper.openAccessibilityServiceDetailSetting(failingContext)
 
         /** Then **/
         assertEquals(
@@ -132,36 +135,35 @@ class PermissionHelperTest : BaseTest() {
     /**
      * 접근성 상세 화면이 열리면 하이라이트 목록과 일반 목록을 시도하지 않는지 검증
      *
-     * Given: startActivity가 성공하는 컨텍스트
+     * Given: 선언한 접근성 서비스, startActivity가 성공하는 컨텍스트
      * When: openAccessibilityServiceDetailSetting 호출
-     * Then: 상세 화면 1회만 시작, 대상 서비스 컴포넌트 이름과 FLAG_ACTIVITY_NEW_TASK 포함
+     * Then: 상세 화면 1회만 시작, 선언한 서비스 컴포넌트 이름과 FLAG_ACTIVITY_NEW_TASK 포함
      */
     @Test
     fun test_04_accessibilityDetailSuccessSkipsFallbacks() = runTest {
         /** Given **/
         val startingContext: Context = mockk()
         val startedIntents = mutableListOf<Intent>()
+        val service = declareAccessibilityService()
         every { startingContext.packageName } returns context.packageName
+        every { startingContext.packageManager } returns context.packageManager
         every { startingContext.startActivity(capture(startedIntents)) } just Runs
 
         /** When **/
-        PermissionHelper.openAccessibilityServiceDetailSetting(startingContext, AccessibilityService::class.java)
+        PermissionHelper.openAccessibilityServiceDetailSetting(startingContext)
 
         /** Then **/
         verify(exactly = 1) { startingContext.startActivity(any()) }
         val intent = startedIntents.single()
         assertEquals(ACTION_ACCESSIBILITY_DETAILS_SETTINGS, intent.action)
-        assertEquals(
-            ComponentName(context.packageName, AccessibilityService::class.java.name).flattenToString(),
-            intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME),
-        )
+        assertEquals(service.flattenToString(), intent.getStringExtra(Intent.EXTRA_COMPONENT_NAME))
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
     }
 
     /**
      * 접근성 상세 화면이 실패하고 하이라이트 목록이 열리면 일반 목록을 시도하지 않는지 검증
      *
-     * Given: 상세 화면만 SecurityException을 던지고 접근성 설정 목록은 성공하는 컨텍스트
+     * Given: 선언한 접근성 서비스, 상세 화면만 SecurityException을 던지고 접근성 설정 목록은 성공하는 컨텍스트
      * When: openAccessibilityServiceDetailSetting 호출
      * Then: 상세 화면, 하이라이트 extras가 있는 목록 순으로 2회만 시도
      */
@@ -170,7 +172,9 @@ class PermissionHelperTest : BaseTest() {
         /** Given **/
         val partlyFailingContext: Context = mockk()
         val startedIntents = mutableListOf<Intent>()
+        declareAccessibilityService()
         every { partlyFailingContext.packageName } returns context.packageName
+        every { partlyFailingContext.packageManager } returns context.packageManager
         every { partlyFailingContext.startActivity(capture(startedIntents)) } answers {
             if (firstArg<Intent>().action == ACTION_ACCESSIBILITY_DETAILS_SETTINGS) {
                 throw SecurityException("Permission Denial")
@@ -178,7 +182,7 @@ class PermissionHelperTest : BaseTest() {
         }
 
         /** When **/
-        PermissionHelper.openAccessibilityServiceDetailSetting(partlyFailingContext, AccessibilityService::class.java)
+        PermissionHelper.openAccessibilityServiceDetailSetting(partlyFailingContext)
 
         /** Then **/
         assertEquals(
@@ -361,101 +365,59 @@ class PermissionHelperTest : BaseTest() {
         assertFalse(PermissionHelper.isUsageAccessGranted(contextWithUsageMode(AppOpsManager.MODE_ERRORED)))
     }
 
-    /** 알림 접근 판정용 서비스 클래스 */
-    private class FirstListenerService : NotificationListenerService()
-
-    /** 다른 컴포넌트와 구분하기 위한 서비스 클래스 */
-    private class SecondListenerService : NotificationListenerService()
-
     private fun putEnabledListeners(value: String?) {
         Settings.Secure.putString(context.contentResolver, "enabled_notification_listeners", value)
     }
 
     /**
-     * 허용 목록에 해당 서비스 컴포넌트가 있으면 알림 접근이 허용으로 판정되는지 검증
-     *
-     * Given: 허용 목록에 다른 서비스와 대상 서비스가 함께 있음
-     * When: isNotificationListenerEnabled 호출
-     * Then: true
-     */
-    @Test
-    fun test_14_notificationListenerEnabledWhenComponentListed() = runTest {
-        /** Given **/
-        val other = ComponentName("com.other", "com.other.Service").flattenToString()
-        val target = ComponentName(context, FirstListenerService::class.java).flattenToString()
-        putEnabledListeners("$other:$target")
-
-        /** When / Then **/
-        assertTrue(PermissionHelper.isNotificationListenerEnabled(context, FirstListenerService::class.java))
-    }
-
-    /**
      * 같은 앱의 다른 서비스만 허용 목록에 있으면 거부로 판정되는지 검증
      *
-     * Given: 허용 목록에 같은 패키지의 다른 서비스만 있음
+     * Given: 선언한 알림 리스너, 허용 목록에 같은 패키지의 다른 서비스만 있음
      * When: isNotificationListenerEnabled 호출
      * Then: false
      */
     @Test
-    fun test_15_notificationListenerDisabledWhenOnlyOtherComponentListed() = runTest {
+    fun test_14_notificationListenerDisabledWhenOnlyOtherComponentListed() = runTest {
         /** Given **/
-        putEnabledListeners(ComponentName(context, SecondListenerService::class.java).flattenToString())
+        declareNotificationListenerService()
+        putEnabledListeners(ComponentName(context.packageName, "${context.packageName}.OtherListenerService").flattenToString())
 
         /** When / Then **/
-        assertFalse(PermissionHelper.isNotificationListenerEnabled(context, FirstListenerService::class.java))
+        assertFalse(PermissionHelper.isNotificationListenerEnabled(context))
     }
 
     /**
      * 허용 목록 설정값이 없으면 거부로 판정되는지 검증
      *
-     * Given: 허용 목록 설정값 없음
+     * Given: 선언한 알림 리스너, 허용 목록 설정값 없음
      * When: isNotificationListenerEnabled 호출
      * Then: false
      */
     @Test
-    fun test_16_notificationListenerDisabledWhenSettingMissing() = runTest {
+    fun test_15_notificationListenerDisabledWhenSettingMissing() = runTest {
         /** Given **/
+        declareNotificationListenerService()
         putEnabledListeners(null)
 
         /** When / Then **/
-        assertFalse(PermissionHelper.isNotificationListenerEnabled(context, FirstListenerService::class.java))
+        assertFalse(PermissionHelper.isNotificationListenerEnabled(context))
     }
 
     /**
-     * API 30 이상에서 알림 접근 상세 화면을 컴포넌트 지정으로 여는지 검증
+     * API 30 미만에서 선언한 알림 리스너가 있어도 알림 접근 목록 화면을 여는지 검증
      *
-     * Given: SDK 34, Activity가 아닌 애플리케이션 컨텍스트
-     * When: showNotificationListenerSettings 호출
-     * Then: ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS, 컴포넌트 extra가 대상 서비스, FLAG_ACTIVITY_NEW_TASK 포함
-     */
-    @Test
-    @Config(sdk = [34])
-    fun test_17_opensNotificationListenerDetailOnROrAbove() = runTest {
-        /** Given / When **/
-        PermissionHelper.showNotificationListenerSettings(context, FirstListenerService::class.java)
-
-        /** Then **/
-        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
-        assertEquals(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS, intent.action)
-        assertEquals(
-            ComponentName(context, FirstListenerService::class.java).flattenToString(),
-            intent.getStringExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME),
-        )
-        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
-    }
-
-    /**
-     * API 30 미만에서 알림 접근 목록 화면을 여는지 검증
-     *
-     * Given: SDK 25, Activity가 아닌 애플리케이션 컨텍스트
+     * Given: SDK 25, 선언한 알림 리스너
      * When: showNotificationListenerSettings 호출
      * Then: ACTION_NOTIFICATION_LISTENER_SETTINGS, FLAG_ACTIVITY_NEW_TASK 포함
      */
     @Test
     @Config(sdk = [25])
-    fun test_18_opensNotificationListenerListBelowR() = runTest {
-        /** Given / When **/
-        PermissionHelper.showNotificationListenerSettings(context, FirstListenerService::class.java)
+    fun test_16_opensNotificationListenerListBelowR() = runTest {
+        /** Given **/
+        declareNotificationListenerService()
+
+        /** When **/
+        PermissionHelper.showNotificationListenerSettings(context)
 
         /** Then **/
         val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
@@ -497,7 +459,9 @@ class PermissionHelperTest : BaseTest() {
             every { packageName } returns "com.black.app"
             every { startActivity(any()) } answers {
                 started.add(firstArg())
-                if (started.size == 1) throw ActivityNotFoundException()
+                if (started.size == 1) {
+                    throw ActivityNotFoundException()
+                }
             }
         }
 
@@ -914,7 +878,9 @@ class PermissionHelperTest : BaseTest() {
             every { packageName } returns "com.black.app"
             every { startActivity(any()) } answers {
                 started.add(firstArg())
-                if (started.size == 1) throw ActivityNotFoundException("No Activity found")
+                if (started.size == 1) {
+                    throw ActivityNotFoundException("No Activity found")
+                }
             }
         }
 
@@ -928,12 +894,115 @@ class PermissionHelperTest : BaseTest() {
         assertEquals("package:com.black.app", started[1].dataString)
     }
 
+    /**
+     * 매니페스트에 선언한 이 앱의 알림 리스너를 찾는지 검증
+     *
+     * Given: 알림 리스너 인텐트 필터를 가진 이 앱의 서비스 선언
+     * When: findNotificationListenerService 호출
+     * Then: 선언한 서비스 컴포넌트
+     */
+    @Test
+    fun test_41_findsDeclaredNotificationListenerService() = runTest {
+        /** Given **/
+        val service = declareNotificationListenerService()
+
+        /** When **/
+        val found = PermissionHelper.findNotificationListenerService(context)
+
+        /** Then **/
+        assertEquals(service, found)
+    }
+
+    /**
+     * 알림 리스너 선언이 없으면 허용되지 않은 것으로 보고 알림 접근 목록 화면을 여는지 검증
+     *
+     * Given: 알림 리스너 선언 없음, SDK 34
+     * When: findNotificationListenerService, isNotificationListenerEnabled, showNotificationListenerSettings 호출
+     * Then: null, false, 컴포넌트 지정 없는 ACTION_NOTIFICATION_LISTENER_SETTINGS
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_42_noDeclaredNotificationListenerOpensList() = runTest {
+        /** Given **/
+        // 테스트 매니페스트에 알림 리스너 선언 없음
+        putEnabledListeners("com.other/com.other.Service")
+
+        /** When **/
+        val found = PermissionHelper.findNotificationListenerService(context)
+        val enabled = PermissionHelper.isNotificationListenerEnabled(context)
+        PermissionHelper.showNotificationListenerSettings(context)
+
+        /** Then **/
+        assertNull(found)
+        assertFalse(enabled)
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS, intent.action)
+        assertFalse(intent.hasExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME))
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
+    /**
+     * 이 앱의 알림 리스너 허용 여부를 알림 접근 허용 목록으로 판정하는지 검증
+     *
+     * Given: 선언한 알림 리스너, 다른 앱 리스너와 함께 허용한 목록과 다른 앱 리스너만 허용한 목록
+     * When: 각 목록에서 isNotificationListenerEnabled(context) 호출
+     * Then: 함께 허용한 목록은 true, 다른 앱 리스너만 허용한 목록은 false
+     */
+    @Test
+    fun test_43_declaredNotificationListenerEnabledFollowsSetting() = runTest {
+        /** Given **/
+        val service = declareNotificationListenerService()
+        val otherListener = "com.other/com.other.Service"
+
+        /** When **/
+        putEnabledListeners("$otherListener:${service.flattenToString()}")
+        val enabledResult = PermissionHelper.isNotificationListenerEnabled(context)
+        putEnabledListeners(otherListener)
+        val disabledResult = PermissionHelper.isNotificationListenerEnabled(context)
+
+        /** Then **/
+        assertTrue(enabledResult)
+        assertFalse(disabledResult)
+    }
+
+    /**
+     * 클래스 없이 이 앱의 알림 리스너 상세 화면을 여는지 검증
+     *
+     * Given: 선언한 알림 리스너, SDK 34
+     * When: showNotificationListenerSettings(context) 호출
+     * Then: ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS, 컴포넌트 extra가 선언한 서비스, FLAG_ACTIVITY_NEW_TASK 포함
+     */
+    @Test
+    @Config(sdk = [34])
+    fun test_44_opensDeclaredNotificationListenerDetail() = runTest {
+        /** Given **/
+        val service = declareNotificationListenerService()
+
+        /** When **/
+        PermissionHelper.showNotificationListenerSettings(context)
+
+        /** Then **/
+        val intent = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS, intent.action)
+        assertEquals(service.flattenToString(), intent.getStringExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME))
+        assertTrue(intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+    }
+
     /** 앱 모듈의 접근성 서비스 선언을 대신해 이 앱 패키지에 접근성 서비스 인텐트 필터를 가진 서비스 등록 */
     private fun declareAccessibilityService(): ComponentName {
         val service = ComponentName(context.packageName, "${context.packageName}.TestAccessibilityService")
         val packageManager = shadowOf(context.packageManager)
         packageManager.addServiceIfNotPresent(service)
         packageManager.addIntentFilterForService(service, IntentFilter(AccessibilityService.SERVICE_INTERFACE))
+        return service
+    }
+
+    /** 앱 모듈의 알림 리스너 선언을 대신해 이 앱 패키지에 알림 리스너 인텐트 필터를 가진 서비스 등록 */
+    private fun declareNotificationListenerService(): ComponentName {
+        val service = ComponentName(context.packageName, "${context.packageName}.TestNotificationListenerService")
+        val packageManager = shadowOf(context.packageManager)
+        packageManager.addServiceIfNotPresent(service)
+        packageManager.addIntentFilterForService(service, IntentFilter(NotificationListenerService.SERVICE_INTERFACE))
         return service
     }
 

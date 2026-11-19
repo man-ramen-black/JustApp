@@ -1,0 +1,441 @@
+package com.black.core.data
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.preferencesDataStoreFile
+import com.black.test.BaseTest
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.FixMethodOrder
+import org.junit.Test
+import org.junit.runners.MethodSorters
+import org.robolectric.RuntimeEnvironment
+import java.io.IOException
+import android.util.Log as AndroidLog
+
+/** [BaseDataStore] 하위 DataStore의 손상 파일 복구, 저장 실패 전달, 기본값 Flow, 읽고 고쳐 쓰기, 여러 키 함께 저장, 전체 삭제, 저장 로그 끄기 검증 */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+class BaseDataStoreTest : BaseTest() {
+
+    private val context: Context = RuntimeEnvironment.getApplication()
+
+    /** 손상 파일 복구 검증용 DataStore */
+    private class CorruptionTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            const val NAME = "corruptionTest"
+
+            private val Context.corruptionTestDataStore by blackDataStore(NAME)
+
+            private val KEY_TEXT = stringPreferencesKey("text")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.corruptionTestDataStore
+
+        suspend fun updateText(text: String): Result<Unit> = update(KEY_TEXT, text)
+
+        suspend fun getText(): String = get(KEY_TEXT, "")
+    }
+
+    /**
+     * 파일이 손상돼 있어도 손상 파일을 빈 값으로 바꾸고 이후 저장·조회가 되는지 검증
+     *
+     * Given: protobuf로 읽을 수 없는 DataStore 파일
+     * When: 값 저장 후 조회
+     * Then: 저장 오류 없음 + 저장한 값 조회
+     */
+    @Test
+    fun test_01_corruptedFileIsReplacedAndWritable() = runTest {
+        /** Given **/
+        // 길이 127인 필드를 선언하고 내용이 없어 읽는 도중 끝나는 protobuf
+        context.preferencesDataStoreFile(CorruptionTestDataStore.NAME)
+            .apply { parentFile?.mkdirs() }
+            .writeBytes(byteArrayOf(0x0A, 0x7F))
+        val dataStore = CorruptionTestDataStore(context)
+
+        /** When **/
+        val result = dataStore.updateText("saved")
+
+        /** Then **/
+        assertTrue(result.isSuccess)
+        assertEquals("saved", dataStore.getText())
+    }
+
+    /** 저장이 항상 [failSave]로 끝나는 DataStore를 쓰는 저장소 */
+    private class FailingDataStore(context: Context, failSave: suspend () -> Nothing) : BaseDataStore(context) {
+        private val dataStore: DataStore<Preferences> = mockk {
+            coEvery { updateData(any()) } coAnswers { failSave() }
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+        suspend fun updateText(text: String): Result<Unit> = update(stringPreferencesKey("text"), text)
+    }
+
+    /**
+     * 디스크 쓰기 실패는 예외 대신 실패 결과로 돌려주는지 검증
+     *
+     * Given: 저장 시 IOException을 던지는 DataStore
+     * When: 값 저장
+     * Then: 실패 결과, 원인은 IOException
+     */
+    @Test
+    fun test_02_writeFailureReturnsFailure() = runTest {
+        /** Given **/
+        val dataStore = FailingDataStore(context) { throw IOException("disk full") }
+
+        /** When **/
+        val result = dataStore.updateText("saved")
+
+        /** Then **/
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IOException)
+    }
+
+    /**
+     * [save]를 자식 코루틴에서 시작해 저장 대기 중에 그 코루틴을 취소하고 [save]가 던진 예외 반환
+     *
+     * [save]가 취소를 실패 결과로 바꿔 돌려주면 null.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun TestScope.cancelWhileSaving(save: suspend () -> Result<*>): Throwable? {
+        var thrown: Throwable? = null
+        val saving = launch { thrown = runCatching { save() }.exceptionOrNull() }
+        // 저장 대기에 들어갈 때까지 실행
+        runCurrent()
+        // 저장 대기 중 호출한 코루틴 취소
+        saving.cancel()
+        saving.join()
+        return thrown
+    }
+
+    /**
+     * 저장 중에 호출한 코루틴이 취소되면 실패 결과로 바꾸지 않고 다시 던지는지 검증
+     *
+     * Given: 취소될 때까지 저장을 기다리는 DataStore
+     * When: 자식 코루틴에서 값을 저장하다 그 코루틴 취소
+     * Then: CancellationException 전파
+     */
+    @Test
+    fun test_03_cancellationIsRethrown() = runTest {
+        /** Given **/
+        val dataStore = FailingDataStore(context) { awaitCancellation() }
+
+        /** When **/
+        val thrown = cancelWhileSaving { dataStore.updateText("saved") }
+
+        /** Then **/
+        assertTrue(thrown is CancellationException)
+    }
+
+    /** 기본값 Flow 검증용 DataStore */
+    private class FlowTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.flowTestDataStore by blackDataStore("flowTest")
+
+            private val KEY_TEXT = stringPreferencesKey("text")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.flowTestDataStore
+
+        suspend fun updateText(text: String): Result<Unit> = update(KEY_TEXT, text)
+
+        suspend fun removeText(): Result<Unit> = remove(KEY_TEXT)
+
+        fun getTextFlow(): Flow<String> = flow(KEY_TEXT, "default")
+    }
+
+    /** 읽기가 항상 [error]로 실패하는 DataStore를 쓰는 저장소 */
+    private class ReadFailingDataStore(context: Context, error: Throwable) : BaseDataStore(context) {
+        private val dataStore: DataStore<Preferences> = mockk {
+            every { data } returns flow { throw error }
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+        fun getTextFlow(): Flow<String> = flow(stringPreferencesKey("text"), "default")
+    }
+
+    /**
+     * 저장값이 없으면 기본값 Flow가 기본값을 내보내는지 검증
+     *
+     * Given: 값을 지운 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: "default"
+     */
+    @Test
+    fun test_04_flowWithDefaultEmitsDefaultWhenAbsent() = runTest {
+        /** Given **/
+        val dataStore = FlowTestDataStore(context)
+        dataStore.removeText()
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("default", text)
+    }
+
+    /**
+     * 저장값이 있으면 기본값 Flow가 저장값을 내보내는지 검증
+     *
+     * Given: "saved"를 저장한 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: "saved"
+     */
+    @Test
+    fun test_05_flowWithDefaultEmitsSavedValue() = runTest {
+        /** Given **/
+        val dataStore = FlowTestDataStore(context)
+        dataStore.updateText("saved")
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("saved", text)
+    }
+
+    /**
+     * 읽기 IOException은 기본값 Flow가 예외 대신 기본값으로 내보내는지 검증
+     *
+     * Given: 읽기 시 IOException을 던지는 DataStore
+     * When: 기본값 "default"를 지정한 Flow의 첫 값 조회
+     * Then: 예외 없이 "default"
+     */
+    @Test
+    fun test_06_flowWithDefaultEmitsDefaultOnReadFailure() = runTest {
+        /** Given **/
+        val dataStore = ReadFailingDataStore(context, IOException("read failed"))
+
+        /** When **/
+        val text = dataStore.getTextFlow().first()
+
+        /** Then **/
+        assertEquals("default", text)
+    }
+
+    /** 읽고 고쳐 쓰기 검증용 DataStore */
+    private class UpdateWithTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.updateWithTestDataStore by blackDataStore("updateWithTest")
+
+            private val KEY_SET = stringSetPreferencesKey("set")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.updateWithTestDataStore
+
+        suspend fun add(value: String): Result<Set<String>> = updateWith(KEY_SET, emptySet()) { it + value }
+
+        suspend fun getSet(): Set<String> = get(KEY_SET, emptySet())
+    }
+
+    /**
+     * 읽고 고쳐 쓰기가 저장된 값에 변환을 이어 적용하는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 값 두 개를 차례로 추가
+     * Then: 첫 결과는 기본값에서 시작한 집합, 둘째 결과와 저장값은 둘 다 포함
+     */
+    @Test
+    fun test_07_updateWithAppliesTransformToStoredValue() = runTest {
+        /** Given **/
+        val dataStore = UpdateWithTestDataStore(context)
+
+        /** When **/
+        val first = dataStore.add("a")
+        val second = dataStore.add("b")
+
+        /** Then **/
+        assertEquals(setOf("a"), first.getOrNull())
+        assertEquals(setOf("a", "b"), second.getOrNull())
+        assertEquals(setOf("a", "b"), dataStore.getSet())
+    }
+
+    /**
+     * 읽고 고쳐 쓰기의 저장 실패가 실패 결과로, 취소가 재던짐으로 처리되는지 검증
+     *
+     * Given: 저장 시 IOException을 던지는 DataStore, 취소될 때까지 저장을 기다리는 DataStore
+     * When: updateWith 호출, 뒤의 DataStore는 저장 중에 호출한 코루틴 취소
+     * Then: 실패 결과(IOException), 취소는 전파
+     */
+    @Test
+    fun test_08_updateWithFailureAndCancellation() = runTest {
+        /** Given **/
+        class FailingWithDataStore(context: Context, failSave: suspend () -> Nothing) : BaseDataStore(context) {
+            private val dataStore: DataStore<Preferences> = mockk {
+                coEvery { updateData(any()) } coAnswers { failSave() }
+            }
+
+            override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+            suspend fun add(): Result<String> = updateWith(stringPreferencesKey("text"), "") { it + "x" }
+        }
+
+        /** When **/
+        val failure = FailingWithDataStore(context) { throw IOException("disk full") }.add()
+        val thrown = cancelWhileSaving { FailingWithDataStore(context) { awaitCancellation() }.add() }
+
+        /** Then **/
+        assertTrue(failure.exceptionOrNull() is IOException)
+        assertTrue(thrown is CancellationException)
+    }
+
+    /** 여러 키 함께 저장 검증용 DataStore */
+    private class UpdateAllTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.updateAllTestDataStore by blackDataStore("updateAllTest")
+
+            private val KEY_TEXT = stringPreferencesKey("text")
+            private val KEY_NUMBER = longPreferencesKey("number")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.updateAllTestDataStore
+
+        suspend fun updateBoth(text: String?, number: Long): Result<Unit> =
+            updateAll(PreferenceUpdate(KEY_TEXT, text), PreferenceUpdate(KEY_NUMBER, number))
+
+        suspend fun getText(): String = get(KEY_TEXT, "")
+
+        suspend fun getNumber(): Long = get(KEY_NUMBER, 0L)
+    }
+
+    /**
+     * 여러 키를 한 번에 저장하고 null 값의 키는 지우는지 검증
+     *
+     * Given: 저장값 없음
+     * When: ("a", 1) 저장 후 (null, 2) 저장
+     * Then: 첫 저장 뒤 "a"와 1, 둘째 저장 뒤 text는 지워져 기본값 ""이고 number는 2
+     */
+    @Test
+    fun test_09_updateAllSavesTogetherAndRemovesNull() = runTest {
+        /** Given **/
+        val dataStore = UpdateAllTestDataStore(context)
+
+        /** When **/
+        val first = dataStore.updateBoth("a", 1L)
+        val firstText = dataStore.getText()
+        val firstNumber = dataStore.getNumber()
+        val second = dataStore.updateBoth(null, 2L)
+
+        /** Then **/
+        assertTrue(first.isSuccess)
+        assertEquals("a", firstText)
+        assertEquals(1L, firstNumber)
+        assertTrue(second.isSuccess)
+        assertEquals("", dataStore.getText())
+        assertEquals(2L, dataStore.getNumber())
+    }
+
+    /**
+     * 여러 키 저장의 실패가 실패 결과로, 취소가 재던짐으로 처리되는지 검증
+     *
+     * Given: 저장 시 IOException을 던지는 DataStore, 취소될 때까지 저장을 기다리는 DataStore
+     * When: updateAll 호출, 뒤의 DataStore는 저장 중에 호출한 코루틴 취소
+     * Then: 실패 결과(IOException), 취소는 전파
+     */
+    @Test
+    fun test_10_updateAllFailureAndCancellation() = runTest {
+        /** Given **/
+        class FailingAllDataStore(context: Context, failSave: suspend () -> Nothing) : BaseDataStore(context) {
+            private val dataStore: DataStore<Preferences> = mockk {
+                coEvery { updateData(any()) } coAnswers { failSave() }
+            }
+
+            override fun getDataStore(context: Context): DataStore<Preferences> = dataStore
+
+            suspend fun updateBoth(): Result<Unit> = updateAll(
+                PreferenceUpdate(stringPreferencesKey("text"), "a"),
+                PreferenceUpdate(longPreferencesKey("number"), 1L),
+            )
+        }
+
+        /** When **/
+        val failure = FailingAllDataStore(context) { throw IOException("disk full") }.updateBoth()
+        val thrown = cancelWhileSaving { FailingAllDataStore(context) { awaitCancellation() }.updateBoth() }
+
+        /** Then **/
+        assertTrue(failure.exceptionOrNull() is IOException)
+        assertTrue(thrown is CancellationException)
+    }
+
+    /**
+     * 저장값 전체 삭제 후 기본값 조회 검증
+     *
+     * Given: ("a", 1)을 저장한 DataStore
+     * When: 저장값 전체 삭제
+     * Then: 삭제 성공, text와 number는 기본값 ""와 0
+     */
+    @Test
+    fun test_11_clearRemovesAllValues() = runTest {
+        /** Given **/
+        val dataStore = UpdateAllTestDataStore(context)
+        dataStore.updateBoth("a", 1L)
+
+        /** When **/
+        val result = dataStore.clear()
+
+        /** Then **/
+        assertTrue(result.isSuccess)
+        assertEquals("", dataStore.getText())
+        assertEquals(0L, dataStore.getNumber())
+    }
+
+    /** 저장 로그 끄기 검증용 DataStore */
+    private class WriteLogTestDataStore(context: Context) : BaseDataStore(context) {
+        companion object {
+            private val Context.writeLogTestDataStore by blackDataStore("writeLogTest")
+
+            private val KEY_SILENT_TIME = longPreferencesKey("silentTime")
+            private val KEY_LOGGED_TIME = longPreferencesKey("loggedTime")
+        }
+
+        override fun getDataStore(context: Context): DataStore<Preferences> = context.writeLogTestDataStore
+
+        suspend fun updateSilentTime(time: Long): Result<Unit> = update(KEY_SILENT_TIME, time, logValue = false, logWrite = false)
+
+        suspend fun updateLoggedTime(time: Long): Result<Unit> = update(KEY_LOGGED_TIME, time, logValue = false)
+
+        fun getSilentTimeFlow(): Flow<Long> = flow(KEY_SILENT_TIME, 0L)
+    }
+
+    /**
+     * 저장 로그를 끄면 값을 저장하면서 키 이름도 로그에 남기지 않는지 검증
+     *
+     * Given: 저장값 없음
+     * When: 저장 로그를 끈 키에 1234, 값만 숨긴 키에 5678 저장
+     * Then: 1234가 저장됨, Log.v에 끈 키 이름은 없고 값만 숨긴 키 이름은 있음
+     */
+    @Test
+    fun test_12_updateWithoutWriteLogSavesSilently() = runTest {
+        /** Given **/
+        val dataStore = WriteLogTestDataStore(context)
+
+        /** When **/
+        val silent = dataStore.updateSilentTime(1234L)
+        val logged = dataStore.updateLoggedTime(5678L)
+
+        /** Then **/
+        assertTrue(silent.isSuccess && logged.isSuccess)
+        assertEquals(1234L, dataStore.getSilentTimeFlow().first())
+        verify(exactly = 0) { AndroidLog.v(any(), match { it.contains("silentTime") }) }
+        verify(exactly = 1) { AndroidLog.v(any(), match { it.contains("[loggedTime]") && !it.contains("5678") }) }
+    }
+}

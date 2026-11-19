@@ -25,13 +25,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlin {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -47,6 +47,8 @@ android {
 }
 
 dependencies {
+    // core 타입(InstalledAppResolver 등) 목업 헬퍼용, core 유닛 테스트도 이 모듈을 쓰므로 api로 다시 노출하지 않음
+    implementation(project(":core"))
     api(libs.androidx.core.ktx)
     api(libs.robolectric)
     api(libs.mockk)

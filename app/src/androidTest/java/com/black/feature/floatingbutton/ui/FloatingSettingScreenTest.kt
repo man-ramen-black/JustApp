@@ -14,6 +14,7 @@ import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.ui.component.OverlayPositionTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme
+import com.black.core.util.AccessibilityServiceStatus
 import com.black.feature.floatingbutton.R
 import com.black.feature.floatingbutton.service.FloatingButtonController
 import com.black.feature.floatingbutton.service.FloatingForegroundService
@@ -37,7 +38,7 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class FloatingSettingScreenTest : BaseUiTest() {
 
-    private val controller = FloatingButtonController(context)
+    private val controller = FloatingButtonController(context, AccessibilityServiceStatus(context))
 
     /** setup에서 읽은 테스트 전 사용자의 플로팅 버튼 실행 여부 */
     private var originalRunning = false
@@ -48,7 +49,11 @@ class FloatingSettingScreenTest : BaseUiTest() {
             read = { FloatingForegroundService.running.value },
             restore = { running ->
                 if (FloatingForegroundService.running.value != running) {
-                    if (running) controller.start() else controller.stop()
+                    if (running) {
+                        controller.start()
+                    } else {
+                        controller.stop()
+                    }
                     waitUntilRunning(running)
                 }
             },

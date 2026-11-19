@@ -7,12 +7,12 @@ import android.util.Xml
 import androidx.annotation.StringRes
 import com.black.app.R
 import com.black.app.deeplink.Deeplink
-import com.black.app.sleeproutine.SleepRoutineService
 import com.black.app.ui.MainActivity
 import com.black.app.ui.navigation.AppRoute
 import com.black.core.service.BaseForegroundService
 import com.black.core.service.ServiceActivity
 import com.black.feature.floatingbutton.service.FloatingForegroundService
+import com.black.feature.sleeproutine.service.SleepRoutineService
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -218,7 +218,9 @@ class StaticShortcutsTest : BaseTest() {
             var id: String? = null
             var shortLabelRes = 0
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                if (parser.eventType != XmlPullParser.START_TAG) continue
+                if (parser.eventType != XmlPullParser.START_TAG) {
+                    continue
+                }
                 when (parser.name) {
                     "shortcut" -> {
                         id = parser.getAttributeValue(ANDROID_NAMESPACE, "shortcutId")

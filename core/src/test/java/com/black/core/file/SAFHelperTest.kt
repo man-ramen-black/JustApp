@@ -2,10 +2,10 @@ package com.black.core.file
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.content.Intent
 import com.black.core.file.SAFHelper.getFileName
 import com.black.core.file.SAFHelper.openInputStream
 import com.black.core.file.SAFHelper.readDocumentText
@@ -17,6 +17,10 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -209,21 +213,44 @@ class SAFHelperTest : BaseTest() {
     }
 
     /**
-     * 읽은 뒤 후속 처리에서 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
+     * [action]을 자식 코루틴에서 시작해 [started]가 완료되면 그 코루틴을 취소하고 [action]이 던진 예외 반환
      *
-     * Given: 문서 내용, CancellationException을 던지는 후속 처리
-     * When: readDocumentText 호출
+     * [action]이 취소를 실패 결과로 바꿔 돌려주면 null.
+     * 후속 처리는 IO 스레드에서 돌아 테스트 스케줄러로 진행 시점을 맞출 수 없어 [started]로 기다림.
+     */
+    private suspend fun TestScope.cancelAfterStarted(
+        started: CompletableDeferred<Unit>,
+        action: suspend () -> Result<*>,
+    ): Throwable? {
+        var thrown: Throwable? = null
+        val running = launch { thrown = runCatching { action() }.exceptionOrNull() }
+        // 후속 처리가 시작된 뒤 호출한 코루틴 취소
+        started.await()
+        running.cancel()
+        running.join()
+        return thrown
+    }
+
+    /**
+     * 읽은 뒤 후속 처리 중에 호출한 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
+     *
+     * Given: 문서 내용, 취소될 때까지 기다리는 후속 처리
+     * When: 자식 코루틴에서 readDocumentText를 호출하고 후속 처리가 시작되면 그 코루틴 취소
      * Then: CancellationException 전파
      */
     @Test
     fun test_09_readDocumentTextRethrowsCancellation() = runTest {
         /** Given **/
         every { contentResolver.openInputStream(documentUri) } returns ByteArrayInputStream(byteArrayOf())
+        val started = CompletableDeferred<Unit>()
 
         /** When **/
-        val thrown = runCatching {
-            documentUri.readDocumentText(context) { throw CancellationException("cancelled") }
-        }.exceptionOrNull()
+        val thrown = cancelAfterStarted(started) {
+            documentUri.readDocumentText(context) {
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
 
         /** Then **/
         assertTrue(thrown is CancellationException)
@@ -294,21 +321,25 @@ class SAFHelperTest : BaseTest() {
     }
 
     /**
-     * 쓴 뒤 후속 처리에서 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
+     * 쓴 뒤 후속 처리 중에 호출한 코루틴이 취소되면 실패 결과로 바꾸지 않고 취소를 다시 던지는지 검증
      *
-     * Given: 쓰기 스트림, CancellationException을 던지는 후속 처리
-     * When: writeDocumentText 호출
+     * Given: 쓰기 스트림, 취소될 때까지 기다리는 후속 처리
+     * When: 자식 코루틴에서 writeDocumentText를 호출하고 후속 처리가 시작되면 그 코루틴 취소
      * Then: CancellationException 전파
      */
     @Test
     fun test_13_writeDocumentTextRethrowsCancellation() = runTest {
         /** Given **/
         every { contentResolver.openOutputStream(documentUri, "wt") } returns ByteArrayOutputStream()
+        val started = CompletableDeferred<Unit>()
 
         /** When **/
-        val thrown = runCatching {
-            documentUri.writeDocumentText(context, createText = { "text" }) { throw CancellationException("cancelled") }
-        }.exceptionOrNull()
+        val thrown = cancelAfterStarted(started) {
+            documentUri.writeDocumentText(context, createText = { "text" }) {
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
 
         /** Then **/
         assertTrue(thrown is CancellationException)

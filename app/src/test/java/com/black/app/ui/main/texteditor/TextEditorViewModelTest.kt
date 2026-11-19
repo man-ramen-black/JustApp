@@ -6,32 +6,39 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.black.app.R
-import com.black.app.model.TextEditorRepository
+import com.black.app.data.TextEditorRepository
 import com.black.test.BaseTest
+import com.black.test.collectDuring
 import com.black.test.collectValues
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 import java.io.FileNotFoundException
+import java.io.IOException
 
 /** [TextEditorViewModel]의 상태 관리·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TextEditorViewModelTest : BaseTest() {
 
     private lateinit var repository: TextEditorRepository
@@ -111,28 +118,35 @@ class TextEditorViewModelTest : BaseTest() {
     }
 
     /**
-     * onConfirmReset 호출 시 repository.reset 실행, 텍스트 초기화, 다이얼로그 닫힘 검증
+     * onConfirmReset 호출 시 repository.reset 실행, 텍스트 초기화, 다이얼로그 닫힘, 이후 화면 이탈에 저장하지 않음 검증
      *
-     * Given: onClickNew로 showResetConfirm true, repository.reset 모킹
-     * When: onConfirmReset 호출 후 코루틴 완료 대기
-     * Then: repository.reset 호출 + uiState.text 빈 문자열 + showResetConfirm false
+     * Given: 문서("initial text")를 불러와 텍스트 변경, onClickNew로 showResetConfirm true, repository.reset 성공 반환
+     * When: onConfirmReset 호출 후 코루틴 완료 대기, 이어서 onPause 호출
+     * Then: repository.reset 호출 + uiState.text 빈 문자열 + showResetConfirm false + 파일 쓰기 없음 + 저장 결과 콜백 미호출
      */
     @Test
     fun test_04_onConfirmResetClearsTextAndResetsRepository() = runTest {
         /** Given **/
-        coEvery { repository.reset() } just Runs
-        val viewModel = createViewModel()
+        val uri = mockk<Uri>()
+        val viewModel = createLoadedViewModel(uri, ViewModelStore())
+        coEvery { repository.reset() } returns Result.success(Unit)
+        viewModel.onTextChanged("draft")
         viewModel.onClickNew()
         assertTrue(viewModel.uiState.value.showResetConfirm)
+        var savedMessageResId: Int? = null
 
         /** When **/
         viewModel.onConfirmReset()
+        waitCoroutine()
+        viewModel.onPause { savedMessageResId = it }
         waitCoroutine()
 
         /** Then **/
         coVerify { repository.reset() }
         assertEquals("", viewModel.uiState.value.text)
         assertFalse(viewModel.uiState.value.showResetConfirm)
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
     }
 
     /**
@@ -225,7 +239,7 @@ class TextEditorViewModelTest : BaseTest() {
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
         coEvery { repository.loadTextFile(uri) } returns
             Result.failure(SecurityException("No persistable permission grants found"))
-        coEvery { repository.reset() } just Runs
+        coEvery { repository.reset() } returns Result.success(Unit)
 
         /** When **/
         val viewModel = createViewModel()
@@ -250,7 +264,7 @@ class TextEditorViewModelTest : BaseTest() {
         val uri = mockk<Uri>()
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
         coEvery { repository.loadTextFile(uri) } returns Result.failure(FileNotFoundException("openInputStream failed"))
-        coEvery { repository.reset() } just Runs
+        coEvery { repository.reset() } returns Result.success(Unit)
 
         /** When **/
         val viewModel = createViewModel()
@@ -379,6 +393,328 @@ class TextEditorViewModelTest : BaseTest() {
         assertNull(savedMessageResId)
     }
 
+    /**
+     * 최근 문서 기록을 지우지 못하면 텍스트를 비우지 않고 실패 안내를 보내며, 로드가 끝난 뒤라 다시 불러오지 않는지 검증
+     *
+     * 비우면 원본 문서와 최근 문서 기록이 남은 채 새 문서처럼 보여, 이후 입력이 화면 이탈 자동 저장으로 옛 문서를 덮어씀.
+     * 다시 불러오면 실패 전에 입력한 내용이 옛 문서 내용으로 바뀜.
+     *
+     * Given: 문서("initial text")를 불러온 뒤 "draft" 입력, repository.reset 실패 반환
+     * When: onConfirmReset 호출
+     * Then: EventShowToast(text_editor_new_failed) 수신 + uiState.text "draft" 유지 + loadTextFile 한 번만 호출 + showResetConfirm false
+     */
+    @Test
+    fun test_15_onConfirmResetFailureKeepsTextAndSendsToastEvent() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModel = createLoadedViewModel(uri, ViewModelStore())
+        coEvery { repository.reset() } returns Result.failure(IOException("disk full"))
+        viewModel.onTextChanged("draft")
+        viewModel.onClickNew()
+
+        /** When **/
+        viewModel.onConfirmReset()
+        val receivedEvents = viewModel.events.collectValues(count = 1)
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(TextEditorViewModel.EventShowToast(R.string.text_editor_new_failed), receivedEvents[0])
+        assertEquals("draft", viewModel.uiState.value.text)
+        coVerify(exactly = 1) { repository.loadTextFile(uri) }
+        assertFalse(viewModel.uiState.value.showResetConfirm)
+    }
+
+    /**
+     * 시작 로드가 끝나기 전에 새 문서로 초기화하면 로드를 취소해, 늦게 끝난 로드가 옛 문서 내용을 되살리지 않는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 [gate]가 열릴 때까지 대기, repository.reset 성공 반환
+     * When: 로드 대기 중 onConfirmReset 호출, 이어서 [gate]를 열어 "old text" 반환
+     * Then: uiState.text 빈 문자열 유지 + repository.reset 호출
+     */
+    @Test
+    fun test_16_onConfirmResetCancelsPendingLatestFileLoad() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val gate = CompletableDeferred<Result<String>>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } coAnswers { gate.await() }
+        coEvery { repository.reset() } returns Result.success(Unit)
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        gate.complete(Result.success("old text"))
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals("", viewModel.uiState.value.text)
+        coVerify { repository.reset() }
+    }
+
+    /**
+     * 시작 로드를 취소한 뒤 초기화가 실패하면 최근 문서를 다시 불러오는지 검증
+     *
+     * 최근 문서 기록이 남은 채 내용 없이 두면 이후 입력이 화면 이탈 자동 저장으로 불러오지 않은 옛 문서를 덮어씀.
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 [gate]가 열릴 때까지 대기, repository.reset 실패 반환
+     * When: 로드 대기 중 onConfirmReset 호출, 이어서 [gate]를 열어 "old text" 반환
+     * Then: EventShowToast(text_editor_new_failed) 수신 + loadTextFile 두 번 호출 + uiState.text "old text"
+     */
+    @Test
+    fun test_17_onConfirmResetFailureRestartsCancelledLatestFileLoad() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val gate = CompletableDeferred<Result<String>>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } coAnswers { gate.await() }
+        coEvery { repository.reset() } returns Result.failure(IOException("disk full"))
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.onConfirmReset()
+        val receivedEvents = viewModel.events.collectValues(count = 1)
+        gate.complete(Result.success("old text"))
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(TextEditorViewModel.EventShowToast(R.string.text_editor_new_failed), receivedEvents[0])
+        coVerify(exactly = 2) { repository.loadTextFile(uri) }
+        assertEquals("old text", viewModel.uiState.value.text)
+    }
+
+    /**
+     * 시작 로드가 파일을 읽는 동안 새 문서로 초기화하고 입력한 뒤 화면을 이탈해도 불러오지 않은 옛 문서에 저장하지 않는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 취소돼도 [gate]가 열릴 때까지 돌아오지 않음(블로킹 읽기), repository.reset 성공 반환
+     * When: 읽는 중 onConfirmReset 호출, "draft" 입력 후 onPause 호출, 이어서 [gate]를 열어 "old text" 반환
+     * Then: 파일 쓰기 없음 + 저장 결과 콜백 미호출 + repository.reset 한 번 호출 + uiState.text 빈 문자열
+     */
+    @Test
+    fun test_18_onPauseDuringBlockingLatestFileLoadAfterResetSkipsOldFile() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val gate = CompletableDeferred<Result<String>>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } coAnswers { awaitBlockingIo(gate) }
+        coEvery { repository.reset() } returns Result.success(Unit)
+        coEvery { repository.saveTextFile(any(), any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        viewModel.onTextChanged("draft")
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+        gate.complete(Result.success("old text"))
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
+        coVerify(exactly = 1) { repository.reset() }
+        assertEquals("", viewModel.uiState.value.text)
+    }
+
+    /**
+     * 초기화 실패 뒤 다시 시작한 시작 로드가 파일을 읽는 동안 입력하고 화면을 이탈해도 불러오지 않은 옛 문서에 저장하지 않는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 호출마다 [firstGate]·[secondGate]가 열릴 때까지 돌아오지 않음(블로킹 읽기), repository.reset 실패 반환
+     * When: 첫 읽기 중 onConfirmReset 호출 후 [firstGate]를 열고, 다시 시작한 읽기 중 "draft" 입력 후 onPause 호출, 이어서 [secondGate]를 열어 "old text" 반환
+     * Then: 파일 쓰기 없음 + 저장 결과 콜백 미호출 + loadTextFile 두 번 호출 + uiState.text "old text"
+     */
+    @Test
+    fun test_19_onPauseDuringRestartedLatestFileLoadSkipsOldFile() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val firstGate = CompletableDeferred<Result<String>>()
+        val secondGate = CompletableDeferred<Result<String>>()
+        val gates = ArrayDeque(listOf(firstGate, secondGate))
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } coAnswers { awaitBlockingIo(gates.removeFirst()) }
+        coEvery { repository.reset() } returns Result.failure(IOException("disk full"))
+        coEvery { repository.saveTextFile(any(), any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        firstGate.complete(Result.success("old text"))
+        waitCoroutine()
+        viewModel.onTextChanged("draft")
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+        secondGate.complete(Result.success("old text"))
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
+        coVerify(exactly = 2) { repository.loadTextFile(uri) }
+        assertEquals("old text", viewModel.uiState.value.text)
+    }
+
+    /**
+     * 저장 버튼 저장이 진행 중일 때 새 문서로 초기화하면 저장이 끝난 뒤 초기화해, 이후 화면 이탈이 옛 문서를 빈 내용으로 덮어쓰지 않는지 검증
+     *
+     * Given: 문서("initial text")를 불러와 "edited" 입력, 최근 문서 기록은 reset이 지우고 saveTextFile이 다시 씀, saveTextFile이 [saveGate]가 열릴 때까지 돌아오지 않음(블로킹 쓰기)
+     * When: onClickSave로 저장 중 onConfirmReset 호출, [saveGate]를 연 뒤 onPause 호출
+     * Then: "edited" 한 번만 저장 + 빈 내용 저장 없음 + 저장 결과 콜백 미호출 + uiState.text 빈 문자열
+     */
+    @Test
+    fun test_20_onConfirmResetDuringSaveDoesNotSaveEmptyTextToOldFile() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val viewModel = createLoadedViewModel(uri, ViewModelStore())
+        val latestFileUri = MutableStateFlow<Uri?>(uri)
+        val saveGate = CompletableDeferred<Unit>()
+        coEvery { repository.currentFileUriFlow } returns latestFileUri
+        coEvery { repository.reset() } coAnswers {
+            latestFileUri.value = null
+            Result.success(Unit)
+        }
+        coEvery { repository.saveTextFile(uri, any()) } coAnswers {
+            awaitBlockingIo(saveGate)
+            latestFileUri.value = uri
+            Result.success(Unit)
+        }
+        viewModel.onTextChanged("edited")
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onClickSave()
+        waitCoroutine()
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        saveGate.complete(Unit)
+        waitCoroutine()
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+
+        /** Then **/
+        coVerify(exactly = 1) { repository.saveTextFile(uri, "edited") }
+        coVerify(exactly = 0) { repository.saveTextFile(any(), "") }
+        assertNull(savedMessageResId)
+        assertEquals("", viewModel.uiState.value.text)
+    }
+
+    /**
+     * 불러오기 로드가 진행 중일 때 새 문서로 초기화하면 로드가 끝난 뒤 초기화해 최종 상태가 새 문서인지 검증
+     *
+     * Given: 최근 문서 없음, loadTextFile이 [gate]가 열릴 때까지 돌아오지 않음(블로킹 읽기), repository.reset 성공 반환
+     * When: onDocumentOpened로 읽는 중 onConfirmReset 호출, [gate]를 열어 "opened text" 반환, 이어서 "draft" 입력 후 onPause 호출
+     * Then: 초기화 뒤 uiState.text 빈 문자열 + 파일 쓰기 없음 + 저장 결과 콜백 미호출
+     */
+    @Test
+    fun test_21_onConfirmResetDuringDocumentOpenEndsWithNewDocument() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val gate = CompletableDeferred<Result<String>>()
+        coEvery { repository.loadTextFile(uri) } coAnswers { awaitBlockingIo(gate) }
+        coEvery { repository.reset() } returns Result.success(Unit)
+        coEvery { repository.saveTextFile(any(), any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onDocumentOpened(uri)
+        waitCoroutine()
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        gate.complete(Result.success("opened text"))
+        waitCoroutine()
+        val textAfterReset = viewModel.uiState.value.text
+        viewModel.onTextChanged("draft")
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals("", textAfterReset)
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
+    }
+
+    /**
+     * 시작 로드가 실패하고 최근 문서 기록 삭제까지 실패해도 이후 입력을 불러오지 못한 옛 문서에 저장하지 않는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 FileNotFoundException 실패 반환, repository.reset 실패 반환
+     * When: "draft" 입력 후 onPause 호출, 이어서 onClickSave 호출
+     * Then: 파일 쓰기 없음 + 저장 결과 콜백 미호출 + 최근 문서 로드 실패 토스트 뒤 EventCreateDocument 수신
+     */
+    @Test
+    fun test_22_initLoadAndResetFailureDoesNotSaveToOldFile() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } returns Result.failure(FileNotFoundException("openInputStream failed"))
+        coEvery { repository.reset() } returns Result.failure(IOException("disk full"))
+        coEvery { repository.saveTextFile(any(), any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        var savedMessageResId: Int? = null
+
+        /** When **/
+        viewModel.onTextChanged("draft")
+        viewModel.onPause { savedMessageResId = it }
+        waitCoroutine()
+        viewModel.onClickSave()
+        val receivedEvents = viewModel.events.collectValues(count = 2)
+
+        /** Then **/
+        coVerify(exactly = 0) { repository.saveTextFile(any(), any()) }
+        assertNull(savedMessageResId)
+        assertEquals(
+            listOf(
+                TextEditorViewModel.EventShowToast(R.string.text_editor_load_failed_latest_file),
+                TextEditorViewModel.EventCreateDocument,
+            ),
+            receivedEvents,
+        )
+    }
+
+    /**
+     * 앞 확인의 초기화가 끝나기 전에 새 문서를 다시 확인하면 초기화를 한 번만 실행해 실패 안내도 한 번만 보내는지 검증
+     *
+     * Given: 마지막 문서 uri 저장, loadTextFile이 취소돼도 [gate]가 열릴 때까지 돌아오지 않음(블로킹 읽기), repository.reset 실패 반환
+     * When: 읽는 중 onClickNew·onConfirmReset을 두 번 호출, 이어서 [gate]를 열어 "old text" 반환
+     * Then: repository.reset 한 번 호출 + 이벤트는 EventShowToast(text_editor_new_failed) 하나 + 다시 불러온 uiState.text "old text"
+     */
+    @Test
+    fun test_23_overlappingConfirmResetRunsResetOnce() = runTest {
+        /** Given **/
+        val uri = mockk<Uri>()
+        val gate = CompletableDeferred<Result<String>>()
+        coEvery { repository.currentFileUriFlow } returns flowOf(uri)
+        coEvery { repository.loadTextFile(uri) } coAnswers { awaitBlockingIo(gate) }
+        coEvery { repository.reset() } returns Result.failure(IOException("disk full"))
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.onClickNew()
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        viewModel.onClickNew()
+        viewModel.onConfirmReset()
+        waitCoroutine()
+        gate.complete(Result.success("old text"))
+        val receivedEvents = collectDuring(viewModel.events)
+
+        /** Then **/
+        coVerify(exactly = 1) { repository.reset() }
+        assertEquals(listOf(TextEditorViewModel.EventShowToast(R.string.text_editor_new_failed)), receivedEvents)
+        assertEquals("old text", viewModel.uiState.value.text)
+    }
+
+    /**
+     * IO 스레드 블로킹 읽기·쓰기 흉내
+     *
+     * 취소돼도 [gate]가 열릴 때까지 돌아오지 않고, 돌아올 때 취소됐으면 결과를 버림(Dispatchers.IO에서 메인으로 돌아올 때의 즉시 취소)
+     */
+    private suspend fun <T> awaitBlockingIo(gate: CompletableDeferred<T>): T =
+        withContext(NonCancellable) { gate.await() }.also { currentCoroutineContext().ensureActive() }
+
     /** [viewModelStore]에 ViewModel을 만들고 init에서 [uri] 문서("initial text")를 불러올 때까지 대기 */
     private suspend fun createLoadedViewModel(uri: Uri, viewModelStore: ViewModelStore): TextEditorViewModel {
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
@@ -396,7 +732,7 @@ class TextEditorViewModelTest : BaseTest() {
         coEvery { repository.currentFileUriFlow } returns flowOf(uri)
         coEvery { repository.loadTextFile(uri) } returns
             Result.failure(SecurityException("No persistable permission grants found"))
-        coEvery { repository.reset() } just Runs
+        coEvery { repository.reset() } returns Result.success(Unit)
         return createViewModel().also { viewModel ->
             viewModel.uiState.filter { it.permissionRequiredUri != null }.first()
         }

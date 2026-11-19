@@ -12,6 +12,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -21,7 +22,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowApplication
 
-/** [ReceiverRegistration]의 applicationContext 등록, 중복 등록 방지, 해제와 재등록 검증 */
+/** [ReceiverRegistration]의 applicationContext 등록, 중복 등록 방지, 해제와 재등록, 화면 상태 리시버 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class ReceiverRegistrationTest : BaseTest() {
@@ -169,6 +170,86 @@ class ReceiverRegistrationTest : BaseTest() {
         assertSame(receiver, registeredTestReceivers().single().broadcastReceiver)
         instanceRegistration.unregister(application)
     }
+
+    /**
+     * 화면 상태 리시버가 화면 켜짐·꺼짐을 각 콜백으로 넘기는지 검증
+     *
+     * Given: 켜짐·꺼짐 콜백을 모두 넘긴 screenState 등록
+     * When: 화면 켜짐, 화면 꺼짐 브로드캐스트 순서로 전송
+     * Then: 필터에 두 action, 콜백이 on, off 순서로 이 앱의 Context를 받음
+     */
+    @Test
+    fun test_07_screenStateDispatchesScreenOnAndOff() = runTest {
+        /** Given **/
+        val calls = mutableListOf<String>()
+        val screenRegistration = ReceiverRegistration.screenState(
+            onScreenOn = { context -> calls += "on ${context.applicationContext === application}" },
+            onScreenOff = { context -> calls += "off ${context.applicationContext === application}" },
+        )
+        screenRegistration.register(application)
+
+        try {
+            /** When **/
+            application.sendBroadcast(Intent(Intent.ACTION_SCREEN_ON))
+            application.sendBroadcast(Intent(Intent.ACTION_SCREEN_OFF))
+            idleMainLooper()
+
+            /** Then **/
+            val filter = registeredReceivers(Intent.ACTION_SCREEN_ON).single().intentFilter
+            assertTrue(filter.hasAction(Intent.ACTION_SCREEN_OFF))
+            assertEquals(listOf("on true", "off true"), calls)
+        } finally {
+            screenRegistration.unregister(application)
+        }
+    }
+
+    /**
+     * 넘긴 콜백의 신호만 필터에 넣는지 검증
+     *
+     * Given: 켜짐 콜백만 넘긴 screenState 등록
+     * When: 화면 꺼짐, 화면 켜짐 브로드캐스트 순서로 전송
+     * Then: 필터에 화면 켜짐만 있고 화면 꺼짐 리시버는 없음, 켜짐 콜백 1회
+     */
+    @Test
+    fun test_08_screenStateFiltersOnlyGivenCallbacks() = runTest {
+        /** Given **/
+        var screenOnCount = 0
+        val screenRegistration = ReceiverRegistration.screenState(onScreenOn = { screenOnCount += 1 })
+        screenRegistration.register(application)
+
+        try {
+            /** When **/
+            application.sendBroadcast(Intent(Intent.ACTION_SCREEN_OFF))
+            application.sendBroadcast(Intent(Intent.ACTION_SCREEN_ON))
+            idleMainLooper()
+
+            /** Then **/
+            assertEquals(1, registeredReceivers(Intent.ACTION_SCREEN_ON).size)
+            assertTrue(registeredReceivers(Intent.ACTION_SCREEN_OFF).isEmpty())
+            assertEquals(1, screenOnCount)
+        } finally {
+            screenRegistration.unregister(application)
+        }
+    }
+
+    /**
+     * 콜백을 하나도 넘기지 않으면 받을 신호가 없어 거부하는지 검증
+     *
+     * Given / When: 콜백 없이 screenState 호출
+     * Then: IllegalArgumentException
+     */
+    @Test
+    fun test_09_screenStateWithoutCallbackThrows() = runTest {
+        /** Given / When / Then **/
+        assertThrows(IllegalArgumentException::class.java) {
+            ReceiverRegistration.screenState()
+        }
+    }
+
+    /** [action]으로 런타임 등록된 리시버 목록 */
+    private fun registeredReceivers(action: String): List<ShadowApplication.Wrapper> =
+        shadowOf(application).registeredReceivers
+            .filter { it.intentFilter.hasAction(action) }
 
     /** applicationContext만 애플리케이션을 돌려주고 그 외 호출은 base가 없어 실패하는 Context(호출부 Context로 직접 등록·해제하지 않는지 확인용) */
     private fun applicationOnlyContext(): Context = object : ContextWrapper(null) {

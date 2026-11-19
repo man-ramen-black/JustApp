@@ -4,13 +4,15 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
-import com.black.app.model.datastore.ForegroundServiceDataStore
+import com.black.app.data.datastore.ForegroundServiceDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.robolectric.Shadows.shadowOf
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** ForegroundService 실행 조건(배터리 최적화 예외, 실행 설정)을 Robolectric 섀도와 실제 DataStore에 구성하고 서비스 시작 요청을 기다리는 테스트 헬퍼 */
 object ForegroundServiceTestFixture {
@@ -37,10 +39,10 @@ object ForegroundServiceTestFixture {
      */
     suspend fun awaitNextStartedService(application: Application): Intent =
         withContext(Dispatchers.Default) {
-            withTimeout(5_000) {
+            withTimeout(5.seconds) {
                 var intent = shadowOf(application).peekNextStartedService()
                 while (intent == null) {
-                    delay(50)
+                    delay(50.milliseconds)
                     intent = shadowOf(application).peekNextStartedService()
                 }
                 intent

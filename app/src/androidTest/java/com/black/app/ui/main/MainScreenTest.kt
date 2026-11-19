@@ -7,12 +7,12 @@ import androidx.compose.ui.unit.dp
 import com.black.app.R
 import com.black.app.testutil.BaseUiTest
 import com.black.core.ui.theme.BlackTheme
-import com.black.feature.pokerogue.R as PokeRogueR
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Assert.assertEquals
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import com.black.feature.pokerogue.R as PokeRogueR
 
 /**
  * [MainScreen]이 헤더·기능 리스트·푸터를 설계대로 노출하는지 검증하는 Compose UI 테스트

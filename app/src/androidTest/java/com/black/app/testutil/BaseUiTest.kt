@@ -44,6 +44,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 모든 계측(UI) 테스트의 공통 베이스.
@@ -407,7 +408,7 @@ abstract class BaseUiTest {
             if (condition()) {
                 return true
             }
-            delay(intervalMillis)
+            delay(intervalMillis.milliseconds)
         }
         return condition()
     }
@@ -423,7 +424,7 @@ abstract class BaseUiTest {
         predicate: (T) -> Boolean,
     ): Boolean {
         // 만족하는 값이 null일 수 있어 값 대신 도달 여부로 판정
-        return withTimeoutOrNull(timeoutMillis) {
+        return withTimeoutOrNull(timeoutMillis.milliseconds) {
             flow.first(predicate)
             true
         } ?: false

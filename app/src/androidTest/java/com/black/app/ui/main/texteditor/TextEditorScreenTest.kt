@@ -14,7 +14,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import com.black.app.R
-import com.black.app.model.datastore.TextEditorDataStore
+import com.black.app.data.datastore.TextEditorDataStore
 import com.black.app.testutil.BaseUiTest
 import com.black.core.ui.component.ToolTopBarTestTags
 import com.black.core.ui.theme.BlackTheme

@@ -18,12 +18,14 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import org.robolectric.RuntimeEnvironment
 
-/** [OverlayViewUtil]의 Gravity 기준 창 좌표 계산과 창 추가 실패 처리 검증 */
+/** [OverlayViewUtil]의 Gravity 기준 창 좌표 계산, 창 추가 실패 처리, 오버레이 Context 테마 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class OverlayViewUtilTest : BaseTest() {
 
@@ -268,6 +270,49 @@ class OverlayViewUtilTest : BaseTest() {
                 )
             }
         }
+    }
+
+    /**
+     * 오버레이 Context가 applicationContext에 매니페스트 application 테마를 입히는지 검증
+     *
+     * Given: application 테마가 창 반투명 테마(Theme.Translucent.NoTitleBar)인 앱, 앱을 감싼 다른 Context
+     * When: 다른 Context로 themedContext 호출
+     * Then: 바탕 Context가 applicationContext, 테마 속성 windowIsTranslucent가 true
+     */
+    @Test
+    fun test_12_themedContextAppliesApplicationTheme() = runTest {
+        /** Given **/
+        val application = RuntimeEnvironment.getApplication()
+        application.applicationInfo.theme = android.R.style.Theme_Translucent_NoTitleBar
+        val otherContext = ContextWrapper(application)
+
+        /** When **/
+        val themedContext = OverlayViewUtil.themedContext(otherContext)
+
+        /** Then **/
+        assertSame(application, (themedContext as ContextWrapper).baseContext)
+        val attributes = themedContext.obtainStyledAttributes(intArrayOf(android.R.attr.windowIsTranslucent))
+        val translucent = attributes.getBoolean(0, false)
+        attributes.recycle()
+        assertTrue(translucent)
+    }
+
+    @Test
+    fun test_13_appThemedContextKeepsGivenContext() = runTest {
+        /** Given **/
+        val application = RuntimeEnvironment.getApplication()
+        application.applicationInfo.theme = android.R.style.Theme_Translucent_NoTitleBar
+        val serviceContext = ContextWrapper(application)
+
+        /** When **/
+        val themedContext = OverlayViewUtil.appThemedContext(serviceContext)
+
+        /** Then **/
+        assertSame(serviceContext, (themedContext as ContextWrapper).baseContext)
+        val attributes = themedContext.obtainStyledAttributes(intArrayOf(android.R.attr.windowIsTranslucent))
+        val translucent = attributes.getBoolean(0, false)
+        attributes.recycle()
+        assertTrue(translucent)
     }
 
     /** addView가 [error]를 던지는 WindowManager를 돌려주는 Context */

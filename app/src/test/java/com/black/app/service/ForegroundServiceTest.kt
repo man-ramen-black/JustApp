@@ -3,7 +3,7 @@ package com.black.app.service
 import android.app.Notification
 import android.content.pm.ServiceInfo
 import com.black.app.R
-import com.black.app.model.datastore.ForegroundServiceDataStore
+import com.black.app.data.datastore.ForegroundServiceDataStore
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
 import org.junit.After
