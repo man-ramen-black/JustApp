@@ -70,11 +70,20 @@ dependencies {
     // JsonUtil이 공개 API로 노출(이전에는 retrofit converter-gson을 거쳐 들어오던 버전 유지)
     api(libs.gson)
 
+    // 기능 모듈의 Retrofit 서비스가 Retrofit 애너테이션과 OkHttp 타입(MultipartBody 등)을 직접 씀
+    api(libs.retrofit)
+    api(libs.retrofit.converter.kotlinx.serialization)
+    // Retrofit 2.11.0이 끌어오는 OkHttp 3.14 대신 4.x 사용
+    api(libs.okhttp)
+    // 로그 인터셉터는 Network 안에서만 쓰고 공개 API는 NetworkLogLevel
+    implementation(libs.okhttp.logging.interceptor)
+
     api(libs.hilt)
     ksp(libs.hilt.compiler)
 
     testImplementation(project(":test"))
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
