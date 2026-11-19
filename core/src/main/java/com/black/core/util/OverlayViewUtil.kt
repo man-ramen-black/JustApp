@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.Build
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -25,6 +26,26 @@ object OverlayViewUtil {
      * 가운데이면 가운데에서 밀린 거리(WindowManager 규칙)
      */
     data class WindowPlacement(val gravity: Int, val x: Int, val y: Int)
+
+    /**
+     * 오버레이 뷰 생성용 Context(앱 테마를 입힌 applicationContext)
+     *
+     * TYPE_APPLICATION_OVERLAY 창은 Activity가 파괴돼도 걷히지 않아 Activity context로 만들면 Activity를 붙잡으므로 applicationContext 사용.
+     * applicationContext는 매니페스트 application 테마가 입혀진다는 보장이 없어 그 테마를 직접 입힘.
+     * 기능 모듈은 앱 테마 리소스를 참조할 수 없어 리소스 이름 대신 매니페스트 값으로 조회
+     */
+    fun themedContext(context: Context): Context {
+        return appThemedContext(context.applicationContext)
+    }
+
+    /**
+     * [context]를 바꾸지 않고 매니페스트 application 테마만 입힌 Context
+     *
+     * 접근성 서비스 창처럼 서비스 context로 만들어야 하는 오버레이 뷰에 씀. 그 밖의 오버레이는 [themedContext] 사용
+     */
+    fun appThemedContext(context: Context): Context {
+        return ContextThemeWrapper(context, context.applicationInfo.theme)
+    }
 
     fun attachView(
         view: View,

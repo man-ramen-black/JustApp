@@ -39,7 +39,9 @@ object NotificationUtil {
      * 채널은 첫 알림 때 만들어지므로 아직 없으면 표시 가능으로 판단.
      */
     fun canShow(context: Context, channelId: String): Boolean {
-        if (!PermissionHelper.areNotificationsEnabled(context)) return false
+        if (!PermissionHelper.areNotificationsEnabled(context)) {
+            return false
+        }
         val channel = NotificationManagerCompat.from(context).getNotificationChannelCompat(channelId) ?: return true
         return channel.importance != NotificationManagerCompat.IMPORTANCE_NONE
     }

@@ -2,7 +2,7 @@ package com.black.feature.floatingbutton.service
 
 import android.content.Context
 import com.black.core.service.BaseForegroundService
-import com.black.core.util.PermissionHelper
+import com.black.core.util.AccessibilityServiceStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -15,6 +15,7 @@ import javax.inject.Inject
  */
 class FloatingButtonController @Inject constructor(
     @ApplicationContext context: Context,
+    private val accessibilityServiceStatus: AccessibilityServiceStatus,
 ) {
     private val appContext = context.applicationContext
 
@@ -22,8 +23,7 @@ class FloatingButtonController @Inject constructor(
     val running: StateFlow<Boolean> = FloatingForegroundService.running
 
     /** 뒤로 가기 버튼이 쓰는 앱 접근성 서비스 사용 여부 */
-    fun isAccessibilityServiceEnabled(): Boolean =
-        PermissionHelper.isAccessibilityServiceEnabled(appContext)
+    fun isAccessibilityServiceEnabled(): Boolean = accessibilityServiceStatus.isAccessibilityServiceEnabled()
 
     fun start() {
         BaseForegroundService.start(appContext, FloatingForegroundService::class.java)

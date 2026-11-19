@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import java.util.Calendar
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * [FloatingView]가 표시할 시계와 스타일 값
@@ -24,7 +25,7 @@ class FloatingViewState(dataStore: FloatingDataStore) {
 
     val clock: LiveData<String> = flow {
             while (true) {
-                delay(100)
+                delay(100.milliseconds)
                 emit(System.currentTimeMillis())
             }
         }

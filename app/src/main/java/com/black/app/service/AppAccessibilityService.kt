@@ -4,17 +4,17 @@ import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
-import com.black.app.ui.main.usagetimer.UsageTimerWindowHandler
 import com.black.core.broadcast.ReceiverRegistration
 import com.black.core.service.GlobalActionRequest
 import com.black.core.util.PermissionHelper
+import com.black.feature.usagetimer.service.UsageTimerWindowHandler
 
 /**
  * JustApp의 유일한 접근성 서비스
  *
  * 기능마다 서비스를 두면 접근성 설정에서 기능 수만큼 켜야 하므로 하나로 합침.
  * 사용 타이머의 창 전환 처리는 [UsageTimerWindowHandler], 플로팅 버튼 뒤로 가기·수면 루틴 화면 끄기 같은 전역 동작 요청은 [GlobalActionRequest]로 받음.
- * 기능 모듈은 이 클래스를 참조할 수 없어 켜짐 확인·설정 이동에 [PermissionHelper.isAccessibilityServiceEnabled] 등 클래스를 받지 않는 함수를 사용하므로,
+ * 기능 모듈은 이 클래스를 참조할 수 없어 켜짐 확인([PermissionHelper.isAccessibilityServiceEnabled])과 설정 이동이 매니페스트에 선언된 첫 접근성 서비스를 기준으로 하므로,
  * 매니페스트에 다른 접근성 서비스를 추가하지 않음
  */
 @SuppressLint("AccessibilityPolicy")

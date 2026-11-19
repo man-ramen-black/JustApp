@@ -1,0 +1,73 @@
+package com.black.core.view
+
+import android.content.Context
+import android.os.SystemClock
+import android.util.AttributeSet
+import android.widget.Chronometer
+
+class BKChronometer : Chronometer{
+
+    var isRunning : Boolean = false
+        private set
+
+    private var pauseTime = 0L
+
+    constructor(context: Context?) : super(context) {
+        initialize(null)
+    }
+
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+        initialize(attrs)
+    }
+
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        initialize(attrs)
+    }
+
+    constructor(
+        context: Context?,
+        attrs: AttributeSet?,
+        defStyleAttr: Int,
+        defStyleRes: Int
+    ) : super(context, attrs, defStyleAttr, defStyleRes) {
+        initialize(attrs)
+    }
+
+    private fun initialize(attrs: AttributeSet?) {}
+
+    override fun start() {
+        isRunning = true
+        base = SystemClock.elapsedRealtime() - pauseTime
+        super.start()
+        pauseTime = 0
+    }
+
+    override fun stop() {
+        super.stop()
+        base = SystemClock.elapsedRealtime()
+        pauseTime = 0
+    }
+
+    /** 경과 시간을 0으로 초기화 후 재시작 */
+    fun restart() {
+        pauseTime = 0
+        start()
+    }
+
+    /** 지정한 기준 시각(elapsedRealtime)부터 이어서 시작 */
+    fun startFrom(baseElapsedRealtime: Long) {
+        isRunning = true
+        pauseTime = 0
+        base = baseElapsedRealtime
+        super.start()
+    }
+
+    fun pause() {
+        super.stop()
+        pauseTime = SystemClock.elapsedRealtime() - base
+    }
+}

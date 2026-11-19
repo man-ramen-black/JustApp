@@ -1,12 +1,7 @@
 package com.black.app.ui.main.texteditor
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.provider.DocumentsContract
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -29,10 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.app.R
+import com.black.core.file.OpenTextDocumentAt
 import com.black.core.ui.component.ConfirmDialog
 import com.black.core.ui.component.ToolTopBar
 import com.black.core.ui.component.TopBarIconButton
@@ -127,27 +122,6 @@ fun TextEditorScreen(
             onConfirm = viewModel::onConfirmPermissionRequest,
             onDismiss = viewModel::onDismissPermissionRequest,
         )
-    }
-}
-
-/**
- * text/plain 문서 열기 선택창을 입력 uri 문서가 있는 위치에서 여는 계약
- *
- * EXTRA_INITIAL_URI는 Android 8.0부터 지원하며, 이전 버전은 기본 위치에서 열림
- */
-private class OpenTextDocumentAt : ActivityResultContract<Uri, Uri?>() {
-    private val openDocument = ActivityResultContracts.OpenDocument()
-
-    override fun createIntent(context: Context, input: Uri): Intent {
-        return openDocument.createIntent(context, arrayOf("text/plain")).apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                putExtra(DocumentsContract.EXTRA_INITIAL_URI, input)
-            }
-        }
-    }
-
-    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
-        return openDocument.parseResult(resultCode, intent)
     }
 }
 

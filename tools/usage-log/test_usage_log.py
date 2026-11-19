@@ -120,12 +120,12 @@ class DecryptTest(UsageLogTestCase):
 
     def test_decrypt_kotlin_sample(self):
         sample_folder = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "..", "..", "app", "build", "usage-log-sample")
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "feature", "usagelog", "build", "usage-log-sample")
         if not os.path.isdir(sample_folder):
             # 표본 생성까지 마친 검증에서는 USAGE_LOG_REQUIRE_SAMPLE=1로 건너뛰기 대신 실패로 처리
             if os.environ.get("USAGE_LOG_REQUIRE_SAMPLE") == "1":
-                self.fail("앱 표본 폴더(app/build/usage-log-sample)가 없음")
-            self.skipTest("앱 표본 폴더(app/build/usage-log-sample)가 없음")
+                self.fail("앱 표본 폴더(feature/usagelog/build/usage-log-sample)가 없음")
+            self.skipTest("앱 표본 폴더(feature/usagelog/build/usage-log-sample)가 없음")
         with open(os.path.join(sample_folder, "key.txt"), encoding="utf-8") as file:
             os.environ["USAGE_LOG_KEY"] = file.read().strip()
         with open(os.path.join(sample_folder, "plain.jsonl"), encoding="utf-8") as file:

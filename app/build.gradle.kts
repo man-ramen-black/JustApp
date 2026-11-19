@@ -57,6 +57,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // :feature:todo가 minSdk 24에서 쓰는 java.time 구현을 APK에 담으려면 앱도 켜야 함
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -84,6 +86,13 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":feature:pokerogue"))
     implementation(project(":feature:floatingbutton"))
+    implementation(project(":feature:calculator"))
+    implementation(project(":feature:sleeproutine"))
+    implementation(project(":feature:appinstallnotification"))
+    implementation(project(":feature:studypopup"))
+    implementation(project(":feature:usagetimer"))
+    implementation(project(":feature:todo"))
+    implementation(project(":feature:usagelog"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -92,20 +101,19 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     implementation(libs.androidx.datastore)
-    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation(libs.androidx.room.runtime)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     testImplementation(project(":test"))
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt)
     ksp(libs.hilt.compiler)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -125,7 +133,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
-    testImplementation(libs.androidx.work.testing)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

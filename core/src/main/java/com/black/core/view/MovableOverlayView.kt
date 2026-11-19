@@ -13,11 +13,12 @@ import com.black.core.model.OverlayPosition
 import com.black.core.util.Log
 import com.black.core.util.OverlayViewUtil
 import com.black.core.util.UiUtil
-import kotlinx.coroutines.CancellationException
+import com.black.core.util.runSuspendCatching
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 이동시킬 수 있는 Overlay 전용 View
@@ -90,7 +91,9 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
         // ViewRootImpl은 첫 순회에서 호스트 가시성을 onAttachedToWindow보다 먼저 읽어 첫 프레임을 판정하므로
         // 창을 추가(addView)하기 전인 여기서 숨겨야 기본 위치가 한 프레임도 보이지 않음
         positionFlow = createPositionFlow()
-        if (positionFlow != null) visibility = INVISIBLE
+        if (positionFlow != null) {
+            visibility = INVISIBLE
+        }
         val position = defaultPosition ?: return
         val placement = OverlayViewUtil.calculateWindowPlacement(position, resources.displayMetrics.density)
         windowParams.gravity = placement.gravity
@@ -109,12 +112,10 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
                 val placement = OverlayViewUtil.calculateWindowPlacement(position, resources.displayMetrics.density)
                 // 배치 반영에 실패해도 뷰가 계속 숨겨지지 않도록 표시는 항상 실행
                 try {
-                    OverlayViewUtil.applyWindowPlacement(this@MovableOverlayView, placement)
-                    appliedPlacement = placement
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Log.e("apply overlay position failed : $e")
+                    runSuspendCatching {
+                        OverlayViewUtil.applyWindowPlacement(this@MovableOverlayView, placement)
+                        appliedPlacement = placement
+                    }.onFailure { Log.e("apply overlay position failed : $it") }
                 } finally {
                     visibility = VISIBLE
                 }
@@ -140,11 +141,13 @@ abstract class MovableOverlayView<T : ViewDataBinding> : OverlayView<T> {
         // 유튜브 전체화면 등 화면 회전과 함께 상단바, 네비바 숨김 처리되는 경우 화면 사이즈 계산에 오차가 생기므로
         // 일정 시간 지연 후 위치 변경
         lifecycleScope.launch {
-            delay(300)
+            delay(300.milliseconds)
             // 위치 설정대로 두고 끌어서 옮기지 않은 창은 WindowManager가 같은 가장자리 기준으로 다시 배치하므로 재배치하지 않음
             // 재배치하면 Top·Left 기준으로 바뀌어 오른쪽·아래·가운데 설정이 풀림
             val applied = appliedPlacement
-            if (applied != null && applied == OverlayViewUtil.currentWindowPlacement(this@MovableOverlayView)) return@launch
+            if (applied != null && applied == OverlayViewUtil.currentWindowPlacement(this@MovableOverlayView)) {
+                return@launch
+            }
             val viewPosition = OverlayViewUtil.getAbsoluteWindowPosition(this@MovableOverlayView)
             OverlayViewUtil.moveView(this@MovableOverlayView, viewPosition.x.toFloat(), viewPosition.y.toFloat())
         }

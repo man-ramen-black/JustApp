@@ -10,11 +10,11 @@ include 없이 exclude만 두어 나머지 앱 데이터는 기본대로 백업�
         <exclude domain="database" path="UsageLog.db-shm" />
         <exclude domain="database" path="UsageLog.db-journal" />
         <exclude domain="file" path="datastore/usage_log.preferences_pb" />
-        <exclude domain="database" path="AssistantTask.db" />
-        <exclude domain="database" path="AssistantTask.db-wal" />
-        <exclude domain="database" path="AssistantTask.db-shm" />
-        <exclude domain="database" path="AssistantTask.db-journal" />
-        <exclude domain="file" path="datastore/assistant_task.preferences_pb" />
+        <exclude domain="database" path="Todo.db" />
+        <exclude domain="database" path="Todo.db-wal" />
+        <exclude domain="database" path="Todo.db-shm" />
+        <exclude domain="database" path="Todo.db-journal" />
+        <exclude domain="file" path="datastore/todo.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="database" path="UsageLog.db" />
@@ -22,10 +22,10 @@ include 없이 exclude만 두어 나머지 앱 데이터는 기본대로 백업�
         <exclude domain="database" path="UsageLog.db-shm" />
         <exclude domain="database" path="UsageLog.db-journal" />
         <exclude domain="file" path="datastore/usage_log.preferences_pb" />
-        <exclude domain="database" path="AssistantTask.db" />
-        <exclude domain="database" path="AssistantTask.db-wal" />
-        <exclude domain="database" path="AssistantTask.db-shm" />
-        <exclude domain="database" path="AssistantTask.db-journal" />
-        <exclude domain="file" path="datastore/assistant_task.preferences_pb" />
+        <exclude domain="database" path="Todo.db" />
+        <exclude domain="database" path="Todo.db-wal" />
+        <exclude domain="database" path="Todo.db-shm" />
+        <exclude domain="database" path="Todo.db-journal" />
+        <exclude domain="file" path="datastore/todo.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

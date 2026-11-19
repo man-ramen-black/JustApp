@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 수면 루틴 포그라운드 서비스와 그 알림(Android 13 이상은 알림 권한이 있어야 표시) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 서비스에서 YouTube·홈 화면을 띄울 때 백그라운드 실행 제한 예외 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 방해 금지 켜기·끄기(선언이 있어야 설정의 방해 금지 접근 목록에 표시) -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- 종료 시각까지 CPU를 깨워 두는 부분 wake lock -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application>
+        <service android:name=".service.SleepRoutineService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="@string/sleep_routine_special_use_description" />
+        </service>
+    </application>
+</manifest>

@@ -201,7 +201,11 @@ object JsonUtil {
      * [logInput]이 false면 입력이 노출되지 않도록 예외 클래스 이름만 core [Log]로 남김.
      */
     private fun reportFailure(e: Throwable, logInput: Boolean) {
-        if (logInput) Log.w(e) else Log.w("[JsonUtil] 파싱 실패: ${e.javaClass.simpleName}")
+        if (logInput) {
+            Log.w(e)
+        } else {
+            Log.w("[JsonUtil] 파싱 실패: ${e.javaClass.simpleName}")
+        }
     }
 }
 

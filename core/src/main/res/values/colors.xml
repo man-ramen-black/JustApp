@@ -9,4 +9,11 @@
     <color name="white_f7">#FFF7F7F7</color>
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00000000</color>
+
+    <color name="window_background">@color/black</color>
+    <color name="border">#555555</color>
+    <!-- 버튼 배경(bt_dark, bt_dark_circle)과 앱 스타일이 함께 씀 -->
+    <color name="color_primary">#121212</color>
+    <color name="color_accent">@color/grey_dd</color>
+    <color name="text_color">@color/color_accent</color>
 </resources>

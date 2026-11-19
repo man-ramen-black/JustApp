@@ -27,8 +27,8 @@ import com.black.app.ui.navigation.AppNavHost
 import com.black.app.ui.navigation.AppNavigator
 import com.black.app.ui.navigation.AppRoute
 import com.black.app.ui.navigation.applyDefaultNavOptions
-import com.black.app.util.ComponentExtensions.launch
 import com.black.core.ui.theme.BlackTheme
+import com.black.core.util.ComponentExtensions.launch
 import com.black.core.util.PermissionHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.map

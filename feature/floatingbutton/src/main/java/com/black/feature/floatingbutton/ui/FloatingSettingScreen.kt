@@ -14,7 +14,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.black.core.R as CoreR
 import com.black.core.ui.component.OverlayPermissionDialog
 import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.ui.component.OverlayPositionSetting
@@ -26,6 +25,7 @@ import com.black.core.ui.theme.AppTypography
 import com.black.core.util.PermissionHelper
 import com.black.core.viewmodel.CollectEvents
 import com.black.feature.floatingbutton.R
+import com.black.core.R as CoreR
 
 /**
  * [FloatingSettingScreen] 요소의 testTag

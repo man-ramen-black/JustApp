@@ -10,6 +10,7 @@ import com.black.core.viewmodel.ViewModelEvent
 import com.black.core.webkit.BKWebViewClient
 import com.black.feature.pokerogue.data.PokeRepository
 import com.black.feature.pokerogue.model.PokeType
+import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map

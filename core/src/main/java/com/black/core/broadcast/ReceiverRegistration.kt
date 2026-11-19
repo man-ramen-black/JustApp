@@ -59,4 +59,36 @@ class ReceiverRegistration(
 
     /** 로그 태그가 이 클래스라 어느 리시버인지 구분하는 데 쓰는 필터 action 목록 */
     private fun actions(): List<String> = (0 until filter.countActions()).map { filter.getAction(it) }
+
+    companion object {
+
+        /**
+         * 화면 켜짐·꺼짐을 받는 리시버 등록 홀더
+         *
+         * 화면 켜짐·꺼짐은 매니페스트 리시버로 받을 수 없어 런타임 등록으로만 받음.
+         * 넘긴 콜백의 신호만 필터에 넣으며 둘 다 null이면 받을 신호가 없어 [IllegalArgumentException].
+         *
+         * @param onScreenOn [Intent.ACTION_SCREEN_ON] 수신 시 호출
+         * @param onScreenOff [Intent.ACTION_SCREEN_OFF] 수신 시 호출
+         */
+        fun screenState(
+            onScreenOn: ((Context) -> Unit)? = null,
+            onScreenOff: ((Context) -> Unit)? = null,
+        ): ReceiverRegistration {
+            require(onScreenOn != null || onScreenOff != null) { "no screen state callback" }
+            val filter = IntentFilter()
+            if (onScreenOn != null) {
+                filter.addAction(Intent.ACTION_SCREEN_ON)
+            }
+            if (onScreenOff != null) {
+                filter.addAction(Intent.ACTION_SCREEN_OFF)
+            }
+            return ReceiverRegistration(filter) { context, intent ->
+                when (intent.action) {
+                    Intent.ACTION_SCREEN_ON -> onScreenOn?.invoke(context)
+                    Intent.ACTION_SCREEN_OFF -> onScreenOff?.invoke(context)
+                }
+            }
+        }
+    }
 }

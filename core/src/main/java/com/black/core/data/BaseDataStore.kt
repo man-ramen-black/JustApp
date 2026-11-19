@@ -1,0 +1,179 @@
+package com.black.core.data
+
+import android.content.Context
+import androidx.annotation.VisibleForTesting
+import androidx.datastore.core.DataMigration
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStore
+import com.black.core.util.Log
+import com.black.core.util.runSuspendCatching
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlin.properties.ReadOnlyProperty
+
+/**
+ * [BaseDataStore] 하위 클래스가 쓰는 Preferences DataStore delegate
+ *
+ * [preferencesDataStore]를 직접 쓰면 corruptionHandler가 빠져, 파일이 손상되면 읽기는 [BaseDataStore]의 IOException 처리로
+ * 기본값만 돌려주고 저장(edit)은 손상 파일을 먼저 읽다 CorruptionException으로 계속 실패.
+ * 손상 파일을 빈 값으로 바꾸는 [ReplaceFileCorruptionHandler]를 항상 지정
+ *
+ * 사용: `private val Context.fooDataStore by blackDataStore("foo")`
+ */
+fun blackDataStore(
+    name: String,
+    produceMigrations: (Context) -> List<DataMigration<Preferences>> = { listOf() },
+): ReadOnlyProperty<Context, DataStore<Preferences>> =
+    preferencesDataStore(
+        name = name,
+        corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+        produceMigrations = produceMigrations,
+    )
+
+/**
+ * [BaseDataStore.updateAll]로 함께 저장할 키 하나의 새 값
+ *
+ * [value]가 null이면 키를 삭제.
+ */
+class PreferenceUpdate<T : Any>(val key: Preferences.Key<T>, val value: T?) {
+    internal fun applyTo(preferences: MutablePreferences) {
+        if (value == null) {
+            preferences.remove(key)
+        } else {
+            preferences[key] = value
+        }
+    }
+}
+
+/** https://developer.android.com/topic/libraries/architecture/datastore?hl=ko */
+abstract class BaseDataStore(private val context: Context) {
+    protected abstract fun getDataStore(context: Context): DataStore<Preferences>
+
+    /** https://github.com/android/codelab-android-datastore/blob/preferences_datastore/app/src/main/java/com/codelab/android/datastore/data/UserPreferencesRepository.kt#L138 */
+    protected suspend fun <T> get(key: Preferences.Key<T>, def: T, logValue: Boolean = true): T {
+        val data = getDataStore(context).data
+            .catch {
+                when (it) {
+                    is IOException -> emit(emptyPreferences())
+                    /** [DataStore.data] 예외가 발생하면 데이터 읽기를 다시 시도합니다. */
+                    else -> throw it
+                }
+            }
+            /** [DataStore.data] use data.first() to access a single snapshot. */
+            .first()
+            .toPreferences()[key] ?: def
+        Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
+        return data
+    }
+
+    protected fun <T> flow(key: Preferences.Key<T>): Flow<T?> {
+        return getDataStore(context).data
+            .catch {
+                when (it) {
+                    is IOException -> emit(emptyPreferences())
+                    /** [DataStore.data] 예외가 발생하면 데이터 읽기를 다시 시도합니다. */
+                    else -> throw it
+                }
+            }
+            .map { it[key] }
+    }
+
+    /** 저장값이 없거나 읽기에 실패(IOException)하면 [def]를 내보내는 [flow] */
+    protected fun <T> flow(key: Preferences.Key<T>, def: T): Flow<T> {
+        return flow(key).map { it ?: def }
+    }
+
+    /**
+     * 값 저장
+     *
+     * 결과를 돌려주며 실패면 원인 예외를 담음.
+     * 실패 판정은 [runSuspendCatching]을 따라, 호출한 코루틴이 취소되면 결과로 바꾸지 않고 다시 던져 호출부 취소가 전파되도록 함.
+     * [logValue]가 false면 개인 데이터가 로그에 남지 않도록 키 이름만 기록.
+     * [logWrite]가 false면 [logValue]와 상관없이 저장 로그를 남기지 않음.
+     * 키 이름만 남겨도 logcat 시각이 곧 저장한 순간이라, 그 순간 자체가 개인 데이터인 값(집 출발 시각 등)에 씀.
+     */
+    protected suspend fun <T> update(
+        key: Preferences.Key<T>,
+        data: T,
+        logValue: Boolean = true,
+        logWrite: Boolean = true,
+    ): Result<Unit> {
+        if (logWrite) {
+            Log.v(if (logValue) "[${key.name}] $data" else "[${key.name}]")
+        }
+        // 저장 실패는 로그를 남기고 실패 결과로 반환
+        return runSuspendCatching<Unit> { getDataStore(context).edit { it[key] = data } }
+            .onFailure { Log.e(it) }
+    }
+
+    /**
+     * 저장된 값을 읽어 [transform]으로 바꿔 저장하는 일을 DataStore `edit` 한 번 안에서 처리
+     *
+     * 읽기와 쓰기 사이에 다른 저장이 끼어들 수 없어 추가·삭제·최초 생성이 원자적임.
+     * 저장된 값이 없으면 [def]가 [transform]에 전달됨. 성공이면 저장한 값을 돌려주고,
+     * 실패 처리는 [update]와 같음(호출한 코루틴의 취소는 다시 던지고 그 밖의 예외는 실패 결과).
+     * [logValue]가 false면 값 없이 키 이름만 기록.
+     */
+    protected suspend fun <T> updateWith(
+        key: Preferences.Key<T>,
+        def: T,
+        logValue: Boolean = true,
+        transform: (T) -> T,
+    ): Result<T> {
+        return runSuspendCatching {
+            var saved = def
+            getDataStore(context).edit {
+                saved = transform(it[key] ?: def)
+                it[key] = saved
+            }
+            Log.v(if (logValue) "[${key.name}] $saved" else "[${key.name}]")
+            saved
+        }.onFailure { Log.e(it) }
+    }
+
+    /**
+     * 여러 키를 DataStore `edit` 한 번에 저장
+     *
+     * 모두 저장되거나 하나도 저장되지 않아, 함께 맞아야 하는 값이 나눠 저장되다 중간에 끊기지 않음.
+     * 실패 처리는 [update]와 같음. [logValue]가 false면 값 없이 키 이름만 기록.
+     */
+    protected suspend fun updateAll(vararg updates: PreferenceUpdate<*>, logValue: Boolean = true): Result<Unit> {
+        val names = updates.joinToString { it.key.name }
+        Log.v(if (logValue) "[$names] ${updates.joinToString { "${it.value}" }}" else "[$names]")
+        return runSuspendCatching<Unit> {
+            getDataStore(context).edit { preferences -> updates.forEach { it.applyTo(preferences) } }
+        }.onFailure { Log.e(it) }
+    }
+
+    /**
+     * 값 삭제
+     *
+     * 실패 처리는 [update]와 같음.
+     */
+    protected suspend fun <T> remove(key: Preferences.Key<T>): Result<Unit> {
+        Log.v("[${key.name}]")
+        return runSuspendCatching<Unit> { getDataStore(context).edit { it.remove(key) } }
+            .onFailure { Log.e(it) }
+    }
+
+    /**
+     * 저장값 전체 삭제
+     *
+     * 테스트 간 격리에만 사용.
+     * 실패 처리는 [update]와 같음.
+     */
+    @VisibleForTesting
+    suspend fun clear(): Result<Unit> {
+        Log.v("[clear]")
+        return runSuspendCatching<Unit> { getDataStore(context).edit { it.clear() } }
+            .onFailure { Log.e(it) }
+    }
+}

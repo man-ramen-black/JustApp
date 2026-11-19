@@ -26,5 +26,9 @@
     <string name="overlay_position_margin_left">왼쪽 여백(dp)</string>
     <string name="overlay_position_margin_right">오른쪽 여백(dp)</string>
 
+    <string name="select_app">앱 선택</string>
+    <string name="select_app_filter">검색</string>
+    <string name="select_app_complete">선택 완료</string>
+
     <string name="ssl_error_confirm_message">이 사이트의 보안 인증서를 신뢰할 수 없습니다.\n계속하시겠습니까?</string>
 </resources>

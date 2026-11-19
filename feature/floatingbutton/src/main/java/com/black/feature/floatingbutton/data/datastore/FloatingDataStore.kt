@@ -5,11 +5,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.black.core.model.BaseDataStore
+import com.black.core.data.BaseDataStore
+import com.black.core.data.blackDataStore
 import com.black.core.model.OverlayPosition
 import com.black.core.model.OverlayPosition.HorizontalAnchor
 import com.black.core.model.OverlayPosition.VerticalAnchor
-import com.black.core.model.blackDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

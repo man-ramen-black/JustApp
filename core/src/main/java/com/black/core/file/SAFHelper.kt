@@ -7,7 +7,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import com.black.core.util.FileUtil
 import com.black.core.util.Log
-import kotlinx.coroutines.CancellationException
+import com.black.core.util.runSuspendCatching
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
@@ -50,7 +50,7 @@ object SAFHelper {
      * 문서의 UTF-8 텍스트를 읽고 [onRead] 결과 반환, [onRead]까지 IO 스레드에서 실행
      *
      * 스트림을 열 수 없으면 [FileNotFoundException], 권한이 없으면 SecurityException 실패 결과.
-     * [onRead](파싱, 마지막 문서 기록 등)의 예외도 같은 실패 결과로 묶고, 코루틴 취소는 결과로 바꾸지 않고 다시 던짐
+     * [onRead](파싱, 마지막 문서 기록 등)의 예외도 같은 실패 결과로 묶고, 호출한 코루틴의 취소는 결과로 바꾸지 않고 다시 던짐
      */
     suspend fun <T> Uri.readDocumentText(context: Context, onRead: suspend (text: String) -> T): Result<T> {
         val uri = this
@@ -66,7 +66,7 @@ object SAFHelper {
      *
      * 기존 내용을 지우며 여는 "wt" 모드라 [createText]를 스트림을 열기 전에 실행해, 텍스트를 만들다 실패하면 문서를 건드리지 않음.
      * 스트림을 열 수 없으면 [FileNotFoundException], 권한이 없으면 SecurityException 실패 결과.
-     * [onWritten](마지막 문서 기록 등)의 예외도 같은 실패 결과로 묶고, 코루틴 취소는 결과로 바꾸지 않고 다시 던짐
+     * [onWritten](마지막 문서 기록 등)의 예외도 같은 실패 결과로 묶고, 호출한 코루틴의 취소는 결과로 바꾸지 않고 다시 던짐
      */
     suspend fun Uri.writeDocumentText(
         context: Context,
@@ -84,15 +84,13 @@ object SAFHelper {
         }
     }
 
-    /** IO 스레드에서 [block]을 실행해 예외를 실패 결과로 반환, 코루틴 취소는 BaseDataStore 저장과 같이 다시 던짐 */
+    /**
+     * IO 스레드에서 [block]을 실행해 예외를 실패 결과로 반환
+     *
+     * 실패 판정은 BaseDataStore 저장과 같이 [runSuspendCatching]을 따라, 호출한 코루틴의 취소는 다시 던짐.
+     */
     private suspend fun <T> resultOnIo(block: suspend () -> T): Result<T> = withContext(Dispatchers.IO) {
-        try {
-            Result.success(block())
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        runSuspendCatching { block() }
     }
 
     /**

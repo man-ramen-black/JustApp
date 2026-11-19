@@ -158,13 +158,35 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         }
 
         /**
-         * 알림 접근(알림 리스너) 허용 여부
+         * 이 앱이 매니페스트에 선언한 알림 리스너 서비스, 선언이 없으면 null
          *
-         * 패키지가 아니라 [service] 컴포넌트가 허용 목록에 있는지 확인함.
+         * 앱의 알림 리스너는 하나로 합쳐 두므로 첫 항목 사용.
+         * 기능 모듈은 앱 모듈의 서비스 클래스를 참조할 수 없어 매니페스트 선언으로 찾음
          */
-        fun isNotificationListenerEnabled(context: Context, service: Class<out NotificationListenerService>): Boolean {
-            val expectedComponentName = ComponentName(context, service)
+        fun findNotificationListenerService(context: Context): ComponentName? {
+            val intent = Intent(NotificationListenerService.SERVICE_INTERFACE).setPackage(context.packageName)
+            val serviceInfo = context.packageManager.queryIntentServices(intent, 0).firstOrNull()?.serviceInfo
+                ?: return null
+            return ComponentName(serviceInfo.packageName, serviceInfo.name)
+        }
 
+        /**
+         * 이 앱의 알림 리스너([findNotificationListenerService])가 알림 접근을 허용받았는지 여부
+         *
+         * 선언이 없으면 false.
+         */
+        fun isNotificationListenerEnabled(context: Context): Boolean {
+            val componentName = findNotificationListenerService(context) ?: return false
+            return isNotificationListenerEnabled(context, componentName)
+        }
+
+        /**
+         * [expectedComponentName] 알림 리스너의 알림 접근 허용 여부
+         *
+         * 패키지가 아니라 컴포넌트가 허용 목록에 있는지 확인함.
+         * 리스너를 이미 찾아 둔 core 클래스가 매번 매니페스트를 다시 조회하지 않도록 둠.
+         */
+        internal fun isNotificationListenerEnabled(context: Context, expectedComponentName: ComponentName): Boolean {
             val enabledListeners = Settings.Secure.getString(
                 context.contentResolver,
                 ENABLED_NOTIFICATION_LISTENERS,
@@ -177,17 +199,31 @@ class PermissionHelper(private val activity: Activity, private val activityResul
         }
 
         /**
+         * 이 앱의 알림 리스너([findNotificationListenerService]) 알림 접근 설정 화면 이동
+         *
+         * 선언이 없으면 알림 접근 목록 화면.
+         */
+        fun showNotificationListenerSettings(context: Context) {
+            val componentName = findNotificationListenerService(context)
+            if (componentName == null) {
+                startFirstAvailable(context, listOf(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)))
+                return
+            }
+            showNotificationListenerSettings(context, componentName)
+        }
+
+        /**
          * 알림 접근 설정 화면 이동
          *
          * API 30 이상은 [service]의 상세 화면, 그 미만이나 상세 화면이 없으면 알림 접근 목록 화면.
          */
-        fun showNotificationListenerSettings(context: Context, service: Class<out NotificationListenerService>) {
+        private fun showNotificationListenerSettings(context: Context, service: ComponentName) {
             val listIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
             val intents = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val detailIntent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
                     .putExtra(
                         Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
-                        ComponentName(context, service).flattenToString(),
+                        service.flattenToString(),
                     )
                 listOf(detailIntent, listIntent)
             } else {
@@ -311,10 +347,6 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             return isAccessibilityServiceEnabled(context, componentName)
         }
 
-        /** 접근성 권한 있는지 체크 */
-        fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean =
-            isAccessibilityServiceEnabled(context, ComponentName(context, service))
-
         private fun isAccessibilityServiceEnabled(context: Context, expectedComponentName: ComponentName): Boolean {
             val enabledServicesSetting = Settings.Secure.getString(
                 context.contentResolver,
@@ -340,11 +372,7 @@ class PermissionHelper(private val activity: Activity, private val activityResul
             openAccessibilityServiceDetailSetting(context, componentName)
         }
 
-        /** 특정 접근성 서비스 상세 설정 화면 표시(차단·미지원 시 접근성 설정 목록에서 해당 서비스 하이라이트) */
-        fun openAccessibilityServiceDetailSetting(context: Context, service: Class<out AccessibilityService>) {
-            openAccessibilityServiceDetailSetting(context, ComponentName(context, service))
-        }
-
+        /** [service] 접근성 서비스 상세 설정 화면 표시(차단·미지원 시 접근성 설정 목록에서 해당 서비스 하이라이트) */
         private fun openAccessibilityServiceDetailSetting(context: Context, service: ComponentName) {
             val componentName = service.flattenToString()
 

@@ -9,10 +9,10 @@ import com.black.app.ui.navigation.AppRoute
 import com.black.app.ui.navigation.applyDefaultNavOptions
 import com.black.core.component.BaseFragment
 import com.black.core.ui.theme.BlackTheme
-import com.black.feature.pokerogue.R as PokeRogueR
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import com.black.feature.pokerogue.R as PokeRogueR
 
 @AndroidEntryPoint
 class MainFragment : BaseFragment<FragmentMainBinding>() {
@@ -29,9 +29,9 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_editor,
             ) { navigateByActivity(AppRoute.TextEditor) },
             MainItem(
-                getString(R.string.fragment_name_assistant_task),
+                getString(R.string.fragment_name_todo),
                 R.drawable.ic_checklist,
-            ) { navigateByActivity(AppRoute.AssistantTask) },
+            ) { navigateByActivity(AppRoute.Todo) },
             MainItem(
                 getString(R.string.fragment_name_calculator),
                 R.drawable.ic_calculator,

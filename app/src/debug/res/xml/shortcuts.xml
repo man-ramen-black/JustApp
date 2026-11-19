@@ -22,7 +22,7 @@
             android:targetClass="com.black.core.service.ServiceActivity">
             <extra
                 android:name="ServiceActivity.EXTRA_CLASS_NAME"
-                android:value="com.black.app.sleeproutine.SleepRoutineService" />
+                android:value="com.black.feature.sleeproutine.service.SleepRoutineService" />
         </intent>
     </shortcut>
 

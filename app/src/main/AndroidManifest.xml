@@ -24,37 +24,15 @@
     <!-- Android 14 (API 수준 34) 타겟팅 시 추가 필요 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
-    <!-- Floating View -->
+    <!-- 화면 켜짐 유지 오버레이(기능 모듈이 쓰는 권한은 각 모듈 매니페스트에 선언) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
-    <!-- Android 13 이상 Notification, Toast 노출을 위한 권한 -->
+    <!-- Android 13 이상 앱 포그라운드 서비스 알림 표시 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- 정확한 시각의 알람(Todo 기한 알림) 예약, API 31 이상은 사용자가 설정에서 허용해야 동작 -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-    <!-- 사용 기록: 앱 사용·화면 기록 읽기(UsageStatsManager), 선언이 없으면 설정의 사용 정보 접근 화면에서 허용할 수 없음 -->
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
-    <!-- 사용 기록: Wi-Fi 연결 감시와 SSID 읽기(Android 8.1 이상은 위치 권한과 위치 설정이 있어야 SSID가 보임) -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- 기기 사용 기록의 문자 수집(받은·보낸 문자)과 상대 연락처 이름 -->
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-
-    <!-- 수면 루틴: 방해 금지 켜기·끄기(선언이 있어야 설정의 방해 금지 접근 목록에 표시) -->
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <!-- 수면 루틴: 종료 시각까지 CPU를 깨워 두는 부분 wake lock -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- usesCleartextTraffic : https://mrgamza.tistory.com/639 -->
-    <!-- 백업 규칙: 기기 사용 기록과 비서 할 일의 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
+    <!-- 백업 규칙: 기기 사용 기록과 Todo의 DB와 설정만 백업·기기 이전에서 제외(API 30 이하 fullBackupContent, API 31 이상 dataExtractionRules) -->
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -127,14 +105,7 @@
         <service android:name=".service.ForegroundService"
             android:foregroundServiceType="specialUse" />
 
-        <service android:name=".sleeproutine.SleepRoutineService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="@string/sleep_routine_special_use_description" />
-        </service>
-
-        <receiver android:name=".broadcast.BootReceiver" android:exported="true">
+        <receiver android:name=".receiver.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
@@ -156,7 +127,7 @@
         </service>
 
         <!-- 빠른 설정창 화면 켜짐 유지 타일 -->
-        <service android:name=".ui.main.keepscreenon.KeepScreenOnTileService"
+        <service android:name=".keepscreenon.service.KeepScreenOnTileService"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:icon="@drawable/ic_keep_screen_on"
             android:label="@string/keep_screen_on_tile_label"
@@ -174,7 +145,7 @@
         <!-- adb로 화면 켜짐 유지를 켜고 끄는 Receiver (기기 작업 뒤 켜짐 유지 복원용) -->
         <!-- shell은 다른 앱의 비공개 Receiver를 호출할 수 없어 공개하되, shell만 가진 DUMP 권한으로 다른 앱의 호출 차단 -->
         <receiver
-            android:name=".ui.main.keepscreenon.KeepScreenOnReceiver"
+            android:name=".keepscreenon.receiver.KeepScreenOnReceiver"
             android:exported="true"
             android:permission="android.permission.DUMP">
             <intent-filter>
@@ -183,27 +154,17 @@
             </intent-filter>
         </receiver>
 
-        <!-- Todo 시각 알림 알람 수신, 앱이 보낸 알람 인텐트만 받음 -->
-        <receiver android:name=".assistanttask.alarm.AssistantTaskAlarmReceiver" android:exported="false" />
-
-        <!-- 정확한 알람 허용 뒤 Todo 시각 알림 다시 예약, 시스템 방송이라 exported이며 수신기가 액션을 확인 -->
-        <receiver android:name=".assistanttask.alarm.AssistantTaskExactAlarmPermissionReceiver" android:exported="true">
-            <intent-filter>
-                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
-            </intent-filter>
-        </receiver>
-
         <!-- 앱 업데이트 설치가 프로세스와 함께 ForegroundService를 종료하므로 실행 설정이 켜져 있으면 재시작 -->
-        <receiver android:name=".broadcast.AppUpdateReceiver" android:exported="true">
+        <receiver android:name=".receiver.AppUpdateReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
             </intent-filter>
         </receiver>
 
-        <!-- 기기 사용 기록용 알림 접근 서비스 -->
+        <!-- 앱 공용 알림 리스너(기기 사용 기록 알림 기록과 Wi-Fi 감시, Todo 집 도착 알림, 수면 루틴 미디어 세션 조회), 기능 모듈은 매니페스트 선언으로 이 서비스를 찾음 -->
         <service
-            android:name=".usagelog.collect.UsageLogListenerService"
-            android:label="@string/usage_log_listener_label"
+            android:name=".service.AppNotificationListenerService"
+            android:label="@string/app_notification_listener_label"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>

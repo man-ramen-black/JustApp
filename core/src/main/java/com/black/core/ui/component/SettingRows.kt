@@ -168,6 +168,8 @@ fun PermissionStatusRow(
 
 /** [onClick]이 있을 때만 버튼 역할의 클릭 처리 추가 */
 private fun Modifier.clickableIfPresent(onClick: (() -> Unit)?): Modifier {
-    if (onClick == null) return this
+    if (onClick == null) {
+        return this
+    }
     return clickable(role = Role.Button, onClick = onClick)
 }

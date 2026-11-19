@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import com.black.app.broadcast.PackageInstallReceiver
-import com.black.app.broadcast.ScreenReceiver
 import com.black.app.ui.MainActivity
 import com.black.core.service.BaseForegroundService
 import com.black.core.util.NotificationUtil
+import com.black.feature.appinstallnotification.receiver.PackageInstallReceiver
+import com.black.feature.studypopup.receiver.ScreenReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

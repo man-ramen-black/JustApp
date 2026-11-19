@@ -62,7 +62,7 @@ setx USAGE_LOG_DB "C:\Users\<사용자>\.usage_log\usage_log.sqlite3"
 
 `test_usage_log.py`는 테스트용 키로 만든 가짜 기록만 씁니다. 실제 기록 DB와 키는 건드리지 않습니다.
 
-1. (선택) Android 빌드 환경이 있는 PC에서 앱이 만든 표본 첨부를 생성합니다. 저장소 루트에서 `.\gradlew :app:testDebugUnitTest --tests "com.black.app.usagelog.upload.UsageLogSampleExportTest"`를 실행하면 `app/build/usage-log-sample/`에 표본이 생깁니다.
+1. (선택) Android 빌드 환경이 있는 PC에서 앱이 만든 표본 첨부를 생성합니다. 저장소 루트에서 `.\gradlew :feature:usagelog:testDebugUnitTest --tests "com.black.feature.usagelog.data.usecase.UsageLogSampleExportTest"`를 실행하면 `feature/usagelog/build/usage-log-sample/`에 표본이 생깁니다.
 2. 저장소 루트에서 `py -B tools/usage-log/test_usage_log.py`를 실행합니다.
 
 - 표본 폴더가 없으면 표본 테스트(`test_decrypt_kotlin_sample`)만 건너뜁니다.

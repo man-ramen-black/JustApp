@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 사용 기록: 앱 사용·화면 기록 읽기(UsageStatsManager), 선언이 없으면 설정의 사용 정보 접근 화면에서 허용할 수 없음 -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- 사용 기록: Wi-Fi 연결 감시와 SSID 읽기(Android 8.1 이상은 위치 권한과 위치 설정이 있어야 SSID가 보임) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 기기 사용 기록의 문자 수집(받은·보낸 문자)과 상대 연락처 이름 -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <application>
+        <!-- 앱 업데이트 직후 기기 사용 기록 화면을 열지 않아도 주기 수집 예약을 새 Worker 클래스로 갱신(WorkManager DB의 옛 작업은 업데이트 전 Worker 클래스 이름으로 저장돼 있음) -->
+        <receiver android:name=".receiver.UsageLogPackageReplacedReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

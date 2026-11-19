@@ -197,13 +197,6 @@
     <style name="Widget.Black.TabLayout" parent="Widget.MaterialComponents.TabLayout">
     </style>
 
-    <style name="RootLayout">
-        <item name="android:paddingLeft">20dp</item>
-        <item name="android:paddingTop">10dp</item>
-        <item name="android:paddingRight">20dp</item>
-        <item name="android:paddingBottom">10dp</item>
-    </style>
-
     <style name="TextViewTitle" parent="Widget.Black.TextView">
         <item name="android:textSize">18sp</item>
         <item name="android:layout_marginBottom">10dp</item>

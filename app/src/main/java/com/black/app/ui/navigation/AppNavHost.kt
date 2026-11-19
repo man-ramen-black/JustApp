@@ -10,17 +10,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.black.app.ui.main.MainFragment
-import com.black.app.ui.main.appinstallnotification.AppInstallNotificationScreen
-import com.black.app.ui.main.assistanttask.AssistantTaskScreen
-import com.black.app.ui.main.calculator.CalculatorScreen
 import com.black.app.ui.main.etc.BlackFragment
-import com.black.app.ui.main.sleeproutine.SleepRoutineScreen
-import com.black.app.ui.main.studypopup.StudyPopupSettingScreen
 import com.black.app.ui.main.texteditor.TextEditorScreen
-import com.black.app.ui.main.usagelog.UsageLogScreen
-import com.black.app.ui.main.usagetimer.UsageTimerScreen
+import com.black.feature.appinstallnotification.ui.AppInstallNotificationScreen
+import com.black.feature.calculator.ui.CalculatorScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import com.black.feature.pokerogue.ui.PokeRogueFragment
+import com.black.feature.sleeproutine.ui.SleepRoutineScreen
+import com.black.feature.studypopup.ui.StudyPopupSettingScreen
+import com.black.feature.todo.ui.TodoScreen
+import com.black.feature.usagelog.ui.UsageLogScreen
+import com.black.feature.usagetimer.ui.UsageTimerScreen
 
 /**
  * 루트 내비게이션 호스트. 미전환 Fragment는 AndroidFragment로 래핑.
@@ -74,8 +74,8 @@ fun AppNavHost(
         composable<AppRoute.SleepRoutine> {
             SleepRoutineScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
-        composable<AppRoute.AssistantTask> {
-            AssistantTaskScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        composable<AppRoute.Todo> {
+            TodoScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
     }
 }

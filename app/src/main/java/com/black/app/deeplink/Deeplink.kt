@@ -52,7 +52,7 @@ sealed interface Deeplink {
         private fun parseNavigateDeeplink(uri: Uri): Deeplink? {
             return when (uri.pathSegments.firstOrNull()) {
                 PathNavigate.MEMO -> Navigate(AppRoute.TextEditor, clearBackStack = true)
-                PathNavigate.TODO -> Navigate(AppRoute.AssistantTask, clearBackStack = true)
+                PathNavigate.TODO -> Navigate(AppRoute.Todo, clearBackStack = true)
                 else -> null
             }
         }
