@@ -6,7 +6,7 @@ argument-hint: [대상 클래스명 또는 파일 경로]
 
 # 유닛 테스트 작성 스킬
 
-`$ARGUMENTS`의 유닛 테스트를 저장소 컨벤션에 맞게 작성한다. 기준 예시: `app/src/test/java/com/black/app/ui/main/usagetimer/UsageTimerViewModelTest.kt`(ViewModel), `app/src/test/java/com/black/app/model/UsageTimerRepositoryTest.kt`(Repository).
+`$ARGUMENTS`의 유닛 테스트를 저장소 컨벤션에 맞게 작성한다. 기준 예시: `feature/usagetimer/src/test/java/com/black/feature/usagetimer/ui/UsageTimerViewModelTest.kt`(ViewModel), `feature/usagetimer/src/test/java/com/black/feature/usagetimer/data/UsageTimerRepositoryTest.kt`(Repository).
 
 ## 작업 순서
 
@@ -16,9 +16,9 @@ argument-hint: [대상 클래스명 또는 파일 경로]
 4. **작성**: 아래 규칙.
 5. **실행·통과 확인**: 작성으로 끝내지 않는다. 실패하면 원인을 고친 뒤 다시 돌린다.
    ```
-   ./gradlew :app:testDebugUnitTest --tests "com.black.app.ui.main.usagetimer.UsageTimerViewModelTest"
+   ./gradlew :feature:usagetimer:testDebugUnitTest --tests "com.black.feature.usagetimer.ui.UsageTimerViewModelTest"
    ```
-   core 모듈 대상이면 `:core:testDebugUnitTest`를 쓴다.
+   다른 모듈 대상이면 그 모듈의 작업(`:app:testDebugUnitTest`, `:core:testDebugUnitTest` 등)을 쓴다.
 
 ## 클래스 구조
 
@@ -112,5 +112,4 @@ fun test_03_pauseSavesAndSendsEvents() = runTest {
 ## 마무리
 
 - 작성한 테스트를 실행해 통과를 확인한 뒤에만 완료로 보고한다. 실패가 이번 변경 탓인지 애매하면 변경 전 형상에서 **같은 테스트**를 돌려 가른다.
-- 변경과 무관한 전체 테스트 실행은 사용자가 요청할 때만 한다.
 - 새 파일은 `git add`로 스테이징한다.
