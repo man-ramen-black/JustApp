@@ -11,6 +11,7 @@ Orca(https://github.com/stablyai/orca, 문서 https://www.onorca.dev/docs)는 �
 - 새 브랜치는 `git worktree add -b <브랜치> .claude/worktrees/<주제> release` 후 `EnterWorktree(path)`로 세션을 옮긴다. `EnterWorktree(name)`은 origin 기본 브랜치(`master`)에서 분기하므로 쓰지 않는다. 기존 브랜치는 `git -C <기본 체크아웃> worktree add .claude/worktrees/<주제> <브랜치>` 후 같은 방식으로 옮긴다.
 - `orca worktree create`로 최상위 워크트리를 만들지 않는다. 브랜치명의 `/`가 `-`로 바뀌고 사이드바 항목이 계속 늘어난다. `.claude/worktrees` 아래는 외부 워크트리 숨김(`externalWorktreeVisibility: hide`)이라 사이드바에 늘어나지 않는다.
 - "새 세션에서 워크트리 만들어서 진행"은 위처럼 워크트리를 만들고 커밋하지 않는 `docs/superpowers/`·`local.properties`를 복사한 뒤, `orca agent launch --agent claude --worktree id:<JustApp repoId>::<기본 체크아웃>`으로 기본 체크아웃에 세션을 띄우고 프롬프트 첫 단계에 `EnterWorktree(path)`를 넣는다. 숨김 외부 워크트리라 Orca에서 그 경로를 직접 대상으로 잡지 않는다.
+- 워크트리 세션을 다시 열 때(`--resume`)도 같은 이유로 `orca terminal create --worktree id:<JustApp repoId>::<기본 체크아웃> --command "cd .claude/worktrees/<주제>; claude --dangerously-skip-permissions --resume <세션 ID>"`로 기본 체크아웃에 탭을 만들고 `orca terminal switch`로 화면을 옮긴다. 세션 기록은 워크트리 경로 기준이라 `cd` 없이는 찾지 못한다.
 - 워크트리를 지울 때는 그 안의 커밋하지 않은 `docs/superpowers/` 문서를 먼저 옮긴다. `git worktree remove --force`가 함께 지운다.
 - 기본 체크아웃에서 시작해 `EnterWorktree`로 옮긴 세션에는 시작할 때 읽은 release의 `CLAUDE.md`와 워크트리의 `CLAUDE.md`가 함께 남고, 스킬도 기본 체크아웃 것과 워크트리 것(`.claude/worktrees/<주제>:<스킬>`)이 두 벌로 보인다. 워크트리 파일을 고칠 때는 워크트리 스킬을 쓴다. 워크트리에서 바로 시작한 세션은 워크트리 것만 읽는다. 그래서 옮겨 갈 브랜치가 release보다 뒤처져 `CLAUDE.md`·`.claude/`가 옛 버전이면 release를 먼저 병합해 두 문서를 같게 맞춘다.
 
