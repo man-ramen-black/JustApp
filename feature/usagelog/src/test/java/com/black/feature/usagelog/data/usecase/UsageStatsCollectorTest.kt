@@ -3,6 +3,7 @@ package com.black.feature.usagelog.data.usecase
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.black.core.system.OpenUsageSession
 import com.black.core.system.RawUsageEvent
 import com.black.core.system.RawUsageEventKind
 import com.black.feature.usagelog.data.UsageLogRepository
@@ -12,7 +13,6 @@ import com.black.feature.usagelog.data.datastore.UsageLogDataStore
 import com.black.feature.usagelog.model.AppUsageRecord
 import com.black.feature.usagelog.model.GapCause
 import com.black.feature.usagelog.model.GapRecord
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.ScreenOnRecord
 import com.black.test.BaseTest
 import io.mockk.coEvery

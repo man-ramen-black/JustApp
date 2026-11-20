@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import com.black.core.crypto.AesGcmCipher
+import com.black.core.system.OpenUsageSession
 import com.black.feature.usagelog.data.datastore.UsageLogDataStore
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.SmsProgress
 import com.black.feature.usagelog.model.WifiState
 import com.black.test.BaseTest

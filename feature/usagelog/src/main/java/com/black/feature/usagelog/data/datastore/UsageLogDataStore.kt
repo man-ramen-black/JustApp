@@ -12,9 +12,9 @@ import com.black.core.crypto.AesGcmCipher
 import com.black.core.data.BaseDataStore
 import com.black.core.data.PreferenceUpdate
 import com.black.core.data.blackDataStore
+import com.black.core.system.OpenUsageSession
 import com.black.core.util.JsonUtil
 import com.black.feature.usagelog.model.LastSendResult
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.SmsProgress
 import com.black.feature.usagelog.model.WifiState
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -1,9 +1,9 @@
 package com.black.feature.usagelog.data
 
 import android.content.Context
+import com.black.core.system.OpenUsageSession
 import com.black.feature.usagelog.data.datastore.UsageLogDataStore
 import com.black.feature.usagelog.model.LastSendResult
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.SmsProgress
 import com.black.feature.usagelog.model.WifiState
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -4,13 +4,13 @@ import android.content.Context
 import android.util.Log
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.black.core.system.OpenUsageSession
 import com.black.feature.usagelog.data.UsageLogRepository
 import com.black.feature.usagelog.data.UsageLogSettingsRepository
 import com.black.feature.usagelog.data.database.UsageLogDatabase
 import com.black.feature.usagelog.data.datastore.UsageLogDataStore
 import com.black.feature.usagelog.model.GapCause
 import com.black.feature.usagelog.model.GapRecord
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.ScreenOnRecord
 import com.black.feature.usagelog.model.SmsProgress
 import com.black.feature.usagelog.model.WifiState

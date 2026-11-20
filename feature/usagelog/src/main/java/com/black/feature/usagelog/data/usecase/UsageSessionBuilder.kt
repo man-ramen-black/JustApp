@@ -1,9 +1,10 @@
 package com.black.feature.usagelog.data.usecase
 
+import com.black.core.system.AppUsageIntervalTracker
+import com.black.core.system.OpenUsageSession
 import com.black.core.system.RawUsageEvent
 import com.black.core.system.RawUsageEventKind
 import com.black.feature.usagelog.model.AppUsageRecord
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.ScreenOffRecord
 import com.black.feature.usagelog.model.ScreenOnRecord
 import com.black.feature.usagelog.model.UnlockRecord
@@ -39,50 +40,22 @@ object UsageSessionBuilder {
         appNameOf: (String) -> String,
     ): UsageSessionResult {
         val records = ArrayList<UsageLogRecord>()
-        var open = openSession
-
-        // 열린 구간을 pausedAt 또는 fallbackEnd에 닫아 기록으로 변환
-        fun close(session: OpenUsageSession, fallbackEnd: Long) {
-            val end = session.pausedAt ?: fallbackEnd
-            if (end - session.start >= MIN_SESSION_MILLIS) {
-                records.add(AppUsageRecord(session.packageName, appNameOf(session.packageName), session.start, end))
-            }
-        }
+        val tracker = AppUsageIntervalTracker(openSession)
 
         events.forEach { event ->
-            val current = open
-            val packageName = event.packageName
+            // 이벤트로 닫힌 구간을 최소 길이 이상일 때만 기록으로 변환
+            val closed = tracker.accept(event)
+            if (closed != null && closed.end - closed.start >= MIN_SESSION_MILLIS) {
+                records.add(AppUsageRecord(closed.packageName, appNameOf(closed.packageName), closed.start, closed.end))
+            }
+            // 같은 이벤트의 화면 기록은 닫힌 구간 뒤에 추가
             when (event.kind) {
-                RawUsageEventKind.RESUMED -> {
-                    if (packageName == null) {
-                        return@forEach
-                    }
-                    if (current == null) {
-                        open = OpenUsageSession(packageName, event.time)
-                    } else if (current.packageName == packageName) {
-                        // 같은 앱 안의 화면 전환은 구간을 이어 감
-                        open = current.copy(pausedAt = null)
-                    } else {
-                        close(current, event.time)
-                        open = OpenUsageSession(packageName, event.time)
-                    }
-                }
-                RawUsageEventKind.PAUSED -> {
-                    if (current != null && current.packageName == packageName) {
-                        open = current.copy(pausedAt = event.time)
-                    }
-                }
-                RawUsageEventKind.SCREEN_OFF -> {
-                    if (current != null) {
-                        close(current, event.time)
-                    }
-                    open = null
-                    records.add(ScreenOffRecord(event.time))
-                }
+                RawUsageEventKind.SCREEN_OFF -> records.add(ScreenOffRecord(event.time))
                 RawUsageEventKind.SCREEN_ON -> records.add(ScreenOnRecord(event.time))
                 RawUsageEventKind.UNLOCK -> records.add(UnlockRecord(event.time))
+                RawUsageEventKind.RESUMED, RawUsageEventKind.PAUSED -> Unit
             }
         }
-        return UsageSessionResult(records.sortedBy { it.time }, open)
+        return UsageSessionResult(records.sortedBy { it.time }, tracker.openSession)
     }
 }
