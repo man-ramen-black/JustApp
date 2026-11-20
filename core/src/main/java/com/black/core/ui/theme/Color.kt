@@ -19,6 +19,8 @@ object AppColors {
     val Caption = Color(0xFF7A7F88)
     val ItemName = Color(0xFFF5F5F5)
     val Icon = Color(0xFFD6D6D8)
+    /** 날짜·시각 같은 보조 값 색(위젯과 그 미리보기) */
+    val SubText = Color(0xFFBBBBBB)
     val ContainerBackground = Color(0xFF131316)
     val ContainerBorder = Color(0xFF222226)
     val Arrow = Color(0xFF43464D)
