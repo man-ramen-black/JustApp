@@ -33,6 +33,10 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
                 R.drawable.ic_checklist,
             ) { navigateByActivity(AppRoute.Todo) },
             MainItem(
+                getString(R.string.fragment_name_dday),
+                R.drawable.ic_event,
+            ) { navigateByActivity(AppRoute.Dday) },
+            MainItem(
                 getString(R.string.fragment_name_calculator),
                 R.drawable.ic_calculator,
             ) { navigateByActivity(AppRoute.Calculator) },

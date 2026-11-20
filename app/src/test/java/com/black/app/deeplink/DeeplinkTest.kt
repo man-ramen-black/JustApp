@@ -2,6 +2,7 @@ package com.black.app.deeplink
 
 import android.net.Uri
 import com.black.app.ui.navigation.AppRoute
+import com.black.feature.dday.widget.DDAY_SETTINGS_DEEPLINK_URI
 import com.black.feature.todo.notification.TodoNotifier
 import com.black.test.BaseTest
 import kotlinx.coroutines.test.runTest
@@ -11,7 +12,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** [Deeplink.parse]의 navigate 경로 해석과 [Deeplink.navigateUri]의 이동 Uri 생성, Todo 알림 딥링크 해석 검증 */
+/** [Deeplink.parse]의 navigate 경로 해석과 [Deeplink.navigateUri]의 이동 Uri 생성, Todo 알림·D-Day 위젯 딥링크 해석 검증 */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class DeeplinkTest : BaseTest() {
 
@@ -85,5 +86,26 @@ class DeeplinkTest : BaseTest() {
         /** Then **/
         assertEquals(Deeplink.Navigate(AppRoute.Todo, clearBackStack = true), deeplink)
         assertEquals(Deeplink.navigateUri(Deeplink.PathNavigate.TODO), uri)
+    }
+
+    /**
+     * dday 경로가 D-Day 설정 화면 이동으로 해석되고 위젯의 딥링크 주소와 같은지 검증
+     *
+     * 디데이 모듈은 앱 모듈을 참조할 수 없어 딥링크 주소를 문자열로 들고 있으므로, 앱의 경로 상수와 어긋나지 않는지 확인함.
+     *
+     * Given: black://navigate/dday, DDAY_SETTINGS_DEEPLINK_URI
+     * When: parse
+     * Then: Navigate(AppRoute.Dday, clearBackStack = true), navigateUri(PathNavigate.DDAY)와 같은 주소
+     */
+    @Test
+    fun test_05_ddayPathNavigatesToDday() = runTest {
+        /** Given / When **/
+        val deeplink = Deeplink.parse(Uri.parse("black://navigate/dday"))
+        val widgetDeeplink = Deeplink.parse(DDAY_SETTINGS_DEEPLINK_URI)
+
+        /** Then **/
+        assertEquals(Deeplink.Navigate(AppRoute.Dday, clearBackStack = true), deeplink)
+        assertEquals(deeplink, widgetDeeplink)
+        assertEquals(Deeplink.navigateUri(Deeplink.PathNavigate.DDAY), DDAY_SETTINGS_DEEPLINK_URI)
     }
 }
