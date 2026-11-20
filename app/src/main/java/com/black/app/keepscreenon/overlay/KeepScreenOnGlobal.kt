@@ -1,5 +1,6 @@
 package com.black.app.keepscreenon.overlay
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.view.WindowManager
@@ -17,7 +18,13 @@ import kotlinx.coroutines.flow.asStateFlow
  *
  * FLAG_KEEP_SCREEN_ON을 가진 1x1 투명 오버레이 창으로 화면 자동 꺼짐 방지, 화면 꺼짐 수신 시 자동 해제
  * 프로세스 종료 시 창도 함께 제거되므로 상태 영속 저장 불필요
+ *
+ * StaticFieldLeak 경고는 오탐이라 억제. lint는 뷰를 만든 Context를 구분하지 않고 object의 View 필드를 모두 경고하나,
+ * [overlayView]는 applicationContext로 만들어 Activity·Service를 붙잡지 않고,
+ * 창이 붙어 있는 동안은 WindowManager도 같은 뷰를 보유하며 해제 시 null로 비움.
+ * 경고가 필드뿐 아니라 object 선언 위치에도 나므로 필드가 아닌 object에 억제 지정
  */
+@SuppressLint("StaticFieldLeak")
 object KeepScreenOnGlobal {
     /** dumpsys window 식별용 오버레이 창 제목 */
     const val WINDOW_TITLE = "KeepScreenOn"
@@ -64,6 +71,7 @@ object KeepScreenOnGlobal {
         }
 
         // 화면 꺼짐 방지 전용 1x1 투명 오버레이 창 추가
+        // Activity·Service context로 만들면 실제 누수가 되고 object의 StaticFieldLeak 억제에 가려지므로 applicationContext 유지
         val view = View(applicationContext)
         val attached = OverlayViewUtil.tryAttachView(view) { windowParams ->
             windowParams.width = 1
