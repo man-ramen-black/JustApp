@@ -1,5 +1,6 @@
 package com.black.feature.appinstallnotification.notification
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
@@ -46,6 +47,7 @@ object PackageInstallNotifier {
      * [canShow]와 달리 알림 권한만 확인. Android 13 미만에서 앱 알림을 끈 경우와 이 채널만 끈 경우에도
      * 바로가기 게시·알림 게시까지 진행하고, 표시는 시스템이 막음
      */
+    @SuppressLint("MissingPermission") // 알림 권한 확인 뒤 호출
     fun show(context: Context, packageName: String, isUpdate: Boolean) {
         // Android 13 이상 알림 권한 미허용 시 표시 불가, 13 미만은 권한 자체가 없어 검사 제외
         if (!PermissionHelper.isNotificationPermissionGranted(context)) {

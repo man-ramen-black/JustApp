@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Wi-Fi 연결 감시(WifiConnectionMonitor)의 네트워크 콜백 등록과 현재 네트워크 조회 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application>
         <activity android:name=".service.ServiceActivity"

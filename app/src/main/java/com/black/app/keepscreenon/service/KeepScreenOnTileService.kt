@@ -61,7 +61,9 @@ class KeepScreenOnTileService : TileService() {
             val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
             startActivityAndCollapse(pendingIntent)
         } else {
-            @Suppress("DEPRECATION")
+            // Android 14 미만은 PendingIntent 버전이 없어 Intent 버전만 가능
+            // lint는 SDK 분기와 관계없이 targetSdk 기준으로 오류 처리하고 DEPRECATION 억제만으로는 걷히지 않아 lint 이슈 id도 함께 억제
+            @Suppress("DEPRECATION", "StartActivityAndCollapseDeprecated")
             startActivityAndCollapse(intent)
         }
     }

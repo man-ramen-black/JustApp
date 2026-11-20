@@ -25,7 +25,7 @@ import org.junit.runners.MethodSorters
 import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
 
-/** [BootReceiver]의 action 확인 동작과 수면 루틴 세션 재개 요청, Todo 시각 알림 다시 예약 검증 */
+/** [BootReceiver]의 action 확인 동작과 알림 권한별 부팅 알림, 수면 루틴 세션 재개 요청, Todo 시각 알림 다시 예약 검증 */
 @Config(sdk = [34])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class BootReceiverTest : BaseTest() {
@@ -137,6 +137,28 @@ class BootReceiverTest : BaseTest() {
         idleMainLooper()
 
         /** Then **/
+        // 다시 예약은 goAsync로 이어 가는 Dispatchers.Default 범위에서 불리므로 실제 시간으로 대기
+        withContext(Dispatchers.Default) { withTimeout(5.seconds) { rescheduled.await() } }
+    }
+
+    /**
+     * 알림 권한이 없으면 부팅 알림만 건너뛰고 나머지 부팅 처리는 이어 가는지 검증
+     *
+     * Given: 알림 권한 거부
+     * When: BOOT_COMPLETED action으로 BootReceiver를 지정한 브로드캐스트 전송
+     * Then: 부팅 알림 없음 + Todo 시각 알림 다시 예약 호출
+     */
+    @Test
+    fun test_05_bootCompletedWithoutNotificationPermissionSkipsNotification() = runTest {
+        /** Given **/
+        NotificationTestUtil.denyNotificationPermission(context)
+
+        /** When **/
+        context.sendBroadcast(Intent(Intent.ACTION_BOOT_COMPLETED).setClass(context, BootReceiver::class.java))
+        idleMainLooper()
+
+        /** Then **/
+        assertEquals(0, NotificationTestUtil.shadowNotificationManager(context).size())
         // 다시 예약은 goAsync로 이어 가는 Dispatchers.Default 범위에서 불리므로 실제 시간으로 대기
         withContext(Dispatchers.Default) { withTimeout(5.seconds) { rescheduled.await() } }
     }
