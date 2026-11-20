@@ -143,7 +143,7 @@ class UsageLogScreenTest : BaseUiTest() {
         /** Then **/
         assertTagTextContains(
             UsageLogTestTags.USAGE_ACCESS_STATUS,
-            context.getString(R.string.usage_log_permission_usage_access),
+            context.getString(R.string.permission_usage_access),
             context.getString(R.string.permission_status_allowed),
             scrollTo = true,
         )
