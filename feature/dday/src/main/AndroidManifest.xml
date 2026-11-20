@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 기기 캘린더 일정 조회 -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <application>
+        <!-- D-Day 위젯, 시간·시간대 변경과 자정 알람은 남은 날짜를 다시 계산하기 위해 받음 -->
+        <receiver
+            android:name=".widget.DdayWidgetReceiver"
+            android:exported="true"
+            android:label="@string/dday_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="com.black.feature.dday.action.MIDNIGHT_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/dday_widget_info" />
+        </receiver>
+    </application>
+</manifest>
