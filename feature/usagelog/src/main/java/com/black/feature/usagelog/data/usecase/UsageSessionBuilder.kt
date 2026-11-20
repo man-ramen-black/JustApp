@@ -53,7 +53,7 @@ object UsageSessionBuilder {
                 RawUsageEventKind.SCREEN_OFF -> records.add(ScreenOffRecord(event.time))
                 RawUsageEventKind.SCREEN_ON -> records.add(ScreenOnRecord(event.time))
                 RawUsageEventKind.UNLOCK -> records.add(UnlockRecord(event.time))
-                RawUsageEventKind.RESUMED, RawUsageEventKind.PAUSED -> Unit
+                RawUsageEventKind.RESUMED, RawUsageEventKind.PAUSED, RawUsageEventKind.STOPPED -> Unit
             }
         }
         return UsageSessionResult(records.sortedBy { it.time }, tracker.openSession)

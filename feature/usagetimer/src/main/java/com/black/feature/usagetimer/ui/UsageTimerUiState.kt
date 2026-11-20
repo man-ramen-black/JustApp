@@ -20,4 +20,8 @@ data class UsageTimerUiState(
     val accessibilityServiceEnabled: Boolean = false,
     /** 다른 앱 위에 표시 권한 허용 여부 */
     val overlayPermissionGranted: Boolean = false,
+    /** 사용 정보 접근 권한 허용 여부 */
+    val usageAccessGranted: Boolean = false,
+    /** 선택 앱별 최근 사용 시간(ms). 권한이 없거나 조회하지 못하면 null */
+    val recentUsageMillis: Map<String, Long>? = null,
 )

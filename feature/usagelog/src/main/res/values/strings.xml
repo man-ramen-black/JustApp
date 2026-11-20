@@ -6,7 +6,6 @@
     <string name="usage_log_section_send">전송</string>
     <string name="usage_log_section_recent">최근 기록</string>
     <string name="usage_log_switch_label">기록 수집</string>
-    <string name="usage_log_permission_usage_access">사용 정보 접근</string>
     <string name="usage_log_permission_notification_access">알림 접근</string>
     <string name="usage_log_permission_location">위치 항상 허용</string>
     <string name="usage_log_permission_sms">문자</string>

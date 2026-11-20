@@ -11,6 +11,7 @@
     <string name="permission_status_required">허용 필요</string>
     <string name="permission_accessibility_service">접근성 서비스</string>
     <string name="permission_overlay">다른 앱 위에 표시</string>
+    <string name="permission_usage_access">사용 정보 접근</string>
     <string name="open_overlay_settings">허용하러 가기</string>
 
     <string name="overlay_position_section_title">표시 위치</string>

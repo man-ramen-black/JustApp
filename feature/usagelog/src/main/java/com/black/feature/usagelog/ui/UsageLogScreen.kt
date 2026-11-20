@@ -233,7 +233,7 @@ fun UsageLogContent(
         // 권한 섹션
         SectionHeader(title = stringResource(R.string.permission_section_title))
         PermissionStatusRow(
-            label = stringResource(R.string.usage_log_permission_usage_access),
+            label = stringResource(R.string.permission_usage_access),
             granted = uiState.usageAccessGranted,
             onClick = onClickUsageAccess,
             modifier = Modifier.testTag(UsageLogTestTags.USAGE_ACCESS_STATUS),

@@ -59,7 +59,8 @@ class AppUsageIntervalTracker(openSession: OpenUsageSession? = null) {
                 openSession = null
                 return current?.toInterval(event.time)
             }
-            RawUsageEventKind.SCREEN_ON, RawUsageEventKind.UNLOCK -> Unit
+            // 정지는 보이는 구간 계산용이라 포그라운드 구간에 영향 없음
+            RawUsageEventKind.STOPPED, RawUsageEventKind.SCREEN_ON, RawUsageEventKind.UNLOCK -> Unit
         }
         return null
     }
