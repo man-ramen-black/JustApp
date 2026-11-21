@@ -13,6 +13,9 @@
 영어 단어. 글자 단위로 세면 백틱 없이 쓴 식별자가 많은 한국어 문장이 영어로 잡힘. 코드 블록·인라인
 코드·URL·경로는 세기 전에 제거
 
+출력 JSON은 한글을 \\u 이스케이프(ensure_ascii 기본값)로 내보냄. Windows에서 파이프 stdout은 cp949라
+한글을 그대로 쓰면 Claude Code가 UTF-8로 읽어 깨진 안내가 되고, 알림이 있어도 읽히지 않음
+
 사용자 레벨(~/.claude/hooks/guard-korean-reply.py)에 같은 훅이 있는 기계에서는 그쪽이 돌므로 이 사본은
 중복 판정을 피하려고 건너뜀
 
@@ -207,7 +210,7 @@ def main():
                 f"{latin_words}개). 사용자에게 보이는 응답은 한국어로 쓴다(CLAUDE.md 언어 규칙). 같은 내용을 "
                 "한국어로 다시 써서 응답을 마무리하라. 코드 식별자·경로·명령은 그대로 둔다."
             )
-            print(json.dumps({"decision": "block", "reason": reason}, ensure_ascii=False))
+            print(json.dumps({"decision": "block", "reason": reason}))
         return 0
     if event == "PostToolUse":
         tool_use_id = payload.get("tool_use_id")
@@ -219,7 +222,7 @@ def main():
                 "중간 안내까지 모두 한국어로 쓴다(CLAUDE.md 언어 규칙). 다음 안내부터 한국어로 쓴다."
             )
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse",
-                                                     "additionalContext": context}}, ensure_ascii=False))
+                                                     "additionalContext": context}}))
         return 0
     return 0
 
