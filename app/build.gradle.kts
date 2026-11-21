@@ -92,6 +92,7 @@ dependencies {
     implementation(project(":feature:studypopup"))
     implementation(project(":feature:usagetimer"))
     implementation(project(":feature:todo"))
+    implementation(project(":feature:dday"))
     implementation(project(":feature:usagelog"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

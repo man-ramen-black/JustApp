@@ -14,6 +14,7 @@ import com.black.app.ui.main.etc.BlackFragment
 import com.black.app.ui.main.texteditor.TextEditorScreen
 import com.black.feature.appinstallnotification.ui.AppInstallNotificationScreen
 import com.black.feature.calculator.ui.CalculatorScreen
+import com.black.feature.dday.ui.DdayScreen
 import com.black.feature.floatingbutton.ui.FloatingSettingScreen
 import com.black.feature.pokerogue.ui.PokeRogueFragment
 import com.black.feature.sleeproutine.ui.SleepRoutineScreen
@@ -76,6 +77,9 @@ fun AppNavHost(
         }
         composable<AppRoute.Todo> {
             TodoScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
+        }
+        composable<AppRoute.Dday> {
+            DdayScreen(onNavigateUp = { navController.navigateUp() }, modifier = Modifier.fillMaxSize())
         }
     }
 }

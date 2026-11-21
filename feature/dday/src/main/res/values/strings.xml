@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dday_widget_name">디데이</string>
+    <string name="dday_widget_description">캘린더 일정까지 남은 날짜</string>
+    <string name="dday_untitled">(제목 없음)</string>
+    <string name="dday_permission_required">캘린더 권한이 필요합니다.</string>
+    <string name="dday_empty">다가오는 일정이 없습니다.</string>
+    <string name="dday_load_failed">일정을 불러오지 못했습니다.</string>
+    <string name="fragment_name_dday">디데이 위젯</string>
+    <string name="dday_permission_label">캘린더</string>
+    <string name="dday_section_calendars">캘린더 선택</string>
+    <string name="dday_section_preview">미리보기</string>
+    <string name="dday_section_display">표시</string>
+    <string name="dday_style_item_count">일정 개수</string>
+    <string name="dday_section_style">글씨와 간격</string>
+    <string name="dday_style_label_text_size">남은 날짜 글씨</string>
+    <string name="dday_style_title_text_size">제목 글씨</string>
+    <string name="dday_style_date_text_size">날짜 글씨</string>
+    <string name="dday_style_label_gap">남은 날짜와 제목 간격</string>
+    <string name="dday_style_title_date_gap">제목과 날짜 간격</string>
+    <string name="dday_style_item_gap">항목 간격</string>
+    <string name="dday_style_padding">안쪽 여백</string>
+    <string name="dday_unit_sp">%1$dsp</string>
+    <string name="dday_unit_dp">%1$ddp</string>
+    <string name="dday_unit_count">%1$d개</string>
+    <string name="dday_style_decrease">%1$s 줄이기</string>
+    <string name="dday_style_increase">%1$s 늘리기</string>
+    <string name="dday_save_failed">설정을 저장하지 못했습니다.</string>
+    <string name="dday_sample_title_1">프로젝트 마감</string>
+    <string name="dday_sample_title_2">친구 생일</string>
+    <string name="dday_sample_title_3">가족 여행</string>
+</resources>

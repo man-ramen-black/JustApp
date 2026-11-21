@@ -1,6 +1,7 @@
 package com.black.core.ui.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -59,7 +60,8 @@ fun SectionHeader(title: String, trailing: (@Composable () -> Unit)? = null) {
  * 라벨 + 스위치 행
  *
  * 라벨까지 행 전체를 눌러 토글하고, TalkBack이 라벨과 스위치를 한 항목으로 읽도록 행에 토글 의미 부여.
- * [enabled]가 false면 [ActionButton]처럼 흐리게 보이고 눌리지 않음
+ * [enabled]가 false면 [ActionButton]처럼 흐리게 보이고 눌리지 않음.
+ * [leading]은 라벨 앞 장식(색 점 등), [supportingText]는 라벨 아래 보조 문구(계정 이름 등).
  */
 @Composable
 fun SwitchRow(
@@ -68,6 +70,8 @@ fun SwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
+    supportingText: String? = null,
 ) {
     Row(
         // 스위치(32dp)만으로는 Android 권장 최소 터치 높이(48dp)에 못 미쳐 행 높이를 보장
@@ -77,11 +81,21 @@ fun SwitchRow(
             .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = AppTypography.ItemName,
-        )
+        if (leading != null) {
+            leading()
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = AppTypography.ItemName,
+            )
+            if (supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = AppTypography.Caption,
+                )
+            }
+        }
         Switch(
             checked = checked,
             onCheckedChange = null,

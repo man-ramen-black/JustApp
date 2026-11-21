@@ -19,6 +19,7 @@ sealed interface Deeplink {
     object PathNavigate {
         const val MEMO = "memo"
         const val TODO = "todo"
+        const val DDAY = "dday"
     }
 
     /** @param clearBackStack true면 Main까지 백스택 정리 후 이동 */
@@ -53,6 +54,7 @@ sealed interface Deeplink {
             return when (uri.pathSegments.firstOrNull()) {
                 PathNavigate.MEMO -> Navigate(AppRoute.TextEditor, clearBackStack = true)
                 PathNavigate.TODO -> Navigate(AppRoute.Todo, clearBackStack = true)
+                PathNavigate.DDAY -> Navigate(AppRoute.Dday, clearBackStack = true)
                 else -> null
             }
         }
