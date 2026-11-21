@@ -6,6 +6,9 @@ import android.text.TextPaint
 import android.util.TypedValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.black.feature.dday.R
+import com.black.feature.dday.model.DdayItem
+import com.black.feature.dday.model.DdayStyle
 import kotlin.math.ceil
 
 /**
@@ -17,10 +20,32 @@ import kotlin.math.ceil
  */
 fun measureLabelWidth(context: Context, labels: List<String>, textSizeSp: Int): Dp {
     val displayMetrics = context.resources.displayMetrics
-    val paint = TextPaint().apply {
-        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp.toFloat(), displayMetrics)
-    }
+    val paint = widgetTextPaint(context, textSizeSp, Typeface.BOLD)
     val widestPixels = labels.maxOfOrNull { paint.measureText(it) } ?: return 0.dp
     return ceil(widestPixels / displayMetrics.density).dp
+}
+
+/** 모든 항목의 제목 칸 너비를 맞추는 데 쓰는 가장 넓은 제목과 날짜 문구 */
+data class DdayWidestText(val title: String, val date: String)
+
+/**
+ * 가장 넓은 제목과 날짜 고르기
+ *
+ * 위젯은 이 문구를 보이지 않게 겹쳐 모든 항목의 제목 칸 너비를 맞춤.
+ * 제목은 `DdayWidgetContent`처럼 sans-serif 보통 굵기로 재고, 제목이 없으면 제목 없음 문구로 잼. [items]가 비었으면 빈 문구.
+ */
+fun findWidestText(context: Context, items: List<DdayItem>, style: DdayStyle): DdayWidestText {
+    val untitled = context.getString(R.string.dday_untitled)
+    val titlePaint = widgetTextPaint(context, style.titleTextSize, Typeface.NORMAL)
+    val datePaint = widgetTextPaint(context, style.dateTextSize, Typeface.NORMAL)
+    return DdayWidestText(
+        title = items.map { it.title ?: untitled }.maxByOrNull { titlePaint.measureText(it) }.orEmpty(),
+        date = items.map { it.dateText }.maxByOrNull { datePaint.measureText(it) }.orEmpty(),
+    )
+}
+
+/** 위젯 글꼴(sans-serif [typefaceStyle])과 sp를 현재 화면 배율로 바꾼 글씨 크기의 측정용 [TextPaint] */
+private fun widgetTextPaint(context: Context, textSizeSp: Int, typefaceStyle: Int): TextPaint = TextPaint().apply {
+    typeface = Typeface.create(Typeface.SANS_SERIF, typefaceStyle)
+    textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp.toFloat(), context.resources.displayMetrics)
 }

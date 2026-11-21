@@ -34,6 +34,8 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import androidx.glance.visibility
+import androidx.glance.Visibility
 import com.black.core.ui.theme.AppColors
 import com.black.core.util.Extensions.appLaunchIntent
 import com.black.feature.dday.R
@@ -75,12 +77,13 @@ fun calendarEventIntent(item: DdayItem): Intent {
 /**
  * D-Day 위젯 본문
  *
- * 상태만 받아 그리므로 조회와 설정 읽기는 호출하는 쪽에서 끝냄. [labelWidth]는 [measureLabelWidth]로 잰 남은 날짜 칸 너비.
+ * 상태만 받아 그리므로 조회와 설정 읽기는 호출하는 쪽에서 끝냄.
+ * [labelWidth]는 [measureLabelWidth]로 잰 남은 날짜 칸 너비, [widestText]는 [findWidestText]로 고른 가장 넓은 제목·날짜.
  * 위젯 색은 설정과 무관한 고정값이며 `AppColors`의 배경(`ScreenBackground`)·제목(`Title`)·보조 문구(`SubText`) 색을 씀.
  * 글꼴은 [WIDGET_FONT_FAMILY]로 고정함. 지정하지 않으면 런처 테마 글꼴로 그려져 [measureLabelWidth]로 잰 칸보다 라벨이 넓어지면서 `D-Day`가 잘림.
  */
 @Composable
-fun DdayWidgetContent(style: DdayStyle, result: DdayLoadResult, labelWidth: Dp) {
+fun DdayWidgetContent(style: DdayStyle, result: DdayLoadResult, labelWidth: Dp, widestText: DdayWidestText) {
     val context = LocalContext.current
     var rootModifier = GlanceModifier
         .fillMaxSize()
@@ -89,7 +92,7 @@ fun DdayWidgetContent(style: DdayStyle, result: DdayLoadResult, labelWidth: Dp) 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         rootModifier = rootModifier.cornerRadius(android.R.dimen.system_app_widget_background_radius)
     }
-    Box(modifier = rootModifier) {
+    Box(modifier = rootModifier, contentAlignment = Alignment.CenterStart) {
         when (result) {
             DdayLoadResult.NoPermission -> MessageText(
                 text = context.getString(R.string.dday_permission_required),
@@ -110,7 +113,7 @@ fun DdayWidgetContent(style: DdayStyle, result: DdayLoadResult, labelWidth: Dp) 
                     modifier = GlanceModifier.fillMaxSize(),
                 )
             } else {
-                ItemList(style = style, items = result.items, labelWidth = labelWidth)
+                ItemList(style = style, items = result.items, labelWidth = labelWidth, widestText = widestText)
             }
         }
     }
@@ -134,29 +137,56 @@ private fun MessageText(text: String, style: DdayStyle, modifier: GlanceModifier
     }
 }
 
+/**
+ * 일정 목록
+ *
+ * 높이를 내용에 맞춰 위젯 세로 가운데에 놓음. 항목이 위젯보다 길면 위젯 높이까지만 늘어나 스크롤됨.
+ */
 @Composable
-private fun ItemList(style: DdayStyle, items: List<DdayItem>, labelWidth: Dp) {
-    LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
+private fun ItemList(style: DdayStyle, items: List<DdayItem>, labelWidth: Dp, widestText: DdayWidestText) {
+    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         itemsIndexed(items) { index, item ->
             Column(modifier = GlanceModifier.fillMaxWidth()) {
                 if (index > 0) {
                     Spacer(modifier = GlanceModifier.height(style.itemGap.dp))
                 }
-                ItemRow(style = style, item = item, labelWidth = labelWidth)
+                ItemRow(style = style, item = item, labelWidth = labelWidth, widestText = widestText)
             }
         }
     }
 }
 
+/**
+ * 일정 한 줄
+ *
+ * 항목 묶음(남은 날짜 칸, 간격, 제목·날짜)을 양옆 여백으로 가로 가운데에 놓음.
+ * 목록 항목 뿌리에서 정렬로 가운데에 놓으면 묶음이 위젯보다 넓을 때 양쪽이 잘려 남은 날짜까지 가려지므로, 가로 `Row`의 양옆 여백으로 둠.
+ * 넓을 때는 여백이 0이 되고 묶음이 왼쪽부터 놓임.
+ */
 @Composable
-private fun ItemRow(style: DdayStyle, item: DdayItem, labelWidth: Dp) {
-    val context = LocalContext.current
+private fun ItemRow(style: DdayStyle, item: DdayItem, labelWidth: Dp, widestText: DdayWidestText) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .clickable(actionStartActivity(calendarEventIntent(item))),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Spacer(modifier = GlanceModifier.defaultWeight())
+        ItemContent(style = style, item = item, labelWidth = labelWidth, widestText = widestText)
+        Spacer(modifier = GlanceModifier.defaultWeight())
+    }
+}
+
+/**
+ * 남은 날짜 칸과 제목·날짜 묶음
+ *
+ * 항목마다 묶음 너비가 다르면 가운데에 놓을 때 남은 날짜 칸의 시작 위치가 어긋나므로, 가장 넓은 제목·날짜([widestText])를 보이지 않게 겹쳐 모든 항목의 제목 칸을 그 너비로 맞춤.
+ * 너비를 고정값으로 주지 않고 글자로 맞추는 것은, 위젯보다 넓을 때 고정 너비는 글자 가운데에서 잘리지만 글자 칸은 위젯 안에서 줄어들어 기존처럼 한 줄만 보이기 때문.
+ */
+@Composable
+private fun ItemContent(style: DdayStyle, item: DdayItem, labelWidth: Dp, widestText: DdayWidestText) {
+    val context = LocalContext.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = item.label,
             modifier = GlanceModifier.width(labelWidth),
@@ -170,26 +200,44 @@ private fun ItemRow(style: DdayStyle, item: DdayItem, labelWidth: Dp) {
             maxLines = 1,
         )
         Spacer(modifier = GlanceModifier.width(style.labelGap.dp))
-        Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
-                text = item.title ?: context.getString(R.string.dday_untitled),
-                style = TextStyle(
-                    color = ColorProvider(AppColors.Title),
-                    fontSize = style.titleTextSize.sp,
-                    fontFamily = WIDGET_FONT_FAMILY,
-                ),
-                maxLines = 1,
+        Box {
+            TitleDate(
+                style = style,
+                title = widestText.title,
+                date = widestText.date,
+                modifier = GlanceModifier.visibility(Visibility.Invisible),
             )
-            Spacer(modifier = GlanceModifier.height(style.titleDateGap.dp))
-            Text(
-                text = item.dateText,
-                style = TextStyle(
-                    color = ColorProvider(AppColors.SubText),
-                    fontSize = style.dateTextSize.sp,
-                    fontFamily = WIDGET_FONT_FAMILY,
-                ),
-                maxLines = 1,
+            TitleDate(
+                style = style,
+                title = item.title ?: context.getString(R.string.dday_untitled),
+                date = item.dateText,
+                modifier = GlanceModifier,
             )
         }
+    }
+}
+
+@Composable
+private fun TitleDate(style: DdayStyle, title: String, date: String, modifier: GlanceModifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = TextStyle(
+                color = ColorProvider(AppColors.Title),
+                fontSize = style.titleTextSize.sp,
+                fontFamily = WIDGET_FONT_FAMILY,
+            ),
+            maxLines = 1,
+        )
+        Spacer(modifier = GlanceModifier.height(style.titleDateGap.dp))
+        Text(
+            text = date,
+            style = TextStyle(
+                color = ColorProvider(AppColors.SubText),
+                fontSize = style.dateTextSize.sp,
+                fontFamily = WIDGET_FONT_FAMILY,
+            ),
+            maxLines = 1,
+        )
     }
 }

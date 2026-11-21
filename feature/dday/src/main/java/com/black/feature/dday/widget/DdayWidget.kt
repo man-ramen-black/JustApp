@@ -18,8 +18,13 @@ import com.black.feature.dday.data.usecase.LoadDdayItemsUseCase
 import com.black.feature.dday.data.usecase.limitTo
 import com.black.feature.dday.model.DdayStyle
 
-/** 위젯에 그릴 일정 조회 결과, 스타일과 남은 날짜 칸 너비 묶음 */
-data class DdayWidgetData(val style: DdayStyle, val result: DdayLoadResult, val labelWidth: Dp)
+/** 위젯에 그릴 일정 조회 결과, 스타일, 남은 날짜 칸 너비와 제목 칸 너비를 정하는 가장 넓은 제목·날짜 묶음 */
+data class DdayWidgetData(
+    val style: DdayStyle,
+    val result: DdayLoadResult,
+    val labelWidth: Dp,
+    val widestText: DdayWidestText,
+)
 
 /**
  * 캘린더 일정까지 남은 날짜를 보여 주는 홈 화면 위젯
@@ -49,10 +54,10 @@ class DdayWidget : GlanceAppWidget() {
 val DDAY_REFRESH_TOKEN_KEY = stringPreferencesKey("dday_refresh_token")
 
 /**
- * 일정·스타일 조회와 남은 날짜 칸 너비 측정
+ * 일정·스타일 조회와 남은 날짜 칸 너비 측정, 가장 넓은 제목·날짜 고르기
  *
  * 조회나 설정 읽기가 실패해도 위젯이 죽지 않도록 조회 실패 화면과 기본 스타일로 대체함.
- * 일정은 설정한 개수([DdayStyle.itemCount])만 남기고 그 라벨로 칸 너비를 잼.
+ * 일정은 설정한 개수([DdayStyle.itemCount])만 남기고 그 항목으로 칸 너비를 잼.
  */
 suspend fun loadDdayWidgetData(context: Context): DdayWidgetData {
     val style = runSuspendCatching { DdayRepository(context.applicationContext).getStyle() }
@@ -60,8 +65,13 @@ suspend fun loadDdayWidgetData(context: Context): DdayWidgetData {
     val result = runSuspendCatching { LoadDdayItemsUseCase(context).load() }
         .getOrDefault(DdayLoadResult.Failed)
         .limitTo(style.itemCount)
-    val labels = (result as? DdayLoadResult.Loaded)?.items?.map { it.label }.orEmpty()
-    return DdayWidgetData(style, result, measureLabelWidth(context, labels, style.labelTextSize))
+    val items = (result as? DdayLoadResult.Loaded)?.items.orEmpty()
+    return DdayWidgetData(
+        style = style,
+        result = result,
+        labelWidth = measureLabelWidth(context, items.map { it.label }, style.labelTextSize),
+        widestText = findWidestText(context, items, style),
+    )
 }
 
 /**
@@ -86,5 +96,5 @@ fun DdayWidgetLoader(token: String?, initialData: DdayWidgetData, loadData: susp
     val data by produceState(initialValue = initialData, token) {
         value = loadData()
     }
-    DdayWidgetContent(style = data.style, result = data.result, labelWidth = data.labelWidth)
+    DdayWidgetContent(style = data.style, result = data.result, labelWidth = data.labelWidth, widestText = data.widestText)
 }

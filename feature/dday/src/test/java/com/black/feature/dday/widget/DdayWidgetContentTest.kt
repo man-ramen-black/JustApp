@@ -31,6 +31,7 @@ class DdayWidgetContentTest : BaseTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val style = DdayStyle()
+    private val widestText = DdayWidestText(title = "가장 넓은 제목", date = "가장 넓은 날짜")
 
     private val removalItem = DdayItem(
         eventId = 11L,
@@ -76,7 +77,7 @@ class DdayWidgetContentTest : BaseTest() {
         setContext(context)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, result, 40.dp) }
+        provideComposable { DdayWidgetContent(style, result, 40.dp, widestText) }
 
         /** Then **/
         onNode(hasText("D-Day")).assertExists()
@@ -101,7 +102,7 @@ class DdayWidgetContentTest : BaseTest() {
         val expectedIntent = Intent(Intent.ACTION_VIEW, DDAY_SETTINGS_DEEPLINK_URI).setPackage(context.packageName)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, DdayLoadResult.NoPermission, 0.dp) }
+        provideComposable { DdayWidgetContent(style, DdayLoadResult.NoPermission, 0.dp, widestText) }
 
         /** Then **/
         onNode(hasText("캘린더 권한이 필요합니다.")).assertExists()
@@ -123,7 +124,7 @@ class DdayWidgetContentTest : BaseTest() {
         setContext(context)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, DdayLoadResult.Loaded(emptyList()), 0.dp) }
+        provideComposable { DdayWidgetContent(style, DdayLoadResult.Loaded(emptyList()), 0.dp, widestText) }
 
         /** Then **/
         onNode(hasText("다가오는 일정이 없습니다.")).assertExists()
@@ -142,7 +143,7 @@ class DdayWidgetContentTest : BaseTest() {
         setContext(context)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, DdayLoadResult.Failed, 0.dp) }
+        provideComposable { DdayWidgetContent(style, DdayLoadResult.Failed, 0.dp, widestText) }
 
         /** Then **/
         onNode(hasText("일정을 불러오지 못했습니다.")).assertExists()
@@ -162,7 +163,7 @@ class DdayWidgetContentTest : BaseTest() {
         setContext(context)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, result, 40.dp) }
+        provideComposable { DdayWidgetContent(style, result, 40.dp, widestText) }
 
         /** Then **/
         onNode(hasText("(제목 없음)")).assertExists()
@@ -182,7 +183,7 @@ class DdayWidgetContentTest : BaseTest() {
         setContext(context)
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, result, 40.dp) }
+        provideComposable { DdayWidgetContent(style, result, 40.dp, widestText) }
 
         /** Then **/
         onNode(hasClickAction().and(hasAnyDescendant(hasText("제모"))))
@@ -213,7 +214,7 @@ class DdayWidgetContentTest : BaseTest() {
         }
 
         /** When **/
-        provideComposable { DdayWidgetContent(style, result, 40.dp) }
+        provideComposable { DdayWidgetContent(style, result, 40.dp, widestText) }
 
         /** Then **/
         onNode(hasText("D-Day")).assert(centerAligned) { "D-Day 라벨이 가운데 정렬이 아님" }

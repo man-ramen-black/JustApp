@@ -30,6 +30,7 @@ class DdayWidgetRootTest : BaseTest() {
             listOf(DdayItem(eventId = 1L, title = title, label = "D-1", dateText = "9/4 Sun", begin = 1L, end = 2L)),
         ),
         labelWidth = 30.dp,
+        widestText = DdayWidestText(title = "가장 넓은 제목", date = "가장 넓은 날짜"),
     )
 
     private fun tokenState(token: String): Preferences = preferencesOf(DDAY_REFRESH_TOKEN_KEY to token)

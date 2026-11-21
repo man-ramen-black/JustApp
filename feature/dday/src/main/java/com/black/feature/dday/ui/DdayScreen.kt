@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -253,6 +255,7 @@ private fun CalendarRow(
  * 실제 일정이 없거나 권한이 없으면 오늘 기준 D-Day·D-9·D-14 예시 일정을 보임.
  * 위젯처럼 설정한 일정 개수([DdayStyle.itemCount])만 보임.
  * 라벨은 위젯처럼 굵게 그려 [measureLabelWidth]로 잰 칸에 맞음. 위젯 본문은 Glance라 같은 Composable을 쓸 수 없어 일반 Compose로 따로 그림.
+ * 위젯처럼 항목 묶음을 가로 가운데에 놓고, 가장 넓은 항목 너비(`IntrinsicSize.Max`)로 모든 항목 폭을 맞춰 남은 날짜 칸의 시작 위치를 맞춤.
  */
 @Composable
 private fun DdayPreview(style: DdayStyle, preview: DdayLoadResult) {
@@ -271,38 +274,48 @@ private fun DdayPreview(style: DdayStyle, preview: DdayLoadResult) {
             .clip(AppShapes.NotificationPreview)
             .background(AppColors.ScreenBackground)
             .padding(style.padding.dp),
-        verticalArrangement = Arrangement.spacedBy(style.itemGap.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        items.forEach { item ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                BasicText(
-                    text = item.label,
-                    modifier = Modifier.width(labelWidth),
-                    style = TextStyle(
-                        color = AppColors.Title,
-                        fontSize = style.labelTextSize.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    ),
-                    maxLines = 1,
-                )
-                Spacer(modifier = Modifier.width(style.labelGap.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    BasicText(
-                        text = item.title ?: untitled,
-                        style = TextStyle(color = AppColors.Title, fontSize = style.titleTextSize.sp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(modifier = Modifier.height(style.titleDateGap.dp))
-                    BasicText(
-                        text = item.dateText,
-                        style = TextStyle(color = AppColors.SubText, fontSize = style.dateTextSize.sp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+        Column(
+            modifier = Modifier.width(IntrinsicSize.Max),
+            verticalArrangement = Arrangement.spacedBy(style.itemGap.dp),
+        ) {
+            items.forEach { item ->
+                PreviewItemRow(style = style, item = item, labelWidth = labelWidth, untitled = untitled)
             }
+        }
+    }
+}
+
+@Composable
+private fun PreviewItemRow(style: DdayStyle, item: DdayItem, labelWidth: Dp, untitled: String) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        BasicText(
+            text = item.label,
+            modifier = Modifier.width(labelWidth),
+            style = TextStyle(
+                color = AppColors.Title,
+                fontSize = style.labelTextSize.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            ),
+            maxLines = 1,
+        )
+        Spacer(modifier = Modifier.width(style.labelGap.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(
+                text = item.title ?: untitled,
+                style = TextStyle(color = AppColors.Title, fontSize = style.titleTextSize.sp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(style.titleDateGap.dp))
+            BasicText(
+                text = item.dateText,
+                style = TextStyle(color = AppColors.SubText, fontSize = style.dateTextSize.sp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
