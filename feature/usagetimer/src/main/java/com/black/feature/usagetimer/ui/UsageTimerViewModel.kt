@@ -1,23 +1,30 @@
 package com.black.feature.usagetimer.ui
 
 import androidx.annotation.StringRes
+import com.black.core.system.AppUsageTimeRepository
 import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.ui.selectapp.selectedAppUiItem
 import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.InstalledAppResolver
+import com.black.core.util.Log
 import com.black.core.util.OverlayPermissionStatus
+import com.black.core.util.UsageAccessStatus
+import com.black.core.util.runSuspendCatching
 import com.black.core.viewmodel.EventViewModel
 import com.black.core.viewmodel.ViewModelEvent
 import com.black.feature.usagetimer.R
 import com.black.feature.usagetimer.data.UsageTimerRepository
+import com.black.feature.usagetimer.overlay.UsageTimerGlobal
 import com.black.feature.usagetimer.ui.UsageTimerScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.hours
 
 /** [UsageTimerScreen]의 상태·이벤트 관리 ViewModel */
 @HiltViewModel
@@ -26,6 +33,8 @@ class UsageTimerViewModel @Inject constructor(
     private val installedAppResolver: InstalledAppResolver,
     private val overlayPermissionStatus: OverlayPermissionStatus,
     private val accessibilityServiceStatus: AccessibilityServiceStatus,
+    private val usageAccessStatus: UsageAccessStatus,
+    private val appUsageTimeRepository: AppUsageTimeRepository,
 ) : EventViewModel() {
 
     /** UsageTimer 화면 일회성 이벤트 */
@@ -44,11 +53,16 @@ class UsageTimerViewModel @Inject constructor(
     data object EventOpenAccessibilitySettings : UsageTimerEvent()
     /** 이 앱의 다른 앱 위에 표시 권한 설정 화면 이동 */
     data object EventOpenOverlaySettings : UsageTimerEvent()
+    /** 사용 정보 접근 설정 화면 이동 */
+    data object EventOpenUsageAccessSettings : UsageTimerEvent()
     /** 앱 선택 다이얼로그 표시(현재 선택 목록 전달) */
     data class EventOpenSelectApp(val checkedPackageNames: List<String>) : UsageTimerEvent()
 
     private val mutableUiState = MutableStateFlow(UsageTimerUiState())
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
+
+    /** 직전 최근 사용 시간 조회. 새 조회가 시작되면 취소해 늦게 끝난 옛 결과가 덮지 않게 함 */
+    private var recentUsageJob: Job? = null
 
     init {
         // 첫 화면부터 실제 권한 상태 표시
@@ -74,15 +88,41 @@ class UsageTimerViewModel @Inject constructor(
 
     /** 설정 앱에서 권한을 바꾸고 돌아온 경우를 위한 권한 상태 갱신 */
     fun refreshStatus() {
-        // 두 권한 상태 조회
+        // 세 권한 상태 조회
         val accessibilityServiceEnabled = accessibilityServiceStatus.isAccessibilityServiceEnabled()
         val overlayPermissionGranted = overlayPermissionStatus.canDrawOverlays()
+        val usageAccessGranted = usageAccessStatus.isUsageAccessGranted()
         // UiState 반영
         mutableUiState.update {
             it.copy(
                 accessibilityServiceEnabled = accessibilityServiceEnabled,
                 overlayPermissionGranted = overlayPermissionGranted,
+                usageAccessGranted = usageAccessGranted,
             )
+        }
+        // 권한이 바뀌었을 수 있으므로 사용 시간도 다시 조회
+        refreshRecentUsage()
+    }
+
+    /**
+     * 선택 앱의 최근 [RECENT_USAGE_PERIOD] 사용 시간을 조회해 UiState에 반영
+     *
+     * 권한이 없거나 조회에 실패하면 사용 시간을 null로 둠. 앱 사이를 잠깐 오간 구간을 이어 붙이는 간격은
+     * 오버레이 타이머가 같은 이탈을 같은 사용으로 보는 [UsageTimerGlobal.SESSION_GRACE_MILLIS]와 맞춤.
+     */
+    private fun refreshRecentUsage() {
+        recentUsageJob?.cancel()
+        recentUsageJob = launch {
+            val recentUsageMillis = runSuspendCatching {
+                appUsageTimeRepository.getRecentUsageMillis(
+                    repository.getSelectedApps(),
+                    RECENT_USAGE_PERIOD,
+                    UsageTimerGlobal.SESSION_GRACE_MILLIS,
+                )
+            }.onFailure { failure ->
+                Log.w("[UsageTimerViewModel] 최근 사용 시간 조회 실패: ${failure::class.java.simpleName}")
+            }.getOrNull()
+            mutableUiState.update { it.copy(recentUsageMillis = recentUsageMillis) }
         }
     }
 
@@ -125,6 +165,11 @@ class UsageTimerViewModel @Inject constructor(
     fun openOverlaySettings() {
         dismissOverlayPermissionDialog()
         sendEvent(EventOpenOverlaySettings)
+    }
+
+    /** 사용 정보 접근 설정 화면으로 이동 */
+    fun openUsageAccessSettings() {
+        sendEvent(EventOpenUsageAccessSettings)
     }
 
     fun onClickSave() {
@@ -180,6 +225,7 @@ class UsageTimerViewModel @Inject constructor(
             mutableUiState.update {
                 it.copy(selectedApps = packageNames.map(installedAppResolver::selectedAppUiItem))
             }
+            refreshRecentUsage()
         }
     }
 
@@ -202,5 +248,10 @@ class UsageTimerViewModel @Inject constructor(
     private suspend fun updatePauseRemainTime() {
         val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
         mutableUiState.update { it.copy(pauseRemainTimeMillis = pauseRemainTimeMillis) }
+    }
+
+    companion object {
+        /** 선택 앱 사용 시간을 보여 줄 기간(지금부터 거슬러 올라감) */
+        val RECENT_USAGE_PERIOD = 24.hours
     }
 }

@@ -13,6 +13,7 @@ import com.black.core.ui.component.OverlayPermissionDialogTestTags
 import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.ui.component.OverlayPositionTestTags
 import com.black.core.ui.component.ToolTopBarTestTags
+import com.black.core.ui.selectapp.SelectedAppUiItem
 import com.black.core.ui.theme.BlackTheme
 import com.black.core.util.PermissionHelper
 import com.black.feature.usagetimer.R
@@ -73,6 +74,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         assertTagExists(UsageTimerTestTags.CANCEL_BUTTON)
         assertTagExists(UsageTimerTestTags.ACCESSIBILITY_STATUS)
         assertTagExists(UsageTimerTestTags.OVERLAY_STATUS)
+        assertTagExists(UsageTimerTestTags.USAGE_ACCESS_STATUS)
         assertTagExists(UsageTimerTestTags.SELECT_APP_BUTTON)
         assertTagNotExists(UsageTimerTestTags.PAUSE_INFO)
     }
@@ -334,6 +336,7 @@ class UsageTimerScreenTest : BaseUiTest() {
         uiState: UsageTimerUiState,
         onClickAccessibility: () -> Unit = {},
         onClickOverlaySettings: () -> Unit = {},
+        onClickUsageAccess: () -> Unit = {},
         onPositionInputChange: (OverlayPositionInput) -> Unit = {},
     ) {
         onHostActivity { activity ->
@@ -349,6 +352,7 @@ class UsageTimerScreenTest : BaseUiTest() {
                         onClickCancelPause = {},
                         onClickAccessibility = onClickAccessibility,
                         onClickOverlaySettings = onClickOverlaySettings,
+                        onClickUsageAccess = onClickUsageAccess,
                         onClickSelectApp = {},
                         onPositionInputChange = onPositionInputChange,
                         onFinishTimer = {},
@@ -517,5 +521,123 @@ class UsageTimerScreenTest : BaseUiTest() {
 
         /** Then **/
         assertEquals("12", receivedInputs.last().marginTop)
+    }
+
+    /**
+     * 사용 시간 표시 검증용 선택 앱
+     *
+     * 아이콘을 비트맵으로 바꿔 그리므로 고유 크기가 있는 기본 앱 아이콘 사용(크기가 없는 ColorDrawable은 비트맵 생성 실패).
+     */
+    private val exampleApp = SelectedAppUiItem("com.example.app", "예시 앱", context.packageManager.defaultActivityIcon)
+
+    /**
+     * 최근 사용 시간이 있으면 선택 앱 아래에 표시되고 제목에 기간이 드러나는지 검증
+     *
+     * Given:
+     * - 선택 앱 1개와 사용 시간 3,900,000밀리초의 UsageTimerContent 호스팅
+     * When:
+     * - 선택한 앱 목록으로 스크롤
+     * Then:
+     * - 사용 시간 줄에 "1시간 5분" 표시
+     * - 제목 "선택한 앱 · 최근 24시간 사용 시간" 존재
+     */
+    @Test
+    fun test_16_recentUsageShownUnderSelectedApp() {
+        /** Given **/
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(
+                selectedApps = listOf(exampleApp),
+                recentUsageMillis = mapOf("com.example.app" to 3_900_000L),
+            ),
+        )
+
+        /** When **/
+        assertTagDisplayed(UsageTimerTestTags.SELECTED_APPS_LIST, scrollTo = true)
+
+        /** Then **/
+        assertTagText(UsageTimerTestTags.selectedAppUsage("com.example.app"), "1시간 5분")
+        assertTextExists("선택한 앱 · 최근 24시간 사용 시간")
+    }
+
+    /**
+     * 사용 시간을 알 수 없으면 줄과 기간 제목이 표시되지 않는지 검증
+     *
+     * Given:
+     * - 선택 앱 1개, 사용 시간 null의 UsageTimerContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - 사용 시간 줄 미존재
+     * - 기간 제목 미존재, "선택한 앱" 존재
+     */
+    @Test
+    fun test_17_recentUsageHiddenWhenUnavailable() {
+        /** Given **/
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(selectedApps = listOf(exampleApp), recentUsageMillis = null),
+        )
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        assertTagNotExists(UsageTimerTestTags.selectedAppUsage("com.example.app"))
+        assertTextNotExists("선택한 앱 · 최근 24시간 사용 시간")
+        assertTextExists("선택한 앱")
+    }
+
+    /**
+     * 선택 앱이 없으면 사용 시간이 비어 있어도 기본 제목을 유지하는지 검증
+     *
+     * Given:
+     * - 선택 앱 없음, 사용 시간 빈 맵의 UsageTimerContent 호스팅
+     * When:
+     * - 초기 렌더링 상태 유지(별도 조작 없음)
+     * Then:
+     * - "선택한 앱" 존재, 기간 제목 미존재
+     * - 빈 목록 안내 존재
+     */
+    @Test
+    fun test_18_emptySelectionKeepsPlainTitle() {
+        /** Given **/
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(selectedApps = emptyList(), recentUsageMillis = emptyMap()),
+        )
+
+        /** When **/
+        // 초기 렌더링 상태 그대로 검증(별도 조작 없음)
+
+        /** Then **/
+        assertTextExists("선택한 앱")
+        assertTextNotExists("선택한 앱 · 최근 24시간 사용 시간")
+        assertTagExists(UsageTimerTestTags.SELECTED_APPS_EMPTY)
+    }
+
+    /**
+     * 사용 정보 접근이 필요한 상태에서 행을 누르면 콜백이 호출되는지 검증
+     *
+     * Given:
+     * - 사용 정보 접근 거부 상태의 UsageTimerContent 호스팅
+     * When:
+     * - 사용 정보 접근 행 클릭
+     * Then:
+     * - 콜백 1회
+     * - 행에 라벨 "사용 정보 접근" 표시
+     */
+    @Test
+    fun test_19_clickRequiredUsageAccessRowCallsCallback() {
+        /** Given **/
+        var usageAccessClickCount = 0
+        hostUsageTimerContent(
+            uiState = UsageTimerUiState(usageAccessGranted = false),
+            onClickUsageAccess = { usageAccessClickCount++ },
+        )
+
+        /** When **/
+        clickTag(UsageTimerTestTags.USAGE_ACCESS_STATUS)
+
+        /** Then **/
+        assertEquals(1, usageAccessClickCount)
+        assertTagTextContains(UsageTimerTestTags.USAGE_ACCESS_STATUS, "사용 정보 접근")
     }
 }

@@ -21,7 +21,8 @@ fun interface UsageEventSource {
  * [UsageStatsManager] 기반 [UsageEventSource]
  *
  * 사용 정보 접근 권한([PermissionHelper.isUsageAccessGranted])이 없으면 null.
- * 앱 화면 재개·일시 정지, 화면 켜짐·꺼짐, 잠금 해제 다섯 종류만 [RawUsageEvent]로 바꾸고 나머지 이벤트는 뺌.
+ * 앱 화면 재개·일시 정지·정지(종료 포함), 화면 켜짐·꺼짐, 잠금 해제만 [RawUsageEvent]로 바꾸고 나머지 이벤트는 뺌.
+ * 액티비티 클래스 이름은 앱 이벤트에만 담음. 정지·종료 이벤트는 API 29부터 남음.
  * `PACKAGE_USAGE_STATS` 권한은 core가 아닌 이 클래스를 쓰는 기능 모듈의 매니페스트에서 선언.
  */
 class SystemUsageEventSource(private val context: Context) : UsageEventSource {
@@ -41,12 +42,18 @@ class SystemUsageEventSource(private val context: Context) : UsageEventSource {
                 val kind = when (event.eventType) {
                     ACTIVITY_RESUMED -> RawUsageEventKind.RESUMED
                     ACTIVITY_PAUSED -> RawUsageEventKind.PAUSED
+                    ACTIVITY_STOPPED, ACTIVITY_DESTROYED -> RawUsageEventKind.STOPPED
                     SCREEN_INTERACTIVE -> RawUsageEventKind.SCREEN_ON
                     SCREEN_NON_INTERACTIVE -> RawUsageEventKind.SCREEN_OFF
                     KEYGUARD_HIDDEN -> RawUsageEventKind.UNLOCK
                     else -> null
                 } ?: continue
-                result.add(RawUsageEvent(kind, event.packageName, event.timeStamp))
+                // 클래스 이름은 앱 이벤트에만 실음
+                val className = when (kind) {
+                    RawUsageEventKind.RESUMED, RawUsageEventKind.PAUSED, RawUsageEventKind.STOPPED -> event.className
+                    RawUsageEventKind.SCREEN_ON, RawUsageEventKind.SCREEN_OFF, RawUsageEventKind.UNLOCK -> null
+                }
+                result.add(RawUsageEvent(kind, event.packageName, event.timeStamp, className))
             }
         } catch (e: SecurityException) {
             Log.w("[SystemUsageEventSource] 사용 통계 조회 거부")
@@ -62,5 +69,9 @@ class SystemUsageEventSource(private val context: Context) : UsageEventSource {
         const val SCREEN_INTERACTIVE = 15
         const val SCREEN_NON_INTERACTIVE = 16
         const val KEYGUARD_HIDDEN = 18
+        const val ACTIVITY_STOPPED = 23
+
+        // 공개 SDK에 없는 시스템 API 상수
+        const val ACTIVITY_DESTROYED = 24
     }
 }

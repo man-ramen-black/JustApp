@@ -1,9 +1,9 @@
 package com.black.feature.usagelog.data.usecase
 
+import com.black.core.system.OpenUsageSession
 import com.black.core.system.RawUsageEvent
 import com.black.core.system.RawUsageEventKind
 import com.black.feature.usagelog.model.AppUsageRecord
-import com.black.feature.usagelog.model.OpenUsageSession
 import com.black.feature.usagelog.model.ScreenOffRecord
 import com.black.feature.usagelog.model.ScreenOnRecord
 import com.black.feature.usagelog.model.UnlockRecord

@@ -1,5 +1,6 @@
 package com.black.feature.usagetimer.ui
 
+import android.content.res.Resources
 import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -72,10 +73,14 @@ object UsageTimerTestTags {
     const val CANCEL_BUTTON = "cancel_button"
     const val ACCESSIBILITY_STATUS = "usage_timer_accessibility_status"
     const val OVERLAY_STATUS = "usage_timer_overlay_status"
+    const val USAGE_ACCESS_STATUS = "usage_timer_usage_access_status"
     const val SELECT_APP_BUTTON = "select_app_button"
     const val SELECTED_APPS_EMPTY = "selected_apps_empty"
     const val SELECTED_APPS_LIST = "selected_apps_list"
     const val PAUSE_INFO = "pause_info"
+
+    /** 선택 앱 한 건의 최근 사용 시간 줄 */
+    fun selectedAppUsage(packageName: String): String = "selected_app_usage_$packageName"
 }
 
 /** UsageTimer 화면 */
@@ -122,6 +127,9 @@ fun UsageTimerScreen(
             is UsageTimerViewModel.EventOpenAccessibilitySettings -> {
                 PermissionHelper.openAccessibilityServiceDetailSetting(context)
             }
+            is UsageTimerViewModel.EventOpenUsageAccessSettings -> {
+                PermissionHelper.showUsageAccessSettings(context)
+            }
             is UsageTimerViewModel.EventOpenSelectApp -> {
                 val activity = context.fragmentActivity() ?: return@CollectEvents
                 SelectAppDialogFragment.newInstance(event.checkedPackageNames)
@@ -142,6 +150,7 @@ fun UsageTimerScreen(
         onClickCancelPause = viewModel::onClickCancelPause,
         onClickAccessibility = viewModel::onClickAccessibility,
         onClickOverlaySettings = viewModel::openOverlaySettings,
+        onClickUsageAccess = viewModel::openUsageAccessSettings,
         onClickSelectApp = viewModel::onClickSelectApp,
         onPositionInputChange = viewModel::updatePosition,
         onFinishTimer = viewModel::onFinishTimer,
@@ -174,6 +183,7 @@ fun UsageTimerContent(
     onClickCancelPause: () -> Unit,
     onClickAccessibility: () -> Unit,
     onClickOverlaySettings: () -> Unit,
+    onClickUsageAccess: () -> Unit,
     onClickSelectApp: () -> Unit,
     onPositionInputChange: (OverlayPositionInput) -> Unit,
     onFinishTimer: () -> Unit,
@@ -197,6 +207,12 @@ fun UsageTimerContent(
             granted = uiState.overlayPermissionGranted,
             onClick = onClickOverlaySettings,
             modifier = Modifier.testTag(UsageTimerTestTags.OVERLAY_STATUS),
+        )
+        PermissionStatusRow(
+            label = stringResource(R.string.permission_usage_access),
+            granted = uiState.usageAccessGranted,
+            onClick = onClickUsageAccess,
+            modifier = Modifier.testTag(UsageTimerTestTags.USAGE_ACCESS_STATUS),
         )
 
         // 타이머 표시 섹션
@@ -285,7 +301,18 @@ fun UsageTimerContent(
         )
 
         // 선택한 앱 섹션
-        SectionHeader(stringResource(R.string.usage_timer_section_selected_apps))
+        // 사용 시간을 보여 줄 때만 기간이 드러나는 제목
+        val showsUsage = uiState.recentUsageMillis != null && uiState.selectedApps.isNotEmpty()
+        SectionHeader(
+            if (showsUsage) {
+                stringResource(
+                    R.string.usage_timer_section_selected_apps_with_usage,
+                    UsageTimerViewModel.RECENT_USAGE_PERIOD.inWholeHours,
+                )
+            } else {
+                stringResource(R.string.usage_timer_section_selected_apps)
+            },
+        )
 
         if (uiState.selectedApps.isEmpty()) {
             Text(
@@ -303,7 +330,11 @@ fun UsageTimerContent(
                     .testTag(UsageTimerTestTags.SELECTED_APPS_LIST),
             ) {
                 items(uiState.selectedApps, key = { it.packageName }) { item ->
-                    SelectedAppItemContent(item)
+                    // 키가 없는 경우(앱 선택 직후 조회 전)는 줄 숨김
+                    SelectedAppItemContent(
+                        item = item,
+                        usageMillis = uiState.recentUsageMillis?.get(item.packageName),
+                    )
                 }
             }
         }
@@ -353,9 +384,13 @@ private fun PauseRemainCountDown(
     }
 }
 
-/** 선택된 앱 한 건(아이콘+라벨) 표시 */
+/**
+ * 선택된 앱 한 건 표시
+ *
+ * 아이콘, 라벨, 최근 사용 시간으로 구성.
+ */
 @Composable
-private fun SelectedAppItemContent(item: SelectedAppUiItem) {
+private fun SelectedAppItemContent(item: SelectedAppUiItem, usageMillis: Long?) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AppIconImage(
             icon = item.icon,
@@ -366,5 +401,29 @@ private fun SelectedAppItemContent(item: SelectedAppUiItem) {
             text = item.label,
             style = AppTypography.Body,
         )
+        if (usageMillis != null) {
+            Text(
+                text = formatUsageDuration(LocalContext.current.resources, usageMillis),
+                style = AppTypography.Caption,
+                modifier = Modifier.testTag(UsageTimerTestTags.selectedAppUsage(item.packageName)),
+            )
+        }
+    }
+}
+
+/**
+ * 사용 시간을 화면 문구로 변환
+ *
+ * 분 단위 내림. 0보다 크고 1분 미만은 "1분 미만", 1시간 이상은 "시간 분"으로 표시
+ */
+internal fun formatUsageDuration(resources: Resources, usageMillis: Long): String {
+    // 분 단위 내림
+    val totalMinutes = usageMillis / 60_000L
+    val hours = totalMinutes / 60L
+    val minutes = totalMinutes % 60L
+    return when {
+        hours >= 1L -> resources.getString(R.string.usage_timer_usage_hours_minutes, hours, minutes)
+        usageMillis in 1L..59_999L -> resources.getString(R.string.usage_timer_usage_under_minute)
+        else -> resources.getString(R.string.usage_timer_usage_minutes, minutes)
     }
 }

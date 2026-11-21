@@ -3,10 +3,12 @@ package com.black.feature.usagetimer.ui
 import com.black.core.model.OverlayPosition
 import com.black.core.model.OverlayPosition.HorizontalAnchor
 import com.black.core.model.OverlayPosition.VerticalAnchor
+import com.black.core.system.AppUsageTimeRepository
 import com.black.core.ui.component.OverlayPositionInput
 import com.black.core.util.AccessibilityServiceStatus
 import com.black.core.util.InstalledAppResolver
 import com.black.core.util.OverlayPermissionStatus
+import com.black.core.util.UsageAccessStatus
 import com.black.feature.usagetimer.R
 import com.black.feature.usagetimer.data.UsageTimerRepository
 import com.black.feature.usagetimer.model.UsageTimerDefaults
@@ -20,16 +22,19 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.IOException
+import kotlin.time.Duration.Companion.hours
 
 /** [UsageTimerViewModel]의 상태 로드·저장·권한 안내·이벤트 발송 동작 검증 */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,6 +53,12 @@ class UsageTimerViewModelTest : BaseTest() {
     @MockK
     lateinit var accessibilityServiceStatus: AccessibilityServiceStatus
 
+    @MockK
+    lateinit var usageAccessStatus: UsageAccessStatus
+
+    @MockK
+    lateinit var appUsageTimeRepository: AppUsageTimeRepository
+
     @Before
     fun setupViewModel() {
         coEvery { repository.getPauseDuration() } returns 3
@@ -57,11 +68,19 @@ class UsageTimerViewModelTest : BaseTest() {
         installedAppResolver.mockInstalledApps()
         every { overlayPermissionStatus.canDrawOverlays() } returns true
         every { accessibilityServiceStatus.isAccessibilityServiceEnabled() } returns false
+        every { usageAccessStatus.isUsageAccessGranted() } returns true
+        coEvery { appUsageTimeRepository.getRecentUsageMillis(any(), any(), any()) } returns mapOf("com.a" to 60_000L, "com.b" to 0L)
     }
 
     /** ViewModel 생성 후 init의 비동기 초기 로드 완료까지 대기 */
-    private fun createViewModel() = UsageTimerViewModel(repository, installedAppResolver, overlayPermissionStatus, accessibilityServiceStatus)
-        .also { waitCoroutine() }
+    private fun createViewModel() = UsageTimerViewModel(
+        repository,
+        installedAppResolver,
+        overlayPermissionStatus,
+        accessibilityServiceStatus,
+        usageAccessStatus,
+        appUsageTimeRepository,
+    ).also { waitCoroutine() }
 
     /**
      * 생성 시 저장된 일시정지 시간·선택 앱이 UiState로 로드되는지 검증
@@ -463,5 +482,160 @@ class UsageTimerViewModelTest : BaseTest() {
 
         /** Then **/
         assertEquals(UsageTimerViewModel.EventShowToast(R.string.usage_timer_save_failed), receivedEvents[0])
+    }
+
+    /**
+     * 생성 시 선택 앱의 최근 24시간 사용 시간과 사용 정보 접근 권한이 UiState로 로드되는지 검증
+     *
+     * Given: 선택 앱 [com.a, com.b], 권한 허용, 저장소가 앱별 사용 시간 반환
+     * When: ViewModel 생성(초기 로드 완료 대기)
+     * Then: recentUsageMillis가 그 맵, usageAccessGranted true, 24시간·10초 간격으로 조회
+     */
+    @Test
+    fun test_18_initLoadsRecentUsage() = runTest {
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertEquals(mapOf("com.a" to 60_000L, "com.b" to 0L), viewModel.uiState.value.recentUsageMillis)
+        assertTrue(viewModel.uiState.value.usageAccessGranted)
+        coVerify { appUsageTimeRepository.getRecentUsageMillis(listOf("com.a", "com.b"), 24.hours, 10_000L) }
+    }
+
+    /**
+     * 저장소가 사용 시간을 돌려주지 못하면 사용 시간이 없는 상태가 되는지 검증
+     *
+     * Given: getRecentUsageMillis가 null 반환
+     * When: ViewModel 생성
+     * Then: recentUsageMillis null
+     */
+    @Test
+    fun test_19_recentUsageNullWhenUnavailable() = runTest {
+        /** Given **/
+        coEvery { appUsageTimeRepository.getRecentUsageMillis(any(), any(), any()) } returns null
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertNull(viewModel.uiState.value.recentUsageMillis)
+    }
+
+    /**
+     * 상태 갱신이 사용 정보 접근 권한과 사용 시간을 다시 반영하는지 검증
+     *
+     * Given: 생성 뒤 권한 거부, 저장소가 com.a 2분 반환으로 변경
+     * When: refreshStatus 호출 후 코루틴 완료 대기
+     * Then: usageAccessGranted false, recentUsageMillis {com.a: 2분}
+     */
+    @Test
+    fun test_20_refreshStatusReloadsUsageAndPermission() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+        every { usageAccessStatus.isUsageAccessGranted() } returns false
+        coEvery { appUsageTimeRepository.getRecentUsageMillis(any(), any(), any()) } returns mapOf("com.a" to 120_000L)
+
+        /** When **/
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        assertFalse(viewModel.uiState.value.usageAccessGranted)
+        assertEquals(mapOf("com.a" to 120_000L), viewModel.uiState.value.recentUsageMillis)
+    }
+
+    /**
+     * 앱 선택을 저장하면 새 선택 앱 기준으로 사용 시간을 다시 조회하는지 검증
+     *
+     * Given: 저장 성공, 저장 뒤 getSelectedApps가 [com.c] 반환
+     * When: onAppsSelected([com.c]) 호출 후 코루틴 완료 대기
+     * Then: [com.c]로 getRecentUsageMillis 호출
+     */
+    @Test
+    fun test_21_appsSelectedReloadsUsage() = runTest {
+        /** Given **/
+        coEvery { repository.saveSelectedApps(any()) } returns Result.success(Unit)
+        val viewModel = createViewModel()
+        coEvery { repository.getSelectedApps() } returns listOf("com.c")
+
+        /** When **/
+        viewModel.onAppsSelected(listOf("com.c"))
+        waitCoroutine()
+
+        /** Then **/
+        coVerify { appUsageTimeRepository.getRecentUsageMillis(listOf("com.c"), any(), any()) }
+    }
+
+    /**
+     * 사용 시간 조회가 예외로 실패해도 사용 시간만 숨기고 다른 상태는 정상 로드하는지 검증
+     *
+     * Given: getRecentUsageMillis가 RuntimeException을 던짐
+     * When: ViewModel 생성
+     * Then: recentUsageMillis null, 일시정지 시간 입력과 선택 앱은 정상 로드
+     */
+    @Test
+    fun test_22_usageQueryFailureHidesUsage() = runTest {
+        /** Given **/
+        coEvery { appUsageTimeRepository.getRecentUsageMillis(any(), any(), any()) } throws RuntimeException("query failed")
+
+        /** When **/
+        val viewModel = createViewModel()
+
+        /** Then **/
+        assertNull(viewModel.uiState.value.recentUsageMillis)
+        assertEquals("3", viewModel.uiState.value.pauseDurationInput)
+        assertEquals(listOf("com.a", "com.b"), viewModel.uiState.value.selectedApps.map { it.packageName })
+    }
+
+    /**
+     * 사용 정보 접근 설정 열기가 설정 이동 이벤트를 보내는지 검증
+     *
+     * Given: ViewModel 생성
+     * When: openUsageAccessSettings 호출
+     * Then: EventOpenUsageAccessSettings 수신
+     */
+    @Test
+    fun test_23_openUsageAccessSettingsSendsEvent() = runTest {
+        /** Given **/
+        val viewModel = createViewModel()
+
+        /** When **/
+        viewModel.openUsageAccessSettings()
+        val receivedEvents = viewModel.events.collectValues(count = 1)
+
+        /** Then **/
+        assertEquals(UsageTimerViewModel.EventOpenUsageAccessSettings, receivedEvents[0])
+    }
+
+    /**
+     * 늦게 끝난 옛 사용 시간 조회가 새 조회 결과를 덮어쓰지 않는지 검증
+     *
+     * Given: 첫 조회는 1초 뒤 com.a 1, 둘째 조회는 즉시 com.a 2 반환
+     * When: ViewModel 생성 직후 첫 조회가 진행 중일 때 refreshStatus 호출 후 모두 끝날 때까지 대기
+     * Then: recentUsageMillis가 둘째 조회 결과
+     */
+    @Test
+    fun test_24_staleUsageQueryDoesNotOverwriteNewer() = runTest {
+        /** Given **/
+        coEvery { appUsageTimeRepository.getRecentUsageMillis(any(), any(), any()) } coAnswers {
+            delay(1000)
+            mapOf("com.a" to 1L)
+        } andThen mapOf("com.a" to 2L)
+        val viewModel = UsageTimerViewModel(
+            repository,
+            installedAppResolver,
+            overlayPermissionStatus,
+            accessibilityServiceStatus,
+            usageAccessStatus,
+            appUsageTimeRepository,
+        )
+        advanceCoroutineTime(0)
+
+        /** When **/
+        viewModel.refreshStatus()
+        waitCoroutine()
+
+        /** Then **/
+        assertEquals(mapOf("com.a" to 2L), viewModel.uiState.value.recentUsageMillis)
     }
 }
