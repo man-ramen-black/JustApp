@@ -16,9 +16,9 @@ class AppUsageTimeRepositoryTest : BaseTest() {
     /**
      * 기간 시작보다 여유를 두고 조회하고 기간 안 사용 시간을 돌려주는지 검증
      *
-     * Given: now 기준 a를 500ms 사용하고 바로 정지한 이벤트를 주는 소스
+     * Given: now 기준 a를 1500ms 사용하고 바로 정지한 이벤트를 주는 소스
      * When: 24시간 조회
-     * Then: a 500, 조회 범위는 now - 24시간 - 여유 ~ now
+     * Then: a 구간 now-2000~now-500, 조회 시각 now, 조회 범위는 now - 24시간 - 여유 ~ now
      */
     @Test
     fun test_01_queriesPeriodWithLookback() = runTest {
@@ -30,7 +30,7 @@ class AppUsageTimeRepositoryTest : BaseTest() {
             queriedBegin = begin
             queriedEnd = end
             listOf(
-                RawUsageEvent(RawUsageEventKind.RESUMED, "a", now - 1000),
+                RawUsageEvent(RawUsageEventKind.RESUMED, "a", now - 2000),
                 RawUsageEvent(RawUsageEventKind.PAUSED, "a", now - 500),
                 RawUsageEvent(RawUsageEventKind.RESUMED, "home", now - 500),
                 RawUsageEvent(RawUsageEventKind.STOPPED, "a", now - 500),
@@ -39,10 +39,10 @@ class AppUsageTimeRepositoryTest : BaseTest() {
         val repository = AppUsageTimeRepository(source) { now }
 
         /** When **/
-        val result = repository.getRecentUsageMillis(listOf("a"), 24.hours, 0)
+        val result = repository.getRecentUsageSessions(listOf("a"), 24.hours, 0)
 
         /** Then **/
-        assertEquals(mapOf("a" to 500L), result)
+        assertEquals(RecentAppUsage(now, mapOf("a" to listOf(AppUsageSession(now - 2000, now - 500)))), result)
         assertEquals(now - 24.hours.inWholeMilliseconds - AppUsageTimeRepository.QUERY_LOOKBACK_MILLIS, queriedBegin)
         assertEquals(now, queriedEnd)
     }
@@ -60,7 +60,7 @@ class AppUsageTimeRepositoryTest : BaseTest() {
         val repository = AppUsageTimeRepository({ _, _ -> null }) { 100_000L }
 
         /** When **/
-        val result = repository.getRecentUsageMillis(listOf("a"), 24.hours, 0)
+        val result = repository.getRecentUsageSessions(listOf("a"), 24.hours, 0)
 
         /** Then **/
         assertNull(result)
@@ -80,10 +80,10 @@ class AppUsageTimeRepositoryTest : BaseTest() {
         val repository = AppUsageTimeRepository(pipSource(now), includeVisible = false) { now }
 
         /** When **/
-        val result = repository.getRecentUsageMillis(listOf("a"), 24.hours, 0)
+        val result = repository.getRecentUsageSessions(listOf("a"), 24.hours, 0)
 
         /** Then **/
-        assertEquals(mapOf("a" to 1000L), result)
+        assertEquals(mapOf("a" to listOf(AppUsageSession(now - 3000, now - 2000))), result?.sessions)
     }
 
     /**
@@ -91,7 +91,7 @@ class AppUsageTimeRepositoryTest : BaseTest() {
      *
      * Given: test_03과 같은 이벤트, includeVisible true
      * When: 24시간 조회
-     * Then: a가 조회 끝 now에서 닫혀 3000
+     * Then: a가 조회 끝 now까지 진행 중 구간
      */
     @Test
     fun test_04_includeVisibleTrueCountsPip() = runTest {
@@ -100,10 +100,10 @@ class AppUsageTimeRepositoryTest : BaseTest() {
         val repository = AppUsageTimeRepository(pipSource(now), includeVisible = true) { now }
 
         /** When **/
-        val result = repository.getRecentUsageMillis(listOf("a"), 24.hours, 0)
+        val result = repository.getRecentUsageSessions(listOf("a"), 24.hours, 0)
 
         /** Then **/
-        assertEquals(mapOf("a" to 3000L), result)
+        assertEquals(mapOf("a" to listOf(AppUsageSession(now - 3000, now, inProgress = true))), result?.sessions)
     }
 
     /** a를 작은 창으로 줄이고 정지 없이 홈으로 간 이벤트를 주는 소스 */

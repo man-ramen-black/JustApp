@@ -1,6 +1,7 @@
 package com.black.feature.usagelog.data.usecase
 
 import com.black.core.system.AppUsageIntervalTracker
+import com.black.core.system.AppUsageTimeCalculator
 import com.black.core.system.OpenUsageSession
 import com.black.core.system.RawUsageEvent
 import com.black.core.system.RawUsageEventKind
@@ -20,13 +21,8 @@ data class UsageSessionResult(val records: List<UsageLogRecord>, val openSession
 /** 시스템 사용 기록 이벤트를 앱 사용 구간과 화면 기록으로 변환 */
 object UsageSessionBuilder {
 
-    /**
-     * 기록으로 남기는 앱 사용 구간의 최소 길이
-     *
-     * 최근 앱 화면·자동화 앱의 중간 화면처럼 다른 앱으로 넘어가는 길에 잠깐 뜨는 화면이 1초 미만 구간을 대량으로 만들어,
-     * 사용으로 볼 수 없는 이 구간은 기록하지 않음.
-     */
-    const val MIN_SESSION_MILLIS = 1000L
+    /** 기록으로 남기는 앱 사용 구간의 최소 길이(core [AppUsageTimeCalculator.MIN_SESSION_MILLIS]와 같은 기준) */
+    const val MIN_SESSION_MILLIS = AppUsageTimeCalculator.MIN_SESSION_MILLIS
 
     /**
      * 이벤트 변환

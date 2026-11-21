@@ -28,6 +28,18 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         resumed("a", 5000), paused("a", 6000), resumed("home", 6000),
     )
 
+    /** [AppUsageTimeCalculator.usageSessions] 결과를 앱별 구간 길이 합으로 변환(합계 검증용) */
+    private fun sumUsageMillis(
+        events: List<RawUsageEvent>,
+        begin: Long,
+        end: Long,
+        packageNames: Collection<String>,
+        mergeGapMillis: Long,
+        includeVisible: Boolean = false,
+    ): Map<String, Long> =
+        AppUsageTimeCalculator.usageSessions(events, begin, end, packageNames, mergeGapMillis, includeVisible)
+            .mapValues { (_, sessions) -> sessions.sumOf { it.end - it.start } }
+
     /**
      * 요청한 앱만 합산하는지 검증
      *
@@ -44,7 +56,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 0)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 0)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -63,7 +75,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         val events = listOf(resumed("a", 1000), paused("a", 5000), resumed("home", 5000))
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 3000, 10_000, listOf("a"), 0)
+        val result = sumUsageMillis(events, 3000, 10_000, listOf("a"), 0)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -79,10 +91,10 @@ class AppUsageTimeCalculatorTest : BaseTest() {
     @Test
     fun test_03_closesOpenSessionAtPausedAtOrEnd() = runTest {
         /** Given / When **/
-        val withPause = AppUsageTimeCalculator.sumUsageMillis(
+        val withPause = sumUsageMillis(
             listOf(resumed("a", 1000), paused("a", 3000)), 0, 10_000, listOf("a"), 0,
         )
-        val withoutPause = AppUsageTimeCalculator.sumUsageMillis(listOf(resumed("a", 1000)), 0, 4000, listOf("a"), 0)
+        val withoutPause = sumUsageMillis(listOf(resumed("a", 1000)), 0, 4000, listOf("a"), 0)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), withPause)
@@ -102,7 +114,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         val events = listOf(resumed("a", 1000), paused("a", 2000), resumed("home", 2000))
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a", "c"), 0)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a", "c"), 0)
 
         /** Then **/
         assertEquals(mapOf("a" to 1000L, "c" to 0L), result)
@@ -118,7 +130,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
     @Test
     fun test_05_mergesShortGapIncludingGap() = runTest {
         /** Given / When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 10_000)
+        val result = sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 10_000)
 
         /** Then **/
         assertEquals(mapOf("a" to 5000L), result)
@@ -134,7 +146,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
     @Test
     fun test_06_gapOverThresholdNotMerged() = runTest {
         /** Given / When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 2000)
+        val result = sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 2000)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -157,7 +169,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -173,7 +185,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
     @Test
     fun test_08_zeroGapDoesNotMerge() = runTest {
         /** Given / When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 0)
+        val result = sumUsageMillis(gapEvents(), 0, 10_000, listOf("a"), 0)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -195,7 +207,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 2500, 10_000, listOf("a"), 10_000)
+        val result = sumUsageMillis(events, 2500, 10_000, listOf("a"), 10_000)
 
         /** Then **/
         assertEquals(mapOf("a" to 1500L), result)
@@ -218,7 +230,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000)
 
         /** Then **/
         assertEquals(mapOf("a" to 2000L), result)
@@ -240,7 +252,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 20_000, listOf("a"), 10_000)
+        val result = sumUsageMillis(events, 0, 20_000, listOf("a"), 10_000)
 
         /** Then **/
         assertEquals(mapOf("a" to 12_000L), result)
@@ -259,8 +271,8 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         val events = listOf(resumed("a", 1000), paused("a", 2000), resumed("home", 2000), stopped("a", 9000))
 
         /** When **/
-        val withVisible = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
-        val foregroundOnly = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = false)
+        val withVisible = sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
+        val foregroundOnly = sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = false)
 
         /** Then **/
         assertEquals(mapOf("a" to 8000L), withVisible)
@@ -283,7 +295,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
 
         /** Then **/
         assertEquals(mapOf("a" to 3500L), result)
@@ -302,7 +314,7 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         val events = listOf(resumed("a", 1000), paused("a", 3000), resumed("home", 3000), stopped("a", 3500))
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 0, includeVisible = true)
 
         /** Then **/
         assertEquals(mapOf("a" to 2500L), result)
@@ -324,9 +336,170 @@ class AppUsageTimeCalculatorTest : BaseTest() {
         )
 
         /** When **/
-        val result = AppUsageTimeCalculator.sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000, includeVisible = true)
+        val result = sumUsageMillis(events, 0, 10_000, listOf("a"), 10_000, includeVisible = true)
 
         /** Then **/
         assertEquals(mapOf("a" to 7000L), result)
+    }
+
+    /**
+     * 구간을 시작 오름차순으로 돌려주고 기간 시작에서 잘린 구간을 표시하는지 검증
+     *
+     * Given: a 1000~5000, 홈 5000~7000, a 7000~9000
+     * When: begin 3000, end 10000, gap 0으로 구간 계산
+     * Then: [3000~5000(잘림), 7000~9000]
+     */
+    @Test
+    fun test_16_sessionsSortedAndClippedAtBegin() = runTest {
+        /** Given **/
+        val events = listOf(
+            resumed("a", 1000), paused("a", 5000), resumed("home", 5000),
+            paused("home", 7000), resumed("a", 7000), paused("a", 9000), resumed("home", 9000),
+        )
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 3000, 10_000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(
+            mapOf("a" to listOf(AppUsageSession(3000, 5000, startsBeforePeriod = true), AppUsageSession(7000, 9000))),
+            result,
+        )
+    }
+
+    /**
+     * 조회 끝까지 열려 있던 구간을 진행 중으로 표시하는지 검증
+     *
+     * Given: a 재개 1000 뒤 일시 정지 없음
+     * When: end 4000으로 구간 계산
+     * Then: [1000~4000(진행 중)]
+     */
+    @Test
+    fun test_17_openSessionIsInProgress() = runTest {
+        /** Given **/
+        val events = listOf(resumed("a", 1000))
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 0, 4000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(mapOf("a" to listOf(AppUsageSession(1000, 4000, inProgress = true))), result)
+    }
+
+    /**
+     * 1초 미만 구간을 빼는지 검증
+     *
+     * Given: a 1000~1999(999ms), a 3000~4000(1000ms)
+     * When: gap 0으로 구간 계산
+     * Then: [3000~4000]만 남음
+     */
+    @Test
+    fun test_18_dropsSessionsUnderOneSecond() = runTest {
+        /** Given **/
+        val events = listOf(
+            resumed("a", 1000), paused("a", 1999), resumed("home", 1999),
+            paused("home", 3000), resumed("a", 3000), paused("a", 4000), resumed("home", 4000),
+        )
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 0, 10_000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(mapOf("a" to listOf(AppUsageSession(3000, 4000))), result)
+    }
+
+    /**
+     * 짧은 이탈로 이어 붙인 구간을 한 건으로 돌려주는지 검증
+     *
+     * Given: a 1000~2000, 홈 3000ms, a 5000~6000
+     * When: gap 10000으로 구간 계산
+     * Then: [1000~6000] 한 건
+     */
+    @Test
+    fun test_19_mergedGapIsOneSession() = runTest {
+        /** Given / When **/
+        val result = AppUsageTimeCalculator.usageSessions(gapEvents(), 0, 10_000, listOf("a"), 10_000)
+
+        /** Then **/
+        assertEquals(mapOf("a" to listOf(AppUsageSession(1000, 6000))), result)
+    }
+
+    /**
+     * 쓰지 않은 앱이 빈 목록으로 들어가는지 검증
+     *
+     * Given: c 이벤트 없음
+     * When: [a, c] 구간 계산
+     * Then: c 빈 목록
+     */
+    @Test
+    fun test_20_unusedPackageIsEmptyList() = runTest {
+        /** Given **/
+        val events = listOf(resumed("a", 1000), paused("a", 2000), resumed("home", 2000))
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 0, 10_000, listOf("a", "c"), 0)
+
+        /** Then **/
+        assertEquals(emptyList<AppUsageSession>(), result["c"])
+    }
+
+    /**
+     * pausedAt에 닫힌 구간이 기간 끝 전이면 진행 중이 아닌지 검증
+     *
+     * Given: a 재개 1000, 일시 정지 3000, 다른 앱 없음
+     * When: end 10000으로 구간 계산
+     * Then: [1000~3000] 기본 표시(진행 중 아님)
+     */
+    @Test
+    fun test_21_closedAtPausedAtIsNotInProgress() = runTest {
+        /** Given **/
+        val events = listOf(resumed("a", 1000), paused("a", 3000))
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 0, 10_000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(mapOf("a" to listOf(AppUsageSession(1000, 3000))), result)
+    }
+
+    /**
+     * 기간 시작 시각에 시작한 구간은 기간 앞에서 시작한 구간으로 표시하지 않는지 검증
+     *
+     * Given: a 3000~5000
+     * When: begin 3000으로 구간 계산
+     * Then: [3000~5000] startsBeforePeriod false
+     */
+    @Test
+    fun test_22_startAtBeginIsNotBeforePeriod() = runTest {
+        /** Given **/
+        val events = listOf(resumed("a", 3000), paused("a", 5000), resumed("home", 5000))
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 3000, 10_000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(mapOf("a" to listOf(AppUsageSession(3000, 5000))), result)
+    }
+
+    /**
+     * 기간 앞에서 시작해 끝까지 열린 구간에 두 표시가 모두 켜지는지 검증
+     *
+     * Given: a 재개 1000 뒤 일시 정지 없음
+     * When: begin 3000, end 10000으로 구간 계산
+     * Then: [3000~10000] startsBeforePeriod·inProgress 모두 true
+     */
+    @Test
+    fun test_23_beforePeriodAndInProgressBothFlagged() = runTest {
+        /** Given **/
+        val events = listOf(resumed("a", 1000))
+
+        /** When **/
+        val result = AppUsageTimeCalculator.usageSessions(events, 3000, 10_000, listOf("a"), 0)
+
+        /** Then **/
+        assertEquals(
+            mapOf("a" to listOf(AppUsageSession(3000, 10_000, startsBeforePeriod = true, inProgress = true))),
+            result,
+        )
     }
 }

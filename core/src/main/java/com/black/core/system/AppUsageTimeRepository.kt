@@ -9,7 +9,7 @@ import javax.inject.Inject
 import kotlin.time.Duration
 
 /**
- * 최근 기간 안 앱별 사용 시간 조회
+ * 최근 기간 안 앱별 사용 구간 조회
  *
  * 기간 시작 전에 열려 기간 안으로 이어진 사용을 경계부터 세기 위해 기간 시작보다 [QUERY_LOOKBACK_MILLIS]만큼
  * 앞서 이벤트를 조회함. 이 여유보다 길게 이어진 사용은 앞부분 이벤트가 없어 시간에서 빠짐.
@@ -28,20 +28,23 @@ class AppUsageTimeRepository(
     constructor(@ApplicationContext context: Context) : this(SystemUsageEventSource(context))
 
     /**
-     * 지금부터 [period] 전까지 [packageNames] 앱별 사용 시간(밀리초) 조회
+     * 지금부터 [period] 전까지 [packageNames] 앱별 사용 구간 조회
      *
      * @param mergeGapMillis 같은 앱의 짧은 이탈을 이어 붙이는 최대 간격, 0이면 이어 붙이지 않음.
-     * @return 앱별 사용 시간, 사용 정보 접근 권한이 없어 조회하지 못하면 null.
+     * @return 조회 시각과 앱별 사용 구간, 사용 정보 접근 권한이 없어 조회하지 못하면 null.
      */
-    suspend fun getRecentUsageMillis(
+    suspend fun getRecentUsageSessions(
         packageNames: Collection<String>,
         period: Duration,
         mergeGapMillis: Long,
-    ): Map<String, Long>? = withContext(Dispatchers.IO) {
+    ): RecentAppUsage? = withContext(Dispatchers.IO) {
         val end = clock()
         val begin = end - period.inWholeMilliseconds
         val events = source.query(begin - QUERY_LOOKBACK_MILLIS, end) ?: return@withContext null
-        AppUsageTimeCalculator.sumUsageMillis(events, begin, end, packageNames, mergeGapMillis, includeVisible)
+        RecentAppUsage(
+            queriedAtMillis = end,
+            sessions = AppUsageTimeCalculator.usageSessions(events, begin, end, packageNames, mergeGapMillis, includeVisible),
+        )
     }
 
     companion object {

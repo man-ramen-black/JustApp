@@ -6,6 +6,29 @@ import kotlinx.serialization.Serializable
 data class AppUsageInterval(val packageName: String, val start: Long, val end: Long)
 
 /**
+ * 기간 안으로 자른 앱 사용 구간 한 건(밀리초 시각)
+ *
+ * @property startsBeforePeriod 실제 시작이 기간 시작보다 앞이라 [start]가 기간 시작 시각인지 여부
+ * @property inProgress 조회 끝까지 열려 있어 [end]가 조회 시각인지 여부
+ */
+data class AppUsageSession(
+    val start: Long,
+    val end: Long,
+    val startsBeforePeriod: Boolean = false,
+    val inProgress: Boolean = false,
+)
+
+/**
+ * 최근 기간 앱별 사용 구간 조회 결과
+ *
+ * @property queriedAtMillis 조회 끝 시각
+ */
+data class RecentAppUsage(
+    val queriedAtMillis: Long,
+    val sessions: Map<String, List<AppUsageSession>>,
+)
+
+/**
  * 아직 끝나지 않은 앱 사용 구간
  *
  * DataStore에 JSON 문자열로 저장됨. pausedAt은 이 앱의 마지막 ACTIVITY_PAUSED 시각으로, 같은 앱이 다시 실행되면 지워지고
