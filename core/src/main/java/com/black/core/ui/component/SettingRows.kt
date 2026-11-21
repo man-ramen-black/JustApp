@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -15,10 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.black.core.R
@@ -53,6 +57,41 @@ fun SectionHeader(title: String, trailing: (@Composable () -> Unit)? = null) {
             style = AppTypography.Caption,
         )
         trailing()
+    }
+}
+
+/**
+ * 눌러 펴고 접는 섹션 머리
+ *
+ * [SectionHeader] 끝에 펼침·접힘 아이콘을 붙이고 머리 전체를 눌러 [onToggle] 호출.
+ * 스크린 리더가 버튼과 현재 상태(펼침·접힘)를 읽도록 역할과 상태 설명을 붙임.
+ */
+@Composable
+fun CollapsibleSectionHeader(
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val state = stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onToggle)
+            .semantics { stateDescription = state },
+    ) {
+        SectionHeader(
+            title = title,
+            trailing = {
+                // 상태는 머리의 stateDescription이 읽으므로 아이콘 설명은 비움
+                Icon(
+                    painter = painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = AppColors.Caption,
+                )
+            },
+        )
     }
 }
 

@@ -18,18 +18,20 @@ import com.black.core.ui.theme.AppColors
 import com.black.core.ui.theme.AppShapes
 
 /**
- * 컨테이너 톤 상자(배경 + 1dp 컨테이너 테두리 + [shape] 모서리)
+ * 컨테이너 톤 상자(배경 + 1dp 테두리 + [shape] 모서리)
  *
  * @param background 상자 배경색(밝은 미리보기 타일처럼 테두리만 같은 상자에서 변경)
+ * @param borderColor 테두리 색(선택된 타일처럼 상자를 강조할 때 변경)
  * @param clip true면 뒤에 오는 수정자(클릭 리플 등)와 내용도 [shape] 밖을 자름
  */
 fun Modifier.containerBox(
     shape: Shape = AppShapes.Container,
     background: Color = AppColors.ContainerBackground,
+    borderColor: Color = AppColors.ContainerBorder,
     clip: Boolean = false,
 ): Modifier = then(if (clip) Modifier.clip(shape) else Modifier)
     .background(background, shape)
-    .border(1.dp, AppColors.ContainerBorder, shape)
+    .border(1.dp, borderColor, shape)
 
 /**
  * 누를 수 없는 컨테이너 톤 아이콘 상자(메인 목록 항목 아이콘 등 장식용)

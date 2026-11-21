@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +28,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -44,10 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -59,6 +55,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.black.core.ui.component.ActionButton
 import com.black.core.ui.component.AppTextFieldDefaults
+import com.black.core.ui.component.CollapsibleSectionHeader
 import com.black.core.ui.component.PermissionStatusRow
 import com.black.core.ui.component.SectionHeader
 import com.black.core.ui.component.ToolTopBar
@@ -488,8 +485,7 @@ private fun syncFailureMessageResId(status: TodoSyncStatus): Int? = when (status
 /**
  * 구획 머리
  *
- * 완료 구획만 [expanded]와 [onClick]을 받아 펼침·접힘 아이콘을 보이고, 눌러 펴고 접음.
- * 스크린 리더가 버튼과 현재 상태(펼침·접힘)를 읽도록 역할과 상태 설명을 붙임.
+ * 완료 구획만 [expanded]와 [onClick]을 받아 core [CollapsibleSectionHeader]로 펴고 접음.
  */
 @Composable
 private fun SectionHeaderRow(
@@ -497,34 +493,19 @@ private fun SectionHeaderRow(
     expanded: Boolean?,
     onClick: (() -> Unit)?,
 ) {
-    val toggleModifier = if (expanded != null && onClick != null) {
-        val state = stringResource(if (expanded) R.string.todo_expanded else R.string.todo_collapsed)
-        Modifier
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { stateDescription = state }
-    } else {
-        Modifier
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(TodoTestTags.sectionHeader(type))
-            .then(toggleModifier),
-    ) {
-        SectionHeader(
-            title = stringResource(sectionTitleResId(type)),
-            trailing = expanded?.let { isExpanded ->
-                {
-                    // 상태는 머리의 stateDescription이 읽으므로 아이콘 설명은 비움
-                    Icon(
-                        painter = painterResource(if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = AppColors.Caption,
-                    )
-                }
-            },
+    val title = stringResource(sectionTitleResId(type))
+    val tagModifier = Modifier.testTag(TodoTestTags.sectionHeader(type))
+    if (expanded != null && onClick != null) {
+        CollapsibleSectionHeader(
+            title = title,
+            expanded = expanded,
+            onToggle = onClick,
+            modifier = tagModifier,
         )
+        return
+    }
+    Column(modifier = tagModifier.fillMaxWidth()) {
+        SectionHeader(title = title)
     }
 }
 

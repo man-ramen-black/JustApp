@@ -15,8 +15,6 @@
     <string name="todo_section_upcoming">앞으로</string>
     <string name="todo_section_no_due">기한 없음</string>
     <string name="todo_section_done">완료</string>
-    <string name="todo_expanded">펼침</string>
-    <string name="todo_collapsed">접힘</string>
     <string name="todo_reminder_home_arrival">집 도착</string>
     <string name="todo_reminder_time">시각</string>
     <string name="todo_untitled">제목 없음</string>

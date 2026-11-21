@@ -32,4 +32,6 @@
     <string name="select_app_complete">선택 완료</string>
 
     <string name="ssl_error_confirm_message">이 사이트의 보안 인증서를 신뢰할 수 없습니다.\n계속하시겠습니까?</string>
+    <string name="section_expanded">펼침</string>
+    <string name="section_collapsed">접힘</string>
 </resources>
