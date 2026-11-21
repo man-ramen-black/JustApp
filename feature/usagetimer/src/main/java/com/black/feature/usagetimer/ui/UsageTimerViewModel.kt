@@ -61,23 +61,27 @@ class UsageTimerViewModel @Inject constructor(
     private val mutableUiState = MutableStateFlow(UsageTimerUiState())
     val uiState: StateFlow<UsageTimerUiState> = mutableUiState.asStateFlow()
 
-    /** 직전 최근 사용 시간 조회. 새 조회가 시작되면 취소해 늦게 끝난 옛 결과가 덮지 않게 함 */
+    /** 직전 최근 사용 구간 조회. 새 조회가 시작되면 취소해 늦게 끝난 옛 결과가 덮지 않게 함 */
     private var recentUsageJob: Job? = null
 
     init {
         // 첫 화면부터 실제 권한 상태 표시
         refreshStatus()
+        // 일시정지 값은 선택 앱 해석(앱 수만큼 걸림)을 기다리지 않도록 따로 읽음
         launch {
             val pauseRemainTimeMillis = repository.getPauseRemainTimeMillis()
             val pauseDurationInput = repository.getPauseDuration().toString()
-            val selectedApps = repository.getSelectedApps().map(installedAppResolver::selectedAppUiItem)
             mutableUiState.update {
                 it.copy(
+                    pauseStateLoaded = true,
                     pauseRemainTimeMillis = pauseRemainTimeMillis,
                     pauseDurationInput = pauseDurationInput,
-                    selectedApps = selectedApps,
                 )
             }
+        }
+        launch {
+            val selectedApps = repository.getSelectedApps().map(installedAppResolver::selectedAppUiItem)
+            mutableUiState.update { it.copy(selectedApps = selectedApps) }
         }
         // 선택 앱 해석을 기다리지 않도록 위치는 따로 읽고, 입력 중인 값을 덮지 않도록 한 번만 읽음
         launch {
@@ -105,29 +109,51 @@ class UsageTimerViewModel @Inject constructor(
     }
 
     /**
-     * 선택 앱의 최근 [RECENT_USAGE_PERIOD] 사용 시간을 조회해 UiState에 반영
+     * 선택 앱의 최근 [RECENT_USAGE_PERIOD] 사용 구간을 조회해 UiState에 반영
      *
-     * 권한이 없거나 조회에 실패하면 사용 시간을 null로 둠. 앱 사이를 잠깐 오간 구간을 이어 붙이는 간격은
+     * 권한이 없거나 조회에 실패하면 구간을 null로 두고 조회 불가로 표시. 앱 사이를 잠깐 오간 구간을 이어 붙이는 간격은
      * 오버레이 타이머가 같은 이탈을 같은 사용으로 보는 [UsageTimerGlobal.SESSION_GRACE_MILLIS]와 맞춤.
+     *
+     * 조회를 시작할 때 조회 불가 표시를 먼저 내려 다시 조회하는 동안 실패 문구가 남지 않게 하고, 이미 표시 중인
+     * 구간은 그대로 둠.
      */
     private fun refreshRecentUsage() {
         recentUsageJob?.cancel()
+        mutableUiState.update { it.copy(recentUsageUnavailable = false) }
         recentUsageJob = launch {
-            val recentUsageMillis = runSuspendCatching {
-                appUsageTimeRepository.getRecentUsageMillis(
+            val recentUsage = runSuspendCatching {
+                appUsageTimeRepository.getRecentUsageSessions(
                     repository.getSelectedApps(),
                     RECENT_USAGE_PERIOD,
                     UsageTimerGlobal.SESSION_GRACE_MILLIS,
                 )
             }.onFailure { failure ->
-                Log.w("[UsageTimerViewModel] 최근 사용 시간 조회 실패: ${failure::class.java.simpleName}")
+                Log.w("[UsageTimerViewModel] 최근 사용 구간 조회 실패: ${failure::class.java.simpleName}")
             }.getOrNull()
-            mutableUiState.update { it.copy(recentUsageMillis = recentUsageMillis) }
+            mutableUiState.update {
+                it.copy(recentUsage = recentUsage, recentUsageUnavailable = recentUsage == null)
+            }
         }
     }
 
-    fun onPauseDurationInputChanged(input: String) {
-        mutableUiState.update { it.copy(pauseDurationInput = input) }
+    /**
+     * 일시정지 시간 입력을 화면에 반영하고, 1 이상의 정수면 저장
+     *
+     * 표시 위치 입력([updatePosition])처럼 입력 즉시 저장하며, 저장에 실패하면 실패 토스트를 보냄.
+     */
+    fun updatePauseDuration(input: String) {
+        mutableUiState.update { it.copy(pauseDurationInput = input, pauseDurationEdited = true) }
+        val minutes = pauseDurationMinutes(input) ?: return
+        launch {
+            if (repository.savePauseDuration(minutes).isFailure) {
+                sendEvent(EventShowToast(R.string.usage_timer_save_failed))
+            }
+        }
+    }
+
+    /** 구간 목록을 볼 앱을 [packageName]으로 변경 */
+    fun showUsageSessions(packageName: String) {
+        mutableUiState.update { it.copy(usageSessionsPackageName = packageName) }
     }
 
     /**
@@ -170,14 +196,6 @@ class UsageTimerViewModel @Inject constructor(
     /** 사용 정보 접근 설정 화면으로 이동 */
     fun openUsageAccessSettings() {
         sendEvent(EventOpenUsageAccessSettings)
-    }
-
-    fun onClickSave() {
-        val pauseDuration = validPauseDurationMinutes() ?: return
-        launch {
-            val result = repository.savePauseDuration(pauseDuration)
-            sendEvent(EventShowToast(saveResultMessage(result, R.string.usage_timer_save_completed)))
-        }
     }
 
     fun onClickPause() {
@@ -237,8 +255,8 @@ class UsageTimerViewModel @Inject constructor(
 
     /** 입력이 1분 이상의 정수면 그 값, 아니면 안내 토스트를 보내고 null */
     private fun validPauseDurationMinutes(): Int? {
-        val minutes = uiState.value.pauseDurationInput.toIntOrNull()
-        if (minutes == null || minutes < 1) {
+        val minutes = pauseDurationMinutes(uiState.value.pauseDurationInput)
+        if (minutes == null) {
             sendEvent(EventShowToast(R.string.usage_timer_pause_duration_invalid))
             return null
         }

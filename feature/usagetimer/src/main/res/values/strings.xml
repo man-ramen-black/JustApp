@@ -2,22 +2,32 @@
 <resources>
     <string name="fragment_name_usage_timer">앱 사용 타이머</string>
 
-    <string name="usage_timer_section_overlay">타이머 표시</string>
     <string name="usage_timer_show">타이머 띄우기</string>
     <string name="usage_timer_section_pause">일시정지</string>
     <string name="usage_timer_pause_duration_label">일시정지 시간(분)</string>
-    <string name="usage_timer_save">저장</string>
+    <string name="usage_timer_pause_duration_error">1분 이상으로 입력해주세요.</string>
     <string name="usage_timer_pause">일시정지</string>
     <string name="usage_timer_cancel_pause">일시정지 해제</string>
     <string name="usage_timer_pause_remain">남은 일시정지 시간</string>
-    <string name="usage_timer_section_settings">설정</string>
-    <string name="usage_timer_section_selected_apps">선택한 앱</string>
-    <string name="usage_timer_section_selected_apps_with_usage">선택한 앱 · 최근 %1$d시간 사용 시간</string>
+    <string name="usage_timer_section_target_apps">타이머 대상 앱</string>
+    <string name="usage_timer_section_target_apps_with_period">타이머 대상 앱 · 최근 %1$d시간</string>
     <string name="usage_timer_usage_hours_minutes">%1$d시간 %2$d분</string>
     <string name="usage_timer_usage_minutes">%1$d분</string>
     <string name="usage_timer_usage_under_minute">1분 미만</string>
+    <string name="usage_timer_usage_loading" translatable="false">–</string>
+    <string name="usage_timer_usage_permission_hint">사용 정보 접근을 허용하면 사용 기록을 볼 수 있습니다.</string>
+    <string name="usage_timer_sessions_title">%1$s 사용 기록</string>
+    <string name="usage_timer_day_today">오늘</string>
+    <string name="usage_timer_day_yesterday">어제</string>
+    <string name="usage_timer_day_total">%1$s · %2$s</string>
+    <string name="usage_timer_session_range">%1$s ~ %2$s</string>
+    <string name="usage_timer_session_start_before">%1$s 이전</string>
+    <string name="usage_timer_session_in_progress">사용 중</string>
+    <string name="usage_timer_sessions_more">이전 기록 %1$d개 더 보기</string>
+    <string name="usage_timer_sessions_collapse">접기</string>
+    <string name="usage_timer_sessions_empty">최근 %1$d시간 동안 사용 기록이 없습니다.</string>
+    <string name="usage_timer_sessions_failed">사용 기록을 불러오지 못했습니다.</string>
     <string name="usage_timer_selected_apps_empty">선택한 앱이 없습니다.</string>
-    <string name="usage_timer_save_completed">저장되었습니다.</string>
     <string name="usage_timer_paused">%1$d분 동안 일시정지합니다.</string>
     <string name="usage_timer_pause_canceled">일시정지를 해제했습니다.</string>
     <string name="usage_timer_pause_duration_invalid">일시정지 시간은 1분 이상으로 입력해주세요.</string>

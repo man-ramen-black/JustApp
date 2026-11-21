@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -27,7 +28,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -40,6 +43,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -353,6 +357,39 @@ abstract class BaseUiTest {
      * 구획·행의 세로 순서 비교에 사용. 스크롤 영역 밖으로 일부가 잘린 노드도 원래 위치로 비교하도록 잘리지 않은 경계를 씀
      */
     protected fun tagTop(tag: String): Dp = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot().top
+
+    /**
+     * testTag가 [tag]인 노드의 그려진 크기
+     *
+     * 격자 칸처럼 같은 크기여야 하는 요소끼리 비교할 때 사용. [useUnmergedTree]가 true면 부모에 병합되지 않은 트리에서 노드를 찾음
+     */
+    protected fun tagSize(tag: String, useUnmergedTree: Boolean = false): DpSize {
+        val bounds = composeRule.onNodeWithTag(tag, useUnmergedTree).getUnclippedBoundsInRoot()
+        return DpSize(bounds.right - bounds.left, bounds.bottom - bounds.top)
+    }
+
+    /**
+     * testTag가 [tag]인 텍스트가 말줄임·넘침 없이 다 그려졌는지 검증
+     *
+     * 글꼴 배율을 키운 화면에서 숫자가 잘리지 않는지 확인할 때 사용. [useUnmergedTree]가 true면 부모에 병합되지 않은 트리에서 노드를 찾음.
+     *
+     * Compose가 문단을 최대 너비로 배치한 뒤 노드를 글자 너비로 줄이는 경우가 있어, 문단 너비와 노드 너비를 비교하는
+     * [TextLayoutResult.hasVisualOverflow]는 다 그려진 글자도 넘침으로 봄(태블릿에서 문단 185px, 노드 172px 한 줄).
+     * 그래서 세로 넘침, 줄마다 말줄임 여부와 글자 너비가 노드 너비를 넘는지로 판단.
+     */
+    protected fun assertTagTextNotClipped(tag: String, useUnmergedTree: Boolean = false) {
+        val node = composeRule.onNodeWithTag(tag, useUnmergedTree).fetchSemanticsNode()
+        val results = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+        val result = results.first()
+        val clippedLines = (0 until result.lineCount).filter { line ->
+            result.isLineEllipsized(line) || result.getLineRight(line) - result.getLineLeft(line) > result.size.width
+        }
+        assertFalse(
+            "$tag 텍스트가 잘림(세로 넘침 ${result.didOverflowHeight}, 잘린 줄 $clippedLines, 노드 크기 ${result.size})",
+            result.didOverflowHeight || clippedLines.isNotEmpty(),
+        )
+    }
 
     /**
      * testTag가 [tag]인 노드가 생길 때까지 최대 [timeoutMillis] 대기
